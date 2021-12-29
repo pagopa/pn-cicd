@@ -74,6 +74,17 @@ Resources:
                     <password>${env.CODEARTIFACT_AUTH_TOKEN}</password>
                   </server>
                 </servers>
+                <mirrors>
+                  <mirror>
+                    <id>pn-codeartifact</id>
+                    <name>pn-codeartifact</name>
+                    <url>https://${env.CODEARTIFACT_DOMAIN_FULL}/maven/${env.CODEARTIFACT_REPO}/</url>
+                    <mirrorOf>*</mirrorOf>
+                  </mirror>
+                </mirrors>
+                <activeProfiles>
+                  <activeProfile>pn-codeartifact</activeProfile>
+                </activeProfiles>
               </settings>
       Source:
         Type: GITHUB
