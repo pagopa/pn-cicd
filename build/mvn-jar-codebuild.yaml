@@ -100,6 +100,7 @@ Resources:
               on-failure: ABORT
               commands:
                 - echo $SETTINGS > maven-settings.xml
+                - echo "*** Settings.xml ***"
                 - cat maven-settings.xml
                 - export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
                 - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
@@ -109,15 +110,17 @@ Resources:
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - echo "*** Environment Variables ***"
                 - env
+                - export MAVEN_CONFIG="--settings maven-settings.xml"
             build:
               on-failure: ABORT
               commands:
                 - echo "Maven Build"
-                - ./mvnw --settings maven-settings.xml clean package
+                - echo "Token $CODEARTIFACT_AUTH_TOKEN"
+                - ./mvnw clean package
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
                     echo "Deploy"
-                    ./mvnw --settings maven-settings.xml -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL deploy
+                    ./mvnw -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL deploy
                   fi
             post_build:
               on-failure: ABORT
