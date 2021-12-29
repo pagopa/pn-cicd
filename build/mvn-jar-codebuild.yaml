@@ -133,6 +133,12 @@ Resources:
                      SONAR_ADD_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
                   fi
                 - ./mvnw verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
+          reports:
+            test-report:
+              file-format: JUNITXML
+              files: 
+                - target/failsafe-reports/*
+                - target/surefire-reports/*
           cache:
             paths:
               - '/root/.m2/**/*'
