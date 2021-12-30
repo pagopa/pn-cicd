@@ -7,4 +7,36 @@ CI/CD Piattaforma Notifiche
 - __build__: cloud formation stack used for continuous integration.
 - __deploy__: cloud formation stack used for continuous deployment.
 
-# Layout
+## Pipeline 
+
+Il file _infra/pn-cicd-pipeline_ è l'unico che deve essere caricato manualmente con il seguente comando:
+```
+aws cloudformation create-stack --stack-name pn-cicd --template-body file://infra/pn-cicd-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
+```
+
+Oppure aggiornaro con il comando
+```
+aws cloudformation update-stack --stack-name pn-cicd --template-body file://infra/pn-cicd-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
+```
+
+Lo stack contiene la pipeline che andando a leggere i template all'interno della cartella _build_
+crea gli Stack che daranno origine ai progetti _CodeBuild_ per la CI dei moduli di PN su github.
+
+## Comandi singoli
+
+Creazione dello stack:
+```
+aws cloudformation create-stack --stack-name <value> --template-body build/mvn-jar-codebuild.yaml --parameters ParameterKey=string,ParameterValue=string,UsePreviousValue=boolean,ResolvedValue=string
+```
+
+Aggiornamento dello stack:
+```
+aws cloudformation update-stack --stack-name <value> --capabilities CAPABILITY_IAM
+```
+
+Cancellazione dello stack:
+```
+aws cloudformation delete-stack --stack-name <value> --capabilities CAPABILITY_IAM
+```
+
+
