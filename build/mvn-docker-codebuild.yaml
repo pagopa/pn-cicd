@@ -123,9 +123,7 @@ Resources:
                 - echo Logging in to Amazon ECR...
                 - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
                 - echo $SETTINGS > maven-settings.xml
-                - cat maven-settings.xml
                 - export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
-                - echo "Token $CODEARTIFACT_AUTH_TOKEN"
                 - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
                 - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
                 - export PR_NUM=$(echo $CODEBUILD_WEBHOOK_TRIGGER | sed 's/pr\///')
