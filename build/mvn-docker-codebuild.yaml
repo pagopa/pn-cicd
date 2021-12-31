@@ -120,7 +120,8 @@ Resources:
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - export MAVEN_CONFIG="--settings maven-settings.xml"
-                - export VERSION=${CODEBUILD_SOURCE_VERSION}
+                - export VERSION=$( mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout )
+                - export SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}
             build:
               on-failure: ABORT
               commands:
@@ -141,11 +142,13 @@ Resources:
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
                     echo "Deploy"
                     docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${GITHUB_PRJ_NAME}:$VERSION
+                    docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${GITHUB_PRJ_NAME}:$SOURCE_VERSION
                     docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${GITHUB_PRJ_NAME}:latest
                     docker image ls
                     echo Build completed on `date`
                     echo Pushing the Docker image...
                     docker push $ECR_URL/${GITHUB_PRJ_NAME}:$VERSION
+                    docker push $ECR_URL/${GITHUB_PRJ_NAME}:$SOURCE_VERSION
                     docker push $ECR_URL/${GITHUB_PRJ_NAME}:latest
                   fi
           reports:
