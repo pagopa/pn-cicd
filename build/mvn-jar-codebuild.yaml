@@ -13,10 +13,7 @@ Parameters:
     Description: Used for maven repository access
     Type: String
     Default: pn-develop-bootstrap-step-01-repo
-  FakeParam:
-    Description: use to trigger update
-    Type: Number
-    Default: 2
+
 Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
