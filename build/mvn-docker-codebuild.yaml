@@ -110,7 +110,6 @@ Resources:
           phases:
             install:
               runtime-versions:
-                 docker: 18
                  java: corretto11
             pre_build:
               on-failure: ABORT
