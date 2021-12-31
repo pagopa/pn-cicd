@@ -58,7 +58,7 @@ Resources:
             Value: develop
           - Name: ECR_URL
             Type: PLAINTEXT
-            Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${GitHubProjectName}'
+            Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com'
           - Name: AWS_DEFAULT_REGION
             Type: PLAINTEXT
             Value: !Sub "${AWS::Region}"
