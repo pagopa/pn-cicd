@@ -145,6 +145,12 @@ Resources:
               - '/root/.m2/**/*'
               - '/root/.sonar/**/*'
       TimeoutInMinutes: 10
+      Cache:
+        Type: LOCAL
+        Modes: # You can specify one or more cache mode,
+          - LOCAL_CUSTOM_CACHE
+          - LOCAL_DOCKER_LAYER_CACHE
+          - LOCAL_SOURCE_CACHE
       Triggers:
         Webhook: true
         FilterGroups:
