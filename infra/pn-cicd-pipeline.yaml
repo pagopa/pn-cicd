@@ -181,6 +181,7 @@ Resources:
                   - 'iam:*'
                   - 'codebuild:*'
                   - 'codestar-notifications:*'
+                  - 'ecr:*'
                 Effect: Allow
                 Resource: '*'
 
