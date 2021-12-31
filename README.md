@@ -39,4 +39,8 @@ Cancellazione dello stack:
 aws cloudformation delete-stack --stack-name <value> --capabilities CAPABILITY_IAM
 ```
 
+## Lancio della sigola build
 
+```
+aws codebuild start-build --project-name myProject --environment-variables-override "[{\"name\":\"ACTION\",\"value\":\"create\"},{\"name\":\"BRANCH\",\"value\":\"${BITBUCKET_BRANCH}\"}]"
+```
