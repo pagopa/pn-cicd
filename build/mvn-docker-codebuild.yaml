@@ -167,7 +167,6 @@ Resources:
             test-report:
               file-format: JUNITXML
               files: 
-                - target/failsafe-reports/*
                 - target/surefire-reports/*
           cache:
             paths:
