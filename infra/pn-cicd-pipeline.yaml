@@ -125,7 +125,40 @@ Resources:
                 ParameterOverrides: '{"GitHubProjectName": "pn-delivery","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
               OutputArtifacts: [ ]
               RunOrder: 2
-
+            - Name: CreateStack-Pn_delivery-push-ci
+              InputArtifacts:
+                - Name: SourceArtifact
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              Configuration:
+                ActionMode: REPLACE_ON_FAILURE
+                StackName: pn-delivery-push-ci
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+                RoleArn: !GetAtt 'CFNRole.Arn'
+                TemplatePath: 'SourceArtifact::build/mvn-docker-codebuild.yaml'
+                ParameterOverrides: '{"GitHubProjectName": "pn-delivery-push","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
+              OutputArtifacts: [ ]
+              RunOrder: 2
+            - Name: CreateStack-pn-external-channels-ci
+              InputArtifacts:
+                - Name: SourceArtifact
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              Configuration:
+                ActionMode: REPLACE_ON_FAILURE
+                StackName: pn-external-channels-ci
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+                RoleArn: !GetAtt 'CFNRole.Arn'
+                TemplatePath: 'SourceArtifact::build/mvn-docker-codebuild.yaml'
+                ParameterOverrides: '{"GitHubProjectName": "pn-external-channels","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
+              OutputArtifacts: [ ]
+              RunOrder: 2
   CFNRole:
     Type: AWS::IAM::Role
     Properties:
