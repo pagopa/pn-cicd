@@ -49,6 +49,9 @@ Resources:
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
             Value: develop
+          - Name: RELEASE
+            Type: PLAINTEXT
+            Value: false
           - Name: SETTINGS
             Type: PLAINTEXT
             Value: |
@@ -58,9 +61,9 @@ Resources:
                 http://maven.apache.org/xsd/settings-1.0.0.xsd">
                 <profiles>
                   <profile>
-                    <id>pn-codeartifact</id>
+                    <id>ci-profile</id>
                     <activation>
-                     <activeByDefault>true</activeByDefault>
+                     <property>CODEBUILD_CI</property>
                     </activation>
                     <repositories>
                         <repository>
@@ -86,10 +89,8 @@ Resources:
                     <mirrorOf>*</mirrorOf>
                   </mirror>
                 </mirrors>
-                <activeProfiles>
-                  <activeProfile>pn-codeartifact</activeProfile>
-                </activeProfiles>
               </settings>
+
       Source:
         Type: GITHUB
         Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
