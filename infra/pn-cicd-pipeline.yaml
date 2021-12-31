@@ -8,7 +8,7 @@ Parameters:
     Default: pagopa/pn-cicd
 Resources:
   CodeBuildSourceCredential:
-    Type: 'AWS::CodeBuild::SourceCredential'
+    Type: AWS::CodeBuild::SourceCredential
     Properties:
       Token: '{{resolve:secretsmanager:github:SecretString:token}}'
       ServerType: GITHUB
@@ -34,7 +34,7 @@ Resources:
               ActionTypeId:
                 Category: Source
                 Owner: AWS
-                Version: '1'
+                Version: 1
                 Provider: CodeStarSourceConnection
               Configuration:
                 ConnectionArn: !Ref 'CodestarGitHubConnectionArn'
