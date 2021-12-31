@@ -57,7 +57,7 @@ Resources:
               InputArtifacts:
                 - Name: SourceArtifact
               RunOrder: 1
-            - Name: CreateStack-Pn_model-codebuild
+            - Name: CreateStack-Pn_parent-ci
               InputArtifacts:
                 - Name: SourceArtifact
               ActionTypeId:
@@ -67,14 +67,31 @@ Resources:
                 Version: 1
               Configuration:
                 ActionMode: REPLACE_ON_FAILURE
-                StackName: pn-model-codebuild
+                StackName: pn-parent-ci
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+                RoleArn: !GetAtt 'CFNRole.Arn'
+                TemplatePath: 'SourceArtifact::build/mvn-parent-codebuild.yaml'
+                ParameterOverrides: '{"GitHubProjectName": "pn-parent","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
+              OutputArtifacts: [ ]
+              RunOrder: 2
+            - Name: CreateStack-Pn_model-ci
+              InputArtifacts:
+                - Name: SourceArtifact
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              Configuration:
+                ActionMode: REPLACE_ON_FAILURE
+                StackName: pn-model-ci
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
                 TemplatePath: 'SourceArtifact::build/mvn-jar-codebuild.yaml'
                 ParameterOverrides: '{"GitHubProjectName": "pn-model","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
               OutputArtifacts: []
               RunOrder: 2
-            - Name: CreateStack-Pn_commons-codebuild
+            - Name: CreateStack-Pn_commons-ci
               InputArtifacts:
                 - Name: SourceArtifact
               ActionTypeId:
@@ -84,13 +101,13 @@ Resources:
                 Version: 1
               Configuration:
                 ActionMode: REPLACE_ON_FAILURE
-                StackName: pn-commons-codebuild
+                StackName: pn-commons-ci
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
                 TemplatePath: 'SourceArtifact::build/mvn-jar-codebuild.yaml'
                 ParameterOverrides: '{"GitHubProjectName": "pn-commons","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
               OutputArtifacts: [ ]
-              RunOrder: 3
+              RunOrder: 2
   CFNRole:
     Type: AWS::IAM::Role
     Properties:
