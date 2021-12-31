@@ -29,7 +29,6 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:4.0
-        privilegedMode: true
         EnvironmentVariables:
           - Name: CODEARTIFACT_DOMAIN_NAME
             Type: PLAINTEXT
@@ -109,6 +108,7 @@ Resources:
             pre_build:
               on-failure: ABORT
               commands:
+                - $(aws ecr get-login --region $AWS_REGION --no-include-email)
                 - echo $SETTINGS > maven-settings.xml
                 - cat maven-settings.xml
                 - export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
