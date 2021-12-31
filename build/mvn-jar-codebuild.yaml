@@ -63,7 +63,7 @@ Resources:
                   <profile>
                     <id>ci-profile</id>
                     <activation>
-                     <property><name>CODEBUILD_CI</name></property>
+                     <property><name>env.CODEBUILD_CI</name></property>
                     </activation>
                     <repositories>
                         <repository>
