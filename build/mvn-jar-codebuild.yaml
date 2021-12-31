@@ -49,9 +49,6 @@ Resources:
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
             Value: develop
-          - Name: RELEASE
-            Type: PLAINTEXT
-            Value: false
           - Name: SETTINGS
             Type: PLAINTEXT
             Value: |
@@ -101,26 +98,24 @@ Resources:
             secrets-manager:
               SONAR_TOKEN: arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM:token
           phases:
+            install:
+              runtime-versions:
+                 java: corretto11
             pre_build:
               on-failure: ABORT
               commands:
                 - echo $SETTINGS > maven-settings.xml
-                - echo "*** Settings.xml ***"
-                - cat maven-settings.xml
                 - export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
                 - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
                 - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
                 - export PR_NUM=$(echo $CODEBUILD_WEBHOOK_TRIGGER | sed 's/pr\///')
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
-                - echo "*** Environment Variables ***"
-                - env
                 - export MAVEN_CONFIG="--settings maven-settings.xml"
             build:
               on-failure: ABORT
               commands:
                 - echo "Maven Build"
-                - echo "Token $CODEARTIFACT_AUTH_TOKEN"
                 - ./mvnw clean package
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
