@@ -108,7 +108,7 @@ Resources:
                 - export PR_NUM=$(echo $CODEBUILD_WEBHOOK_TRIGGER | sed 's/pr\///')
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
-                - export MAVEN_CONFIG="--settings maven-settings.xml"
+                - export MAVEN_CONFIG="--settings maven-settings.xml -Dmaven.test.failure.ignore=true"
             build:
               on-failure: ABORT
               commands:
