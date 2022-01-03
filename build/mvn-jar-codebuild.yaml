@@ -109,6 +109,7 @@ Resources:
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - export MAVEN_CONFIG="--settings maven-settings.xml -Dmaven.test.failure.ignore=true"
+                - env
             build:
               on-failure: ABORT
               commands:
@@ -133,12 +134,6 @@ Resources:
                     fi
                     ./mvnw verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
                   fi
-          reports:
-            test-report:
-              file-format: JUNITXML
-              files: 
-                - target/failsafe-reports/*
-                - target/surefire-reports/*
           cache:
             paths:
               - '/root/.m2/**/*'
