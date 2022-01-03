@@ -132,6 +132,7 @@ Resources:
                     else 
                        SONAR_ADD_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
                     fi
+                    echo SONAR_ADD_OPTS=$SONAR_ADD_OPTS
                     ./mvnw verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
                   fi
           cache:
