@@ -110,6 +110,8 @@ Resources:
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - export MAVEN_CONFIG="--settings maven-settings.xml -Dmaven.test.failure.ignore=true"
                 - env
+                - ./mvnw help:effective-pom
+                - find /root/.m2 
             build:
               on-failure: ABORT
               commands:
