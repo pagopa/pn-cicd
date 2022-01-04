@@ -111,7 +111,7 @@ Resources:
                 - export MAVEN_CONFIG="--settings maven-settings.xml -Dmaven.test.failure.ignore=true"
                 - env
                 - ./mvnw help:effective-pom
-                - find /root/.m2 
+                - find -L /root/.m2 
             build:
               on-failure: ABORT
               commands:
