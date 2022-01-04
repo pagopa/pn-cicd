@@ -163,11 +163,6 @@ Resources:
                     docker push $ECR_URL/${IMAGE_REPO_NAME}:$SOURCE_VERSION
                     docker push $ECR_URL/${IMAGE_REPO_NAME}:latest
                   fi
-          reports:
-            test-report:
-              file-format: JUNITXML
-              files: 
-                - target/surefire-reports/*
           cache:
             paths:
               - '/root/.m2/**/*'
