@@ -114,11 +114,12 @@ Resources:
               on-failure: ABORT
               commands:
                 - echo "Maven Build"
-                - ./mvnw clean package
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
                     echo "Deploy"
                     ./mvnw -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL deploy
+                  else
+                    ./mvnw package
                   fi
             post_build:
               on-failure: ABORT
@@ -133,7 +134,7 @@ Resources:
                        SONAR_ADD_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
                     fi
                     echo SONAR_ADD_OPTS=$SONAR_ADD_OPTS
-                    ./mvnw verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
+                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
                   fi
           cache:
             paths:
