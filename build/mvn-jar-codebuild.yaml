@@ -119,7 +119,7 @@ Resources:
                     echo "Deploy"
                     ./mvnw -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL deploy
                   else
-                    ./mvnw package
+                    ./mvnw install
                   fi
             post_build:
               on-failure: ABORT
