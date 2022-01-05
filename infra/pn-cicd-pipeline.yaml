@@ -70,7 +70,7 @@ Resources:
                 StackName: pn-parent-ci
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-parent-codebuild.yaml'
+                TemplatePath: 'SourceArtifact::build/mvn-jar-codebuild.yaml'
                 ParameterOverrides: '{"GitHubProjectName": "pn-parent","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
               OutputArtifacts: [ ]
               RunOrder: 2
@@ -177,13 +177,14 @@ Resources:
             Statement:
               - Sid: CloudFormationStmnt1
                 Action:
-                  - 'ec2:*'
                   - 'iam:*'
                   - 'codebuild:*'
                   - 'codestar-notifications:*'
                   - 'ecr:*'
                 Effect: Allow
                 Resource: '*'
+
+
 
   S3Policy:
     Type: 'AWS::IAM::ManagedPolicy'
@@ -195,9 +196,16 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
-              - 's3:*'
+              - s3:PutObject
+              - s3:PutObjectAcl
+              - s3:GetObject
+              - s3:GetObjectVersion
+              - s3:GetBucketVersioning
             Resource:
-              - '*'
+              - !Sub arn:aws:s3:::${CodePipelineBucket}/*
+              - !Sub arn:aws:s3:::${PnCiCdTemplatesBucket}/*
+              - !Sub arn:aws:s3:::${CodePipelineBucket}
+              - !Sub arn:aws:s3:::${PnCiCdTemplatesBucket}
 
   CodePipelinePolicy:
     Type: 'AWS::IAM::ManagedPolicy'
