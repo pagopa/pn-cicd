@@ -145,11 +145,11 @@ Resources:
                 - echo "Sonar"
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
-                     SONAR_ADD_OPTS="-Dsonar.branch.name=$BRANCH_NAME -Dsonar.branch.target=$BRANCH_TARGET"
+                     SONAR_ADD_OPTS="-Dsonar.branch.name=$BRANCH_NAME"
                   else 
                      SONAR_ADD_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
                   fi
-                - ./mvnw verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
+                - ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.scm.exclusions.disabled=true -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
                     echo "Deploy"
