@@ -117,9 +117,9 @@ Resources:
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
                     echo "Deploy"
-                    ./mvnw -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL deploy
+                    ./mvnw -DskipITs -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL deploy
                   else
-                    ./mvnw install
+                    ./mvnw -DskipITs install
                   fi
             post_build:
               on-failure: ABORT
