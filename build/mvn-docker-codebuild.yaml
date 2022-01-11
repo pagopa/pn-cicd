@@ -27,7 +27,7 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${AWS::StackName}-CodeBuild"
+      Name: !Sub "${GitHubProjectName}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Artifacts:
         Type: NO_ARTIFACTS
@@ -293,7 +293,7 @@ Resources:
     Type: AWS::CodeStarNotifications::NotificationRule
     Properties:
       DetailType: FULL
-      Name: !Sub '${AWS::StackName}-msg'
+      Name: !Sub '${GitHubProjectName}-CI'
       EventTypeIds:
         - codebuild-project-build-state-failed
       Resource: !Sub '${CodeBuildProject.Arn}'

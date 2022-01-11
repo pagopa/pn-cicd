@@ -4,6 +4,12 @@ Parameters:
   PnCiCdTemplatesBucketName:
     Type: String
     Description: Bucket name where pipeline copied the current version of CI templates
+  CodeArtifactDomainName:
+    Type: String
+    Default: pn-codeartifact-domain
+  CodeArtifactRepositoryName:
+    Type: String
+    Default: pn-codeartifact-repo
   CommitId:
     Type: String
     Default: 'none'
@@ -14,16 +20,64 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/infra/code-artifact.yaml'
+      Parameters:
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
       TimeoutInMinutes: 5
 
-  CiProjectStack:
-   Type: AWS::CloudFormation::Stack
-   Properties:
-     Tags:
-       - Key: 'COMMIT_ID'
-         Value: !Ref 'CommitId'
-     TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/infra/ci-projects.yaml'
-     Parameters:
-       PnCiCdTemplatesBucketName: !Ref 'PnCiCdTemplatesBucketName'
-     TimeoutInMinutes: 5
-
+# Progetti CI jar
+  ParentPomCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-jar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-parent'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+      TimeoutInMinutes: 5
+  PnModelCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-jar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-model'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+      TimeoutInMinutes: 5
+  PnCommonsCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-jar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-commons'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+      TimeoutInMinutes: 5
+# Progetti docker
+  PnDeliveryCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-docker-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-delivery'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+      TimeoutInMinutes: 5
+  PnDeliveryPushCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-docker-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-delivery-push'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+      TimeoutInMinutes: 5
+  PnExternalChannelsCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-docker-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-external-channels'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+      TimeoutInMinutes: 5
