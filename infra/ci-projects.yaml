@@ -1,0 +1,16 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Code Artifact and Artifact Bucket with export for CI/CD Pipeline
+Parameters:
+  PnCiCdTemplatesBucketName:
+    Type: String
+
+Resources:
+  ParentPomCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-jar-codebuild.yaml'
+      Parameters:
+        - GitHubProjectName: 'pn-parent'
+        - CodeArtifactDomainName: 'pn-codeartifact-domain'
+        - CodeArtifactRepositoryName: 'pn-codeartifact-repo'
+      TimeoutInMinutes: 5

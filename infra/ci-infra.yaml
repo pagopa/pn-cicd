@@ -10,7 +10,7 @@ Parameters:
     Description: Git commit identifier
 
 Resources:
-  CodeArtifact:
+  CodeArtifactStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       Tags:
@@ -18,4 +18,15 @@ Resources:
           Value: !Ref 'CommitId'
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/infra/code-artifact.yaml'
       TimeoutInMinutes: 5
+
+  CiProjectStack:
+   Type: AWS::CloudFormation::Stack
+   Properties:
+     Tags:
+       - Key: 'COMMIT_ID'
+         Value: !Ref 'CommitId'
+     TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/ci-projects.yaml'
+     Parameters:
+       PnCiCdTemplatesBucketName: !Ref 'PnCiCdTemplatesBucketName'
+     TimeoutInMinutes: 5
 
