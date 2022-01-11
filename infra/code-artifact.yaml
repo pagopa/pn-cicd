@@ -4,9 +4,9 @@ Parameters:
   RepositorySuffix:
     Type: String
     Default: pn-codeartifact
+
 Resources:
-  # MAVEN ARTIFACTS REPOSITORY
-  #############################
+
   CodeArtifactDomain:
     Type: AWS::CodeArtifact::Domain
     Properties:
