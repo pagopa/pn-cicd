@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: '2010-09-09'
+# see: https://docs.aws.amazon.com/codepipeline/latest/userguide/action-reference-ECSbluegreen.html
+Parameters:
+  PnCiCdTemplatesBucket:
+    Type: String
+  BuildNum:
+    Type: Number
+    Default: 0
+
+Resources:
+  CodeArtifact:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        BUILD_NUM : !Ref BuildNum
+      Tags:
+        - BUILD_NUM : !Ref BuildNum
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucket}/code-artifact.yaml'
+      TimeoutInMinutes: 5

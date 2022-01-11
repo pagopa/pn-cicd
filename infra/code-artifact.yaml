@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Code Artifact and Artifact Bucket with export for CI/CD Pipeline
+
+Resources:
+  # MAVEN ARTIFACTS REPOSITORY
+  #############################
+  CodeArtifactDomain:
+    Type: AWS::CodeArtifact::Domain
+    Properties:
+      DomainName: !Sub "${AWS::StackName}-domain"
+
+  CodeArtifactUpstreamRepository:
+    Type: AWS::CodeArtifact::Repository
+    Properties:
+      DomainName: !GetAtt CodeArtifactDomain.Name
+      RepositoryName: !Sub "${AWS::StackName}-upstream-repo"
+      ExternalConnections:
+        - public:maven-central
+
+  CodeArtifactRepository:
+    Type: AWS::CodeArtifact::Repository
+    Properties:
+      DomainName: !GetAtt CodeArtifactDomain.Name
+      RepositoryName: !Sub "${AWS::StackName}-repo"
+      Upstreams:
+        - !GetAtt CodeArtifactUpstreamRepository.Name
+
+  CodeArtifactReadOnlyPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: CodeArtifactPolicy
+      Groups:
+        - !Ref CodeArtifactReadOnlyGroup
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: CodeArtifactBearerTokenPolicy
+            Effect: Allow
+            Action:
+              - sts:GetServiceBearerToken
+            Resource: "*"
+            Condition:
+              StringEquals:
+                'sts:AWSServiceName': codeartifact.amazonaws.com
+          - Sid: CodeArtifactGetAuthorizationTokenPolicy
+            Effect: Allow
+            Action:
+              - codeartifact:GetAuthorizationToken
+            Resource:
+              - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomain.Name}"
+          - Sid: CodeArtifactReadOnlyPolicy
+            Effect: Allow
+            Action:
+              - 'codeartifact:List*'
+              - 'codeartifact:Describe*'
+              - 'codeartifact:Get*'
+              - 'codeartifact:Read*'
+            Resource:
+              - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:package/${CodeArtifactDomain.Name}/${CodeArtifactRepository.Name}/*"
+              - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomain.Name}"
+              - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomain.Name}/${CodeArtifactRepository.Name}"
+
+  CodeArtifactReadOnlyGroup:
+    Type: AWS::IAM::Group
+
+  CodeArtifactReadOnlyUser:
+    Type: AWS::IAM::User
+    Properties:
+      Groups:
+        - !Sub '${CodeArtifactReadOnlyGroup}'
+
+  CodeArtifactReadOnlyUserKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      Serial: 1
+      Status: Active
+      UserName: !Ref CodeArtifactReadOnlyUser
+
+Outputs:
+  CodeArtifactRepositoryName:
+    Description: The CodeArtifact Repository Name
+    Value: !GetAtt CodeArtifactRepository.Name
+  CodeArtifactDomainName:
+    Description: The CodeArtifact Domain Name
+    Value: !GetAtt CodeArtifactDomain.Name
+  CodeArtifactReadOnlyGroupArn:
+    Description: The CodeArtifact ReadOnly Group ARN
+    Value: !GetAtt CodeArtifactReadOnlyGroup.Arn
