@@ -3,18 +3,18 @@ AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
   PnCiCdTemplatesBucketName:
     Type: String
-  BuildNum:
-    Type: Number
-    Default: 0
+    Description: Bucket name where pipeline copied the current version of CI templates
+  CommitId:
+    type: String
+    Description: Git commit identifier
 
 Resources:
   CodeArtifact:
     Type: AWS::CloudFormation::Stack
     Properties:
-#      Tags:
-#        - Key: BUILD_NUM
-#          Value: !Ref BuildNum
-#      TemplateURL: !Sub 'https://${PnCiCdTemplatesBucketName}/infra/code-artifact.yaml'
+      Tags:
+        - Key: COMMIT_IT
+          Value: !Ref CommitId
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/infra/code-artifact.yaml'
       TimeoutInMinutes: 5
 
