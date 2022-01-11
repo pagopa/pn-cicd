@@ -1,19 +1,22 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Code Artifact and Artifact Bucket with export for CI/CD Pipeline
-
+Parameters:
+  RepositorySuffix:
+    Type: String
+    Default: pnCodeArtifact
 Resources:
   # MAVEN ARTIFACTS REPOSITORY
   #############################
   CodeArtifactDomain:
     Type: AWS::CodeArtifact::Domain
     Properties:
-      DomainName: !Sub "${AWS::StackName}-domain"
+      DomainName: !Sub "${RepositorySuffix}-domain"
 
   CodeArtifactUpstreamRepository:
     Type: AWS::CodeArtifact::Repository
     Properties:
       DomainName: !GetAtt CodeArtifactDomain.Name
-      RepositoryName: !Sub "${AWS::StackName}-upstream-repo"
+      RepositoryName: !Sub "${RepositorySuffix}-upstream-repo"
       ExternalConnections:
         - public:maven-central
 
@@ -21,7 +24,7 @@ Resources:
     Type: AWS::CodeArtifact::Repository
     Properties:
       DomainName: !GetAtt CodeArtifactDomain.Name
-      RepositoryName: !Sub "${AWS::StackName}-repo"
+      RepositoryName: !Sub "${RepositorySuffix}-repo"
       Upstreams:
         - !GetAtt CodeArtifactUpstreamRepository.Name
 
