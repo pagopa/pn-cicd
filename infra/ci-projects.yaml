@@ -3,6 +3,12 @@ Description: Code Artifact and Artifact Bucket with export for CI/CD Pipeline
 Parameters:
   PnCiCdTemplatesBucketName:
     Type: String
+  CodeArtifactDomainName:
+    Type: String
+    Default: pn-codeartifact-domain
+  CodeArtifactRepositoryName:
+    Type: String
+    Default: pn-codeartifact-repo
 
 Resources:
   ParentPomCI:
@@ -10,7 +16,7 @@ Resources:
     Properties:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-jar-codebuild.yaml'
       Parameters:
-        - GitHubProjectName: 'pn-parent'
-        - CodeArtifactDomainName: 'pn-codeartifact-domain'
-        - CodeArtifactRepositoryName: 'pn-codeartifact-repo'
+        GitHubProjectName: 'pn-parent'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
       TimeoutInMinutes: 5
