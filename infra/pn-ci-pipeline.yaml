@@ -11,12 +11,12 @@ Parameters:
     Default: main
 
 Resources:
-#  CodeBuildSourceCredential:
-#    Type: AWS::CodeBuild::SourceCredential
-#    Properties:
-#      Token: '{{resolve:secretsmanager:github:SecretString:token}}'
-#      ServerType: GITHUB
-#      AuthType: PERSONAL_ACCESS_TOKEN
+  CodeBuildSourceCredential:
+    Type: AWS::CodeBuild::SourceCredential
+    Properties:
+      Token: '{{resolve:secretsmanager:github:SecretString:token}}'
+      ServerType: GITHUB
+      AuthType: PERSONAL_ACCESS_TOKEN
 
   CodePipelineBucket:
     Type: AWS::S3::Bucket
