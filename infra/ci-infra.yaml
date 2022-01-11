@@ -22,7 +22,7 @@ Resources:
      Tags:
        - Key: 'COMMIT_ID'
          Value: !Ref 'CommitId'
-     TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/ci-projects.yaml'
+     TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/infra/ci-projects.yaml'
      Parameters:
        PnCiCdTemplatesBucketName: !Ref 'PnCiCdTemplatesBucketName'
      TimeoutInMinutes: 5
