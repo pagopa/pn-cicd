@@ -3,7 +3,7 @@ Description: Code Artifact and Artifact Bucket with export for CI/CD Pipeline
 Parameters:
   RepositorySuffix:
     Type: String
-    Default: pnCodeArtifact
+    Default: pn-codeartifact
 Resources:
   # MAVEN ARTIFACTS REPOSITORY
   #############################
