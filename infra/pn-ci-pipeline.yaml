@@ -45,7 +45,7 @@ Resources:
                 FullRepositoryId: !Ref 'RepositoryName'
                 BranchName: !Ref 'BranchName'
               OutputArtifacts:
-                - Name: SourceArtifact
+                - Name: TemplateSource
               RunOrder: 1
         - Name: Deploy
           Actions:
@@ -59,11 +59,11 @@ Resources:
                 BucketName: !Ref 'PnCiCdTemplatesBucket'
                 Extract: true
               InputArtifacts:
-                - Name: SourceArtifact
+                - Name: TemplateSource
               RunOrder: 1
             - Name: CreateStack-Pn_parent-ci
               InputArtifacts:
-                - Name: SourceArtifact
+                - Name: TemplateSource
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -74,13 +74,13 @@ Resources:
                 StackName: pn-parent-ci
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-jar-codebuild.yaml'
+                TemplatePath: 'TemplateSource::build/mvn-jar-codebuild.yaml'
                 ParameterOverrides: '{"GitHubProjectName": "pn-parent","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
               OutputArtifacts: [ ]
               RunOrder: 2
             - Name: CreateStack-Pn_model-ci
               InputArtifacts:
-                - Name: SourceArtifact
+                - Name: TemplateSource
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -91,13 +91,13 @@ Resources:
                 StackName: pn-model-ci
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-jar-codebuild.yaml'
+                TemplatePath: 'TemplateSource::build/mvn-jar-codebuild.yaml'
                 ParameterOverrides: '{"GitHubProjectName": "pn-model","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
               OutputArtifacts: []
               RunOrder: 2
             - Name: CreateStack-Pn_commons-ci
               InputArtifacts:
-                - Name: SourceArtifact
+                - Name: TemplateSource
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -108,13 +108,13 @@ Resources:
                 StackName: pn-commons-ci
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-jar-codebuild.yaml'
+                TemplatePath: 'TemplateSource::build/mvn-jar-codebuild.yaml'
                 ParameterOverrides: '{"GitHubProjectName": "pn-commons","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
               OutputArtifacts: [ ]
               RunOrder: 2
             - Name: CreateStack-Pn_delivery-ci
               InputArtifacts:
-                - Name: SourceArtifact
+                - Name: TemplateSource
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -125,13 +125,13 @@ Resources:
                 StackName: pn-delivery-ci
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-docker-codebuild.yaml'
+                TemplatePath: 'TemplateSource::build/mvn-docker-codebuild.yaml'
                 ParameterOverrides: '{"GitHubProjectName": "pn-delivery","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
               OutputArtifacts: [ ]
               RunOrder: 2
             - Name: CreateStack-Pn_delivery-push-ci
               InputArtifacts:
-                - Name: SourceArtifact
+                - Name: TemplateSource
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -142,13 +142,13 @@ Resources:
                 StackName: pn-delivery-push-ci
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-docker-codebuild.yaml'
+                TemplatePath: 'TemplateSource::build/mvn-docker-codebuild.yaml'
                 ParameterOverrides: '{"GitHubProjectName": "pn-delivery-push","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
               OutputArtifacts: [ ]
               RunOrder: 2
             - Name: CreateStack-pn-external-channels-ci
               InputArtifacts:
-                - Name: SourceArtifact
+                - Name: TemplateSource
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -159,7 +159,7 @@ Resources:
                 StackName: pn-external-channels-ci
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-docker-codebuild.yaml'
+                TemplatePath: 'TemplateSource::build/mvn-docker-codebuild.yaml'
                 ParameterOverrides: '{"GitHubProjectName": "pn-external-channels","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
               OutputArtifacts: [ ]
               RunOrder: 2
