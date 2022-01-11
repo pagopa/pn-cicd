@@ -6,6 +6,10 @@ Parameters:
   RepositoryName:
     Type: String
     Default: pagopa/pn-cicd
+  BranchName:
+    Type: String
+    Default: main
+
 Resources:
   CodeBuildSourceCredential:
     Type: AWS::CodeBuild::SourceCredential
@@ -39,7 +43,7 @@ Resources:
               Configuration:
                 ConnectionArn: !Ref 'CodestarGitHubConnectionArn'
                 FullRepositoryId: !Ref 'RepositoryName'
-                BranchName: 'main'
+                BranchName: !Ref 'BranchName'
               OutputArtifacts:
                 - Name: SourceArtifact
               RunOrder: 1
