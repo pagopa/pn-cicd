@@ -14,6 +14,7 @@ Resources:
       Parameters:
         BUILD_NUM : !Ref BuildNum
       Tags:
-        - BUILD_NUM : !Ref BuildNum
+        - Key: BUILD_NUM
+          Value: !Ref BuildNum
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucket}/code-artifact.yaml'
       TimeoutInMinutes: 5
