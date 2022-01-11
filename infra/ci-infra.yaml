@@ -11,8 +11,6 @@ Resources:
   CodeArtifact:
     Type: AWS::CloudFormation::Stack
     Properties:
-      Parameters:
-        BUILD_NUM : !Ref BuildNum
       Tags:
         - Key: BUILD_NUM
           Value: !Ref BuildNum
