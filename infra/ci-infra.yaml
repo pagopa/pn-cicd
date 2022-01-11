@@ -13,9 +13,6 @@ Resources:
   CodeArtifactStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      Tags:
-        - Key: 'COMMIT_ID'
-          Value: !Ref 'CommitId'
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/infra/code-artifact.yaml'
       TimeoutInMinutes: 5
 
