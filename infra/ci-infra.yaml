@@ -6,6 +6,7 @@ Parameters:
     Description: Bucket name where pipeline copied the current version of CI templates
   CommitId:
     Type: String
+    Default: 'none'
     Description: Git commit identifier
 
 Resources:
