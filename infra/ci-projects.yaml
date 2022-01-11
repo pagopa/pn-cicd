@@ -9,6 +9,9 @@ Parameters:
   CodeArtifactRepositoryName:
     Type: String
     Default: pn-codeartifact-repo
+  CommitId:
+    Type: String
+    Default: none
 
 Resources:
   ParentPomCI:
@@ -17,6 +20,24 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-jar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-parent'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+      TimeoutInMinutes: 5
+  PnModelCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-jar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-model'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+      TimeoutInMinutes: 5
+  PnCommonsCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-jar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-commons'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
       TimeoutInMinutes: 5
