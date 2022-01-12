@@ -69,18 +69,15 @@ Resources:
             pre_build:
               on-failure: ABORT
               commands:
-                - echo Installing source NPM dependencies...
-                - npm install
                 - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${!BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
                 - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
                 - export PR_NUM=$(echo $CODEBUILD_WEBHOOK_TRIGGER | sed 's/pr\///')
                 - export CI_PROFILE="$CODEBUILD_CI"
-                - env
             build:
               on-failure: ABORT
               commands:
                 - echo Build started on `date`
-                - tar c /var/test | gzip | aws s3 cp - "s3://${WebappsTemplatesBucket}/${GitHubProjectName}.tar.gz"
+                - tar c * | gzip | aws s3 cp - "s3://${WebappsTemplatesBucket}/${!BRANCH_NAME}/${GitHubProjectName}.tar.gz"
           artifacts:
             files:
               - '**/*'
