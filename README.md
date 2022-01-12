@@ -11,12 +11,12 @@ CI/CD Piattaforma Notifiche
 
 Il file _infra/pn-cicd-pipeline_ è l'unico che deve essere caricato manualmente con il seguente comando:
 ```
-aws cloudformation create-stack --stack-name pn-cicd --template-body file://infra/pn-cicd-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
+aws cloudformation create-stack --stack-name pn-ci-pipeline --template-body file://infra/pn-ci-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
 ```
 
 Oppure aggiornaro con il comando
 ```
-aws cloudformation update-stack --stack-name pn-cicd --template-body file://infra/pn-cicd-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
+aws cloudformation update-stack --stack-name pn-ci-pipeline --template-body file://infra/pn-ci-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
 ```
 
 Lo stack contiene la pipeline che andando a leggere i template all'interno della cartella _build_
