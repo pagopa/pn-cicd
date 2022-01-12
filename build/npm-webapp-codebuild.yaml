@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CodeBuild for maven webapp project (node)
+Parameters:
+  GitHubProjectName:
+    Description: Name of pagopa project name
+    Type: String
+    Default: pn-webapp
+  CodeArtifactDomainName:
+    Description: Used for maven repository access
+    Type: String
+    Default: pn-develop-bootstrap-step-01-domain
+  CodeArtifactRepositoryName:
+    Description: Used for maven repository access
+    Type: String
+    Default: pn-develop-bootstrap-step-01-repo
+
+Resources:
+
+  WebappsTemplatesBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    VersioningConfiguration:
+      Status: Enabled
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${GitHubProjectName}-CodeBuild"
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+        EnvironmentVariables:
+          - Name: CODEARTIFACT_DOMAIN_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${CodeArtifactDomainName}"
+          - Name: CODEARTIFACT_DOMAIN_FULL
+            Type: PLAINTEXT
+            Value:
+              Fn::Join:
+                - ''
+                - - !Sub "${CodeArtifactDomainName}"
+                  - !Sub '-${AWS::AccountId}.d.codeartifact.${AWS::Region}.${AWS::URLSuffix}'
+          - Name: CODEARTIFACT_REPO
+            Type: PLAINTEXT
+            Value: !Sub "${CodeArtifactRepositoryName}"
+          - Name: GITHUB_PRJ_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${GitHubProjectName}"
+          - Name: GIT_DEFAULT_BRANCH
+            Type: PLAINTEXT
+            Value: develop
+      Source:
+        Type: GITHUB
+        Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
+        BuildSpec: !Sub |
+          version: 0.2
+          env:
+            shell: bash
+          phases:
+            install:
+              runtime-versions:
+                 nodejs: 14
+            pre_build:
+              on-failure: ABORT
+              commands:
+                - echo Installing source NPM dependencies...
+                - npm install
+                - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
+                - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
+                - export PR_NUM=$(echo $CODEBUILD_WEBHOOK_TRIGGER | sed 's/pr\///')
+                - export CI_PROFILE="$CODEBUILD_CI"
+                - env
+            build:
+              on-failure: ABORT
+              commands:
+                - echo Build started on `date`
+                - tar c /var/test | gzip | aws s3 cp - "s3://${WebappsTemplatesBucket}/${GitHubProjectName}.tar.gz"
+          artifacts:
+            files:
+              - '**/*'
+            base-directory: build
+          cache:
+            paths:
+              - '/root/.m2/**/*'
+              - '/root/.sonar/**/*'
+              - '/root/.npm/**/*'
+              - 'build/**/*'
+      TimeoutInMinutes: 10
+      Cache:
+        Type: LOCAL
+        Modes: # You can specify one or more cache mode,
+          - LOCAL_CUSTOM_CACHE
+          - LOCAL_DOCKER_LAYER_CACHE
+          - LOCAL_SOURCE_CACHE
+      Triggers:
+        Webhook: true
+        FilterGroups:
+          - - Type: EVENT
+              Pattern: PUSH, PULL_REQUEST_MERGED
+            - Type: HEAD_REF
+              Pattern: ^refs/heads/(main|develop)$
+          - - Type: EVENT
+              Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+            - Type: BASE_REF
+              Pattern: ^refs/heads/(main|develop)$
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeBuildPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: CodeBuildReportGroup
+                Effect: Allow
+                Action:
+                  - codebuild:CreateReportGroup
+                  - codebuild:CreateReport
+                  - codebuild:UpdateReport
+                  - codebuild:BatchPutTestCases
+                  - codebuild:BatchPutCodeCoverages
+                Resource:
+                  - !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*'
+              - Sid: CloudWatchLogsPolicy
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - "*"
+              - Sid: BearerTokenPolicy
+                Effect: Allow
+                Action:
+                  - sts:GetServiceBearerToken
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    'sts:AWSServiceName': codeartifact.amazonaws.com
+              - Sid: GitHubSecret
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: "*"
+              - Sid: CodeArtifactGetAuthorizationTokenPolicy
+                Effect: Allow
+                Action:
+                  - codeartifact:GetAuthorizationToken
+                Resource: !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}'
+              - Sid: CodeArtifactRepository
+                Effect: Allow
+                Action:
+                  - codeartifact:ReadFromRepository
+                  - codeartifact:GetRepositoryEndpoint
+                  - codeartifact:ListPackages
+                Resource:
+                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}'
+              - Sid: CodeArtifactPackage
+                Effect: Allow
+                Action:
+                  - codeartifact:PublishPackageVersion
+                  - codeartifact:PutPackageMetadata
+                  - codeartifact:ReadFromRepository
+                  - codeartifact:DescribePackageVersion
+                  - 'codeartifact:List*'
+                  - 'codeartifact:Get*'
+                  - 'codeartifact:Read*'
+                Resource:
+                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:package/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}/*'
+                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}'
+                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}'
+              - Sid: WebappsTemplatesBucket
+                Effect: Allow
+                Action:
+                  - s3:GetReplicationConfiguration
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:aws:s3:::${WebappsTemplatesBucket}'
+              - Sid: WebappsTemplatesBucketObjects
+                Effect: Allow
+                Action:
+                  - s3:GetObjectVersion
+                  - s3:GetObjectVersionAcl
+                  - 's3:PutObject*'
+                Resource:
+                  - !Sub 'arn:aws:s3:::${WebappsTemplatesBucket}/*'
