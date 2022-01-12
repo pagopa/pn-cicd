@@ -19,8 +19,10 @@ Resources:
   WebappsTemplatesBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
-    VersioningConfiguration:
-      Status: Enabled
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
 
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
