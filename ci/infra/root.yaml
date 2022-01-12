@@ -19,7 +19,7 @@ Resources:
   CodeArtifactStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/infra/code-artifact.yaml'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/infra/code-artifact.yaml'
       Parameters:
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
@@ -37,7 +37,7 @@ Resources:
   ParentPomCI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-jar-codebuild.yaml'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-parent'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
@@ -46,7 +46,7 @@ Resources:
   PnModelCI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-jar-codebuild.yaml'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-model'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
@@ -55,7 +55,7 @@ Resources:
   PnCommonsCI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-jar-codebuild.yaml'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-commons'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
@@ -65,7 +65,7 @@ Resources:
   PnDeliveryCI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-docker-codebuild.yaml'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-delivery'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
@@ -74,7 +74,7 @@ Resources:
   PnDeliveryPushCI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-docker-codebuild.yaml'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-delivery-push'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
@@ -83,7 +83,7 @@ Resources:
   PnExternalChannelsCI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-docker-codebuild.yaml'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-external-channels'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
@@ -92,7 +92,7 @@ Resources:
   PnWebapp:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/npm-webapp-codebuild.yaml'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/npm-webapp-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-webapp'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'

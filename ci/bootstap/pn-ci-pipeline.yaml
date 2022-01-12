@@ -24,6 +24,7 @@ Resources:
   PnCiCdTemplatesBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
 
   pipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -63,7 +64,7 @@ Resources:
               InputArtifacts:
                 - Name: TemplateSource
               RunOrder: 1
-            - Name: CreateStack-ci-infra
+            - Name: CreateStack-ci-root
               InputArtifacts:
                 - Name: TemplateSource
               ActionTypeId:
@@ -73,10 +74,10 @@ Resources:
                 Version: 1
               Configuration:
                 ActionMode: REPLACE_ON_FAILURE
-                StackName: pn-ci-infra
+                StackName: pn-ci-root
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'TemplateSource::infra/ci-infra.yaml'
+                TemplatePath: 'TemplateSource::ci/infra/root.yaml'
                 ParameterOverrides: !Sub '{"PnCiCdTemplatesBucketName" : "${PnCiCdTemplatesBucket}", "CommitId": "#{SourceVariables.CommitId}" }'
               OutputArtifacts: [ ]
               RunOrder: 2
