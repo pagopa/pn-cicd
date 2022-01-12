@@ -25,6 +25,14 @@ Resources:
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
       TimeoutInMinutes: 5
 
+  WebappsTemplatesBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+
 # Progetti CI jar
   ParentPomCI:
     Type: AWS::CloudFormation::Stack
@@ -89,4 +97,5 @@ Resources:
         GitHubProjectName: 'pn-webapp'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+        WebappsTemplatesBucket: !Ref 'WebappsTemplatesBucket'
       TimeoutInMinutes: 5

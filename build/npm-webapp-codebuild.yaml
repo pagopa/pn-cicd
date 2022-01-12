@@ -5,6 +5,10 @@ Parameters:
     Description: Name of pagopa project name
     Type: String
     Default: pn-webapp
+  WebappsTemplatesBucket:
+    Description: Name Webapp template bucket
+    Type: String
+    Default: WebappsTemplatesBucket
   CodeArtifactDomainName:
     Description: Used for maven repository access
     Type: String
@@ -15,14 +19,6 @@ Parameters:
     Default: pn-develop-bootstrap-step-01-repo
 
 Resources:
-
-  WebappsTemplatesBucket:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-    Properties:
-      VersioningConfiguration:
-        Status: Enabled
 
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
