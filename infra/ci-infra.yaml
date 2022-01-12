@@ -84,7 +84,7 @@ Resources:
   PnWebapp:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/mvn-webapp-codebuild.yaml'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/build/npm-webapp-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-webapp'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
