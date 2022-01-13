@@ -92,3 +92,9 @@ Outputs:
   CodeArtifactReadOnlyGroupArn:
     Description: The CodeArtifact ReadOnly Group ARN
     Value: !GetAtt CodeArtifactReadOnlyGroup.Arn
+  CodeArtifactReadOnlyUserKeyId:
+    Description: The CodeArtifact ReadOnly KeyId
+    Value: !Ref CodeArtifactReadOnlyUserKey
+  CodeArtifactReadOnlyUserKeySecret:
+    Description: The CodeArtifact ReadOnly Key Secret. Code is public and jar also
+    Value: !GetAtt CodeArtifactReadOnlyUserKey.SecretAccessKey
