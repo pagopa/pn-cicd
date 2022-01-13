@@ -1,4 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Description: Definizione della pipeline che aggiorna i CodeBuild che effettuano la Continuos Integration
+
 Parameters:
   CodestarGitHubConnectionArn:
     Type: String
@@ -6,7 +8,16 @@ Parameters:
   RepositoryName:
     Type: String
     Default: pagopa/pn-cicd
+  BranchName:
+    Type: String
+    Default: main
+  SlackInfo:
+    Type: String
+    Description: <slack workspace id>:<slack channel id>
+    Default: TQSBH3ZS4:C028UC74ZEV
+
 Resources:
+  # Global Definition of credential needed by CodeBuild to access to GitHub
   CodeBuildSourceCredential:
     Type: AWS::CodeBuild::SourceCredential
     Properties:
@@ -14,12 +25,17 @@ Resources:
       ServerType: GITHUB
       AuthType: PERSONAL_ACCESS_TOKEN
 
+  # Pipeline artifacts bucket
   CodePipelineBucket:
     Type: AWS::S3::Bucket
 
+  # Pipeline copy CFN templates from github to this bucket. This enable CFN reuse by Nested Stack
   PnCiCdTemplatesBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
 
+  # Update CI builders
   pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -31,6 +47,7 @@ Resources:
         - Name: Source
           Actions:
             - Name: SourceAction
+              Namespace: SourceVariables
               ActionTypeId:
                 Category: Source
                 Owner: AWS
@@ -39,9 +56,9 @@ Resources:
               Configuration:
                 ConnectionArn: !Ref 'CodestarGitHubConnectionArn'
                 FullRepositoryId: !Ref 'RepositoryName'
-                BranchName: 'main'
+                BranchName: !Ref 'BranchName'
               OutputArtifacts:
-                - Name: SourceArtifact
+                - Name: TemplateSource
               RunOrder: 1
         - Name: Deploy
           Actions:
@@ -55,11 +72,11 @@ Resources:
                 BucketName: !Ref 'PnCiCdTemplatesBucket'
                 Extract: true
               InputArtifacts:
-                - Name: SourceArtifact
+                - Name: TemplateSource
               RunOrder: 1
-            - Name: CreateStack-Pn_parent-ci
+            - Name: CreateStack-ci-root
               InputArtifacts:
-                - Name: SourceArtifact
+                - Name: TemplateSource
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -67,98 +84,14 @@ Resources:
                 Version: 1
               Configuration:
                 ActionMode: REPLACE_ON_FAILURE
-                StackName: pn-parent-ci
+                StackName: pn-ci-root
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-jar-codebuild.yaml'
-                ParameterOverrides: '{"GitHubProjectName": "pn-parent","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
+                TemplatePath: 'TemplateSource::ci/infra/root.yaml'
+                ParameterOverrides: !Sub '{"PnCiCdTemplatesBucketName" : "${PnCiCdTemplatesBucket}", "NotificationSNSTopic": "${NotificationSNSTopic}", "CommitId": "#{SourceVariables.CommitId}" }'
               OutputArtifacts: [ ]
               RunOrder: 2
-            - Name: CreateStack-Pn_model-ci
-              InputArtifacts:
-                - Name: SourceArtifact
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: 1
-              Configuration:
-                ActionMode: REPLACE_ON_FAILURE
-                StackName: pn-model-ci
-                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
-                RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-jar-codebuild.yaml'
-                ParameterOverrides: '{"GitHubProjectName": "pn-model","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
-              OutputArtifacts: []
-              RunOrder: 2
-            - Name: CreateStack-Pn_commons-ci
-              InputArtifacts:
-                - Name: SourceArtifact
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: 1
-              Configuration:
-                ActionMode: REPLACE_ON_FAILURE
-                StackName: pn-commons-ci
-                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
-                RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-jar-codebuild.yaml'
-                ParameterOverrides: '{"GitHubProjectName": "pn-commons","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
-              OutputArtifacts: [ ]
-              RunOrder: 2
-            - Name: CreateStack-Pn_delivery-ci
-              InputArtifacts:
-                - Name: SourceArtifact
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: 1
-              Configuration:
-                ActionMode: REPLACE_ON_FAILURE
-                StackName: pn-delivery-ci
-                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
-                RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-docker-codebuild.yaml'
-                ParameterOverrides: '{"GitHubProjectName": "pn-delivery","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
-              OutputArtifacts: [ ]
-              RunOrder: 2
-            - Name: CreateStack-Pn_delivery-push-ci
-              InputArtifacts:
-                - Name: SourceArtifact
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: 1
-              Configuration:
-                ActionMode: REPLACE_ON_FAILURE
-                StackName: pn-delivery-push-ci
-                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
-                RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-docker-codebuild.yaml'
-                ParameterOverrides: '{"GitHubProjectName": "pn-delivery-push","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
-              OutputArtifacts: [ ]
-              RunOrder: 2
-            - Name: CreateStack-pn-external-channels-ci
-              InputArtifacts:
-                - Name: SourceArtifact
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: 1
-              Configuration:
-                ActionMode: REPLACE_ON_FAILURE
-                StackName: pn-external-channels-ci
-                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
-                RoleArn: !GetAtt 'CFNRole.Arn'
-                TemplatePath: 'SourceArtifact::build/mvn-docker-codebuild.yaml'
-                ParameterOverrides: '{"GitHubProjectName": "pn-external-channels","CodeArtifactDomainName": "pn-develop-bootstrap-step-01-domain", "CodeArtifactRepositoryName":"pn-develop-bootstrap-step-01-repo"}'
-              OutputArtifacts: [ ]
-              RunOrder: 2
+
   CFNRole:
     Type: AWS::IAM::Role
     Properties:
@@ -181,9 +114,10 @@ Resources:
                   - 'codebuild:*'
                   - 'codestar-notifications:*'
                   - 'ecr:*'
+                  - 's3:*'
+                  - 'codeartifact:*'
                 Effect: Allow
                 Resource: '*'
-
 
 
   S3Policy:
@@ -267,6 +201,99 @@ Resources:
         - !Ref CodePipelinePolicy
         - !Ref CodestarPolicy
 
+  # BUILD FAILURE SLACK NOTIFICATION TOPIC
+  ########################################
+  NotificationSNSTopic:
+    Type: AWS::SNS::Topic
+  TopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Sid: AllowServices
+            Effect: Allow
+            Principal:
+              Service:
+                - "codestar-notifications.amazonaws.com"
+            Action:
+              - 'sns:Publish'
+            Resource:
+              - !Ref NotificationSNSTopic
+          - Sid: AllowAWS
+            Effect: Allow
+            Principal:
+              AWS: "*"
+            Action:
+              - "SNS:GetTopicAttributes"
+              - "SNS:SetTopicAttributes"
+              - "SNS:AddPermission"
+              - "SNS:RemovePermission"
+              - "SNS:DeleteTopic"
+              - "SNS:Subscribe"
+              - "SNS:ListSubscriptionsByTopic"
+              - "SNS:Publish"
+              - "SNS:Receive"
+            Resource:
+              - !Ref NotificationSNSTopic
+      Topics:
+        - !Ref NotificationSNSTopic
+
+  BuildNotificationChatbotIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Role for build notifications chatbot
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - chatbot.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/service_role/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+  BuildNotificationChatbot:
+    Type: AWS::Chatbot::SlackChannelConfiguration
+    Properties:
+      ConfigurationName: !Sub '${AWS::StackName}-notifications-chatbot'
+      IamRoleArn:
+        Fn::GetAtt: [ BuildNotificationChatbotIAMRole, Arn ]
+      LoggingLevel: INFO
+      SlackChannelId:
+        Fn::Select:
+          - '1'
+          - Fn::Split:
+              - ":"
+              - Ref: SlackInfo
+      SlackWorkspaceId:
+        Fn::Select:
+          - '0'
+          - Fn::Split:
+              - ":"
+              - Ref: SlackInfo
+      SnsTopicArns:
+        - Ref: NotificationSNSTopic
+  BuildNotificationTopicChatbot:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn:
+        Ref: NotificationSNSTopic
+      Endpoint: "https://global.sns-api.chatbot.amazonaws.com"
+      Protocol: https
+
+  CodePipelineNotifications:
+    Type: AWS::CodeStarNotifications::NotificationRule
+    Properties:
+      DetailType: FULL
+      Name: !Sub '${AWS::StackName}-delivery-msg'
+      EventTypeIds:
+        - codepipeline-pipeline-pipeline-execution-failed
+      Resource: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${pipeline}'
+      Targets:
+        - TargetAddress: !Ref 'NotificationSNSTopic'
+          TargetType: SNS
 Outputs:
   PipelineName:
     Value: !Ref 'pipeline'

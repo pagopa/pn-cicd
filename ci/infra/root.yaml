@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Genera il repository maven e include gli stack di generazione dei CodeBuild project per 
+  effettuare il build di librerie, microservizi e webapp.
+
+Parameters:
+  PnCiCdTemplatesBucketName:
+    Type: String
+    Description: Bucket name where pipeline copied the current version of CI templates
+  CodeArtifactDomainName:
+    Type: String
+    Default: pn-codeartifact-domain
+  CodeArtifactRepositoryName:
+    Type: String
+    Default: pn-codeartifact-repo
+  NotificationSNSTopic:
+    Type: String
+    Default: 'none'
+    Description: Topic for build and pipeline notification
+
+Resources:
+  CodeArtifactStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/infra/code-artifact.yaml'
+      Parameters:
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+      TimeoutInMinutes: 5
+
+  WebappsTemplatesBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+
+# Progetti CI jar
+  ParentPomCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-parent'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
+  PnModelCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-model'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
+  PnCommonsCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-commons'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
+# Progetti docker
+  PnDeliveryCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-delivery'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
+  PnDeliveryPushCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-delivery-push'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
+  PnExternalChannelsCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-external-channels'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
+  
+  # Progetti WebApp
+  PnWebapp:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/npm-webapp-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-webapp'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+        WebappsTemplatesBucket: !Ref 'WebappsTemplatesBucket'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
