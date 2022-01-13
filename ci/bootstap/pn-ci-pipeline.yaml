@@ -284,10 +284,9 @@ Resources:
       Name: !Sub '${AWS::StackName}-delivery-msg'
       EventTypeIds:
         - codepipeline-pipeline-pipeline-execution-failed
-      Resource: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipelinePolicy}'
+      Resource: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${pipeline}'
       Targets:
-        - TargetAddress:
-            !ImportValue 'build-msg-topic'
+        - TargetAddress: !Ref 'NotificationSNSTopic'
           TargetType: SNS
 Outputs:
   PipelineName:
