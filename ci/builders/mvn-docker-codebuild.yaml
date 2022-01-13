@@ -138,6 +138,7 @@ Resources:
                 - export IMAGE_TAG=$VERSION
                 - export IMAGE_REPO_NAME=$GITHUB_PRJ_NAME
                 - export SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}
+                - env
             build:
               on-failure: ABORT
               commands:
