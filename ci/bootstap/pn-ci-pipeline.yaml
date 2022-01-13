@@ -251,7 +251,7 @@ Resources:
   BuildNotificationChatbot:
     Type: AWS::Chatbot::SlackChannelConfiguration
     Properties:
-      ConfigurationName: 'notifications-chatbot'
+      ConfigurationName: !Sub '${AWS::StackName}-notifications-chatbot'
       IamRoleArn:
         Fn::GetAtt: [ BuildNotificationChatbotIAMRole, Arn ]
       LoggingLevel: INFO
