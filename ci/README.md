@@ -11,12 +11,12 @@ CI/CD Piattaforma Notifiche
 
 Il file _ci/bootstrap/pn-cicd-pipeline.yaml_ è l'unico che deve essere caricato manualmente con il seguente comando:
 ```
-aws cloudformation create-stack --stack-name pn-ci-pipeline --template-body file://ci/bootstrap/pn-ci-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
+aws cloudformation create-stack --stack-name pn-ci-pipeline --template-body ci/bootstrap/pn-ci-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
 ```
 
 Oppure aggiornaro con il comando
 ```
-aws cloudformation update-stack --stack-name pn-ci-pipeline --template-body file://ci/bootstrap/pn-ci-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
+aws cloudformation update-stack --stack-name pn-ci-pipeline --template-body ci/bootstrap/pn-ci-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
 ```
 
 Lo stack contiene la pipeline che lancia il template _ci/infra/root.yaml_ che crea le risorse necessarie alla CI e

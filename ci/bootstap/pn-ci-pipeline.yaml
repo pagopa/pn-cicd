@@ -9,6 +9,10 @@ Parameters:
   BranchName:
     Type: String
     Default: main
+  SlackInfo:
+    Type: String
+    Description: <slack workspace id>:<slack channel id>
+    Default: TQSBH3ZS4:C028UC74ZEV
 
 Resources:
   CodeBuildSourceCredential:
@@ -78,7 +82,7 @@ Resources:
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
                 TemplatePath: 'TemplateSource::ci/infra/root.yaml'
-                ParameterOverrides: !Sub '{"PnCiCdTemplatesBucketName" : "${PnCiCdTemplatesBucket}", "CommitId": "#{SourceVariables.CommitId}" }'
+                ParameterOverrides: !Sub '{"PnCiCdTemplatesBucketName" : "${PnCiCdTemplatesBucket}", "NotificationSNSTopic", "${NotificationSNSTopic}", "CommitId": "#{SourceVariables.CommitId}" }'
               OutputArtifacts: [ ]
               RunOrder: 2
 
@@ -191,6 +195,100 @@ Resources:
         - !Ref CodePipelinePolicy
         - !Ref CodestarPolicy
 
+  # BUILD FAILURE SLACK NOTIFICATION TOPIC
+  ########################################
+  NotificationSNSTopic:
+    Type: AWS::SNS::Topic
+  TopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Sid: AllowServices
+            Effect: Allow
+            Principal:
+              Service:
+                - "codestar-notifications.amazonaws.com"
+            Action:
+              - 'sns:Publish'
+            Resource:
+              - !Ref NotificationSNSTopic
+          - Sid: AllowAWS
+            Effect: Allow
+            Principal:
+              AWS: "*"
+            Action:
+              - "SNS:GetTopicAttributes"
+              - "SNS:SetTopicAttributes"
+              - "SNS:AddPermission"
+              - "SNS:RemovePermission"
+              - "SNS:DeleteTopic"
+              - "SNS:Subscribe"
+              - "SNS:ListSubscriptionsByTopic"
+              - "SNS:Publish"
+              - "SNS:Receive"
+            Resource:
+              - !Ref NotificationSNSTopic
+      Topics:
+        - !Ref NotificationSNSTopic
+
+  BuildNotificationChatbotIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Role for build notifications chatbot
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - chatbot.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/service_role/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+  BuildNotificationChatbot:
+    Type: AWS::Chatbot::SlackChannelConfiguration
+    Properties:
+      ConfigurationName: 'notifications-chatbot'
+      IamRoleArn:
+        Fn::GetAtt: [ BuildNotificationChatbotIAMRole, Arn ]
+      LoggingLevel: INFO
+      SlackChannelId:
+        Fn::Select:
+          - '1'
+          - Fn::Split:
+              - ":"
+              - Ref: SlackInfo
+      SlackWorkspaceId:
+        Fn::Select:
+          - '0'
+          - Fn::Split:
+              - ":"
+              - Ref: SlackInfo
+      SnsTopicArns:
+        - Ref: NotificationSNSTopic
+  BuildNotificationTopicChatbot:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn:
+        Ref: NotificationSNSTopic
+      Endpoint: "https://global.sns-api.chatbot.amazonaws.com"
+      Protocol: https
+
+  CodePipelineNotifications:
+    Type: AWS::CodeStarNotifications::NotificationRule
+    Properties:
+      DetailType: FULL
+      Name: !Sub '${AWS::StackName}-delivery-msg'
+      EventTypeIds:
+        - codepipeline-pipeline-pipeline-execution-failed
+      Resource: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipelinePolicy}'
+      Targets:
+        - TargetAddress:
+            !ImportValue 'build-msg-topic'
+          TargetType: SNS
 Outputs:
   PipelineName:
     Value: !Ref 'pipeline'
