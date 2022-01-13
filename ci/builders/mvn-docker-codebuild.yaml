@@ -287,12 +287,6 @@ Resources:
                 Resource:
                   - "*"
 
-  #  CodeBuildProjectLogGroup:
-  #    Type: AWS::Logs::LogGroup
-  #    Properties:
-  #      LogGroupName: !Sub "/aws/codebuild/${CodeBuildProject}"
-  #      RetentionInDays: 7
-
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
     Properties:

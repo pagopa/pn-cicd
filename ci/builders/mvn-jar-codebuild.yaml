@@ -239,12 +239,6 @@ Resources:
                   - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}'
                   - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}'
 
-#  CodeBuildProjectLogGroup:
-#    Type: AWS::Logs::LogGroup
-#    Properties:
-#      LogGroupName: !Sub "/aws/codebuild/${CodeBuildProject}"
-#      RetentionInDays: 7
-
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
     Properties:

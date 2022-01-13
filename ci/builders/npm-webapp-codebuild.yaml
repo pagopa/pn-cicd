@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CodeBuild for maven webapp project (node)
+Description: CodeBuild for webapp project (node)
 Parameters:
   GitHubProjectName:
     Description: Name of pagopa project name

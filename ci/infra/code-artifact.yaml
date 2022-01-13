@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Code Artifact and Artifact Bucket with export for CI/CD Pipeline
+Description: Generate CodeArtifact maven repository with readonly access key
 Parameters:
   CodeArtifactDomainName:
     Type: String

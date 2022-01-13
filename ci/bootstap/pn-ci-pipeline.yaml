@@ -1,4 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Description: Definizione della pipeline che aggiorna i CodeBuild che effettuano la Continuos Integration
+
 Parameters:
   CodestarGitHubConnectionArn:
     Type: String
@@ -15,6 +17,7 @@ Parameters:
     Default: TQSBH3ZS4:C028UC74ZEV
 
 Resources:
+  # Global Definition of credential needed by CodeBuild to access to GitHub
   CodeBuildSourceCredential:
     Type: AWS::CodeBuild::SourceCredential
     Properties:
@@ -22,14 +25,17 @@ Resources:
       ServerType: GITHUB
       AuthType: PERSONAL_ACCESS_TOKEN
 
+  # Pipeline artifacts bucket
   CodePipelineBucket:
     Type: AWS::S3::Bucket
 
+  # Pipeline copy CFN templates from github to this bucket. This enable CFN reuse by Nested Stack
   PnCiCdTemplatesBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
 
+  # Update CI builders
   pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:

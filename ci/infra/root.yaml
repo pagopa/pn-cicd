@@ -1,4 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Genera il repository maven e include gli stack di generazione dei CodeBuild project per 
+  effettuare il build di librerie, microservizi e webapp.
 
 Parameters:
   PnCiCdTemplatesBucketName:
@@ -95,6 +98,8 @@ Resources:
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
       TimeoutInMinutes: 5
+  
+  # Progetti WebApp
   PnWebapp:
     Type: AWS::CloudFormation::Stack
     Properties:
