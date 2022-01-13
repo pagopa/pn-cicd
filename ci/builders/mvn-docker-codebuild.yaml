@@ -134,11 +134,10 @@ Resources:
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - export MAVEN_CONFIG="--settings maven-settings.xml"
-                - export VERSION=$( mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout )
+                - export VERSION=$( mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG )
                 - export IMAGE_TAG=$VERSION
                 - export IMAGE_REPO_NAME=$GITHUB_PRJ_NAME
                 - export SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}
-                - env
             build:
               on-failure: ABORT
               commands:
