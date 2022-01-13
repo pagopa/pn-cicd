@@ -10,10 +10,6 @@ Parameters:
   CodeArtifactRepositoryName:
     Type: String
     Default: pn-codeartifact-repo
-  CommitId:
-    Type: String
-    Default: 'none'
-    Description: Git commit identifier
   NotificationSNSTopic:
     Type: String
     Default: 'none'
