@@ -88,7 +88,7 @@ Resources:
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
                 TemplatePath: 'TemplateSource::ci/infra/root.yaml'
-                ParameterOverrides: !Sub '{"PnCiCdTemplatesBucketName" : "${PnCiCdTemplatesBucket}", "NotificationSNSTopic": "${NotificationSNSTopic}", "CommitId": "#{SourceVariables.CommitId}" }'
+                ParameterOverrides: !Sub '{"PnCiCdTemplatesBucketName" : "${PnCiCdTemplatesBucket}", "NotificationSNSTopic": "${NotificationSNSTopic}" }'
               OutputArtifacts: [ ]
               RunOrder: 2
 
