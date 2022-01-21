@@ -130,19 +130,32 @@ Resources:
                 - export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
                 - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
                 - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
-                - export PR_NUM=$(echo $CODEBUILD_WEBHOOK_TRIGGER | sed 's/pr\///')
+                - export PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///')
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
-                - export MAVEN_CONFIG="--settings maven-settings.xml"
+                - export MAVEN_CONFIG="--settings maven-settings.xml --no-transfer-progress"
                 - export VERSION=$( mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG )
                 - export IMAGE_TAG=$VERSION
                 - export IMAGE_REPO_NAME=$GITHUB_PRJ_NAME
                 - export SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}
+                - |
+                  SRC_DIR=./src/main/java
+                  if [ -e $SRC_DIR ]; then
+                    if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
+                       SONAR_OPTS="-Dsonar.branch.name=$BRANCH_NAME -Dsonar.scm.exclusions.disabled=true"
+                    else 
+                       SONAR_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
+                    fi
+                    SONAR_OPTS="$SONAR_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}"
+                    MAVEN_ADD_GOAL=org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+                  fi
+                  export MAVEN_OPTS="-DskipITs $SONAR_OPTS"
+                - env
             build:
               on-failure: ABORT
               commands:
                 - echo "Maven Build"
-                - ./mvnw -DskipITs clean spring-boot:build-image
+                - ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image $MAVEN_ADD_GOAL
             post_build:
               on-failure: ABORT
               commands:
