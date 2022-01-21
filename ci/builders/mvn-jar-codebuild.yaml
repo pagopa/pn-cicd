@@ -139,21 +139,6 @@ Resources:
                   else
                     ./mvnw clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                   fi
-            post_build:
-              on-failure: ABORT
-              commands:
-                - echo "Sonar"
-                - |
-                  SRC_DIR=$(mvn help:evaluate -Dexpression=project.build.sourceDirectory -q -DforceStdout)
-                  if [ -e $SRC_DIR ]; then
-                    if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
-                       SONAR_ADD_OPTS="-Dsonar.branch.name=$BRANCH_NAME -Dsonar.scm.exclusions.disabled=true"
-                    else 
-                       SONAR_ADD_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
-                    fi
-                    echo SONAR_ADD_OPTS=$SONAR_ADD_OPTS
-                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar 
-                  fi
           cache:
             paths:
               - '/root/.m2/**/*'
