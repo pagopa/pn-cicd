@@ -142,7 +142,7 @@ Resources:
               on-failure: ABORT
               commands:
                 - echo "Maven Build"
-                - ./mvnw -DskipITs spring-boot:build-image
+                - ./mvnw -DskipITs clean spring-boot:build-image
             post_build:
               on-failure: ABORT
               commands:
