@@ -129,15 +129,14 @@ Resources:
                   fi
                 - env
             build:
-              on-failure: ABORT
               commands:
                 - echo "Maven Build"
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
                     echo "Deploy"
-                    ./mvnw clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+                    ./mvnw $MAVEN_OPTS clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                   else
-                    ./mvnw clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+                    ./mvnw $MAVEN_OPTS clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                   fi
           cache:
             paths:
