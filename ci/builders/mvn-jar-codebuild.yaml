@@ -113,6 +113,20 @@ Resources:
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - export MAVEN_CONFIG="--settings maven-settings.xml --no-transfer-progress"
+                - |
+                  SRC_DIR=$(mvn help:evaluate -Dexpression=project.build.sourceDirectory -q -DforceStdout)
+                  if [ -e $SRC_DIR ]; then
+                    if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
+                       SONAR_OPTS="-Dsonar.branch.name=$BRANCH_NAME -Dsonar.scm.exclusions.disabled=true"
+                    else 
+                       SONAR_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
+                    fi
+                    SONAR_OPTS="-Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}"
+                  fi
+                  export MAVEN_OPTS="-DskipITs $SONAR_OPTS"
+                  if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
+                    export MAVEN_OPTS="$MAVEN_OPTS -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL"
+                  fi
                 - env
             build:
               on-failure: ABORT
@@ -121,9 +135,9 @@ Resources:
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
                     echo "Deploy"
-                    ./mvnw -DskipITs -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL clean deploy
+                    ./mvnw clean deploy org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                   else
-                    ./mvnw -DskipITs clean install
+                    ./mvnw clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                   fi
             post_build:
               on-failure: ABORT
@@ -138,7 +152,7 @@ Resources:
                        SONAR_ADD_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
                     fi
                     echo SONAR_ADD_OPTS=$SONAR_ADD_OPTS
-                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
+                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar 
                   fi
           cache:
             paths:
