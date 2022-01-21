@@ -14,7 +14,7 @@ Parameters:
   SlackInfo:
     Type: String
     Description: <slack workspace id>:<slack channel id>
-    Default: TQSBH3ZS4:C028UC74ZEV
+    Default: TQSBH3ZS4:C02V0SRC4TV
 
 Resources:
   # Global Definition of credential needed by CodeBuild to access to GitHub
