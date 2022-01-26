@@ -1,0 +1,501 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Continuos Delivery pipeline for infrastructure deployment'
+Parameters:
+  CodeStarGithubConnectionArn:
+    Description: CodeStar connection for github project
+    Type: String
+  CMKARN:
+    Description: ARN of the KMS CMK creates in Tools account
+    Type: String
+  ProjectName:
+    Description: Usually "pn", can be changed for feature branch deployment
+    Type: String
+  InfraRepoName:
+    Description: Name of the Github Repository containing infrastructure templates
+    Type: String
+  InfraBranchName:
+    Description: Name of the Github Repository branch
+    Type: String
+  InfraRepoSubdir:
+    Description: Path of the Github Repository containing infrastructure cloudformation templates
+    Type: String
+    Default: runtime-infra
+  DevAccount:
+    Description: AWS AccountNumber for Dev environment
+    Type: Number
+  UatAccount:
+    Description: AWS AccountNumber for Uat environment
+    Type: Number
+  ProdAccount:
+    Description: AWS AccountNumber for Prod environment
+    Type: Number
+  
+  CrossAccountCondition:
+    Description: Conditionally creates the resources for cross account access
+    Type: String
+    Default: false
+
+Conditions:
+  ActivateCrossAccountRoles: !Equals [ !Ref CrossAccountCondition, true ]
+  HasUatStage: !Not [ !Equals [ !Ref DevAccount, !Ref UatAccount ] ]
+
+Resources:
+
+
+  # GITHUB ACCESS
+  ###############
+
+  GithubAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-GithubAccessRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub ${AWS::AccountId}
+            Action:
+              - sts:AssumeRole
+      Path: /
+
+  GithubAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-GithubAccessPolicy
+      Roles:
+        - !Ref GithubAccessRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:*
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - kms:*
+            Resource: !Ref CMKARN
+          -
+            Effect: Allow
+            Action:
+              - codestar-connections:ListTagsForResource
+              - codestar-connections:UseConnection
+              - codestar-connections:GetConnection
+            Resource: !Ref CodeStarGithubConnectionArn
+      
+
+  # PIPELINE PERMISSION
+  ###############
+  PipeLineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-CdPipelineRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+  
+  PipelinePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-CdPipelinePolicy
+      Roles:
+        - !Ref PipeLineRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - codepipeline:*
+              - iam:ListRoles
+              - cloudformation:Describe*
+              - cloudFormation:List*
+              - codecommit:List*
+              - codecommit:Get*
+              - codecommit:GitPull
+              - codecommit:UploadArchive
+              - codecommit:CancelUploadArchive
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              - cloudformation:CreateStack
+              - cloudformation:DeleteStack
+              - cloudformation:DescribeStacks
+              - cloudformation:UpdateStack
+              - cloudformation:CreateChangeSet
+              - cloudformation:DeleteChangeSet
+              - cloudformation:DescribeChangeSet
+              - cloudformation:ExecuteChangeSet
+              - cloudformation:SetStackPolicy
+              - cloudformation:ValidateTemplate
+              - iam:PassRole
+              - s3:ListAllMyBuckets
+              - s3:GetBucketLocation
+            Resource:
+              - "*"
+          -
+            Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: !Ref CMKARN
+          -
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetBucketPolicy
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - !Sub arn:aws:s3:::${ArtifactBucket}/*
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - !Sub ${GithubAccessRole.Arn}
+              - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+              - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+              - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CdPipelineRole
+
+  
+  # PIPELINE DEFINITION
+  #######################
+  InfraPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipeLineRole.Arn
+      Name: !Sub '${ProjectName}-InfraPipeline'
+      Stages:
+        # Download cloudformation infrastructure
+        - Name: Get_Sources
+          Actions:
+            - Name: Infra_form_Github
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeStarSourceConnection
+              Configuration:
+                ConnectionArn: !Ref CodeStarGithubConnectionArn
+                FullRepositoryId: !Ref InfraRepoName
+                BranchName: !Ref InfraBranchName
+              RoleArn:
+                Fn::If:
+                  - ActivateCrossAccountRoles
+                  - !Sub ${GithubAccessRole.Arn}
+                  - !Ref AWS::NoValue
+              OutputArtifacts:
+                - Name: SCCheckoutArtifact
+              RunOrder: 1
+        # Add pipeline parameters to infrastructure parameters file.
+        - Name: Enrich_cfn_parameters
+          Actions:
+            - Name: Use_jq
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref EnrichCfnParametersCodeBuildProject
+                PrimarySource: SCCheckoutArtifact
+              InputArtifacts:
+                - Name: SCCheckoutArtifact
+              OutputArtifacts:
+                - Name: EnanchedParamsArtifact
+              RunOrder: 1
+        # Save infrastructure template fragment for inclusion from root template
+        - Name: Save_templates_to_bucket
+          Actions:
+            - Name: SaveToS3
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: S3
+              Configuration:
+                Extract: true
+                BucketName: !Ref TemplateBucket
+              InputArtifacts:
+                - Name: EnanchedParamsArtifact
+              RunOrder: 1
+        # Deploy infrastructure to dev account
+        - Name: Deploy_Infra_to_DEV
+          Actions:
+            - Name: Deploy_CFN
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub ${ProjectName}-infra-dev
+                Capabilities: CAPABILITY_NAMED_IAM
+                TemplatePath: !Sub EnanchedParamsArtifact::${InfraRepoSubdir}/pn-infra.yaml
+                TemplateConfiguration: !Sub EnanchedParamsArtifact::${InfraRepoSubdir}/${ProjectName}-dev-enanched-cfg.json
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                    - !Ref AWS::NoValue
+              InputArtifacts:
+                - Name: EnanchedParamsArtifact
+              RunOrder: 1
+              RoleArn:
+                Fn::If:
+                  - ActivateCrossAccountRoles
+                  - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                  - !Ref AWS::NoValue
+        # Deploy infrastructure to uat account if different from dev
+        - Fn::If:
+          - HasUatStage
+          - Name: Deploy_Infra_to_UAT
+            Actions:
+              # prepare changeset
+              - Name: Compute_Uat_CFN_ChangeSet
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                Configuration:
+                  ActionMode: CHANGE_SET_REPLACE
+                  StackName: !Sub ${ProjectName}-infra-uat
+                  Capabilities: CAPABILITY_NAMED_IAM
+                  TemplatePath: !Sub EnanchedParamsArtifact::${InfraRepoSubdir}/pn-infra.yaml
+                  TemplateConfiguration: !Sub EnanchedParamsArtifact::${InfraRepoSubdir}/${ProjectName}-uat-enanched-cfg.json
+                  ChangeSetName: !Sub ${ProjectName}-infra-uat-changeset
+                  RoleArn:
+                    Fn::If:
+                      - ActivateCrossAccountRoles
+                      - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                      - !Ref AWS::NoValue
+                InputArtifacts:
+                  - Name: EnanchedParamsArtifact
+                RunOrder: 1
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                    - !Ref AWS::NoValue
+              # review changeset
+              - Name: Approve_Uat_ChangeSet
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Provider: Manual
+                  Version: '1'
+                Configuration:
+                  CustomData: Please approve.
+                RunOrder: '2'
+              # apply changeset
+              - Name: Apply_CFN_ChangeSet
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                Configuration:
+                  ActionMode: CHANGE_SET_EXECUTE
+                  StackName: !Sub ${ProjectName}-infra-uat
+                  Capabilities: CAPABILITY_NAMED_IAM
+                  ChangeSetName: !Sub ${ProjectName}-infra-uat-changeset
+                  RoleArn:
+                    Fn::If:
+                      - ActivateCrossAccountRoles
+                      - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                      - !Ref AWS::NoValue
+                InputArtifacts:
+                  - Name: EnanchedParamsArtifact
+                RunOrder: 3
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                    - !Ref AWS::NoValue
+          - !Ref AWS::NoValue  
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+        EncryptionKey:
+          Id: !Ref CMKARN
+          Type: KMS
+
+  # PIPELINE ARTIFACT BUCKET AND POLICY 
+  ########################################
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArtifactBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:*
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${ArtifactBucket}
+              - !Sub arn:aws:s3:::${ArtifactBucket}/*
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CdPipelineRole
+                - !GetAtt [PipeLineRole,Arn]
+                - !GetAtt [GithubAccessRole,Arn]
+
+  
+  # CFN TEMPLATE BUCKET AND POLICY 
+  ########################################
+  
+  TemplateBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    #Properties:
+    #  BucketName: !Sub ${ProjectName}-cd-templates-bucket
+
+
+  TemplateBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TemplateBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:*
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${TemplateBucket}
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CdPipelineRole
+                - !GetAtt [PipeLineRole,Arn]
+                - !GetAtt [GithubAccessRole,Arn]
+
+  
+  # CODEBUILD for Cloudformation Template parameters enrichement
+  ###################################################
+  EnrichCfnParametersCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-EnrichParamsCodeBuildProject
+      ServiceRole: !GetAtt EnrichParamsCodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - jqExpr="' .Parameters.ProjectName=\"${ProjectName}\" | .Parameters.TemplateBucketBaseUrl=\"${TemplateBucketBaseUrl}\" '"
+                - echo $jqExpr
+                - cat runtime-infra-new/${ProjectName}-dev-cfg.json | eval jq $jqExpr \
+                      > runtime-infra-new/${ProjectName}-dev-enanched-cfg.json
+                - | 
+                  if ( [ -e runtime-infra-new/${ProjectName}-uat-cfg.json ] ) then 
+                    cat runtime-infra-new/${ProjectName}-uat-cfg.json | eval jq $jqExpr \
+                      > runtime-infra-new/${ProjectName}-uat-enanched-cfg.json
+                  fi
+                - |
+                  if ( [ -e runtime-infra-new/${ProjectName}-prod-cfg.json ] ) then
+                    cat runtime-infra-new/${ProjectName}-prod-cfg.json | eval jq $jqExpr \
+                      > runtime-infra-new/${ProjectName}-prod-enanched-cfg.json
+                  fi
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+        EnvironmentVariables:
+          - Name: ProjectName
+            Value: !Ref ProjectName
+          - Name: TemplateBucketBaseUrl
+            Value: !Sub 'https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}'
+  
+  EnrichParamsCodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-EnrichParamsCodeBuildRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - 
+            Effect: Allow
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  
+  EnrichParamsCodeBuildPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-EnrichParamsCodeBuildPolicy
+      Roles:
+        - !Ref EnrichParamsCodeBuildRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+            Resource:
+              - "*"
+          -
+            Effect: Allow
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: !Ref CMKARN
+          -
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetBucketPolicy
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - !Sub arn:aws:s3:::${ArtifactBucket}/*
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+      
+  

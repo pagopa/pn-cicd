@@ -1,30 +1,34 @@
-#  Create AWS KMS key to encrypt traffic between accounts
-
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Creates a AWS KMS key in KMS and grants access to other accounts
+Description: Creates a CMK in KMS and grants access to other accounts
 Parameters:
-  BetaAccount:
+  DevAccount:
     Description: AWS AccountNumber for Beta
     Type: Number
-  ProductionAccount:
+  UatAccount:
+    Description: AWS AccountNumber for Beta
+    Type: Number
+  ProdAccount:
     Description: AWS AccountNumber for Prod
     Type: Number
+  ProjectName:
+    Description: Usually "pn", can be changed for feature branch deployment
+    Type: String
 
 Resources:
   KMSKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: Used by Assumed Roles in Beta/Prod accounts to Encrypt/Decrypt code
+      Description: Used by Assumed Roles in Dev/Uat/Prod accounts to Encrypt/Decrypt code
       EnableKeyRotation: true
       KeyPolicy:
         Version: "2012-10-17"
-        Id: !Ref AWS::StackName
+        Id: !Sub '${ProjectName}-kmskey'
         Statement:
           -
             Sid: Allows admin of the key
             Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root # CiCdAccount
             Action:
               - "kms:Create*"
               - "kms:Describe*"
@@ -44,9 +48,10 @@ Resources:
             Effect: Allow
             Principal:
               AWS:
-                - !Sub arn:aws:iam::${ProductionAccount}:root
-                - !Sub arn:aws:iam::${BetaAccount}:root
-                - !Sub arn:aws:iam::${AWS::AccountId}:root
+                - !Sub arn:aws:iam::${AWS::AccountId}:root # CiCdAccount
+                - !Sub arn:aws:iam::${DevAccount}:root
+                - !Sub arn:aws:iam::${UatAccount}:root
+                - !Sub arn:aws:iam::${ProdAccount}:root
             Action:
               - kms:Encrypt
               - kms:Decrypt
@@ -57,9 +62,10 @@ Resources:
   KMSAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: alias/codepipeline-crossaccounts
+      AliasName: !Sub alias/${ProjectName}-codepipeline-crossaccounts
       TargetKeyId: !Ref KMSKey
 
 Outputs:
   CMK:
     Value: !GetAtt [KMSKey,Arn]
+

@@ -1,0 +1,322 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+
+
+Parameters:
+  Cluster:
+    Type: String
+    Default: ecs-deployment
+
+  Service:
+    Type: String
+    Default: demoapp
+
+  EcRRepositoryName:
+    Type: String
+    Default: demoapp
+
+  BetaAccount:
+    Description: AWS AccountNumber for Beta
+    Type: Number
+
+  ProductName:
+    Description: Name of the Project
+    Type: String
+    Default: pn
+  BranchName:
+    Description: Name of the Project
+    Type: String
+    Default: main
+
+  ProductionAccount:
+    Description: AWS AccountNumber for production
+    Type: Number
+
+  CMKARN:
+    Description: ARN of the KMS CMK creates in Tools account
+    Type: String
+
+  CodeStarGithubConnectionArn:
+    Description: CodeStar connection for github
+    Type: String
+    Default: arn:aws:codestar-connections:eu-west-1:533281951572:connection/8e27492e-ed90-44e6-8b12-c58bdde0ef2e
+
+  CrossAccountCondition:
+    Description: Conditionally creates the resources for cross account access
+    Type: String
+    Default: false
+
+Conditions:
+  AddCodeBuildResource: !Equals [ !Ref CrossAccountCondition, true ]
+
+
+
+Resources:
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - ecr:GetAuthorizationToken
+              - Resource: !Sub arn:aws:s3:::${ArtifactBucket}/*
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:GetObjectVersion
+              - Resource: !Sub arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${EcRRepositoryName}
+                Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:PutImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+              - Resource: "*"
+                Effect: Allow
+                Action: "*"
+
+
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Resource:
+                  - !Sub arn:aws:s3:::${ArtifactBucket}/*
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - ecs:*
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                  - codecommit:*
+                  - states:*
+                  - ecr:*
+                  - iam:PassRole
+              -
+                Effect: Allow
+                Action:
+                  - kms:*
+                Resource: !Ref CMKARN
+
+              -
+                Effect: Allow
+                Action:
+                  - sts:AssumeRole
+                Resource:
+                  - !Sub arn:aws:iam::${BetaAccount}:role/CiCdAcctCodePipelineCodeCommitRole
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/${ProductName}-${BranchName}-from-github-to-s3-role
+
+
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+
+
+  CodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProductName}-${BranchName}-delivery-deploy
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - echo "Deploy to ECS"
+                - "export JQ_EXP='{ \"AWS_ACCESS_KEY_ID\": .Credentials.AccessKeyId, \"AWS_SECRET_ACCESS_KEY\": .Credentials.SecretAccessKey, \"AWS_SESSION_TOKEN\": .Credentials.SessionToken } | to_entries | map(\"export \" + .key + \"=\" + .value) | .[]'"
+                - "$( aws sts assume-role --role-arn $BETA_ACCOUNT_ROLE --role-session-name $DOCKER_PREFIX-beta-deploy-session | jq -r \"$JQ_EXP\" )"
+                - "export JQ_EXP='{ \"CLUSTER_NAME\": .CluserName, \"SERVICE_NAME\": .ServiceName } | to_entries | map(\"export \" + .key + \"=\" + .value) | .[]'"
+                - "$( cat $CODEBUILD_SRC_DIR_InfraOutputs/InfrastructureOutputs.json | jq -r \"$JQ_EXP\" )"
+                - echo $CLUSTER_NAME
+                - echo $SERVICE_NAME
+                - aws ecs update-service --cluster "$CLUSTER_NAME" --service "$SERVICE_NAME" --force-new-deployment
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+        EnvironmentVariables:
+          - Name: ECR_REGION
+            Value: !Ref AWS::Region
+          - Name: ECR_ACCOUNT_ID
+            Value: !Ref BetaAccount
+          - Name: BETA_ACCOUNT_ROLE
+            Value: !Sub arn:aws:iam::${BetaAccount}:role/CiCdAcctCodePipelineCodeCommitRole
+          - Name: DOCKER_PREFIX
+            Value: !Sub '${ProductName}-${BranchName}'
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+        EncryptionKey:
+          Id: !Ref CMKARN
+          Type: KMS
+
+      Stages:
+
+        - Name: Source
+          Actions:
+            - InputArtifacts: []
+              ActionTypeId:
+                Version: '1'
+                Owner: AWS
+                Category: Source
+                Provider: ECR
+              OutputArtifacts:
+                - Name: SourceArtifact
+              RunOrder: 1
+              Configuration:
+                ImageTag: latest
+                RepositoryName: !Ref 'EcRRepositoryName'
+              Name: ImageSource
+            - Name: AppSource
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeStarSourceConnection
+              Configuration:
+                ConnectionArn: !Ref CodeStarGithubConnectionArn
+                FullRepositoryId: yayfeng/demoapp
+                BranchName: !Ref BranchName
+                DetectChanges: false
+              RoleArn:
+                Fn::If:
+                  - AddCodeBuildResource
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/${ProductName}-${BranchName}-from-github-to-s3-role
+                  - !Ref AWS::NoValue
+
+              OutputArtifacts:
+                - Name: SCCheckoutArtifact
+              RunOrder: 1
+
+        - Name: DeployToBeta
+          Actions:
+            - Name: DeployService
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub ${ProductName}-${BranchName}-ecs-service-demoapp
+                Capabilities: CAPABILITY_NAMED_IAM
+                TemplatePath: !Sub SCCheckoutArtifact::templates/ecs-service.yaml
+                TemplateConfiguration: !Sub SCCheckoutArtifact::templates/ecs-service-demoapp-beta-cfg.json
+                OutputFileName: InfrastructureOutputs.json
+                #RoleArn: !Sub arn:aws:iam::${TestAccount}:role/cloudformationdeployer-role
+                RoleArn:
+                  Fn::If:
+                    - AddCodeBuildResource
+                    - !Sub arn:aws:iam::${BetaAccount}:role/${ProductName}-${BranchName}-cloudformationdeployer-role
+                    - !Ref AWS::NoValue
+              InputArtifacts:
+                - Name: SCCheckoutArtifact
+              OutputArtifacts:
+                - Name: InfraOutputs
+              RunOrder: 1
+              #RoleArn: !Sub arn:aws:iam::${TestAccount}:role/ToolsAcctCodePipelineCloudFormationRole
+              RoleArn:
+                Fn::If:
+                  - AddCodeBuildResource
+                  - !Sub arn:aws:iam::${BetaAccount}:role/CiCdAcctCodePipelineCodeCommitRole
+                  - !Ref AWS::NoValue
+
+            - Name: DeployContainer
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+                PrimarySource: SCCheckoutArtifact
+              InputArtifacts:
+                - Name: SCCheckoutArtifact
+                - Name: InfraOutputs
+              RunOrder: 2
+
+
+        - Name: ManualApproval
+          Actions:
+            - Name: ManualApproval
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: "1"
+              Configuration:
+                CustomData: Please approve.
+              InputArtifacts: []
+              RunOrder: 1
+
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArtifactBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:*
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${ArtifactBucket}
+              - !Sub arn:aws:s3:::${ArtifactBucket}/*
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${BetaAccount}:role/CiCdAcctCodePipelineCodeCommitRole
+                - !GetAtt [CodeBuildServiceRole,Arn]
+                - !GetAtt [CodePipelineServiceRole,Arn]
+
+Outputs:
+  PipelineUrl:
+    Value: !Sub https://console.aws.amazon.com/codepipeline/home?region=${AWS::Region}#/view/${Pipeline}
