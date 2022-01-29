@@ -179,9 +179,10 @@ Resources:
       RoleArn: !GetAtt PipeLineRole.Arn
       Name: !Sub '${ProjectName}-InfraPipeline'
       Stages:
-        # Download cloudformation infrastructure
+        # Download sources: infrastructure
         - Name: Get_Sources
           Actions:
+            # Checkout from Github
             - Name: Infra_form_Github
               ActionTypeId:
                 Category: Source
@@ -200,9 +201,53 @@ Resources:
               OutputArtifacts:
                 - Name: SCCheckoutArtifact
               RunOrder: 1
-        # Add pipeline parameters to infrastructure parameters file.
-        - Name: Enrich_cfn_parameters
+        # Ensure dev account configurations and environmental parameters
+        - Name: Prepare_dev_account_and_full_parameters
           Actions:
+            # Save infrastructure template fragment for inclusion from once4account template
+            - Name: SaveToS3
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: S3
+              Configuration:
+                Extract: true
+                BucketName: !Ref TemplateBucket
+              InputArtifacts:
+                - Name: SCCheckoutArtifact
+              RunOrder: 1
+            # Deploy once-in-an-account configurations for DEV ccount
+            - Name: Deploy_once4Account_CFN
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: 'once-dev'
+                Capabilities: CAPABILITY_NAMED_IAM
+                TemplatePath: !Sub SCCheckoutArtifact::${InfraRepoSubdir}/once4account/dev.yaml
+                ParameterOverrides: !Sub '{"TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}"}'
+                OutputFileName: Once4AccountOutputs.json
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                    - !Ref AWS::NoValue
+              InputArtifacts:
+                - Name: SCCheckoutArtifact
+              OutputArtifacts:
+                - Name: Once4AccountOutputsArtifact
+              RunOrder: 2
+              RoleArn:
+                Fn::If:
+                  - ActivateCrossAccountRoles
+                  - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                  - !Ref AWS::NoValue
+            # Add ProjectName parameter (useful for features branches) 
+            # and TemplateBucketBaseUrl parameter (useful for include reusable template segments)
             - Name: Use_jq
               ActionTypeId:
                 Category: Build
@@ -216,11 +261,9 @@ Resources:
                 - Name: SCCheckoutArtifact
               OutputArtifacts:
                 - Name: EnanchedParamsArtifact
-              RunOrder: 1
-        # Save infrastructure template fragment for inclusion from root template
-        - Name: Save_templates_to_bucket
-          Actions:
-            - Name: SaveToS3
+              RunOrder: 3
+            # Save infrastructure template fragment for inclusion from root template
+            - Name: SaveToS3_withMoreParams
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -231,7 +274,7 @@ Resources:
                 BucketName: !Ref TemplateBucket
               InputArtifacts:
                 - Name: EnanchedParamsArtifact
-              RunOrder: 1
+              RunOrder: 4
         # Deploy infrastructure to dev account
         - Name: Deploy_Infra_to_DEV
           Actions:
@@ -374,7 +417,6 @@ Resources:
     DeletionPolicy: Retain
     #Properties:
     #  BucketName: !Sub ${ProjectName}-cd-templates-bucket
-
 
   TemplateBucketPolicy:
     Type: AWS::S3::BucketPolicy
