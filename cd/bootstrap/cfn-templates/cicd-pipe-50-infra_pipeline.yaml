@@ -1,3 +1,5 @@
+# TODO: multiregion CFN deploy 
+
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Continuos Delivery pipeline for infrastructure deployment'
 Parameters:
@@ -143,6 +145,8 @@ Resources:
               - iam:PassRole
               - s3:ListAllMyBuckets
               - s3:GetBucketLocation
+              - "ecr:*"
+              - "*"
             Resource:
               - "*"
           -
@@ -183,7 +187,7 @@ Resources:
         - Name: Get_Sources
           Actions:
             # Checkout from Github
-            - Name: Infra_form_Github
+            - Name: Infra_form_github
               ActionTypeId:
                 Category: Source
                 Owner: AWS
@@ -201,11 +205,11 @@ Resources:
               OutputArtifacts:
                 - Name: SCCheckoutArtifact
               RunOrder: 1
-        # Ensure dev account configurations and environmental parameters
-        - Name: Prepare_dev_account_and_full_parameters
+        # Copy reusable templates fragment to bucket for later inclusion
+        - Name: Save_template_fragments
           Actions:
             # Save infrastructure template fragment for inclusion from once4account template
-            - Name: SaveToS3
+            - Name: Save_templates_to_S3
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -217,6 +221,9 @@ Resources:
               InputArtifacts:
                 - Name: SCCheckoutArtifact
               RunOrder: 1
+        # Deploy to dev accoiunt
+        - Name: Prepare_dev_account
+          Actions:
             # Deploy once-in-an-account configurations for DEV ccount
             - Name: Deploy_once4Account_CFN
               ActionTypeId:
@@ -240,15 +247,15 @@ Resources:
                 - Name: SCCheckoutArtifact
               OutputArtifacts:
                 - Name: Once4AccountOutputsArtifact
-              RunOrder: 2
+              Namespace: OnceDevOutputVars
+              RunOrder: 1
               RoleArn:
                 Fn::If:
                   - ActivateCrossAccountRoles
                   - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
                   - !Ref AWS::NoValue
-            # Add ProjectName parameter (useful for features branches) 
-            # and TemplateBucketBaseUrl parameter (useful for include reusable template segments)
-            - Name: Use_jq
+            # Merge dev account global parameters to infrastructure parameters from filesystem
+            - Name: Enrich_infrastructure_parameters
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -257,13 +264,19 @@ Resources:
               Configuration:
                 ProjectName: !Ref EnrichCfnParametersCodeBuildProject
                 PrimarySource: SCCheckoutArtifact
+                EnvironmentVariables: !Sub '[
+                    {"name":"TemplateFilePath", "value":"${InfraRepoSubdir}/pn-infra.yaml", "type":"PLAINTEXT"},
+                    {"name":"ParamFilePath", "value":"${InfraRepoSubdir}/pn-infra-dev-cfg.json", "type":"PLAINTEXT"},
+                    {"name":"PreviousOutputFileArtifactAndPath", "value":"Once4AccountOutputsArtifact/Once4AccountOutputs.json", "type":"PLAINTEXT"}
+                  ]'
               InputArtifacts:
                 - Name: SCCheckoutArtifact
+                - Name: Once4AccountOutputsArtifact
               OutputArtifacts:
                 - Name: EnanchedParamsArtifact
-              RunOrder: 3
-            # Save infrastructure template fragment for inclusion from root template
-            - Name: SaveToS3_withMoreParams
+              RunOrder: 2
+            # Only for debug purpose
+            - Name: Save_enached_parameters_to_S3
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -274,11 +287,9 @@ Resources:
                 BucketName: !Ref TemplateBucket
               InputArtifacts:
                 - Name: EnanchedParamsArtifact
-              RunOrder: 4
-        # Deploy infrastructure to dev account
-        - Name: Deploy_Infra_to_DEV
-          Actions:
-            - Name: Deploy_CFN
+              RunOrder: 3
+            # Deploy infrastructure to dev
+            - Name: Deploy_infrastructure_CFN
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -289,7 +300,12 @@ Resources:
                 StackName: !Sub ${ProjectName}-infra-dev
                 Capabilities: CAPABILITY_NAMED_IAM
                 TemplatePath: !Sub EnanchedParamsArtifact::${InfraRepoSubdir}/pn-infra.yaml
-                TemplateConfiguration: !Sub EnanchedParamsArtifact::${InfraRepoSubdir}/${ProjectName}-dev-enanched-cfg.json
+                TemplateConfiguration: !Sub 'EnanchedParamsArtifact::${InfraRepoSubdir}/pn-infra-dev-cfg.json.enanched' 
+                ParameterOverrides: !Sub '{
+                    "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                    "ProjectName": "${ProjectName}"
+                  }'
+                OutputFileName: InfraOutputs.json
                 RoleArn:
                   Fn::If:
                     - ActivateCrossAccountRoles
@@ -297,7 +313,73 @@ Resources:
                     - !Ref AWS::NoValue
               InputArtifacts:
                 - Name: EnanchedParamsArtifact
-              RunOrder: 1
+              OutputArtifacts:
+                - Name: InfraOutputsArtifact
+              RunOrder: 4
+              RoleArn:
+                Fn::If:
+                  - ActivateCrossAccountRoles
+                  - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                  - !Ref AWS::NoValue
+            # Merge dev account global parameters to infrastructure parameters from filesystem
+            - Name: Enrich_ipc_parameters
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref EnrichCfnParametersCodeBuildProject
+                PrimarySource: SCCheckoutArtifact
+                EnvironmentVariables: !Sub '[
+                    {"name":"TemplateFilePath", "value":"${InfraRepoSubdir}/pn-ipc.yaml", "type":"PLAINTEXT"},
+                    {"name":"ParamFilePath", "value":"${InfraRepoSubdir}/pn-ipc-dev-cfg.json", "type":"PLAINTEXT"},
+                    {"name":"PreviousOutputFileArtifactAndPath", "value":"InfraOutputsArtifact/InfraOutputs.json", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: SCCheckoutArtifact
+                - Name: InfraOutputsArtifact
+              OutputArtifacts:
+                - Name: EnanchedParamsArtifact2
+              RunOrder: 5
+            # Only for debug purpose
+            - Name: Save_enached_parameters_to_S3_bis
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: S3
+              Configuration:
+                Extract: true
+                BucketName: !Ref TemplateBucket
+              InputArtifacts:
+                - Name: EnanchedParamsArtifact2
+              RunOrder: 6
+            # Deploy infrastructure to dev
+            - Name: Deploy_ipc_CFN
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub ${ProjectName}-ipc-dev
+                Capabilities: CAPABILITY_NAMED_IAM
+                TemplatePath: !Sub EnanchedParamsArtifact2::${InfraRepoSubdir}/pn-ipc.yaml
+                TemplateConfiguration: !Sub 'EnanchedParamsArtifact2::${InfraRepoSubdir}/pn-ipc-dev-cfg.json.enanched' 
+                ParameterOverrides: !Sub '{
+                    "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                    "ProjectName": "${ProjectName}"
+                  }'
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                    - !Ref AWS::NoValue
+              InputArtifacts:
+                - Name: EnanchedParamsArtifact2
+              RunOrder: 7
               RoleArn:
                 Fn::If:
                   - ActivateCrossAccountRoles
@@ -319,8 +401,12 @@ Resources:
                   ActionMode: CHANGE_SET_REPLACE
                   StackName: !Sub ${ProjectName}-infra-uat
                   Capabilities: CAPABILITY_NAMED_IAM
-                  TemplatePath: !Sub EnanchedParamsArtifact::${InfraRepoSubdir}/pn-infra.yaml
-                  TemplateConfiguration: !Sub EnanchedParamsArtifact::${InfraRepoSubdir}/${ProjectName}-uat-enanched-cfg.json
+                  TemplatePath: !Sub SCCheckoutArtifact::${InfraRepoSubdir}/pn-infra.yaml
+                  TemplateConfiguration: !Sub SCCheckoutArtifact::${InfraRepoSubdir}/${ProjectName}-uat-cfg.json
+                  ParameterOverrides: !Sub '{
+                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                      "ProjectName":"${ProjectName}"
+                    }'
                   ChangeSetName: !Sub ${ProjectName}-infra-uat-changeset
                   RoleArn:
                     Fn::If:
@@ -455,22 +541,28 @@ Resources:
         BuildSpec: |
           version: 0.2
           phases:
+            pre_build:
+              commands:
+                - apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CC86BB64
+                - add-apt-repository ppa:rmescandon/yq
+                - apt-get update
+                - apt-get install -y yq=4.16.2
             build:
               commands:
-                - jqExpr="' .Parameters.ProjectName=\"${ProjectName}\" | .Parameters.TemplateBucketBaseUrl=\"${TemplateBucketBaseUrl}\" '"
-                - echo $jqExpr
-                - cat runtime-infra-new/${ProjectName}-dev-cfg.json | eval jq $jqExpr \
-                      > runtime-infra-new/${ProjectName}-dev-enanched-cfg.json
-                - | 
-                  if ( [ -e runtime-infra-new/${ProjectName}-uat-cfg.json ] ) then 
-                    cat runtime-infra-new/${ProjectName}-uat-cfg.json | eval jq $jqExpr \
-                      > runtime-infra-new/${ProjectName}-uat-enanched-cfg.json
-                  fi
+                - echo "# Infrastructure outputs"
+                - PreviousOutputFilePath=$( eval echo "\$CODEBUILD_SRC_DIR_${PreviousOutputFileArtifactAndPath}" )
+                - cat $PreviousOutputFilePath
+                - echo ""
+                - echo "# Keep parameters"
+                - "keepKeys=$( yq eval '.Parameters | keys' $TemplateFilePath | sed -e 's/#.*//' | sed -e '/^ *$/d' | sed -e 's/^. //g' | tr '\n' ',' | sed -e 's/,$//' )"
+                - echo "$keepKeys"
+                - echo ""
+                - echo "Merge all parameters"
+                - "jqMergeExpr='{ \"Parameters\": .[0] } * .[1]'"
                 - |
-                  if ( [ -e runtime-infra-new/${ProjectName}-prod-cfg.json ] ) then
-                    cat runtime-infra-new/${ProjectName}-prod-cfg.json | eval jq $jqExpr \
-                      > runtime-infra-new/${ProjectName}-prod-enanched-cfg.json
-                  fi
+                    jq -s "$jqMergeExpr" ${PreviousOutputFilePath} ${ParamFilePath} | \
+                        jq '[.Parameters] ' | jq " map({ $keepKeys }) | { \"Parameters\": .[0] } " |
+                        tee ${ParamFilePath}.enanched
           artifacts:
             files:
               - '**/*'
@@ -479,12 +571,8 @@ Resources:
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
-        Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
-        EnvironmentVariables:
-          - Name: ProjectName
-            Value: !Ref ProjectName
-          - Name: TemplateBucketBaseUrl
-            Value: !Sub 'https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}'
+        Image: "aws/codebuild/standard:5.0"
+        
   
   EnrichParamsCodeBuildRole:
     Type: AWS::IAM::Role
