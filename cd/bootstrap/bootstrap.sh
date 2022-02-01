@@ -3,7 +3,11 @@
 # N.B: per aggiungere o rimuovere un ambiente dev/uat/prod bisogna rimuovere la pipeline e ricrearla
 # la pipeline la prima volta fallisce per questione di diritti
 
+# TODO: notifiche nelle pipeline
 # TODO: rimuovere CodeStarGithubConnectionArn2
+
+# TODO: documentare parametri obbligatori ProjectName, TemplateBucketBaseUrl
+
 
 ProjectName="pn"
 GithubRepoName="pagopa/pn-infra"
@@ -12,9 +16,29 @@ InfraRepoSubdir="runtime-infra-new"
 CodeStarGithubConnectionArn="arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
 CodeStarGithubConnectionArn2="arn:aws:codestar-connections:eu-west-3:911845998067:connection/03777403-e8c7-46ec-9d0b-9a6bf2c115f9"
 
-MicroserviceRepoName=
-MicroserviceBranchName=main
-MicroserviceImageNameAndTag="api-first-springboot:latest"
+#CiCdProfile=$1
+#CiCdRegion=$2
+#DevProfile=$3
+#DevRegion=$4 # Ignored, reserved for future use
+#UatProfile="$DevProfile"
+#UatRegion="$DevRegion"
+#UatAccount="$DevAccount"
+
+#ProdProfile="$DevProfile"
+#ProdRegion="$DevRegion"
+#ProdAccount="$DevAccount"
+
+
+MicroserviceName1="example1"
+MicroserviceRepoName1="marco-vit-pagopa/api-first-springboot"
+MicroserviceBranchName1=main
+MicroserviceImageNameAndTag1="api-first-springboot:latest"
+
+MicroserviceName2="example2"
+MicroserviceRepoName2="marco-vit-pagopa/api-first-springboot"
+MicroserviceBranchName2="feature/2"
+MicroserviceImageNameAndTag2="api-first-springboot-f2:latest"
+
 
 
 
@@ -178,15 +202,17 @@ deployStackAndUpdateCrossAccountCondition \
         ProdAccount="$ProdAccount"
 
 
-echo "########## Deploy MICROSERVICE pipeline ##########"
+echo ""
+echo ""
+echo "########## Deploy MICROSERVICE ${MicroserviceName1} pipeline ##########"
 deployStackAndUpdateCrossAccountCondition \
   aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
-      --stack-name "${ProjectName}-infra-pipeline" \
+      --stack-name "${ProjectName}-microsvc-${MicroserviceName1}-pipeline" \
       --template-file ${scriptDir}/cfn-templates/cicd-pipe-70-microsvc_pipeline.yaml \
       --capabilities CAPABILITY_NAMED_IAM \
       --parameter-overrides \
-        CodeStarGithubConnectionArn="$CodeStarGithubConnectionArn" \
-        CodeStarGithubConnectionArn2="$CodeStarGithubConnectionArn2" \
+        CodeStarGithubConnectionArnInfra="$CodeStarGithubConnectionArn" \
+        CodeStarGithubConnectionArnMicro="$CodeStarGithubConnectionArn2" \
         CMKARN=$CMKArn \
         ProjectName="$ProjectName" \
         InfraRepoName="$GithubRepoName" \
@@ -195,7 +221,33 @@ deployStackAndUpdateCrossAccountCondition \
         DevAccount="$DevAccount" \
         UatAccount="$UatAccount" \
         ProdAccount="$ProdAccount" \
-        MicroserviceRepoName="${MicroserviceRepoName}" \
-        MicroserviceBranchName="${MicroserviceBranchName}" \
-        MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag}"
+        MicroserviceName="${MicroserviceName1}" \
+        MicroserviceRepoName="${MicroserviceRepoName1}" \
+        MicroserviceBranchName="${MicroserviceBranchName1}" \
+        MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag1}"
+
+
+echo ""
+echo ""
+echo "########## Deploy MICROSERVICE ${MicroserviceName2} pipeline ##########"
+deployStackAndUpdateCrossAccountCondition \
+  aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
+      --stack-name "${ProjectName}-microsvc-${MicroserviceName2}-pipeline" \
+      --template-file ${scriptDir}/cfn-templates/cicd-pipe-70-microsvc_pipeline.yaml \
+      --capabilities CAPABILITY_NAMED_IAM \
+      --parameter-overrides \
+        CodeStarGithubConnectionArnInfra="$CodeStarGithubConnectionArn" \
+        CodeStarGithubConnectionArnMicro="$CodeStarGithubConnectionArn2" \
+        CMKARN=$CMKArn \
+        ProjectName="$ProjectName" \
+        InfraRepoName="$GithubRepoName" \
+        InfraBranchName="$GithubBranchName" \
+        InfraRepoSubdir="$InfraRepoSubdir" \
+        DevAccount="$DevAccount" \
+        UatAccount="$UatAccount" \
+        ProdAccount="$ProdAccount" \
+        MicroserviceName="${MicroserviceName2}" \
+        MicroserviceRepoName="${MicroserviceRepoName2}" \
+        MicroserviceBranchName="${MicroserviceBranchName2}" \
+        MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag2}"
 

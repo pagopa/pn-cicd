@@ -3,10 +3,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Continuos Delivery pipeline for infrastructure deployment'
 Parameters:
-  CodeStarGithubConnectionArn:
+  CodeStarGithubConnectionArnInfra:
     Description: CodeStar connection for github infrastructure project
     Type: String
-  CodeStarGithubConnectionArn2:
+  CodeStarGithubConnectionArnMicro:
     Description: CodeStar connection for github microservice project
     Type: String
   CMKARN:
@@ -17,6 +17,9 @@ Parameters:
     Description: Usually "pn", can be changed for feature branch deployment
     Type: String
   
+  MicroserviceName:
+    Description: Logical name of the microservice
+    Type: String
   MicroserviceRepoName:
     Description: Name of the Github Repository containing microservice templates
     Type: String
@@ -32,6 +35,10 @@ Parameters:
   InfraBranchName:
     Description: Name of the Github Repository branch containing infrastructure templates
     Type: String
+  InfraRepoSubdir:
+    Description: Path of the Github Repository containing infrastructure cloudformation templates
+    Type: String
+    Default: runtime-infra
   
   DevAccount:
     Description: AWS AccountNumber for Dev environment
@@ -61,7 +68,7 @@ Resources:
   GithubAccessRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ProjectName}-GithubAccessRole
+      RoleName: !Sub ${ProjectName}-GithubAccessRole-${MicroserviceName}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -77,7 +84,7 @@ Resources:
   GithubAccessPolicy:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: !Sub ${ProjectName}-GithubAccessPolicy
+      PolicyName: !Sub ${ProjectName}-GithubAccessPolicy-${MicroserviceName}
       Roles:
         - !Ref GithubAccessRole
       PolicyDocument:
@@ -99,7 +106,9 @@ Resources:
               - codestar-connections:ListTagsForResource
               - codestar-connections:UseConnection
               - codestar-connections:GetConnection
-            Resource: !Ref CodeStarGithubConnectionArn
+            Resource: 
+              - !Ref CodeStarGithubConnectionArnInfra
+              - !Ref CodeStarGithubConnectionArnMicro
       
 
   # PIPELINE PERMISSION
@@ -107,7 +116,7 @@ Resources:
   PipeLineRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ProjectName}-CdPipelineRole
+      RoleName: !Sub ${ProjectName}-${MicroserviceName}-PipelineRole
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -116,6 +125,7 @@ Resources:
             Principal:
               Service:
                 - codepipeline.amazonaws.com
+                - events.amazonaws.com
             Action:
               - sts:AssumeRole
       Path: /
@@ -123,7 +133,7 @@ Resources:
   PipelinePolicy:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: !Sub ${ProjectName}-CdPipelinePolicy
+      PolicyName: !Sub ${ProjectName}-${MicroserviceName}-CdPipelinePolicy
       Roles:
         - !Ref PipeLineRole
       PolicyDocument:
@@ -188,11 +198,11 @@ Resources:
   
   # PIPELINE DEFINITION
   #######################
-  InfraPipeline:
+  MicroservicePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipeLineRole.Arn
-      Name: !Sub '${ProjectName}-InfraPipeline'
+      Name: !Sub '${ProjectName}-${MicroserviceName}-Pipeline'
       Stages:
         # Download sources: image and files for CFN templates
         - Name: Get_Sources
@@ -219,7 +229,8 @@ Resources:
                 Version: 1
                 Provider: CodeStarSourceConnection
               Configuration:
-                ConnectionArn: !Ref CodeStarGithubConnectionArn
+                DetectChanges: false
+                ConnectionArn: !Ref CodeStarGithubConnectionArnInfra
                 FullRepositoryId: !Ref InfraRepoName
                 BranchName: !Ref InfraBranchName
               RoleArn:
@@ -228,7 +239,7 @@ Resources:
                   - !Sub ${GithubAccessRole.Arn}
                   - !Ref AWS::NoValue
               OutputArtifacts:
-                - Name: ImnfraSCCheckoutArtifact
+                - Name: InfraSCCheckoutArtifact
               RunOrder: 1
             # Checkout microservice CFN templates from Github
             - Name: Microservice_form_Github
@@ -238,7 +249,8 @@ Resources:
                 Version: 1
                 Provider: CodeStarSourceConnection
               Configuration:
-                ConnectionArn: !Ref CodeStarGithubConnectionArn2
+                DetectChanges: false
+                ConnectionArn: !Ref CodeStarGithubConnectionArnMicro
                 FullRepositoryId: !Ref MicroserviceRepoName
                 BranchName: !Ref MicroserviceBranchName
               RoleArn:
@@ -249,12 +261,140 @@ Resources:
               OutputArtifacts:
                 - Name: MicrosvcSCCheckoutArtifact
               RunOrder: 1
+        # Copy reusable templates fragment to bucket for later inclusion
+        - Name: Save_template_fragments
+          Actions:
+            # Save infrastructure template fragment for inclusion from once4account template
+            - Name: Save_templates_to_S3
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: S3
+              Configuration:
+                Extract: true
+                BucketName: !Ref TemplateBucket
+              InputArtifacts:
+                - Name: InfraSCCheckoutArtifact
+              RunOrder: 1
+        ### Deploy to dev account ###
+        #############################
+        - Name: Prepare_dev_account
+          Actions:
+            # Deploy microservice storage on dev
+            - Name: Deploy_dev_storage_CFN
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub '${ProjectName}-${MicroserviceName}-storage-dev'
+                Capabilities: CAPABILITY_NAMED_IAM
+                TemplatePath: MicrosvcSCCheckoutArtifact::scripts/aws/cfn/storage.yml
+                ParameterOverrides: !Sub '{
+                    "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                    "ProjectName": "${ProjectName}"
+                  }'
+                OutputFileName: StorageOutputs.json
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                    - !Ref AWS::NoValue
+              InputArtifacts:
+                - Name: MicrosvcSCCheckoutArtifact
+              OutputArtifacts:
+                - Name: DevMicroserviceStorageOutputsArtifact
+              RunOrder: 1
+              RoleArn:
+                Fn::If:
+                  - ActivateCrossAccountRoles
+                  - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                  - !Ref AWS::NoValue
+            # collect parameters for microservice dev
+            - Name: Enrich_dev_microservice_parameters
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref EnrichCfnParametersCodeBuildProject
+                PrimarySource: MicrosvcSCCheckoutArtifact
+                EnvironmentVariables: !Sub '[
+                    {"name":"TemplateFilePath", "value":"scripts/aws/cfn/microservice.yml", "type":"PLAINTEXT"},
+                    {"name":"ParamFilePath", "value":"scripts/aws/cfn/microservice-dev-cfg.json", "type":"PLAINTEXT"},
+                    {"name":"PreviousOutputFileArtifactAndPath", "value":"DevMicroserviceStorageOutputsArtifact/StorageOutputs.json", "type":"PLAINTEXT"},
+                    {"name":"ACCOUNT_ROLE", "value":"arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole", "type":"PLAINTEXT"},
+                    {"name":"StackName", "value":"${ProjectName}-ipc-dev", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: MicrosvcSCCheckoutArtifact
+                - Name: DevMicroserviceStorageOutputsArtifact
+              OutputArtifacts:
+                - Name: DevEnanchedParamsArtifact
+              RunOrder: 2
+            # Deploy microservice on dev
+            - Name: Deploy_dev_microsvc_CFN
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub '${ProjectName}-${MicroserviceName}-microsvc-dev'
+                Capabilities: CAPABILITY_NAMED_IAM
+                TemplatePath: DevEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
+                TemplateConfiguration: !Sub 'DevEnanchedParamsArtifact::scripts/aws/cfn/microservice-dev-cfg.json.enanched' 
+                ParameterOverrides: !Sub '{
+                    "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                    "ProjectName": "${ProjectName}",
+                    "ContainerImageUri": "#{MicrosvcImageVars.ImageURI}"
+                  }'
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                    - !Ref AWS::NoValue
+              InputArtifacts:
+                - Name: DevEnanchedParamsArtifact
+              RunOrder: 3
+              RoleArn:
+                Fn::If:
+                  - ActivateCrossAccountRoles
+                  - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                  - !Ref AWS::NoValue
       ArtifactStore:
         Type: S3
         Location: !Ref ArtifactBucket
         EncryptionKey:
           Id: !Ref CMKARN
           Type: KMS
+
+  # - Pipeline ECR Activation Event Rule
+  EcrTriggeringEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "EventRule"
+      EventPattern: 
+        source: ["aws.ecr"]
+        detail:
+          action-type: ["PUSH"]
+          repository-name: 
+            - !Select [ 0, !Split [ ":", !Ref MicroserviceImageNameAndTag ] ]
+          image-tag:
+            - !Select [ 1, !Split [ ":", !Ref MicroserviceImageNameAndTag ] ]
+          result: ["SUCCESS"]
+        detail-type: ["ECR Image Action"]
+      RoleArn: !GetAtt [PipeLineRole,Arn]
+      Targets:
+        - Arn: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectName}-${MicroserviceName}-Pipeline'
+          Id: "MicroservicePipeline"
+          RoleArn: !GetAtt [PipeLineRole,Arn]
+
 
   # PIPELINE ARTIFACT BUCKET AND POLICY 
   ########################################
@@ -326,29 +466,42 @@ Resources:
   EnrichCfnParametersCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${ProjectName}-EnrichParamsCodeBuildProject
+      Name: !Sub ${ProjectName}-${MicroserviceName}-EnrichParamsCodeBuildProject
       ServiceRole: !GetAtt EnrichParamsCodeBuildRole.Arn
       Source: 
         Type: CODEPIPELINE
         BuildSpec: |
           version: 0.2
           phases:
+            pre_build:
+              commands:
+                - apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CC86BB64
+                - add-apt-repository ppa:rmescandon/yq
+                - apt-get update
+                - apt-get install -y yq=4.16.2
             build:
               commands:
-                - jqExpr="' .Parameters.ProjectName=\"${ProjectName}\" | .Parameters.TemplateBucketBaseUrl=\"${TemplateBucketBaseUrl}\" '"
-                - echo $jqExpr
-                - cat runtime-infra-new/${ProjectName}-dev-cfg.json | eval jq $jqExpr \
-                      > runtime-infra-new/${ProjectName}-dev-enanched-cfg.json
-                - | 
-                  if ( [ -e runtime-infra-new/${ProjectName}-uat-cfg.json ] ) then 
-                    cat runtime-infra-new/${ProjectName}-uat-cfg.json | eval jq $jqExpr \
-                      > runtime-infra-new/${ProjectName}-uat-enanched-cfg.json
-                  fi
+                - "export JQ_EXP='{ \"AWS_ACCESS_KEY_ID\": .Credentials.AccessKeyId, \"AWS_SECRET_ACCESS_KEY\": .Credentials.SecretAccessKey, \"AWS_SESSION_TOKEN\": .Credentials.SessionToken } | to_entries | map(\"export \" + .key + \"=\" + .value) | .[]'"
+                - "$( aws sts assume-role --role-arn $ACCOUNT_ROLE --role-session-name codebuildReadStacks | jq -r \"$JQ_EXP\" )"
+                - echo "Infrastructure parameters"
                 - |
-                  if ( [ -e runtime-infra-new/${ProjectName}-prod-cfg.json ] ) then
-                    cat runtime-infra-new/${ProjectName}-prod-cfg.json | eval jq $jqExpr \
-                      > runtime-infra-new/${ProjectName}-prod-enanched-cfg.json
-                  fi
+                    aws cloudformation describe-stacks --stack-name $StackName | \
+                        jq '.Stacks[0].Outputs | reduce .[] as $i ({}; .[$i.OutputKey] = $i.OutputValue) ' | \
+                        tee infrastructure_parameters.json
+                - echo "# Infrastructure outputs"
+                - PreviousOutputFilePath=$( eval echo "\$CODEBUILD_SRC_DIR_${PreviousOutputFileArtifactAndPath}" )
+                - cat $PreviousOutputFilePath
+                - echo ""
+                - echo "# Keep parameters"
+                - "keepKeys=$( yq eval '.Parameters | keys' $TemplateFilePath | sed -e 's/#.*//' | sed -e '/^ *$/d' | sed -e 's/^. //g' | tr '\n' ',' | sed -e 's/,$//' )"
+                - echo "$keepKeys"
+                - echo ""
+                - echo "Merge all parameters"
+                - "jqMergeExpr='.[0] * { \"Parameters\": .[1] } * { \"Parameters\": .[2] }'"
+                - |
+                    jq -s "$jqMergeExpr" ${ParamFilePath} ${PreviousOutputFilePath} infrastructure_parameters.json | \
+                        jq '[.Parameters] ' | jq " map({ $keepKeys }) | { \"Parameters\": .[0] } " |
+                        tee ${ParamFilePath}.enanched
           artifacts:
             files:
               - '**/*'
@@ -357,17 +510,12 @@ Resources:
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
-        Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
-        EnvironmentVariables:
-          - Name: ProjectName
-            Value: !Ref ProjectName
-          - Name: TemplateBucketBaseUrl
-            Value: !Sub 'https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}'
+        Image: "aws/codebuild/standard:5.0"
   
   EnrichParamsCodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ProjectName}-EnrichParamsCodeBuildRole
+      RoleName: !Sub ${ProjectName}-${MicroserviceName}-EnrichParamsCodeBuildRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -382,7 +530,7 @@ Resources:
   EnrichParamsCodeBuildPolicy:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: !Sub ${ProjectName}-EnrichParamsCodeBuildPolicy
+      PolicyName: !Sub ${ProjectName}-${MicroserviceName}-EnrichParamsCodeBuildPolicy
       Roles:
         - !Ref EnrichParamsCodeBuildRole
       PolicyDocument:
@@ -396,6 +544,7 @@ Resources:
               - logs:PutLogEvents
               - codebuild:BatchGetBuilds
               - codebuild:StartBuild
+              - "*"
             Resource:
               - "*"
           -
