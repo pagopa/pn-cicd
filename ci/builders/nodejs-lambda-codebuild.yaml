@@ -4,7 +4,6 @@ Parameters:
   GitHubProjectName:
     Description: Name of pagopa project name
     Type: String
-    Default: pn-infra
   BaseDir:
     Description: base directory of the lambda project
     Type: String
@@ -20,7 +19,7 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${GitHubProjectName}-CodeBuild"
+      Name: !Sub "${GitHubProjectName}-${BaseDir}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Artifacts:
         Type: NO_ARTIFACTS
@@ -60,12 +59,11 @@ Resources:
             files:
               - build-output/**/*
         Artifacts:
-          Location: pn-develop-build-artifact-bucket
+          Location: !Ref 'CiArtifactBucket'
           Name: /
-          NamespaceType: BUILD_ID
           OverrideArtifactName: false
           Packaging: ZIP
-          Path: pn-develop-apikey-authorizer-lambda
+          Path: !Ref 'BaseDir'
           Type: S3
       TimeoutInMinutes: 10
       Triggers:
