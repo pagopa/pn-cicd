@@ -28,7 +28,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
       TimeoutInMinutes: 5
 
-  WebappsTemplatesBucket:
+  CiArtifactBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
@@ -108,6 +108,6 @@ Resources:
         GitHubProjectName: 'pn-webapp'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
-        WebappsTemplatesBucket: !Ref 'WebappsTemplatesBucket'
+        CiArtifactBucket: !Ref 'CiArtifactBucket'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
       TimeoutInMinutes: 5
