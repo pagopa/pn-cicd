@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CodeBuild for maven docker project
+Parameters:
+  GitHubProjectName:
+    Description: Name of pagopa project name
+    Type: String
+    Default: pn-infra
+  BaseDir:
+    Description: base directory of the lambda project
+    Type: String
+  CiArtifactBucket:
+    Description: Ci Artifact bucket name
+    Type: String
+  NotificationSNSTopic:
+    Type: String
+    Default: 'none'
+    Description: Topic for build and pipeline notification
+
+Resources:
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${GitHubProjectName}-CodeBuild"
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+        EnvironmentVariables:
+          - Name: GITHUB_PRJ_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${GitHubProjectName}"
+          - Name: GIT_DEFAULT_BRANCH
+            Type: PLAINTEXT
+            Value: develop
+          - Name: AWS_DEFAULT_REGION
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::Region}"
+          - Name: AWS_ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::AccountId}"
+      Source:
+        Type: GITHUB
+        Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - echo Build started on `date`
+                - npm install
+            post-build:
+              commands:
+                - mkdir build-output
+                - cp *.js node_modules/ build-output 
+         artifacts:
+            files:
+              - build-output/**/*
+        Artifacts:
+          Location: pn-develop-build-artifact-bucket
+          Name: /
+          NamespaceType: BUILD_ID
+          OverrideArtifactName: false
+          Packaging: ZIP
+          Path: pn-develop-apikey-authorizer-lambda
+          Type: S3
+      TimeoutInMinutes: 10
+      Triggers:
+        Webhook: true
+        FilterGroups:
+          - - Type: EVENT
+              Pattern: PUSH, PULL_REQUEST_MERGED
+            - Type: HEAD_REF
+              Pattern: ^refs/heads/(main|develop)$
+#          - - Type: EVENT
+#              Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+#            - Type: BASE_REF
+#              Pattern: ^refs/heads/(main|develop)$
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeBuildPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: CodeBuildReportGroup
+                Effect: Allow
+                Action:
+                  - codebuild:CreateReportGroup
+                  - codebuild:CreateReport
+                  - codebuild:UpdateReport
+                  - codebuild:BatchPutTestCases
+                  - codebuild:BatchPutCodeCoverages
+                Resource:
+                  - !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*'
+              - Sid: CloudWatchLogsPolicy
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - "*"
+              - Sid: BearerTokenPolicy
+                Effect: Allow
+                Action:
+                  - sts:GetServiceBearerToken
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    'sts:AWSServiceName': codeartifact.amazonaws.com
+              - Sid: GitHubSecret
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: "*"
+
+  CodeBuildNotifications:
+    Type: AWS::CodeStarNotifications::NotificationRule
+    Properties:
+      DetailType: FULL
+      Name: !Sub '${GitHubProjectName}-CI'
+      EventTypeIds:
+        - codebuild-project-build-state-failed
+      Resource: !Sub '${CodeBuildProject.Arn}'
+      Targets:
+        - TargetAddress: !Ref 'NotificationSNSTopic'
+          TargetType: SNS
+
