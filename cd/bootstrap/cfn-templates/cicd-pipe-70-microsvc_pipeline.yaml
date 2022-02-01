@@ -1,0 +1,421 @@
+# TODO: multiregion CFN deploy 
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Continuos Delivery pipeline for infrastructure deployment'
+Parameters:
+  CodeStarGithubConnectionArn:
+    Description: CodeStar connection for github infrastructure project
+    Type: String
+  CodeStarGithubConnectionArn2:
+    Description: CodeStar connection for github microservice project
+    Type: String
+  CMKARN:
+    Description: ARN of the KMS CMK creates in Tools account
+    Type: String
+  
+  ProjectName:
+    Description: Usually "pn", can be changed for feature branch deployment
+    Type: String
+  
+  MicroserviceRepoName:
+    Description: Name of the Github Repository containing microservice templates
+    Type: String
+  MicroserviceBranchName:
+    Description: Name of the Github Repository branch containing microservice templates
+    Type: String
+  MicroserviceImageNameAndTag:
+    Description: Container <image_name>:<tag> for microservice
+    Type: String
+  InfraRepoName:
+    Description: Name of the Github Repository containing infrastructure templates
+    Type: String
+  InfraBranchName:
+    Description: Name of the Github Repository branch containing infrastructure templates
+    Type: String
+  
+  DevAccount:
+    Description: AWS AccountNumber for Dev environment
+    Type: Number
+  UatAccount:
+    Description: AWS AccountNumber for Uat environment
+    Type: Number
+  ProdAccount:
+    Description: AWS AccountNumber for Prod environment
+    Type: Number
+  
+  CrossAccountCondition:
+    Description: Conditionally creates the resources for cross account access
+    Type: String
+    Default: false
+
+Conditions:
+  ActivateCrossAccountRoles: !Equals [ !Ref CrossAccountCondition, true ]
+  HasUatStage: !Not [ !Equals [ !Ref DevAccount, !Ref UatAccount ] ]
+
+Resources:
+
+
+  # GITHUB ACCESS
+  ###############
+
+  GithubAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-GithubAccessRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub ${AWS::AccountId}
+            Action:
+              - sts:AssumeRole
+      Path: /
+
+  GithubAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-GithubAccessPolicy
+      Roles:
+        - !Ref GithubAccessRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:*
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - kms:*
+            Resource: !Ref CMKARN
+          -
+            Effect: Allow
+            Action:
+              - codestar-connections:ListTagsForResource
+              - codestar-connections:UseConnection
+              - codestar-connections:GetConnection
+            Resource: !Ref CodeStarGithubConnectionArn
+      
+
+  # PIPELINE PERMISSION
+  ###############
+  PipeLineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-CdPipelineRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+  
+  PipelinePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-CdPipelinePolicy
+      Roles:
+        - !Ref PipeLineRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - codepipeline:*
+              - iam:ListRoles
+              - cloudformation:Describe*
+              - cloudFormation:List*
+              - codecommit:List*
+              - codecommit:Get*
+              - codecommit:GitPull
+              - codecommit:UploadArchive
+              - codecommit:CancelUploadArchive
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              - cloudformation:CreateStack
+              - cloudformation:DeleteStack
+              - cloudformation:DescribeStacks
+              - cloudformation:UpdateStack
+              - cloudformation:CreateChangeSet
+              - cloudformation:DeleteChangeSet
+              - cloudformation:DescribeChangeSet
+              - cloudformation:ExecuteChangeSet
+              - cloudformation:SetStackPolicy
+              - cloudformation:ValidateTemplate
+              - iam:PassRole
+              - s3:ListAllMyBuckets
+              - s3:GetBucketLocation
+              - "ecr:*"
+              - "*"
+            Resource:
+              - "*"
+          -
+            Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: !Ref CMKARN
+          -
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetBucketPolicy
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - !Sub arn:aws:s3:::${ArtifactBucket}/*
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - !Sub ${GithubAccessRole.Arn}
+              - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+              - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+              - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CdPipelineRole
+
+  
+  # PIPELINE DEFINITION
+  #######################
+  InfraPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipeLineRole.Arn
+      Name: !Sub '${ProjectName}-InfraPipeline'
+      Stages:
+        # Download sources: image and files for CFN templates
+        - Name: Get_Sources
+          Actions:
+            # Get microservice image digest
+            - Name: Microservice_image_source
+              ActionTypeId:
+                Version: '1'
+                Owner: AWS
+                Category: Source
+                Provider: ECR
+              RunOrder: 1
+              Configuration:
+                RepositoryName: !Select [ 0, !Split [ ":", !Ref MicroserviceImageNameAndTag ] ]
+                ImageTag: !Select [ 1, !Split [ ":", !Ref MicroserviceImageNameAndTag ] ]
+              OutputArtifacts:
+                - Name: MicrosvcImageArtifact
+              Namespace: 'MicrosvcImageVars'
+            # Checkout infrastructures CFN templates from Github
+            - Name: Infra_form_Github
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeStarSourceConnection
+              Configuration:
+                ConnectionArn: !Ref CodeStarGithubConnectionArn
+                FullRepositoryId: !Ref InfraRepoName
+                BranchName: !Ref InfraBranchName
+              RoleArn:
+                Fn::If:
+                  - ActivateCrossAccountRoles
+                  - !Sub ${GithubAccessRole.Arn}
+                  - !Ref AWS::NoValue
+              OutputArtifacts:
+                - Name: ImnfraSCCheckoutArtifact
+              RunOrder: 1
+            # Checkout microservice CFN templates from Github
+            - Name: Microservice_form_Github
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeStarSourceConnection
+              Configuration:
+                ConnectionArn: !Ref CodeStarGithubConnectionArn2
+                FullRepositoryId: !Ref MicroserviceRepoName
+                BranchName: !Ref MicroserviceBranchName
+              RoleArn:
+                Fn::If:
+                  - ActivateCrossAccountRoles
+                  - !Sub ${GithubAccessRole.Arn}
+                  - !Ref AWS::NoValue
+              OutputArtifacts:
+                - Name: MicrosvcSCCheckoutArtifact
+              RunOrder: 1
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+        EncryptionKey:
+          Id: !Ref CMKARN
+          Type: KMS
+
+  # PIPELINE ARTIFACT BUCKET AND POLICY 
+  ########################################
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArtifactBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:*
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${ArtifactBucket}
+              - !Sub arn:aws:s3:::${ArtifactBucket}/*
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CdPipelineRole
+                - !GetAtt [PipeLineRole,Arn]
+                - !GetAtt [GithubAccessRole,Arn]
+
+  
+  # CFN TEMPLATE BUCKET AND POLICY 
+  ########################################
+  
+  TemplateBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    #Properties:
+    #  BucketName: !Sub ${ProjectName}-cd-templates-bucket
+
+  TemplateBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TemplateBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:*
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${TemplateBucket}
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CdPipelineRole
+                - !GetAtt [PipeLineRole,Arn]
+                - !GetAtt [GithubAccessRole,Arn]
+
+  
+  # CODEBUILD for Cloudformation Template parameters enrichement
+  ###################################################
+  EnrichCfnParametersCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-EnrichParamsCodeBuildProject
+      ServiceRole: !GetAtt EnrichParamsCodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - jqExpr="' .Parameters.ProjectName=\"${ProjectName}\" | .Parameters.TemplateBucketBaseUrl=\"${TemplateBucketBaseUrl}\" '"
+                - echo $jqExpr
+                - cat runtime-infra-new/${ProjectName}-dev-cfg.json | eval jq $jqExpr \
+                      > runtime-infra-new/${ProjectName}-dev-enanched-cfg.json
+                - | 
+                  if ( [ -e runtime-infra-new/${ProjectName}-uat-cfg.json ] ) then 
+                    cat runtime-infra-new/${ProjectName}-uat-cfg.json | eval jq $jqExpr \
+                      > runtime-infra-new/${ProjectName}-uat-enanched-cfg.json
+                  fi
+                - |
+                  if ( [ -e runtime-infra-new/${ProjectName}-prod-cfg.json ] ) then
+                    cat runtime-infra-new/${ProjectName}-prod-cfg.json | eval jq $jqExpr \
+                      > runtime-infra-new/${ProjectName}-prod-enanched-cfg.json
+                  fi
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+        EnvironmentVariables:
+          - Name: ProjectName
+            Value: !Ref ProjectName
+          - Name: TemplateBucketBaseUrl
+            Value: !Sub 'https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}'
+  
+  EnrichParamsCodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-EnrichParamsCodeBuildRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - 
+            Effect: Allow
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  
+  EnrichParamsCodeBuildPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-EnrichParamsCodeBuildPolicy
+      Roles:
+        - !Ref EnrichParamsCodeBuildRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+            Resource:
+              - "*"
+          -
+            Effect: Allow
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: !Ref CMKARN
+          -
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetBucketPolicy
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - !Sub arn:aws:s3:::${ArtifactBucket}/*
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+      
+  

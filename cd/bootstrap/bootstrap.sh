@@ -3,13 +3,20 @@
 # N.B: per aggiungere o rimuovere un ambiente dev/uat/prod bisogna rimuovere la pipeline e ricrearla
 # la pipeline la prima volta fallisce per questione di diritti
 
+# TODO: rimuovere CodeStarGithubConnectionArn2
 
 ProjectName="pn"
 GithubRepoName="pagopa/pn-infra"
 GithubBranchName="feature/PN-574"
 InfraRepoSubdir="runtime-infra-new"
 CodeStarGithubConnectionArn="arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
-   
+CodeStarGithubConnectionArn2="arn:aws:codestar-connections:eu-west-3:911845998067:connection/03777403-e8c7-46ec-9d0b-9a6bf2c115f9"
+
+MicroserviceRepoName=
+MicroserviceBranchName=main
+MicroserviceImageNameAndTag="api-first-springboot:latest"
+
+
 
 if ( [ $# -ne 4 -a $# -ne 6 -a $# -ne 8 ] ) then
   echo "This script create or renew a certificate for a server domain name"
@@ -168,13 +175,27 @@ deployStackAndUpdateCrossAccountCondition \
         InfraRepoSubdir="$InfraRepoSubdir" \
         DevAccount="$DevAccount" \
         UatAccount="$UatAccount" \
-        ProdAccount="$ProdAccount" 
+        ProdAccount="$ProdAccount"
 
 
-#aws cloudformation deploy --stack-name infra-pipeline-github-source --template-file CiCdAccount/infra_pipeline_github_source.yaml --parameter-overrides CMKARN=$CMKArn BetaAccount=$BetaAccount ProductionAccount=$ProdAccount  --capabilities CAPABILITY_NAMED_IAM --profile $CiCdProfile
-
-#echo "Adding Permissions to the Cross Accounts"
-
-#aws cloudformation deploy --stack-name infra-pipeline-github-source --template-file CiCdAccount/infra_pipeline_github_source.yaml --parameter-overrides CrossAccountCondition=true --capabilities CAPABILITY_NAMED_IAM --profile $CiCdProfile
-#aws cloudformation deploy --stack-name microservice-cd-ecr-source --template-file CiCdAccount/microservice_cd_ecr_source.yaml --parameter-overrides CrossAccountCondition=true --capabilities CAPABILITY_NAMED_IAM --profile $CiCdProfile
+echo "########## Deploy MICROSERVICE pipeline ##########"
+deployStackAndUpdateCrossAccountCondition \
+  aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
+      --stack-name "${ProjectName}-infra-pipeline" \
+      --template-file ${scriptDir}/cfn-templates/cicd-pipe-70-microsvc_pipeline.yaml \
+      --capabilities CAPABILITY_NAMED_IAM \
+      --parameter-overrides \
+        CodeStarGithubConnectionArn="$CodeStarGithubConnectionArn" \
+        CodeStarGithubConnectionArn2="$CodeStarGithubConnectionArn2" \
+        CMKARN=$CMKArn \
+        ProjectName="$ProjectName" \
+        InfraRepoName="$GithubRepoName" \
+        InfraBranchName="$GithubBranchName" \
+        InfraRepoSubdir="$InfraRepoSubdir" \
+        DevAccount="$DevAccount" \
+        UatAccount="$UatAccount" \
+        ProdAccount="$ProdAccount" \
+        MicroserviceRepoName="${MicroserviceRepoName}" \
+        MicroserviceBranchName="${MicroserviceBranchName}" \
+        MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag}"
 
