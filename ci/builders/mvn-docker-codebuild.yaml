@@ -27,7 +27,42 @@ Resources:
         ScanOnPush: true
       ImageTagMutability: MUTABLE
       RepositoryName: !Sub '${GitHubProjectName}'
-
+      RepositoryPolicyText: '{
+          "Version": "2008-10-17",
+          "Statement": [
+            {
+              "Sid": "Allow cicd",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::558518206506:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::946373734005:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            }
+          ]
+        }'
+  
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
