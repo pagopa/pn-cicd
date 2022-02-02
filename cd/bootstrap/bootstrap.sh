@@ -1,12 +1,9 @@
 #!/usr/bin/env bash -e
 
-# N.B: per aggiungere o rimuovere un ambiente dev/uat/prod bisogna rimuovere la pipeline e ricrearla
-# la pipeline la prima volta fallisce per questione di diritti
-
-# TODO: notifiche nelle pipeline
-# TODO: opsione per lanciare le pipeline dei microservizi alla fine della pipeline di infrastruttura 
-
-# TODO: documentare parametri obbligatori ProjectName, TemplateBucketBaseUrl, documentare passthrou
+# N.B: 
+# - This script do not remove CFN templates. You have to remove them manually when needed
+# - When you reconfigure a pipeline adding one environment (uat or prod) you have to 
+#   remove pipeline CFN stack manually before re-execute this script
 
 if ( [ $# -ne 3 -a $# -ne 4 -a $# -ne 5 ] ) then
   echo "This script create or renew a certificate for a server domain name"
