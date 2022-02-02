@@ -1,23 +1,26 @@
 # CD pipeline
 
-A continuos delivery "environment" pipeline is really structured in multiple pipelines:
-- One "Infrastructure" pipeline responsable of 
-  - networking and cluster resources and
-  - resources that enable communication between different microservices.
-- Multiple pipelines, one for each microservice, responsable of
-  - storage resources for each microservice and
-  - microservice execution resources and API exposition resources.
+A continuous delivery "environment" pipeline is really structured in multiple pipelines:
 
-## Initialize a Continuos Delivery environment
+- One __"Infrastructure" pipeline__ responsible for:
+  - networking and cluster resources 
+  - resources that enable communication between different microservices.
+
+- Multiple __Microservice pipeline__, one for each microservice, responsible for:
+  - storage resources
+  - microservice execution resources 
+  - API exposition resources
+
+## Initialize a Continuous Delivery environment
 
 Prepare a configuration file as described in the next section and use the 
-[boostrap.sh](boostrap/boostrap.sh) script.
+[boostrap.sh](bootstrap/bootstrap.sh) script.
 
-More informations about pipelines internals and how to structure infrastructure 
-and microservices templates are available [here](bootstrap).
-
+More information about pipelines internals and how to structure infrastructure 
+and microservices templates are available [here](bootstrap/README.md).
 
 ## Configuration file example with comments
+
 ```
 {
     "project-name": "test",
@@ -56,22 +59,23 @@ and microservices templates are available [here](bootstrap).
     ]
 }
 ```
-- **project-name**: only ascii letters and numbers, used to distinguis main branch from feature branch.
-- **infrastructure**: informations about infrastructure CFN template repository
-  - *repo-name*: the name of the repository
-  - *branch-name*: the branch to checkout
-  - *repo-subdir*: a repository subdirectory (usually runtime-template)
-  - *codestar-connection-arn*: AWS CodeStar connection to use for repository checkout
-- **accounts**:
-  - *cicd.region*: the region where to deploy the pipelines definitions
-  - *dev.region*: the region where to deploy development environment
-  - *uat.region*: the region where to deploy User Acceptance Test environment
-- **microservices**: an array of microservice pipelines definitions
-  - *name*: the logical name of microservice (only ascii letters and numbers)
-  - *repo-name*: the name of the repository
-  - *branch-name*: the branch to checkout
-  - *image-name-and-tag*: the ECR repository name and the image tag separated by a column (:)
-  - *codestar-connection-arn*: AWS CodeStar connection to use for microservice repository checkout.
+
+- __project-name__: only ascii letters and numbers. Usually "pn", can be pnNNN where NNN is the feature number
+- __infrastructure__: information about infrastructure CFN template repository
+  - _repo-name_: the name of the repository
+  - _branch-name_: the branch to checkout
+  - _repo-subdir_: a repository subdirectory (usually runtime-template)
+  - _codestar-connection-arn_: AWS CodeStar connection to use for repository checkout
+- __accounts__:
+  - _cicd.region_: the region where to deploy the pipelines definitions
+  - _dev.region_: the region where to deploy development environment
+  - _uat.region_: the region where to deploy User Acceptance Test environment
+- __microservices__: an array of microservice pipelines definitions
+  - _name_: the logical name of microservice (only ascii letters and numbers)
+  - _repo-name_: the name of the repository
+  - _branch-name_: the branch to checkout
+  - _image-name-and-tag_: the ECR repository name and the image tag separated by a column (:)
+  - _codestar-connection-arn_: AWS CodeStar connection to use for microservice repository checkout.
     Microservice pipelines checkout and use CFN templates for storage and runtime definition.
 
 
