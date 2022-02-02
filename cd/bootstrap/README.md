@@ -38,7 +38,7 @@ This script is read from the infrastructure git repository with path
 ```
 <base>/once4account/<env-name>.yaml
 ```
- - **Input**: only one mandatory parameter TemplateBucketBaseUrl containing the base path of 
+ - **Input**: only one mandatory parameter TemplateBucketBaseUrl containing the base URL of 
    infrastructure CFN fragments
  - **Output**: any output useful for next steps.
  - **Responsability**: configure global resources as API-Gateway log configuration and 
@@ -52,43 +52,66 @@ This script is read from the infrastructure git repository with path
  - **Input**: file, previous step and some mandatory parameters
    - A file ```<base>/pn-infra-<env-name>-cfg.json``` from infrastructure repository
    - The outputs of "once in an account" CFN templates
-   - 
-
- - **Output**:
-
- - **Responsability**:
+   - ProjectName: the *project-name* configuration value
+   - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
+ - **Output**: any output useful for next steps.
+ - **Responsability**: configure networking infrastructure
 
 ### Ipc infrastructure CNF template
- - **Input**:
-
- - **Output**:
-
- - **Responsability**:
+This script is read from the infrastructure git repository with path 
+```
+<base>/pn-ipc.yaml
+```
+ - **Input**: file, previous step and some mandatory parameters
+   - A file ```<base>/pn-ipc-<env-name>-cfg.json``` from infrastructure repository
+   - The outputs of "network infrastructure" CFN templates
+   - ProjectName: the *project-name* configuration value
+   - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
+ - **Output**: any output useful to the microservices.
+ - **Responsability**: configure comunication between microservices and define all CFN 
+   parameters that microservices can use.
 
 
 ## The microservices pipelines
+Defined in [cicd-pipe-70-microsvc_pipeline.yaml](cicd-pipe-70-microsvc_pipeline.yaml) has the 
+following steps
+- Checkout micorservice container image, microservice CFN templates and infrastructure CFN templates
+- Copy infrastructure CFN templates to an S3 bucket (useful for nested stack)
+- Deploy development account
+  - Deploy a "microservice storage" CFN template
+  - Merge CFN parameters file for next step with output from previous step
+  - Deploy "microservice runtime" CFN template
+- Deploy User Acceptance Test account: same step of dev account but ask manual approval and
+  use different parameters file.
+- (TODO) Deploy Production account
 
 ### Storage microservice CNF template
- - **Input**:
+ This script is read from the microservice git repository with path 
+```
+scripts/aws/cfn/storage.yml
+```
+ - **Input**: some mandatory parameters
+   - ProjectName: the *project-name* configuration value
+   - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
+ - **Output**: any output useful to the microservice.
+ - **Responsability**: configure storage resources for the microservice.
 
- - **Output**:
-
- - **Responsability**:
 
 ### Runtime microservice CNF template
- - **Input**:
+ This script is read from the microservice git repository with path 
+```
+scripts/aws/cfn/microservice.yml
+```
+ - **Input**: file, previous step and some mandatory parameters
+   - A file ```scripts/aws/cfn/microservice-<env-name>-cfg.json``` from microservice repository
+   - The outputs of "microservice storage" CFN templates
+   - ProjectName: the *project-name* configuration value
+   - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
+   - ContainerImageUri: the full URI of the container image with digest
+   - (TODO) MicroserviceNumber: an unique number for each microservice in a microservice 
+     group (usefull to disambiguate load balancer rules)
+ - **Output**: nobody use this output
+ - **Responsability**: configure microservice runtime and API exposition.
 
- - **Output**:
-
- - **Responsability**:
-
-
-
-TODO: documentare parametri obbligatori ProjectName, TemplateBucketBaseUrl, documentare passthrou
-TODO: chiarire il mecanismo di passaggio dei parametri in infra ( passthrow )
-
-- Per microservizio 
-  - storage ha solo i due parametri obbligatori
-  - microservice ha tutti gli output di infra-ipc + ProjectName, TemplateBucketBaseUrl e MicroserviceNumber (TODO)
 
 
