@@ -1,0 +1,29 @@
+{
+    "project-name": "pn",
+    "infrastructure": {
+        "repo-name": "pagopa/pn-infra",
+        "branch-name": "feature/PN-574",
+        "repo-subdir": "runtime-infra-new",
+        "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
+    },
+    "accounts": {
+        "cicd": {
+            "region": "eu-west-3"
+        },
+        "dev": {
+            "region": "eu-south-1"
+        },
+        "uat": {
+            "region": "eu-south-1"
+        }
+    },
+    "microservices": [
+        {
+            "name": "delivery",
+            "repo-name": "pagopa/pn-delivery",
+            "branch-name": "feature/PN-574",
+            "image-name-and-tag": "pn-delivery:latest",
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
+        }
+    ]
+}

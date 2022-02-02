@@ -4,55 +4,18 @@
 # la pipeline la prima volta fallisce per questione di diritti
 
 # TODO: notifiche nelle pipeline
-# TODO: rimuovere CodeStarGithubConnectionArn2
+# TODO: opsione per lanciare le pipeline dei microservizi alla fine della pipeline di infrastruttura 
 
-# TODO: documentare parametri obbligatori ProjectName, TemplateBucketBaseUrl
+# TODO: documentare parametri obbligatori ProjectName, TemplateBucketBaseUrl, documentare passthrou
 
-
-ProjectName="pn"
-GithubRepoName="pagopa/pn-infra"
-GithubBranchName="feature/PN-574"
-InfraRepoSubdir="runtime-infra-new"
-CodeStarGithubConnectionArn="arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
-CodeStarGithubConnectionArn2="arn:aws:codestar-connections:eu-west-3:911845998067:connection/03777403-e8c7-46ec-9d0b-9a6bf2c115f9"
-
-#CiCdProfile=$1
-#CiCdRegion=$2
-#DevProfile=$3
-#DevRegion=$4 # Ignored, reserved for future use
-#UatProfile="$DevProfile"
-#UatRegion="$DevRegion"
-#UatAccount="$DevAccount"
-
-#ProdProfile="$DevProfile"
-#ProdRegion="$DevRegion"
-#ProdAccount="$DevAccount"
-
-
-MicroserviceName1="example1"
-MicroserviceRepoName1="marco-vit-pagopa/api-first-springboot"
-MicroserviceBranchName1=main
-MicroserviceImageNameAndTag1="api-first-springboot:latest"
-
-MicroserviceName2="example2"
-MicroserviceRepoName2="marco-vit-pagopa/api-first-springboot"
-MicroserviceBranchName2="feature/2"
-MicroserviceImageNameAndTag2="api-first-springboot-f2:latest"
-
-
-
-
-if ( [ $# -ne 4 -a $# -ne 6 -a $# -ne 8 ] ) then
+if ( [ $# -ne 3 -a $# -ne 4 -a $# -ne 5 ] ) then
   echo "This script create or renew a certificate for a server domain name"
-  echo "Usage: $0 <cicd-profile> <cicd-region> <dev-profile> <dev-region> [<uat-profile> <uat-region> [<prod-profile> <prod-region>]]"
+  echo "Usage: $0 <config-file> <cicd-profile> <dev-profile> [<uat-profile> [<prod-profile>]]"
+  echo "<config-file>: environment pipelines configuration file"
   echo "<cicd-profile>: AWS connection profile for cicd account"
-  echo "<cicd-region>: AWS region where deploy cicd pipelines"
   echo "<dev-profile>: AWS connection profile for dev environment account"
-  echo "<dev-region>: AWS region where deploy dev environment infrastructure"
   echo "<uat-profile>: AWS connection profile for uat environment account"
-  echo "<uat-region>: AWS region where deploy uat environment infrastructure"
   echo "<prod-profile>: AWS connection profile for prod environment account"
-  echo "<prod-region>: AWS region where deploy prod environment infrastructure"
   echo ""
   echo "This script require following executable configured in the PATH variable:"
   echo " - aws cli 2.0 "
@@ -66,39 +29,57 @@ if ( [ $# -ne 4 -a $# -ne 6 -a $# -ne 8 ] ) then
   fi
 fi
 
+scriptDir=$( dirname "$0" )
 
-CiCdProfile=$1
-CiCdRegion=$2
+ConfigFile=$1
+
+CiCdProfile=$2
+CiCdRegion=$(jq -r '.accounts.cicd.region' $ConfigFile )
 CiCdAccount=$(aws sts get-caller-identity --profile $CiCdProfile | jq -r .Account)
 
 DevProfile=$3
-DevRegion=$4 # Ignored, reserved for future use
+DevRegion=$(jq -r '.accounts.dev.region' $ConfigFile ) # Ignored, reserved for future use
 DevAccount=$(aws sts get-caller-identity --profile $DevProfile | jq -r .Account)
 
 UatProfile="$DevProfile"
 UatRegion="$DevRegion"
 UatAccount="$DevAccount"
-if ( [ $# -eq 6 ] ) then
-  UatProfile=$5
-  UatRegion=$6 # Ignored, reserved for future use
+if ( [ $# -ge 4 ] ) then
+  UatProfile=$4
+  UatRegion=$(jq -r '.accounts.uat.region' $ConfigFile ) # Ignored, reserved for future use
   UatAccount=$(aws sts get-caller-identity --profile $UatProfile | jq -r .Account)
 fi
 
 ProdProfile="$DevProfile"
 ProdRegion="$DevRegion"
 ProdAccount="$DevAccount"
-if ( [ $# -eq 8 ] ) then
-  ProdProfile=$7
-  ProdRegion=$8 # Ignored, reserved for future use
+if ( [ $# -eq 5 ] ) then
+  ProdProfile=$5
+  ProdRegion=$(jq -r '.accounts.prod.region' $ConfigFile ) # Ignored, reserved for future use
   ProdAccount=$(aws sts get-caller-identity --profile $ProdProfile | jq -r .Account)
 fi
 
+ProjectName=$(jq -r '."project-name"' $ConfigFile )
 
-scriptDir=$( dirname "$0" )
+InfraRepoName=$(jq -r '.infrastructure."repo-name"' $ConfigFile )
+InfraBranchName=$(jq -r '.infrastructure."branch-name"' $ConfigFile )
+InfraRepoSubdir=$(jq -r '.infrastructure."repo-subdir"' $ConfigFile )
+InfraCodeStarGithubConnectionArn=$(jq -r '.infrastructure."codestar-connection-arn"' $ConfigFile )
+
 
 echo ""
 padding="            "
-echo "======================= PARAMETRIZZAZIONE ==========================="
+echo "======================== PARAMETRIZATION ==========================="
+echo "Project Name = ${ProjectName}"
+echo ""
+echo " === Infrastructure repository connection"
+echo " -  Repository name: ${InfraRepoName}"
+echo " -      Branch name: ${InfraBranchName}"
+echo " - Templates subdir: ${InfraRepoSubdir}"
+echo " - Codestar connection: ${InfraCodeStarGithubConnectionArn}"
+echo ""
+echo " === AWS ACCOUNT INFORMATIONS "
+echo "---------------------------------------------------------------------"
 echo "| EnvName |  Account Id  |   Region    |  Profile "
 echo "|---------|--------------|-------------|-----------------------------"
 echo "|    cicd | $CiCdAccount | ${CiCdRegion}${padding:${#CiCdRegion}}| $CiCdProfile"
@@ -110,8 +91,31 @@ if ( [ ! "$ProdAccount" = "$DevAccount" ] ) then
 echo "|    prod | $ProdAccount | ${ProdRegion}${padding:${#ProdRegion}}| $ProdProfile"
 fi
 echo "---------------------------------------------------------------------"
-echo ""
 
+
+NumberOfMicroservices=$(jq '.microservices | length' $ConfigFile )
+
+echo ""
+echo " === MICROSERVICES CONFIGURATIONS "
+for (( m=0; m<${NumberOfMicroservices}; m++ ))
+do
+  MicroserviceName=$(jq -r ".microservices[$m].name" $ConfigFile )
+  MicroserviceRepoName=$(jq -r ".microservices[$m].\"repo-name\"" $ConfigFile )
+  MicroserviceBranchName=$(jq -r ".microservices[$m].\"branch-name\"" $ConfigFile )
+  MicroserviceImageNameAndTag=$(jq -r ".microservices[$m].\"image-name-and-tag\"" $ConfigFile )
+  MicroCodeStarGithubConnectionArn=$(jq -r ".microservices[$m].\"codestar-connection-arn\"" $ConfigFile )
+
+  echo " --- ${MicroserviceName} "
+  echo " -    Repository name: ${MicroserviceRepoName}"
+  echo " -        Branch name: ${MicroserviceBranchName}"
+  echo " - Image name and tag: ${MicroserviceImageNameAndTag}"
+  echo " - Codestar connection: ${MicroCodeStarGithubConnectionArn}"   
+done
+
+echo ""
+echo ""
+echo ""
+echo ""
 
 echo "########### PREPARE Continuos Delivery BUCKETS AND ROLSE ####################"
 echo "# Deploying pre-requisite stack to the ci cd account... "
@@ -191,63 +195,46 @@ deployStackAndUpdateCrossAccountCondition \
       --template-file ${scriptDir}/cfn-templates/cicd-pipe-50-infra_pipeline.yaml \
       --capabilities CAPABILITY_NAMED_IAM \
       --parameter-overrides \
-        CodeStarGithubConnectionArn="$CodeStarGithubConnectionArn" \
+        CodeStarGithubConnectionArn="$InfraCodeStarGithubConnectionArn" \
         CMKARN=$CMKArn \
         ProjectName="$ProjectName" \
-        InfraRepoName="$GithubRepoName" \
-        InfraBranchName="$GithubBranchName" \
+        InfraRepoName="$InfraRepoName" \
+        InfraBranchName="$InfraBranchName" \
         InfraRepoSubdir="$InfraRepoSubdir" \
         DevAccount="$DevAccount" \
         UatAccount="$UatAccount" \
         ProdAccount="$ProdAccount"
 
+for (( m=0; m<${NumberOfMicroservices}; m++ ))
+do
+  MicroserviceName=$(jq -r ".microservices[$m].name" $ConfigFile )
+  MicroserviceRepoName=$(jq -r ".microservices[$m].\"repo-name\"" $ConfigFile )
+  MicroserviceBranchName=$(jq -r ".microservices[$m].\"branch-name\"" $ConfigFile )
+  MicroserviceImageNameAndTag=$(jq -r ".microservices[$m].\"image-name-and-tag\"" $ConfigFile )
+  MicroCodeStarGithubConnectionArn=$(jq -r ".microservices[$m].\"codestar-connection-arn\"" $ConfigFile )
 
-echo ""
-echo ""
-echo "########## Deploy MICROSERVICE ${MicroserviceName1} pipeline ##########"
-deployStackAndUpdateCrossAccountCondition \
-  aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
-      --stack-name "${ProjectName}-microsvc-${MicroserviceName1}-pipeline" \
-      --template-file ${scriptDir}/cfn-templates/cicd-pipe-70-microsvc_pipeline.yaml \
-      --capabilities CAPABILITY_NAMED_IAM \
-      --parameter-overrides \
-        CodeStarGithubConnectionArnInfra="$CodeStarGithubConnectionArn" \
-        CodeStarGithubConnectionArnMicro="$CodeStarGithubConnectionArn2" \
-        CMKARN=$CMKArn \
-        ProjectName="$ProjectName" \
-        InfraRepoName="$GithubRepoName" \
-        InfraBranchName="$GithubBranchName" \
-        InfraRepoSubdir="$InfraRepoSubdir" \
-        DevAccount="$DevAccount" \
-        UatAccount="$UatAccount" \
-        ProdAccount="$ProdAccount" \
-        MicroserviceName="${MicroserviceName1}" \
-        MicroserviceRepoName="${MicroserviceRepoName1}" \
-        MicroserviceBranchName="${MicroserviceBranchName1}" \
-        MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag1}"
-
-
-echo ""
-echo ""
-echo "########## Deploy MICROSERVICE ${MicroserviceName2} pipeline ##########"
-deployStackAndUpdateCrossAccountCondition \
-  aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
-      --stack-name "${ProjectName}-microsvc-${MicroserviceName2}-pipeline" \
-      --template-file ${scriptDir}/cfn-templates/cicd-pipe-70-microsvc_pipeline.yaml \
-      --capabilities CAPABILITY_NAMED_IAM \
-      --parameter-overrides \
-        CodeStarGithubConnectionArnInfra="$CodeStarGithubConnectionArn" \
-        CodeStarGithubConnectionArnMicro="$CodeStarGithubConnectionArn2" \
-        CMKARN=$CMKArn \
-        ProjectName="$ProjectName" \
-        InfraRepoName="$GithubRepoName" \
-        InfraBranchName="$GithubBranchName" \
-        InfraRepoSubdir="$InfraRepoSubdir" \
-        DevAccount="$DevAccount" \
-        UatAccount="$UatAccount" \
-        ProdAccount="$ProdAccount" \
-        MicroserviceName="${MicroserviceName2}" \
-        MicroserviceRepoName="${MicroserviceRepoName2}" \
-        MicroserviceBranchName="${MicroserviceBranchName2}" \
-        MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag2}"
+  echo ""
+  echo ""
+  echo "########## Deploy MICROSERVICE ${MicroserviceName} pipeline ##########"
+  deployStackAndUpdateCrossAccountCondition \
+    aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
+        --stack-name "${ProjectName}-microsvc-${MicroserviceName}-pipeline" \
+        --template-file ${scriptDir}/cfn-templates/cicd-pipe-70-microsvc_pipeline.yaml \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --parameter-overrides \
+          CodeStarGithubConnectionArnInfra="$InfraCodeStarGithubConnectionArn" \
+          CodeStarGithubConnectionArnMicro="$MicroCodeStarGithubConnectionArn" \
+          CMKARN=$CMKArn \
+          ProjectName="$ProjectName" \
+          InfraRepoName="$InfraRepoName" \
+          InfraBranchName="$InfraBranchName" \
+          InfraRepoSubdir="$InfraRepoSubdir" \
+          DevAccount="$DevAccount" \
+          UatAccount="$UatAccount" \
+          ProdAccount="$ProdAccount" \
+          MicroserviceName="${MicroserviceName}" \
+          MicroserviceRepoName="${MicroserviceRepoName}" \
+          MicroserviceBranchName="${MicroserviceBranchName}" \
+          MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag}"
+done
 

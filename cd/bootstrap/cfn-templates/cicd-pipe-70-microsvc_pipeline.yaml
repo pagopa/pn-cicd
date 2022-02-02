@@ -277,11 +277,11 @@ Resources:
               InputArtifacts:
                 - Name: InfraSCCheckoutArtifact
               RunOrder: 1
-        ### Deploy to dev account ###
+        ### Deploy to DEV account ###
         #############################
         - Name: Prepare_dev_account
           Actions:
-            # Deploy microservice storage on dev
+            # Deploy microservice storage on DEV
             - Name: Deploy_dev_storage_CFN
               ActionTypeId:
                 Category: Deploy
@@ -313,7 +313,7 @@ Resources:
                   - ActivateCrossAccountRoles
                   - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
                   - !Ref AWS::NoValue
-            # collect parameters for microservice dev
+            # collect parameters for microservice DEV
             - Name: Enrich_dev_microservice_parameters
               ActionTypeId:
                 Category: Build
@@ -336,7 +336,7 @@ Resources:
               OutputArtifacts:
                 - Name: DevEnanchedParamsArtifact
               RunOrder: 2
-            # Deploy microservice on dev
+            # Deploy microservice on DEV
             - Name: Deploy_dev_microsvc_CFN
               ActionTypeId:
                 Category: Deploy
@@ -367,6 +367,182 @@ Resources:
                   - ActivateCrossAccountRoles
                   - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
                   - !Ref AWS::NoValue
+        # Deploy infrastructure to uat account if different from dev
+        - Fn::If:
+          - HasUatStage
+          ### Deploy to UAT account ###
+          #############################
+          - Name: Prepare_uat_account
+            Actions:
+              # Compute changeset for microservice storage on UAT
+              - Name: Compute_uat_storage_changeset
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                Configuration:
+                  ActionMode: CHANGE_SET_REPLACE
+                  ChangeSetName: !Sub ${ProjectName}-${MicroserviceName}-storage-uat-changeset
+                  StackName: !Sub '${ProjectName}-${MicroserviceName}-storage-uat'
+                  Capabilities: CAPABILITY_NAMED_IAM
+                  TemplatePath: MicrosvcSCCheckoutArtifact::scripts/aws/cfn/storage.yml
+                  ParameterOverrides: !Sub '{
+                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                      "ProjectName": "${ProjectName}"
+                    }'
+                  RoleArn:
+                    Fn::If:
+                      - ActivateCrossAccountRoles
+                      - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                      - !Ref AWS::NoValue
+                InputArtifacts:
+                  - Name: MicrosvcSCCheckoutArtifact
+                RunOrder: 1
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                    - !Ref AWS::NoValue
+              - Name: approve_uat_storage_ChangeSet
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Provider: Manual
+                  Version: 1
+                Configuration:
+                  CustomData: !Sub 'Check the changeset to UAT ipc for ${ProjectName}'
+                RunOrder: 2
+              # Apply changeset for microservice storage on UAT
+              - Name: Deploy_uat_storage_CFN
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                Configuration:
+                  ActionMode: CHANGE_SET_EXECUTE
+                  ChangeSetName: !Sub ${ProjectName}-${MicroserviceName}-storage-uat-changeset
+                  StackName: !Sub '${ProjectName}-${MicroserviceName}-storage-uat'
+                  Capabilities: CAPABILITY_NAMED_IAM
+                  TemplatePath: MicrosvcSCCheckoutArtifact::scripts/aws/cfn/storage.yml
+                  ParameterOverrides: !Sub '{
+                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                      "ProjectName": "${ProjectName}"
+                    }'
+                  OutputFileName: StorageOutputs.json
+                  RoleArn:
+                    Fn::If:
+                      - ActivateCrossAccountRoles
+                      - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                      - !Ref AWS::NoValue
+                InputArtifacts:
+                  - Name: MicrosvcSCCheckoutArtifact
+                OutputArtifacts:
+                  - Name: UatMicroserviceStorageOutputsArtifact
+                RunOrder: 3
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                    - !Ref AWS::NoValue
+              # collect parameters for microservice UAT
+              - Name: Enrich_uat_microservice_parameters
+                ActionTypeId:
+                  Category: Build
+                  Owner: AWS
+                  Version: 1
+                  Provider: CodeBuild
+                Configuration:
+                  ProjectName: !Ref EnrichCfnParametersCodeBuildProject
+                  PrimarySource: MicrosvcSCCheckoutArtifact
+                  EnvironmentVariables: !Sub '[
+                      {"name":"TemplateFilePath", "value":"scripts/aws/cfn/microservice.yml", "type":"PLAINTEXT"},
+                      {"name":"ParamFilePath", "value":"scripts/aws/cfn/microservice-uat-cfg.json", "type":"PLAINTEXT"},
+                      {"name":"PreviousOutputFileArtifactAndPath", "value":"UatMicroserviceStorageOutputsArtifact/StorageOutputs.json", "type":"PLAINTEXT"},
+                      {"name":"ACCOUNT_ROLE", "value":"arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole", "type":"PLAINTEXT"},
+                      {"name":"StackName", "value":"${ProjectName}-ipc-uat", "type":"PLAINTEXT"}
+                    ]'
+                InputArtifacts:
+                  - Name: MicrosvcSCCheckoutArtifact
+                  - Name: UatMicroserviceStorageOutputsArtifact
+                OutputArtifacts:
+                  - Name: UatEnanchedParamsArtifact
+                RunOrder: 4
+              # Compute microservice on UAT changeset
+              - Name: Compute_uat_microsvc_changeset
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                Configuration:
+                  ActionMode: CHANGE_SET_REPLACE
+                  ChangeSetName: !Sub ${ProjectName}-${MicroserviceName}-microservice-uat-changeset
+                  StackName: !Sub '${ProjectName}-${MicroserviceName}-microsvc-uat'
+                  Capabilities: CAPABILITY_NAMED_IAM
+                  TemplatePath: UatEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
+                  TemplateConfiguration: !Sub 'UatEnanchedParamsArtifact::scripts/aws/cfn/microservice-uat-cfg.json.enanched' 
+                  ParameterOverrides: !Sub '{
+                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                      "ProjectName": "${ProjectName}",
+                      "ContainerImageUri": "#{MicrosvcImageVars.ImageURI}"
+                    }'
+                  RoleArn:
+                    Fn::If:
+                      - ActivateCrossAccountRoles
+                      - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                      - !Ref AWS::NoValue
+                InputArtifacts:
+                  - Name: UatEnanchedParamsArtifact
+                RunOrder: 5
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                    - !Ref AWS::NoValue
+              - Name: approve_uat_microservice_ChangeSet
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Provider: Manual
+                  Version: 1
+                Configuration:
+                  CustomData: !Sub 'Check the changeset to UAT ipc for ${ProjectName}'
+                RunOrder: 6
+              # Deploy microservice on UAT
+              - Name: Deploy_uat_microsvc_CFN
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                Configuration:
+                  ActionMode: CHANGE_SET_EXECUTE
+                  ChangeSetName: !Sub ${ProjectName}-${MicroserviceName}-microservice-uat-changeset
+                  StackName: !Sub '${ProjectName}-${MicroserviceName}-microsvc-uat'
+                  Capabilities: CAPABILITY_NAMED_IAM
+                  TemplatePath: UatEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
+                  TemplateConfiguration: !Sub 'UatEnanchedParamsArtifact::scripts/aws/cfn/microservice-uat-cfg.json.enanched' 
+                  ParameterOverrides: !Sub '{
+                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                      "ProjectName": "${ProjectName}",
+                      "ContainerImageUri": "#{MicrosvcImageVars.ImageURI}"
+                    }'
+                  RoleArn:
+                    Fn::If:
+                      - ActivateCrossAccountRoles
+                      - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                      - !Ref AWS::NoValue
+                InputArtifacts:
+                  - Name: UatEnanchedParamsArtifact
+                RunOrder: 7
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                    - !Ref AWS::NoValue
+          - !Ref AWS::NoValue  
       ArtifactStore:
         Type: S3
         Location: !Ref ArtifactBucket
