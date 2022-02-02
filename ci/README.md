@@ -1,43 +1,67 @@
-# Continuos Integration 
-CI Piattaforma Notifiche
+# Continuous Integration Piattaforma Notifiche
 
 ## Directory structure
 - __bootstrap__: CI pipeline infrastructure resources for CI/CD build and pipeline.
 - __infra__: cloud formation stack ci infrastructure.
 - __builders__: cloud formation stack template used for continuous integration via CodeBuild.
 
-## Pipeline 
-Il file _ci/bootstrap/pn-cicd-pipeline.yaml_ è l'unico che deve essere caricato manualmente con il seguente comando:
+## CI Pipeline
+The CI pipeline stack is deployed by the Cloud Formation template _ci/bootstrap/pn-cicd-pipeline.yaml_.
+
+This is the only one need manual deployment with the following command:
+
 ```
-aws cloudformation create-stack --stack-name pn-ci-pipeline --template-body ci/bootstrap/pn-ci-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
-```
-Oppure aggiornaro con il comando
-```
-aws cloudformation update-stack --stack-name pn-ci-pipeline --template-body ci/bootstrap/pn-ci-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
+aws cloudformation deploy --stack-name pn-ci-pipeline --template-body ci/bootstrap/pn-ci-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
 ```
 
-Lo stack contiene la pipeline che lancia il template _ci/infra/root.yaml_ che crea le risorse necessarie
- alla CI e chiama i template contenuti in _builders_ per crere gli stack che daranno origine ai 
- progetti _CodeBuild_ per la CI dei moduli di PN su github.
+- __NOTE__: a _cicd_ profile configuration in `~/.aws/config` and `~/.aws/credential` are needed. 
 
-## Comandi singoli che possono tornare utili
+The pipeline read _[infra/root.yaml](infra/root.yaml)_ template to create the CI Stacks. 
 
-### Creazione dello stack singolo
+It will deploy common resource shared with the CD pipeline like:
+- CodeArtifact: Artifact repository for maven, npm, ....
+- ArtifactBuckets: Used to store artifact like lambda, static website  
+- CodeBuildNotifications: to connect build failure to SNSTopic (ChatBot on Slack)
+
+It use nested templates in _[builders](builders)_ directory to deploy resources
+needed for the CI process like:
+- CodeBuild
+- ECR (for docker artificats)
+
+## Add a project to CI pipeline
+
+The process to add a project in the CI pipeline is done by add some lines in _root.yaml_ file.
+
+Exaple: Properties depends on the selected _builder_ type.
+
+````yaml
+<Name for CI Stack>:
+  Type: AWS::CloudFormation::Stack
+  Properties:
+   TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/<builder-type>.yaml'
+   Parameters:
+   GitHubProjectName: '<pagopa github project name>'
+   CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+   CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+   NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+  TimeoutInMinutes: <timeout in minutes for build process>
+````
+
+## Useful commands
+
+### Create a stack using builders for testing purpose
 ```
-aws cloudformation create-stack --stack-name <value> --template-body build/mvn-jar-codebuild.yaml --parameters ParameterKey=string,ParameterValue=string,UsePreviousValue=boolean,ResolvedValue=string
+aws cloudformation deploy --stack-name <value> --template-body builders/mvn-jar-codebuild.yaml --profile cicd  \
+ --parameters ParameterKey=string,ParameterValue=string,UsePreviousValue=boolean,ResolvedValue=string
 ```
 
-### Aggiornamento dello stack
+### Remove stack after test
 ```
-aws cloudformation update-stack --stack-name <value> --capabilities CAPABILITY_IAM
-```
-
-### Cancellazione dello stack
-```
-aws cloudformation delete-stack --stack-name <value> --capabilities CAPABILITY_IAM
+aws cloudformation delete-stack --stack-name <value> --profile cicd --capabilities CAPABILITY_IAM 
 ```
 
-### Lancio della singola build
+### Launch a build on CodeBuild
 ```
-aws codebuild start-build --project-name myProject --environment-variables-override "[{\"name\":\"ACTION\",\"value\":\"create\"},{\"name\":\"BRANCH\",\"value\":\"${BITBUCKET_BRANCH}\"}]"
+aws codebuild start-build --project-name myProject --profile cicd \
+ --environment-variables-override "[{\"name\":\"ACTION\",\"value\":\"create\"},{\"name\":\"BRANCH\",\"value\":\"${BITBUCKET_BRANCH}\"}]"
 ```
