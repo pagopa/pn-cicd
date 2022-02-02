@@ -1,21 +1,26 @@
-
 # Continuos Delivery Pipelines internals
 
 ## Big Picture
 ![Big picture image](big-picture.drawio.png)
 
-The CICD account contains pipelines that deploy CFN stacks in dev, uat and prod accounts.
+The CICD account contains pipelines that deploy CFN stacks in _dev_, _uat_ and _prod_ accounts.
 
-To allow this we need two shared bucket for artifacts and CFN templates fragment (we 
-use nested stack). The [cicd-pipe-00-shared_buckets_key.yaml](cicd-pipe-00-shared_buckets_key.yaml)
-template contains encription key definition.
+### Artifact & Cloud Formation template Buckets
 
-The [target-pipe-20-cicd_roles.yaml] CFN templates contains the role definition repeated 
-in each of dev, uat and prod accounts that permit to CiCd account to deploy CFN stacks into
+To be able to deploy stacks and artifacts in the target account 2 shared bucket are used:
+1. deploy artifacts 
+2. CFN templates (used nested stack). 
+
+Buckets have encryption enabled and _encryption key_ is managed by 
+[cicd-pipe-00-shared_buckets_key.yaml](cfn-templates/cicd-pipe-00-shared_buckets_key.yaml)
+template.
+
+The [target-pipe-20-cicd_roles.yaml](cfn-templates/target-pipe-20-cicd_roles.yaml) CFN templates contains the 
+_role definition_ for each _dev_, _uat_ and _prod_ accounts that permit to CiCd account to deploy stacks into
 target accounts.
 
-
 ## The infrastructure pipeline
+
 Defined in [cicd-pipe-50-infra_pipeline.yaml](cicd-pipe-50-infra_pipeline.yaml) is composed 
 of the following steps
 - Checkout infrastructure templates
