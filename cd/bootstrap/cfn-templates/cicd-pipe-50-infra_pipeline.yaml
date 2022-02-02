@@ -3,14 +3,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Continuos Delivery pipeline for infrastructure deployment'
 Parameters:
+  ProjectName:
+    Description: Usually "pn", can be changed for feature branch deployment
+    Type: String
   CodeStarGithubConnectionArn:
     Description: CodeStar connection for github project
     Type: String
   CMKARN:
     Description: ARN of the KMS CMK creates in Tools account
-    Type: String
-  ProjectName:
-    Description: Usually "pn", can be changed for feature branch deployment
     Type: String
   InfraRepoName:
     Description: Name of the Github Repository containing infrastructure templates
@@ -96,7 +96,7 @@ Resources:
   PipeLineRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ProjectName}-CdPipelineRole
+      RoleName: !Sub '${ProjectName}-CdPipelineRole'
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:

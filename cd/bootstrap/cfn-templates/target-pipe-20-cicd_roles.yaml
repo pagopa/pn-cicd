@@ -9,14 +9,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Cross Account Role to Allow Access to CodePipeline in CiCd Account
 Parameters:
+  ProjectName:
+    Description: Usually "pn", can be changed for feature branch deployment
+    Type: String
   CiCdAccount:
     Description: AWS AccountNumber for CiCd account
     Type: Number
   CMKARN:
     Description: ARN of the KMS CMK creates in CiCd account
-    Type: String
-  ProjectName:
-    Description: Usually "pn", can be changed for feature branch deployment
     Type: String
 
 Resources:
