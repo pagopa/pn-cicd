@@ -38,7 +38,7 @@ Resources:
               - sts:AssumeRole
       Path: /
 
-  # Policy attached to Countinuos Delivery assumed role
+  # Policy attached to Continuous Delivery assumed role
   CdPipelinePolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -76,7 +76,7 @@ Resources:
               - sts:AssumeRole
       Path: /
   
-  # Policy attached to role assumed by CiCd pipeline during CloudFromation deploy steps
+  # Policy attached to role assumed by CiCd pipeline during CloudFormation deploy steps
   CfnDeployerPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -92,7 +92,7 @@ Resources:
               - apigateway:PUT # Update API definition
               - apigateway:GET # Get API info.
               - apigateway:PATCH # Update API resources.
-              - apigateway:DELETE # Delete API incase of rollback. - iam:AttachRolePolicy
+              - apigateway:DELETE # Delete API in case of rollback. - iam:AttachRolePolicy
               - cloudformation:*
               - cloudfront:CreateCachePolicy
               - cloudfront:CreateCloudFrontOriginAccessIdentity
