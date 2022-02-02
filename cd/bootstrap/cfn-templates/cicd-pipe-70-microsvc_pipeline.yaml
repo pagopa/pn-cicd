@@ -29,6 +29,9 @@ Parameters:
   MicroserviceImageNameAndTag:
     Description: Container <image_name>:<tag> for microservice
     Type: String
+  MicroserviceNumber:
+    Description: Microservice disambiguation number useful for load-balancer rules
+    Type: Number
   InfraRepoName:
     Description: Name of the Github Repository containing infrastructure templates
     Type: String
@@ -295,7 +298,8 @@ Resources:
                 TemplatePath: MicrosvcSCCheckoutArtifact::scripts/aws/cfn/storage.yml
                 ParameterOverrides: !Sub '{
                     "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
-                    "ProjectName": "${ProjectName}"
+                    "ProjectName": "${ProjectName}",
+                    "MicroserviceNumber": "${MicroserviceNumber}"
                   }'
                 OutputFileName: StorageOutputs.json
                 RoleArn:
@@ -352,7 +356,8 @@ Resources:
                 ParameterOverrides: !Sub '{
                     "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
                     "ProjectName": "${ProjectName}",
-                    "ContainerImageUri": "#{MicrosvcImageVars.ImageURI}"
+                    "ContainerImageUri": "#{MicrosvcImageVars.ImageURI}",
+                    "MicroserviceNumber": "${MicroserviceNumber}"
                   }'
                 RoleArn:
                   Fn::If:
@@ -428,7 +433,8 @@ Resources:
                   TemplatePath: MicrosvcSCCheckoutArtifact::scripts/aws/cfn/storage.yml
                   ParameterOverrides: !Sub '{
                       "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
-                      "ProjectName": "${ProjectName}"
+                      "ProjectName": "${ProjectName}",
+                      "MicroserviceNumber": "${MicroserviceNumber}"
                     }'
                   OutputFileName: StorageOutputs.json
                   RoleArn:
@@ -486,7 +492,8 @@ Resources:
                   ParameterOverrides: !Sub '{
                       "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
                       "ProjectName": "${ProjectName}",
-                      "ContainerImageUri": "#{MicrosvcImageVars.ImageURI}"
+                      "ContainerImageUri": "#{MicrosvcImageVars.ImageURI}",
+                      "MicroserviceNumber": "${MicroserviceNumber}"
                     }'
                   RoleArn:
                     Fn::If:

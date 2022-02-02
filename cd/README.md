@@ -76,7 +76,6 @@ and microservices templates are available [here](bootstrap).
 
 
 ## TODO
- - Define microservice number parameter (used for ApplicationLoadBalancerListenerRulePriority)
  - Multiregion Pipeline
  - Notification for failed pipelines executions
  - Trigger microservices pipelines after successful infrastructure pipeline executions

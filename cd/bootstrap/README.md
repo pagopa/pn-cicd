@@ -93,6 +93,8 @@ scripts/aws/cfn/storage.yml
  - **Input**: some mandatory parameters
    - ProjectName: the *project-name* configuration value
    - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
+   - MicroserviceNumber: an unique number for each microservice in a microservice 
+     group (usefull to disambiguate two instance of the same microservice)
  - **Output**: any output useful to the microservice.
  - **Responsability**: configure storage resources for the microservice.
 
@@ -108,7 +110,7 @@ scripts/aws/cfn/microservice.yml
    - ProjectName: the *project-name* configuration value
    - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
    - ContainerImageUri: the full URI of the container image with digest
-   - (TODO) MicroserviceNumber: an unique number for each microservice in a microservice 
+   - MicroserviceNumber: an unique number for each microservice in a microservice 
      group (usefull to disambiguate load balancer rules)
  - **Output**: nobody use this output
  - **Responsability**: configure microservice runtime and API exposition.

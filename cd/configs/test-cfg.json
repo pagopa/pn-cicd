@@ -28,8 +28,8 @@
         {
             "name": "example2",
             "repo-name": "marco-vit-pagopa/api-first-springboot",
-            "branch-name": "feature/2",
-            "image-name-and-tag": "api-first-springboot-f2:latest",
+            "branch-name": "main",
+            "image-name-and-tag": "api-first-springboot:latest",
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-west-3:911845998067:connection/03777403-e8c7-46ec-9d0b-9a6bf2c115f9"
         }
     ]

@@ -1,10 +1,5 @@
 #!/usr/bin/env bash -e
 
-# N.B: 
-# - This script do not remove CFN templates. You have to remove them manually when needed
-# - When you reconfigure a pipeline adding one environment (uat or prod) you have to 
-#   remove pipeline CFN stack manually before re-execute this script
-
 if ( [ $# -ne 3 -a $# -ne 4 -a $# -ne 5 ] ) then
   echo "This script create or renew a certificate for a server domain name"
   echo "Usage: $0 <config-file> <cicd-profile> <dev-profile> [<uat-profile> [<prod-profile>]]"
@@ -18,6 +13,12 @@ if ( [ $# -ne 3 -a $# -ne 4 -a $# -ne 5 ] ) then
   echo " - aws cli 2.0 "
   echo " - jq"
   echo " - sha256"
+  echo ""
+  echo ""
+  echo " === WARNINGS ==="
+  echo " - This script do not remove CFN templates. You have to remove them manually when needed"
+  echo " - When you reconfigure a pipeline adding one environment (uat or prod) you have to "
+  echo "   remove pipeline CFN stack manually before re-execute this script"  
 
   if ( [ "$BASH_SOURCE" = "" ] ) then
     return 1
@@ -232,6 +233,7 @@ do
           MicroserviceName="${MicroserviceName}" \
           MicroserviceRepoName="${MicroserviceRepoName}" \
           MicroserviceBranchName="${MicroserviceBranchName}" \
-          MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag}"
+          MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag}" \
+          MicroserviceNumber="$[ ${m} + 1 ]"
 done
 
