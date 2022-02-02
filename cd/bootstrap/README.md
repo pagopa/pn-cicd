@@ -5,7 +5,7 @@
 
 The CICD account contains pipelines that deploy CFN stacks in _dev_, _uat_ and _prod_ accounts.
 
-### Artifact & Cloud Formation template Buckets
+### Artifact & Cloud Formation templates Buckets
 
 To be able to deploy stacks and artifacts in the target account 2 shared bucket are used:
 1. deploy artifacts 
@@ -15,18 +15,20 @@ Buckets have encryption enabled and _encryption key_ is managed by
 [cicd-pipe-00-shared_buckets_key.yaml](cfn-templates/cicd-pipe-00-shared_buckets_key.yaml)
 template.
 
+### Pipeline Roles in target account
+
 The [target-pipe-20-cicd_roles.yaml](cfn-templates/target-pipe-20-cicd_roles.yaml) CFN templates contains the 
-_role definition_ for each _dev_, _uat_ and _prod_ accounts that permit to CiCd account to deploy stacks into
+_role definition_ for each _dev_, _uat_ and _prod_ accounts that enable to CiCd account to deploy stacks into
 target accounts.
 
 ## The infrastructure pipeline
 
-Defined in [cicd-pipe-50-infra_pipeline.yaml](cicd-pipe-50-infra_pipeline.yaml) is composed 
+Defined in [cicd-pipe-50-infra_pipeline.yaml](cfn-templates/cicd-pipe-50-infra_pipeline.yaml) is composed 
 of the following steps
 - Checkout infrastructure templates
 - Copy it to an S3 bucket (useful for nested stack)
 - Deploy development account
-  - Deploy a "once for account" templte (useful for global configuration like API-Gateway log 
+  - Deploy a "once for account" template (useful for global configuration like API-Gateway log 
     configuration and Chatbot slack subscriptions)
   - Merge CFN parameters file for next step with output from previous step
   - Deploy "network infrastructure" CFN template
@@ -78,7 +80,7 @@ This script is read from the infrastructure git repository with path
 
 
 ## The microservices pipelines
-Defined in [cicd-pipe-70-microsvc_pipeline.yaml](cicd-pipe-70-microsvc_pipeline.yaml) has the 
+Defined in [cicd-pipe-70-microsvc_pipeline.yaml](cfn-templates/cicd-pipe-70-microsvc_pipeline.yaml) has the 
 following steps
 - Checkout micorservice container image, microservice CFN templates and infrastructure CFN templates
 - Copy infrastructure CFN templates to an S3 bucket (useful for nested stack)
