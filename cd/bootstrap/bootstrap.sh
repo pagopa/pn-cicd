@@ -120,7 +120,7 @@ echo "# Deploying pre-requisite stack to the ci cd account... "
 aws --profile "$CiCdProfile" --region "$CiCdRegion" cloudformation deploy \
     --stack-name "${ProjectName}-bucket-crypto-keys" \
     --template-file ${scriptDir}/cfn-templates/00-shared_buckets_key.yaml \
-    --parameter-overrides \   
+    --parameter-overrides \
       ProjectName="$ProjectName" \
       DevAccount="$DevAccount" \
       UatAccount="$UatAccount" \
@@ -140,7 +140,7 @@ echo "# Enable CiCd roles in Dev Account"
 aws --profile $DevProfile --region $CiCdRegion cloudformation deploy \
     --stack-name "${ProjectName}-cicd-roles" \
     --template-file ${scriptDir}/cfn-templates/20-target_accounts_roles.yaml \
-    --capabilities CAPABILITY_NAMED_IAM \ 
+    --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides \
       ProjectName="$ProjectName" \
       CiCdAccount=$CiCdAccount \

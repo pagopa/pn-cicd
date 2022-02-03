@@ -11,24 +11,22 @@ A continuous delivery "environment" pipeline is really structured in multiple pi
   - microservice execution resources 
   - API exposition resources
 
-## How to define a Continuous Delivery environment
+## Constraints on infrastructure CFN templates repository
+See [pn-infra](https://github.com/pagopa/pn-infra) GithubRepository. 
 
-### Prepare infrastructure repository
-See pn-infra
+## PConstraints on microservices repository 
+Each microservice repository must have two files
+ - __scripts/aws/cfn/storage.yml__: define the resources where microservice data are stored
+ - __scripts/aws/cfn/microservice.yml__: define the microservice runtime resources
 
-### Prepare a microservice repository 
-TODO Descrivere struttura minima
-
-### Initialize a Continuous Delivery environment
-
+## Initialize a Continuous Delivery environment
 Prepare a configuration file as described in the next section and use the 
 [boostrap.sh](bootstrap/bootstrap.sh) script.
 
 More information about pipelines internals and how to structure infrastructure 
 and microservices templates are available [here](bootstrap/README.md).
 
-### Configuration file example with comments
-
+## Configuration file example with comments
 ```
 {
     "project-name": "test",
@@ -88,16 +86,13 @@ and microservices templates are available [here](bootstrap/README.md).
 
 
 ## TODO
- - Multiregion Pipeline
- - Notification for failed pipelines executions
- - Trigger microservices pipelines after successful infrastructure pipeline executions
- - Template bucket shared between multiple pipeline executions. We can solve "partitioning" 
+ - PN-665 Multiregion Pipeline
+ - PN-664 Notification for failed pipelines executions
+ - PN-666: Template bucket shared between multiple pipeline executions. We can solve "partitioning" 
    the bucket by pipeline execution id. (We can also write all the pipeline in the same stage :( ).
- - Red from the continer image the environment variable CVS_COMMIT_ID and use its value to 
-   read the exact commit from github.
- - Add changeset web link to manual approval steps
- - (NICE TO HAVE) move "parameters enrichement" to a lambda function
+ - PN-667: Add changeset web link to manual approval steps
+ - PN-668: (NICE TO HAVE) move "parameters enrichement" to a lambda function
  
- - (LATER) Support prod environment n the pipelines
+ - (LATER) Support prod environment in the pipelines
 
 
