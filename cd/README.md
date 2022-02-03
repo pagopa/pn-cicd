@@ -18,6 +18,7 @@ See [pn-infra](https://github.com/pagopa/pn-infra) GithubRepository.
 Each microservice repository must have two files
  - __scripts/aws/cfn/storage.yml__: define the resources where microservice data are stored
  - __scripts/aws/cfn/microservice.yml__: define the microservice runtime resources
+ - __scripts/aws/cfn/microservice-<env-name>-cfg.json__: define the microservice runtime template parameters
 
 ## Initialize a Continuous Delivery environment
 Prepare a configuration file as described in the next section and use the 
