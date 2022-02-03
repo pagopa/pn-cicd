@@ -585,6 +585,7 @@ Resources:
   ArtifactBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
 
   S3BucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -617,9 +618,8 @@ Resources:
   TemplateBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
-    #Properties:
-    #  BucketName: !Sub ${ProjectName}-cd-templates-bucket
-
+    UpdateReplacePolicy: Retain
+    
   TemplateBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
