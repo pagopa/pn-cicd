@@ -142,3 +142,7 @@ Resources:
         CiArtifactBucket: !Ref 'CiArtifactBucket'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
       TimeoutInMinutes: 5
+
+Outputs:
+  CiArtifactBucket:
+    Value: !Ref 'CiArtifactBucket'
