@@ -14,7 +14,7 @@ A continuous delivery "environment" pipeline is really structured in multiple pi
 ## Constraints on infrastructure CFN templates repository
 See [pn-infra](https://github.com/pagopa/pn-infra) GithubRepository. 
 
-## PConstraints on microservices repository 
+## Constraints on microservices repository 
 Each microservice repository must have two files
  - __scripts/aws/cfn/storage.yml__: define the resources where microservice data are stored
  - __scripts/aws/cfn/microservice.yml__: define the microservice runtime resources
