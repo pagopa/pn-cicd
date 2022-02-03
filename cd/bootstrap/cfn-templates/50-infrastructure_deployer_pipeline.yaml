@@ -289,7 +289,7 @@ Resources:
                 - Name: DevEnanchedParamsArtifact
               RunOrder: 3
             # Deploy infrastructure to dev
-            - Name: Deploy_dev_infrastructure_CFN
+            - Name: Deploy_pn_infra_dev_CFN
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -322,7 +322,7 @@ Resources:
                   - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
                   - !Ref AWS::NoValue
             # Merge dev account global parameters to infrastructure parameters from filesystem
-            - Name: Enrich_dev_ipc_parameters
+            - Name: Enrich_pn_dev_ipc_cfg
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -356,7 +356,7 @@ Resources:
                 - Name: DevEnanchedParamsArtifact2
               RunOrder: 6
             # Deploy infrastructure to dev
-            - Name: Deploy_dev_ipc_CFN
+            - Name: Deploy_pn_dev_ipc_CFN
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -459,7 +459,7 @@ Resources:
                     - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
                     - !Ref AWS::NoValue
               # Merge uat account global parameters to infrastructure parameters from filesystem
-              - Name: Enrich_uat_infrastructure_parameters
+              - Name: Enrich_pn_infra_uat_cfg
                 ActionTypeId:
                   Category: Build
                   Owner: AWS
@@ -493,7 +493,7 @@ Resources:
                   - Name: UatEnanchedParamsArtifact
                 RunOrder: 5
               # Deploy infrastructure to uat
-              - Name: Compute_uat_infrastructure_changeset
+              - Name: Compute_pn_infra_uat_ChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -523,7 +523,7 @@ Resources:
                     - ActivateCrossAccountRoles
                     - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
                     - !Ref AWS::NoValue
-              - Name: approve_uat_infra_ChangeSet
+              - Name: approve_pn_infra_uat_ChangeSet
                 ActionTypeId:
                   Category: Approval
                   Owner: AWS
@@ -532,7 +532,7 @@ Resources:
                 Configuration:
                   CustomData: !Sub 'Check the changeset to base UAT infrastructure for ${ProjectName}.'
                 RunOrder: 7
-              - Name: Deploy_uat_infrastructure_changeset
+              - Name: Deploy_pn_uat_infra_ChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -566,7 +566,7 @@ Resources:
                     - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
                     - !Ref AWS::NoValue
               # Merge uat account global parameters to infrastructure parameters from filesystem
-              - Name: Enrich_uat_ipc_parameters
+              - Name: Enrich_pn_ipc_uat_cfg
                 ActionTypeId:
                   Category: Build
                   Owner: AWS
@@ -600,7 +600,7 @@ Resources:
                   - Name: UatEnanchedParamsArtifact2
                 RunOrder: 10
               # Deploy infrastructure to uat
-              - Name: Compute_uat_ipc_CFN
+              - Name: Compute_pn_ipc_uat_ChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -630,7 +630,7 @@ Resources:
                     - ActivateCrossAccountRoles
                     - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
                     - !Ref AWS::NoValue
-              - Name: approve_uat_ipc_ChangeSet
+              - Name: Approve_pn_ipc_uat_ChangeSet
                 ActionTypeId:
                   Category: Approval
                   Owner: AWS
@@ -639,7 +639,7 @@ Resources:
                 Configuration:
                   CustomData: !Sub 'Check the changeset to UAT ipc for ${ProjectName}'
                 RunOrder: 12
-              - Name: Deploy_uat_ipc_CFN
+              - Name: Deploy_pn_ipc_uat_ChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS

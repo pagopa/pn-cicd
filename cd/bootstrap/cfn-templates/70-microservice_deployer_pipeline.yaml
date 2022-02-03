@@ -284,7 +284,7 @@ Resources:
         - Name: Prepare_dev_account
           Actions:
             # Deploy microservice storage on DEV
-            - Name: Deploy_dev_storage_CFN
+            - Name: Deploy_storage_dev_CFN
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -317,7 +317,7 @@ Resources:
                   - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
                   - !Ref AWS::NoValue
             # collect parameters for microservice DEV
-            - Name: Enrich_dev_microservice_parameters
+            - Name: Enrich_microservice_dev_cfg
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -340,7 +340,7 @@ Resources:
                 - Name: DevEnanchedParamsArtifact
               RunOrder: 2
             # Deploy microservice on DEV
-            - Name: Deploy_dev_microsvc_CFN
+            - Name: Deploy_microservice_dev_CFN
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -409,7 +409,7 @@ Resources:
                     - ActivateCrossAccountRoles
                     - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
                     - !Ref AWS::NoValue
-              - Name: approve_uat_storage_ChangeSet
+              - Name: Approve_uat_storage_ChangeSet
                 ActionTypeId:
                   Category: Approval
                   Owner: AWS
@@ -419,7 +419,7 @@ Resources:
                   CustomData: !Sub 'Check the changeset to UAT ipc for ${ProjectName}'
                 RunOrder: 2
               # Apply changeset for microservice storage on UAT
-              - Name: Deploy_uat_storage_CFN
+              - Name: Deploy_uat_storage_ChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -453,7 +453,7 @@ Resources:
                     - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
                     - !Ref AWS::NoValue
               # collect parameters for microservice UAT
-              - Name: Enrich_uat_microservice_parameters
+              - Name: Enrich_microservice_uat_cfg
                 ActionTypeId:
                   Category: Build
                   Owner: AWS
@@ -476,7 +476,7 @@ Resources:
                   - Name: UatEnanchedParamsArtifact
                 RunOrder: 4
               # Compute microservice on UAT changeset
-              - Name: Compute_uat_microsvc_changeset
+              - Name: Compute_microservice_uat_ChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
@@ -508,7 +508,7 @@ Resources:
                     - ActivateCrossAccountRoles
                     - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
                     - !Ref AWS::NoValue
-              - Name: approve_uat_microservice_ChangeSet
+              - Name: Approve_microservice_uat_ChangeSet
                 ActionTypeId:
                   Category: Approval
                   Owner: AWS
@@ -518,7 +518,7 @@ Resources:
                   CustomData: !Sub 'Check the changeset to UAT ipc for ${ProjectName}'
                 RunOrder: 6
               # Deploy microservice on UAT
-              - Name: Deploy_uat_microsvc_CFN
+              - Name: Deploy_microservice_uat_ChangeSet
                 ActionTypeId:
                   Category: Deploy
                   Owner: AWS
