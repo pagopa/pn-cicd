@@ -205,16 +205,14 @@ Resources:
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
                     echo "Ensure different image for each commit"
-                    echo "FROM ${GITHUB_PRJ_NAME}:$VERSION \n env VCS_COMMIT_ID=$(git rev-parse --verify HEAD)" | docker build -t ${GITHUB_PRJ_NAME}:$VERSION -
+                    (echo "FROM ${GITHUB_PRJ_NAME}:$VERSION" && echo "env VCS_COMMIT_ID=$(git rev-parse --verify HEAD)") | docker build -t "${GITHUB_PRJ_NAME}:${VERSION}" -
                     echo "Deploy"
                     docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:$IMAGE_TAG
-                    docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:$SOURCE_VERSION
                     docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:latest
                     docker image ls
                     echo Build completed on `date`
                     echo Pushing the Docker image...
                     docker push $ECR_URL/${IMAGE_REPO_NAME}:$IMAGE_TAG
-                    docker push $ECR_URL/${IMAGE_REPO_NAME}:$SOURCE_VERSION
                     docker push $ECR_URL/${IMAGE_REPO_NAME}:latest
                   fi
           cache:
