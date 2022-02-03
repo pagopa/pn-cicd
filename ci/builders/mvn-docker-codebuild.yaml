@@ -27,7 +27,42 @@ Resources:
         ScanOnPush: true
       ImageTagMutability: MUTABLE
       RepositoryName: !Sub '${GitHubProjectName}'
-
+      RepositoryPolicyText: '{
+          "Version": "2008-10-17",
+          "Statement": [
+            {
+              "Sid": "Allow cicd",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::558518206506:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::946373734005:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            }
+          ]
+        }'
+  
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -169,15 +204,15 @@ Resources:
                 - ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.scm.exclusions.disabled=true -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
+                    echo "Ensure different image for each commit"
+                    (echo "FROM ${GITHUB_PRJ_NAME}:$VERSION" && echo "env VCS_COMMIT_ID=$(git rev-parse --verify HEAD)") | docker build -t "${GITHUB_PRJ_NAME}:${VERSION}" -
                     echo "Deploy"
                     docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:$IMAGE_TAG
-                    docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:$SOURCE_VERSION
                     docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:latest
                     docker image ls
                     echo Build completed on `date`
                     echo Pushing the Docker image...
                     docker push $ECR_URL/${IMAGE_REPO_NAME}:$IMAGE_TAG
-                    docker push $ECR_URL/${IMAGE_REPO_NAME}:$SOURCE_VERSION
                     docker push $ECR_URL/${IMAGE_REPO_NAME}:latest
                   fi
           cache:

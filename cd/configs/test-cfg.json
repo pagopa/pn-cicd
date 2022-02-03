@@ -1,0 +1,36 @@
+{
+    "project-name": "test",
+    "infrastructure": {
+        "repo-name": "pagopa/pn-infra",
+        "branch-name": "feature/PN-574",
+        "repo-subdir": "runtime-infra-new",
+        "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
+    },
+    "accounts": {
+        "cicd": {
+            "region": "eu-west-3"
+        },
+        "dev": {
+            "region": "eu-south-1"
+        },
+        "uat": {
+            "region": "eu-south-1"
+        }
+    },
+    "microservices": [
+        {
+            "name": "example1",
+            "repo-name": "marco-vit-pagopa/api-first-springboot",
+            "branch-name": "main",
+            "image-name-and-tag": "api-first-springboot:latest",
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-west-3:911845998067:connection/03777403-e8c7-46ec-9d0b-9a6bf2c115f9"
+        },
+        {
+            "name": "example2",
+            "repo-name": "marco-vit-pagopa/api-first-springboot",
+            "branch-name": "main",
+            "image-name-and-tag": "api-first-springboot:latest",
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-west-3:911845998067:connection/03777403-e8c7-46ec-9d0b-9a6bf2c115f9"
+        }
+    ]
+}
