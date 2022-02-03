@@ -119,8 +119,8 @@ echo "########### PREPARE Continuos Delivery BUCKETS AND ROLSE #################
 echo "# Deploying pre-requisite stack to the ci cd account... "
 aws --profile "$CiCdProfile" --region "$CiCdRegion" cloudformation deploy \
     --stack-name "${ProjectName}-bucket-crypto-keys" \
-    --template-file ${scriptDir}/cfn-templates/cicd-pipe-00-shared_buckets_key.yaml \
-    --parameter-overrides \
+    --template-file ${scriptDir}/cfn-templates/00-shared_buckets_key.yaml \
+    --parameter-overrides \   
       ProjectName="$ProjectName" \
       DevAccount="$DevAccount" \
       UatAccount="$UatAccount" \
@@ -139,8 +139,8 @@ echo ""
 echo "# Enable CiCd roles in Dev Account"
 aws --profile $DevProfile --region $CiCdRegion cloudformation deploy \
     --stack-name "${ProjectName}-cicd-roles" \
-    --template-file ${scriptDir}/cfn-templates/target-pipe-20-cicd_roles.yaml \
-    --capabilities CAPABILITY_NAMED_IAM \
+    --template-file ${scriptDir}/cfn-templates/20-target_accounts_roles.yaml \
+    --capabilities CAPABILITY_NAMED_IAM \ 
     --parameter-overrides \
       ProjectName="$ProjectName" \
       CiCdAccount=$CiCdAccount \
@@ -151,7 +151,7 @@ if ( [ ! "$UatAccount" = "$DevAccount" ] ) then
   echo "# Enable CiCd roles in Uat Account"
   aws --profile $UatProfile --region $CiCdRegion cloudformation deploy \
       --stack-name "${ProjectName}-cicd-roles" \
-      --template-file ${scriptDir}/cfn-templates/target-pipe-20-cicd_roles.yaml \
+      --template-file ${scriptDir}/cfn-templates/20-target_accounts_roles.yaml \
       --capabilities CAPABILITY_NAMED_IAM \
       --parameter-overrides \
         ProjectName="$ProjectName" \
@@ -164,7 +164,7 @@ if ( [ ! "$ProdAccount" = "$DevAccount" ] ) then
   echo "# Enable CiCd roles in Prod Account"
   aws --profile $ProdProfile --region $CiCdRegion cloudformation deploy \
       --stack-name "${ProjectName}-cicd-roles" \
-      --template-file ${scriptDir}/cfn-templates/target-pipe-20-cicd_roles.yaml \
+      --template-file ${scriptDir}/cfn-templates/20-target_accounts_roles.yaml \
       --capabilities CAPABILITY_NAMED_IAM \
       --parameter-overrides \
         ProjectName="$ProjectName" \
@@ -190,7 +190,7 @@ echo "########## Deploy INFRASTRUCTURE pipeline ##########"
 deployStackAndUpdateCrossAccountCondition \
   aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
       --stack-name "${ProjectName}-infra-pipeline" \
-      --template-file ${scriptDir}/cfn-templates/cicd-pipe-50-infra_pipeline.yaml \
+      --template-file ${scriptDir}/cfn-templates/50-infrastructure_deployer_pipeline.yaml \
       --capabilities CAPABILITY_NAMED_IAM \
       --parameter-overrides \
         CodeStarGithubConnectionArn="$InfraCodeStarGithubConnectionArn" \
@@ -217,7 +217,7 @@ do
   deployStackAndUpdateCrossAccountCondition \
     aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
         --stack-name "${ProjectName}-microsvc-${MicroserviceName}-pipeline" \
-        --template-file ${scriptDir}/cfn-templates/cicd-pipe-70-microsvc_pipeline.yaml \
+        --template-file ${scriptDir}/cfn-templates/70-microservice_deployer_pipeline.yaml \
         --capabilities CAPABILITY_NAMED_IAM \
         --parameter-overrides \
           CodeStarGithubConnectionArnInfra="$InfraCodeStarGithubConnectionArn" \

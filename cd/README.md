@@ -11,7 +11,15 @@ A continuous delivery "environment" pipeline is really structured in multiple pi
   - microservice execution resources 
   - API exposition resources
 
-## Initialize a Continuous Delivery environment
+## How to define a Continuous Delivery environment
+
+### Prepare infrastructure repository
+See pn-infra
+
+### Prepare a microservice repository 
+TODO Descrivere struttura minima
+
+### Initialize a Continuous Delivery environment
 
 Prepare a configuration file as described in the next section and use the 
 [boostrap.sh](bootstrap/bootstrap.sh) script.
@@ -19,7 +27,7 @@ Prepare a configuration file as described in the next section and use the
 More information about pipelines internals and how to structure infrastructure 
 and microservices templates are available [here](bootstrap/README.md).
 
-## Configuration file example with comments
+### Configuration file example with comments
 
 ```
 {
@@ -83,6 +91,13 @@ and microservices templates are available [here](bootstrap/README.md).
  - Multiregion Pipeline
  - Notification for failed pipelines executions
  - Trigger microservices pipelines after successful infrastructure pipeline executions
+ - Template bucket shared between multiple pipeline executions. We can solve "partitioning" 
+   the bucket by pipeline execution id. (We can also write all the pipeline in the same stage :( ).
+ - Red from the continer image the environment variable CVS_COMMIT_ID and use its value to 
+   read the exact commit from github.
+ - Add changeset web link to manual approval steps
+ - (NICE TO HAVE) move "parameters enrichement" to a lambda function
  
  - (LATER) Support prod environment n the pipelines
+
 

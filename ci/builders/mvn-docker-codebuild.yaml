@@ -204,6 +204,8 @@ Resources:
                 - ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.scm.exclusions.disabled=true -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
+                    echo "Ensure different image for each commit"
+                    echo "FROM ${GITHUB_PRJ_NAME}:$VERSION \n env VCS_COMMIT_ID=$(git rev-parse --verify HEAD)" | docker build -t ${GITHUB_PRJ_NAME}:$VERSION -
                     echo "Deploy"
                     docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:$IMAGE_TAG
                     docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:$SOURCE_VERSION

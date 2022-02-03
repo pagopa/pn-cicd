@@ -105,7 +105,7 @@ following steps
 ```
 scripts/aws/cfn/storage.yml
 ```
- - **Responsability**: configure storage resources for the microservice.
+ - __Responsability__: configure storage resources for the microservice.
  - __Input__: some mandatory parameters
    - ProjectName: the _project name_ configuration value
    - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
