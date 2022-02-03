@@ -12,7 +12,6 @@ Parameters:
     Type: String
   NotificationSNSTopic:
     Type: String
-    Default: 'none'
     Description: Topic for build and pipeline notification
 
 Resources:
@@ -21,8 +20,6 @@ Resources:
     Properties:
       Name: !Sub "${GitHubProjectName}-${BaseDir}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
-      Artifacts:
-        Type: NO_ARTIFACTS
       Environment:
         PrivilegedMode: true
         Type: LINUX_CONTAINER
@@ -32,39 +29,33 @@ Resources:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
             Value: !Sub "${GitHubProjectName}"
-          - Name: GIT_DEFAULT_BRANCH
+          - Name: SUB_PRJ_NAME
             Type: PLAINTEXT
-            Value: develop
-          - Name: AWS_DEFAULT_REGION
+            Value: !Sub "${BaseDir}"
+          - Name: CI_BUCKET_NAME
             Type: PLAINTEXT
-            Value: !Sub "${AWS::Region}"
-          - Name: AWS_ACCOUNT_ID
-            Type: PLAINTEXT
-            Value: !Sub "${AWS::AccountId}"
+            Value: !Sub "${CiArtifactBucket}"
       Source:
         Type: GITHUB
         Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
         BuildSpec: |
           version: 0.2
           phases:
+            pre_build:
+              on-failure: ABORT
+              commands:
+                - cd $SUB_PRJ_NAME
             build:
+              on-failure: ABORT
               commands:
                 - echo Build started on `date`
-                - npm install
-            post-build:
+                - npm run-script test-build
+            post_build:
+              on-failure: ABORT
               commands:
-                - mkdir build-output
-                - cp *.js node_modules/ build-output 
-         artifacts:
-            files:
-              - build-output/**/*
-        Artifacts:
-          Location: !Ref 'CiArtifactBucket'
-          Name: /
-          OverrideArtifactName: false
-          Packaging: ZIP
-          Path: !Ref 'BaseDir'
-          Type: S3
+                - aws s3 cp function.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$SUB_PRJ_NAME.zip"
+      Artifacts:
+        Type: NO_ARTIFACTS
       TimeoutInMinutes: 10
       Triggers:
         Webhook: true
@@ -126,6 +117,21 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                 Resource: "*"
+              - Sid: CiArtifactBucket
+                Effect: Allow
+                Action:
+                  - s3:GetReplicationConfiguration
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:aws:s3:::${CiArtifactBucket}'
+              - Sid: CiArtifactBucketObjects
+                Effect: Allow
+                Action:
+                  - s3:GetObjectVersion
+                  - s3:GetObjectVersionAcl
+                  - 's3:PutObject*'
+                Resource:
+                  - !Sub 'arn:aws:s3:::${CiArtifactBucket}/*'
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
@@ -138,4 +144,3 @@ Resources:
       Targets:
         - TargetAddress: !Ref 'NotificationSNSTopic'
           TargetType: SNS
-
