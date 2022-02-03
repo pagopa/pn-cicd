@@ -44,6 +44,10 @@ Resources:
             pre_build:
               on-failure: ABORT
               commands:
+                - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${!BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
+                - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
+                - export PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///')
+                - export CI_PROFILE="$CODEBUILD_CI"
                 - cd $SUB_PRJ_NAME
             build:
               on-failure: ABORT
@@ -53,7 +57,7 @@ Resources:
             post_build:
               on-failure: ABORT
               commands:
-                - aws s3 cp function.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$SUB_PRJ_NAME.zip"
+                - aws s3 cp function.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/$SUB_PRJ_NAME.zip"
       Artifacts:
         Type: NO_ARTIFACTS
       TimeoutInMinutes: 10
