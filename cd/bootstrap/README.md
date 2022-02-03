@@ -5,7 +5,7 @@
 
 The CICD account contains pipelines that deploy CFN stacks in _dev_, _uat_ and _prod_ accounts.
 
-### Artifact & Cloud Formation template Buckets
+### Artifact & Cloud Formation templates Buckets
 
 To be able to deploy stacks and artifacts in the target account 2 shared bucket are used:
 1. deploy artifacts 
@@ -15,18 +15,20 @@ Buckets have encryption enabled and _encryption key_ is managed by
 [cicd-pipe-00-shared_buckets_key.yaml](cfn-templates/cicd-pipe-00-shared_buckets_key.yaml)
 template.
 
+### Pipeline Roles in target account
+
 The [target-pipe-20-cicd_roles.yaml](cfn-templates/target-pipe-20-cicd_roles.yaml) CFN templates contains the 
-_role definition_ for each _dev_, _uat_ and _prod_ accounts that permit to CiCd account to deploy stacks into
+_role definition_ for each _dev_, _uat_ and _prod_ accounts that enable to CiCd account to deploy stacks into
 target accounts.
 
 ## The infrastructure pipeline
 
-Defined in [cicd-pipe-50-infra_pipeline.yaml](cicd-pipe-50-infra_pipeline.yaml) is composed 
+Defined in [cicd-pipe-50-infra_pipeline.yaml](cfn-templates/cicd-pipe-50-infra_pipeline.yaml) is composed 
 of the following steps
 - Checkout infrastructure templates
 - Copy it to an S3 bucket (useful for nested stack)
 - Deploy development account
-  - Deploy a "once for account" templte (useful for global configuration like API-Gateway log 
+  - Deploy a "once for account" template (useful for global configuration like API-Gateway log 
     configuration and Chatbot slack subscriptions)
   - Merge CFN parameters file for next step with output from previous step
   - Deploy "network infrastructure" CFN template
@@ -38,49 +40,57 @@ of the following steps
 
 *<base>* means the *infrastructure.repo-subdir* configuration value.
 
-### Once in one account infrastructure CNF template
-This script is read from the infrastructure git repository with path 
-```
-<base>/once4account/<env-name>.yaml
-```
- - **Input**: only one mandatory parameter TemplateBucketBaseUrl containing the base URL of 
-   infrastructure CFN fragments
- - **Output**: any output useful for next steps.
- - **Responsability**: configure global resources as API-Gateway log configuration and 
-   Chatbot slack subscriptions
+#### 1. Deploy infrastructure CNF template on each _dev_, _uat_, _prod_ account.
 
-### Networking infrastructure CNF template
-This script is read from the infrastructure git repository with path 
-```
-<base>/pn-infra.yaml
-```
- - **Input**: file, previous step and some mandatory parameters
-   - A file ```<base>/pn-infra-<env-name>-cfg.json``` from infrastructure repository
-   - The outputs of "once in an account" CFN templates
-   - ProjectName: the *project-name* configuration value
-   - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
- - **Output**: any output useful for next steps.
- - **Responsability**: configure networking infrastructure
+This script is read from the infrastructure git repository 
+[pagopa:pn-infra](https://github.com/pagopa/pn-infra) the file
+`once4account/<env-name>.yaml` 
+
+- __Responsability__: configure global resources.
+    - API-Gateway log configuration & Role
+    - Chat-bot slack subscriptions (exported in output)
+    - Certificate Expiration Alarm
+- __Input__: 
+     - _TemplateBucketBaseUrl_: [mandatory] containing the base URL of 
+      infrastructure CFN fragments.
+     - _SlackInfo_: [default] Slack workspace and channel 
+- __Output__: 
+    - _AlarmSNSTopicArn_: SNS Topic Arn for slack Chat-bot
+
+### 2. Networking infrastructure CNF template
+This script is read from the infrastructure git repository [pagopa:pn-infra](https://github.com/pagopa/pn-infra) 
+with path `<base>/pn-infra.yaml`
+
+- __Responsability__: configure networking infrastructure
+  - _VPC_ (see: fragments/vpc.yaml)
+  - _VPC Endpoints_ (see: fragments/vpc-endpoints.yaml)
+  - _Load Balancer_ (see: fragments/load-balancer.yaml)
+  - _ECS Cluster_ (see: fragments/ecs-cluster.yaml)
+- __Input__: file, previous step and some mandatory parameters
+    - _ProjectName_: the _project name_ configuration value
+    - _VpcNumber_: Second byte from the left for VPC CIDR
+    - _TemplateBucketBaseUrl_: containing the base URL of infrastructure CFN fragments
+    - _AlarmSNSTopicArn_: output from previous step.
+    - File ```<base>/pn-infra-<env-name>-cfg.json``` from infrastructure repository
+- __Output__: any output useful for next steps.
 
 ### Ipc infrastructure CNF template
-This script is read from the infrastructure git repository with path 
-```
-<base>/pn-ipc.yaml
-```
- - **Input**: file, previous step and some mandatory parameters
-   - A file ```<base>/pn-ipc-<env-name>-cfg.json``` from infrastructure repository
-   - The outputs of "network infrastructure" CFN templates
-   - ProjectName: the *project-name* configuration value
-   - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
- - **Output**: any output useful to the microservices.
- - **Responsability**: configure comunication between microservices and define all CFN 
-   parameters that microservices can use.
+This script is read from the infrastructure git repository [pagopa:pn-infra](https://github.com/pagopa/pn-infra)
+with path `<base>/pn-ipc.yaml`
 
+- __Responsability__: configure communication between microservices and define all CFN
+  parameters that microservices can use.
+- __Input__: file, previous step and some mandatory parameters
+  - _ProjectName_: the _project name_ configuration value
+  - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
+  - File ```<base>/pn-ipc-<env-name>-cfg.json``` from infrastructure repository
+  - The outputs of "networking infrastructure" CFN templates
+- __Output__: any output useful to the microservices.
 
 ## The microservices pipelines
-Defined in [cicd-pipe-70-microsvc_pipeline.yaml](cicd-pipe-70-microsvc_pipeline.yaml) has the 
+Defined in [cicd-pipe-70-microsvc_pipeline.yaml](cfn-templates/cicd-pipe-70-microsvc_pipeline.yaml) has the 
 following steps
-- Checkout micorservice container image, microservice CFN templates and infrastructure CFN templates
+- Checkout microservice container image, microservice CFN templates and infrastructure CFN templates
 - Copy infrastructure CFN templates to an S3 bucket (useful for nested stack)
 - Deploy development account
   - Deploy a "microservice storage" CFN template
@@ -95,13 +105,13 @@ following steps
 ```
 scripts/aws/cfn/storage.yml
 ```
- - **Input**: some mandatory parameters
-   - ProjectName: the *project-name* configuration value
+ - **Responsability**: configure storage resources for the microservice.
+ - __Input__: some mandatory parameters
+   - ProjectName: the _project name_ configuration value
    - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
    - MicroserviceNumber: an unique number for each microservice in a microservice 
      group (usefull to disambiguate two instance of the same microservice)
  - **Output**: any output useful to the microservice.
- - **Responsability**: configure storage resources for the microservice.
 
 
 ### Runtime microservice CNF template
@@ -109,16 +119,16 @@ scripts/aws/cfn/storage.yml
 ```
 scripts/aws/cfn/microservice.yml
 ```
- - **Input**: file, previous step and some mandatory parameters
+ - __Responsability__: configure microservice runtime and API exposition.
+ - __Input__: file, previous step and some mandatory parameters
    - A file ```scripts/aws/cfn/microservice-<env-name>-cfg.json``` from microservice repository
    - The outputs of "microservice storage" CFN templates
-   - ProjectName: the *project-name* configuration value
+   - ProjectName: the _project name_ configuration value
    - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
    - ContainerImageUri: the full URI of the container image with digest
    - MicroserviceNumber: an unique number for each microservice in a microservice 
      group (usefull to disambiguate load balancer rules)
- - **Output**: nobody use this output
- - **Responsability**: configure microservice runtime and API exposition.
+ - __Output__: nobody use this output
 
 
 

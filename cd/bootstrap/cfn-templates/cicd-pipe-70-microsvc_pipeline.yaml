@@ -3,6 +3,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Continuos Delivery pipeline for infrastructure deployment'
 Parameters:
+  ProjectName:
+    Description: Usually "pn", can be changed for feature branch deployment
+    Type: String
   CodeStarGithubConnectionArnInfra:
     Description: CodeStar connection for github infrastructure project
     Type: String
@@ -12,11 +15,7 @@ Parameters:
   CMKARN:
     Description: ARN of the KMS CMK creates in Tools account
     Type: String
-  
-  ProjectName:
-    Description: Usually "pn", can be changed for feature branch deployment
-    Type: String
-  
+
   MicroserviceName:
     Description: Logical name of the microservice
     Type: String
