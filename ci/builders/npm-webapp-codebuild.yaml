@@ -76,7 +76,7 @@ Resources:
               on-failure: ABORT
               commands:
                 - echo Build started on `date`
-                - tar c * | gzip | aws s3 cp - "s3://${CiArtifactBucket}/${!BRANCH_NAME}/${GitHubProjectName}.tar.gz"
+                - tar c * | gzip | aws s3 cp - "s3://${CiArtifactBucket}/${GitHubProjectName}/${!BRANCH_NAME}/${GitHubProjectName}.tar.gz"
           artifacts:
             files:
               - '**/*'
