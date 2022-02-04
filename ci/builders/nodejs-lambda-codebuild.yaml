@@ -32,6 +32,9 @@ Resources:
           - Name: SUB_PRJ_NAME
             Type: PLAINTEXT
             Value: !Sub "${BaseDir}"
+          - Name: GIT_DEFAULT_BRANCH
+            Type: PLAINTEXT
+            Value: main
           - Name: CI_BUCKET_NAME
             Type: PLAINTEXT
             Value: !Sub "${CiArtifactBucket}"
@@ -40,11 +43,13 @@ Resources:
         Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
         BuildSpec: |
           version: 0.2
+          env:
+            shell: bash
           phases:
             pre_build:
               on-failure: ABORT
               commands:
-                - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${!BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
+                - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
                 - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
                 - export PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///')
                 - export CI_PROFILE="$CODEBUILD_CI"
@@ -57,7 +62,9 @@ Resources:
             post_build:
               on-failure: ABORT
               commands:
-                - aws s3 cp function.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/$SUB_PRJ_NAME.zip"
+                - git rev-parse --verify HEAD > commitID.txt
+                - zip -u $SUB_PRJ_NAME.zip commitID.txt
+                - aws s3 cp $SUB_PRJ_NAME.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/$SUB_PRJ_NAME.zip"
       Artifacts:
         Type: NO_ARTIFACTS
       TimeoutInMinutes: 10
