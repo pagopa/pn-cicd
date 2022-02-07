@@ -2,10 +2,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: CodeBuild for maven docker project
 Parameters:
   GitHubProjectName:
-    Description: Name of pagopa project name
+    Description: Name of pagopa project name pattern = [A-Za-z0-9][A-Za-z0-9\-_]{1,122}
     Type: String
   BaseDir:
-    Description: base directory of the lambda project
+    Description: base directory of the lambda project pattern = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
   CiArtifactBucket:
     Description: Ci Artifact bucket name
@@ -21,7 +21,6 @@ Resources:
       Name: !Sub "${GitHubProjectName}-${BaseDir}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Environment:
-        PrivilegedMode: true
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:5.0
@@ -63,8 +62,8 @@ Resources:
               on-failure: ABORT
               commands:
                 - git rev-parse --verify HEAD > commitID.txt
-                - zip -u $SUB_PRJ_NAME.zip commitID.txt
-                - aws s3 cp $SUB_PRJ_NAME.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/$SUB_PRJ_NAME.zip"
+                - zip -u function.zip commitID.txt
+                - aws s3 cp function.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/$SUB_PRJ_NAME.zip"
       Artifacts:
         Type: NO_ARTIFACTS
       TimeoutInMinutes: 10
@@ -75,10 +74,6 @@ Resources:
               Pattern: PUSH, PULL_REQUEST_MERGED
             - Type: HEAD_REF
               Pattern: ^refs/heads/(main|develop)$
-#          - - Type: EVENT
-#              Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
-#            - Type: BASE_REF
-#              Pattern: ^refs/heads/(main|develop)$
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
