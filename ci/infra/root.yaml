@@ -28,7 +28,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
       TimeoutInMinutes: 5
 
-  WebappsTemplatesBucket:
+  CiArtifactBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
@@ -98,7 +98,38 @@ Resources:
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
       TimeoutInMinutes: 5
-  
+# Progetti Lambda
+  PnApikeyAuthorizerLambda:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-auth-fleet'
+        BaseDir: 'apikeyAuthorizer'
+        CiArtifactBucket: !Ref 'CiArtifactBucket'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
+  PnJwtAuthorizerLambda:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-auth-fleet'
+        BaseDir: 'jwtAuthorizer'
+        CiArtifactBucket: !Ref 'CiArtifactBucket'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
+  PnSessionTokenLambda:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-auth-fleet'
+        BaseDir: 'sessionToken'
+        CiArtifactBucket: !Ref 'CiArtifactBucket'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
+
   # Progetti WebApp
   PnWebapp:
     Type: AWS::CloudFormation::Stack
@@ -108,6 +139,10 @@ Resources:
         GitHubProjectName: 'pn-webapp'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
-        WebappsTemplatesBucket: !Ref 'WebappsTemplatesBucket'
+        CiArtifactBucket: !Ref 'CiArtifactBucket'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
       TimeoutInMinutes: 5
+
+Outputs:
+  CiArtifactBucket:
+    Value: !Ref 'CiArtifactBucket'
