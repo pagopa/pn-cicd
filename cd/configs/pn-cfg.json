@@ -2,7 +2,7 @@
     "project-name": "pn",
     "infrastructure": {
         "repo-name": "pagopa/pn-infra",
-        "branch-name": "feature/PN-574",
+        "branch-name": "feature/PN-611",
         "repo-subdir": "runtime-infra-new",
         "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
     },
@@ -21,9 +21,30 @@
         {
             "name": "delivery",
             "repo-name": "pagopa/pn-delivery",
-            "branch-name": "feature/PN-574",
+            "branch-name": "feature/PN-611",
             "image-name-and-tag": "pn-delivery:latest",
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
+        },
+        {
+            "name": "delivery-push",
+            "repo-name": "pagopa/pn-delivery-push",
+            "branch-name": "feature/PN-611",
+            "image-name-and-tag": "pn-delivery-push:latest",
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
+        },
+        {
+            "name": "external-channels",
+            "repo-name": "pagopa/pn-external-channels",
+            "branch-name": "feature/PN-611",
+            "image-name-and-tag": "pn-external-channels:latest",
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
+        },
+        {
+            "name": "example1",
+            "repo-name": "marco-vit-pagopa/api-first-springboot",
+            "branch-name": "main",
+            "image-name-and-tag": "api-first-springboot:latest",
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-west-3:911845998067:connection/03777403-e8c7-46ec-9d0b-9a6bf2c115f9"
         }
     ]
 }

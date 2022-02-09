@@ -2,7 +2,7 @@
     "project-name": "test",
     "infrastructure": {
         "repo-name": "pagopa/pn-infra",
-        "branch-name": "feature/PN-574",
+        "branch-name": "feature/PN-611",
         "repo-subdir": "runtime-infra-new",
         "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
     },
