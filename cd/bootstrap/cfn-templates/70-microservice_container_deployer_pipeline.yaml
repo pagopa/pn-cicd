@@ -353,7 +353,7 @@ Resources:
                 StackName: !Sub '${ProjectName}-${MicroserviceName}-microsvc-dev'
                 Capabilities: CAPABILITY_NAMED_IAM
                 TemplatePath: DevEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
-                TemplateConfiguration: !Sub 'DevEnanchedParamsArtifact::scripts/aws/cfn/microservice-dev-cfg.json.enanched' 
+                TemplateConfiguration: 'DevEnanchedParamsArtifact::scripts/aws/cfn/microservice-dev-cfg.json.enanched' 
                 ParameterOverrides: !Sub '{
                     "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
                     "ProjectName": "${ProjectName}",
@@ -490,7 +490,7 @@ Resources:
                   StackName: !Sub '${ProjectName}-${MicroserviceName}-microsvc-uat'
                   Capabilities: CAPABILITY_NAMED_IAM
                   TemplatePath: UatEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
-                  TemplateConfiguration: !Sub 'UatEnanchedParamsArtifact::scripts/aws/cfn/microservice-uat-cfg.json.enanched' 
+                  TemplateConfiguration: 'UatEnanchedParamsArtifact::scripts/aws/cfn/microservice-uat-cfg.json.enanched' 
                   ParameterOverrides: !Sub '{
                       "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
                       "ProjectName": "${ProjectName}",
@@ -532,7 +532,7 @@ Resources:
                   StackName: !Sub '${ProjectName}-${MicroserviceName}-microsvc-uat'
                   Capabilities: CAPABILITY_NAMED_IAM
                   TemplatePath: UatEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
-                  TemplateConfiguration: !Sub 'UatEnanchedParamsArtifact::scripts/aws/cfn/microservice-uat-cfg.json.enanched' 
+                  TemplateConfiguration: 'UatEnanchedParamsArtifact::scripts/aws/cfn/microservice-uat-cfg.json.enanched' 
                   ParameterOverrides: !Sub '{
                       "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
                       "ProjectName": "${ProjectName}",
