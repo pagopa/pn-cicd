@@ -53,6 +53,7 @@ and microservices templates are available [here](bootstrap/README.md).
             "name": "example1",
             "repo-name": "marco-vit-pagopa/api-first-springboot",
             "branch-name": "main",
+            "type": "container",
             "image-name-and-tag": "api-first-springboot:latest",
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-west-3:911845998067:connection/03777403-e8c7-46ec-9d0b-9a6bf2c115f9"
         },
@@ -60,8 +61,21 @@ and microservices templates are available [here](bootstrap/README.md).
             "name": "example2",
             "repo-name": "marco-vit-pagopa/api-first-springboot",
             "branch-name": "feature/2",
+            "type": "container",
             "image-name-and-tag": "api-first-springboot-f2:latest",
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-west-3:911845998067:connection/03777403-e8c7-46ec-9d0b-9a6bf2c115f9"
+        },
+        {
+            "name": "auth-fleet",
+            "repo-name": "pagopa/pn-auth-fleet",
+            "branch-name": "feature/PN-611",
+            "type": "lambdas",
+            "lambda-names": [
+                "pn-auth-fleet/main/apikeyAuthorizer",
+                "pn-auth-fleet/main/jwtAuthorizer",
+                "pn-auth-fleet/main/tokenExchange"
+            ],
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
         }
     ]
 }
@@ -81,14 +95,16 @@ and microservices templates are available [here](bootstrap/README.md).
   - _name_: the logical name of microservice (only ascii letters and numbers)
   - _repo-name_: the name of the repository
   - _branch-name_: the branch to checkout
+  - _type_: __container__ for ECR microservices, __lambdas__ for groups of lambda functions.
   - _image-name-and-tag_: the ECR repository name and the image tag separated by a column (:)
+  - _lambda-names_: array containing up to five C.I. lambda artifacts written as 
+    $lt;repo-name$gt;/$lt;branch-name$gt;/$lt;lambda-name$gt;
   - _codestar-connection-arn_: AWS CodeStar connection to use for microservice repository checkout.
     Microservice pipelines checkout and use CFN templates for storage and runtime definition.
 
 
 ## TODO
  - PN-665 Multiregion Pipeline
- - PN-664 Notification for failed pipelines executions
  - PN-666: Template bucket shared between multiple pipeline executions. We can solve "partitioning" 
    the bucket by pipeline execution id. (We can also write all the pipeline in the same stage :( ).
  - PN-667: Add changeset web link to manual approval steps

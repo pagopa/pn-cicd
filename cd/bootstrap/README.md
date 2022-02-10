@@ -12,19 +12,19 @@ To be able to deploy stacks and artifacts in the target account 2 shared bucket 
 2. CFN templates (used nested stack). 
 
 Buckets have encryption enabled and _encryption key_ is managed by 
-[cicd-pipe-00-shared_buckets_key.yaml](cfn-templates/cicd-pipe-00-shared_buckets_key.yaml)
+[00-shared_buckets_key.yaml](cfn-templates/00-shared_buckets_key.yaml)
 template.
 
 ### Pipeline Roles in target account
 
-The [target-pipe-20-cicd_roles.yaml](cfn-templates/target-pipe-20-cicd_roles.yaml) CFN templates contains the 
+The [20-target_accounts_roles.yaml](cfn-templates/20-target_accounts_roles.yaml) CFN templates contains the 
 _role definition_ for each _dev_, _uat_ and _prod_ accounts that enable to CiCd account to deploy stacks into
 target accounts.
 
 ## The infrastructure pipeline
 
-Defined in [cicd-pipe-50-infra_pipeline.yaml](cfn-templates/cicd-pipe-50-infra_pipeline.yaml) is composed 
-of the following steps
+Defined in [50-infrastructure_deployer_pipeline.yaml](cfn-templates/50-infrastructure_deployer_pipeline.yaml)
+is composed of the following steps
 - Checkout infrastructure templates
 - Copy it to an S3 bucket (useful for nested stack)
 - Deploy development account
@@ -87,9 +87,10 @@ with path `<base>/pn-ipc.yaml`
   - The outputs of "networking infrastructure" CFN templates
 - __Output__: any output useful to the microservices.
 
-## The microservices pipelines
-Defined in [cicd-pipe-70-microsvc_pipeline.yaml](cfn-templates/cicd-pipe-70-microsvc_pipeline.yaml) has the 
-following steps
+## The container microservices pipelines
+Used to deploy a microservice deployed as a container is defined in 
+[70-microservice_container_deployer_pipeline.yaml](cfn-templates/70-microservice_container_deployer_pipeline.yaml) 
+has the following steps
 - Checkout microservice container image, microservice CFN templates and infrastructure CFN templates
 - Copy infrastructure CFN templates to an S3 bucket (useful for nested stack)
 - Deploy development account
@@ -131,4 +132,40 @@ scripts/aws/cfn/microservice.yml
  - __Output__: nobody use this output
 
 
+## The lambda microservices pipelines
+Used to deploy a microservice deployed as a set of lambda function without storage is defined in 
+[70-microservice_lambdas_deployer_pipeline.yaml](cfn-templates/70-microservice_lambdas_deployer_pipeline.yaml) 
+has the following steps
+- Get lambdas ZIP files versions from S3, checkout microservice CFN templates and 
+  infrastructure CFN templates from github 
+- Copy infrastructure CFN templates to an S3 bucket (useful for nested stack)
+- Deploy development account
+  - Merge CFN parameters file for next step with output from infrastructure CFN tempaltes
+  - Deploy "microservice runtime" CFN template
+- Deploy User Acceptance Test account: same step of dev account but ask manual approval and
+  use different parameters file.
+- (TODO) Deploy Production account
 
+### Runtime microservice CNF template
+ This script is read from the microservice git repository with path 
+```
+scripts/aws/cfn/microservice.yml
+```
+ - __Responsability__: configure microservice runtime and API exposition.
+ - __Input__: file, previous step, infrastructure parameters and some mandatory parameters
+   - A file ```scripts/aws/cfn/microservice-<env-name>-cfg.json``` from microservice repository
+   - The outputs of "infrastructure ipc" CFN templates
+   - ProjectName: the _project name_ configuration value
+   - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
+   - ContainerImageUri: the full URI of the container image with digest
+   - MicroserviceNumber: an unique number for each microservice in a microservice 
+     group (usefull to disambiguate load balancer rules)
+   - LambdasBucketName: Bucket name where C.I. save lambda ZIP package
+   - LambdaZipVersionIdN (with N in [1, ..., 5]): The ZIP file S3 versionId for the key specified
+     in microservice configuration.
+ - __Output__: nobody use this output
+
+
+
+  
+  
