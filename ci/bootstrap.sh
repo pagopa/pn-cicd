@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash -e
 
 if ( [ $# -ne 2 ] ) then
   echo "Usage: $0 <cicd-profile> <aws-region>"
