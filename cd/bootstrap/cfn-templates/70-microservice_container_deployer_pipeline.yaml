@@ -1,7 +1,7 @@
 # TODO: multiregion CFN deploy 
 
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Continuos Delivery pipeline for infrastructure deployment'
+Description: 'Continuos Delivery pipeline for container microservice deployment'
 Parameters:
   ProjectName:
     Description: Usually "pn", can be changed for feature branch deployment

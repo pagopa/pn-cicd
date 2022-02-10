@@ -1,7 +1,7 @@
 # TODO: multiregion CFN deploy 
 
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Continuos Delivery pipeline for infrastructure deployment'
+Description: 'Continuos Delivery pipeline for lambdas microservice deployment'
 Parameters:
   ProjectName:
     Description: Usually "pn", can be changed for feature branch deployment
@@ -16,10 +16,12 @@ Parameters:
     Description: ARN of the KMS CMK creates in Tools account
     Type: String
   LambdasZipsBucketName:
-    Description: Name of the bucket containing lambdas compiled and compressed artifacts.
+    Description: Name of the bucket containing lambdas compiled and compressed zip file.
     Type: String
   LambdasNames:
-    Description: Names of the lambdas functions
+    Description: 'Every cloudformation can deploy more than one lambdas. 
+                  This commas separated list contains the names of the lambdas 
+                  artifacts <repo/branch/lambdaName>'
     Type: List<String>
   LambdasNamesLength:
     Description: Number of elements in LambdasNames parameter
@@ -403,7 +405,7 @@ Resources:
                 - Name: MicrosvcSCCheckoutArtifact
               OutputArtifacts:
                 - Name: DevEnanchedParamsArtifact
-              RunOrder: 2
+              RunOrder: 1
             # Deploy microservice on DEV
             - Name: Deploy_microservice_dev_CFN
               ActionTypeId:
@@ -452,13 +454,159 @@ Resources:
                     - !Ref AWS::NoValue
               InputArtifacts:
                 - Name: DevEnanchedParamsArtifact
-              RunOrder: 3
+              RunOrder: 2
               RoleArn:
                 Fn::If:
                   - ActivateCrossAccountRoles
                   - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
                   - !Ref AWS::NoValue
-        
+        # Deploy infrastructure to uat account if different from dev
+        - Fn::If:
+          - HasUatStage
+          ### Deploy to UAT account ###
+          #############################
+          - Name: Prepare_uat_account
+            Actions:
+              # collect parameters for microservice UAT
+              - Name: Enrich_microservice_uat_cfg
+                ActionTypeId:
+                  Category: Build
+                  Owner: AWS
+                  Version: 1
+                  Provider: CodeBuild
+                Configuration:
+                  ProjectName: !Ref EnrichCfnParametersCodeBuildProject
+                  PrimarySource: MicrosvcSCCheckoutArtifact
+                  EnvironmentVariables: !Sub '[
+                      {"name":"TemplateFilePath", "value":"scripts/aws/cfn/microservice.yml", "type":"PLAINTEXT"},
+                      {"name":"ParamFilePath", "value":"scripts/aws/cfn/microservice-uat-cfg.json", "type":"PLAINTEXT"},
+                      {"name":"ACCOUNT_ROLE", "value":"arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole", "type":"PLAINTEXT"},
+                      {"name":"StackName", "value":"${ProjectName}-ipc-uat", "type":"PLAINTEXT"}
+                    ]'
+                InputArtifacts:
+                  - Name: MicrosvcSCCheckoutArtifact
+                OutputArtifacts:
+                  - Name: UatEnanchedParamsArtifact
+                RunOrder: 1
+              # Deploy microservice on UAT
+              - Name: Compute_microservice_uat_ChangeSet
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                Configuration:
+                  ActionMode: CHANGE_SET_REPLACE
+                  ChangeSetName: !Sub ${ProjectName}-${MicroserviceName}-microsvc-uat-changeset
+                  StackName: !Sub '${ProjectName}-${MicroserviceName}-microsvc-uat'
+                  Capabilities: CAPABILITY_NAMED_IAM
+                  TemplatePath: UatEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
+                  TemplateConfiguration: 'UatEnanchedParamsArtifact::scripts/aws/cfn/microservice-uat-cfg.json.enanched' 
+                  ParameterOverrides: 
+                    Fn::Join:
+                      - ''
+                      - - '{'
+                        - Fn::Join: 
+                            - ','
+                            - - !Sub '"TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}"'
+                              - !Sub '"ProjectName": "${ProjectName}"'
+                              - !Sub '"LambdasBucketName": "${LambdasZipsBucketName}"'
+                              - !Sub '"MicroserviceNumber": "${MicroserviceNumber}"'
+                              - '"LambdaZipVersionId1": "#{LambdaZipVars1.VersionId}"'
+                              - Fn::If:
+                                  - LambdasNamesLengthAtLeast2
+                                  - '"LambdaZipVersionId2": "#{LambdaZipVars2.VersionId}"'
+                                  - !Ref AWS::NoValue
+                              - Fn::If:
+                                  - LambdasNamesLengthAtLeast3
+                                  - '"LambdaZipVersionId3": "#{LambdaZipVars3.VersionId}"'
+                                  - !Ref AWS::NoValue
+                              - Fn::If:
+                                  - LambdasNamesLengthAtLeast4
+                                  - '"LambdaZipVersionId4": "#{LambdaZipVars4.VersionId}"'
+                                  - !Ref AWS::NoValue
+                              - Fn::If:
+                                  - LambdasNamesLengthAtLeast5
+                                  - '"LambdaZipVersionId5": "#{LambdaZipVars5.VersionId}"'
+                                  - !Ref AWS::NoValue
+                        - '}'
+                  RoleArn:
+                    Fn::If:
+                      - ActivateCrossAccountRoles
+                      - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                      - !Ref AWS::NoValue
+                InputArtifacts:
+                  - Name: UatEnanchedParamsArtifact
+                RunOrder: 2
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                    - !Ref AWS::NoValue
+              - Name: Approve_microservice_uat_ChangeSet
+                ActionTypeId:
+                  Category: Approval
+                  Owner: AWS
+                  Provider: Manual
+                  Version: 1
+                Configuration:
+                  CustomData: !Sub 'Check the changeset to UAT microservice for ${ProjectName}'
+                RunOrder: 3
+              - Name: Apply_microservice_uat_ChangeSet
+                ActionTypeId:
+                  Category: Deploy
+                  Owner: AWS
+                  Version: 1
+                  Provider: CloudFormation
+                Configuration:
+                  ActionMode: CHANGE_SET_EXECUTE
+                  ChangeSetName: !Sub ${ProjectName}-${MicroserviceName}-microsvc-uat-changeset
+                  StackName: !Sub '${ProjectName}-${MicroserviceName}-microsvc-uat'
+                  Capabilities: CAPABILITY_NAMED_IAM
+                  TemplatePath: UatEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
+                  TemplateConfiguration: 'UatEnanchedParamsArtifact::scripts/aws/cfn/microservice-uat-cfg.json.enanched' 
+                  ParameterOverrides: 
+                    Fn::Join:
+                      - ''
+                      - - '{'
+                        - Fn::Join: 
+                            - ','
+                            - - !Sub '"TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}"'
+                              - !Sub '"ProjectName": "${ProjectName}"'
+                              - !Sub '"LambdasBucketName": "${LambdasZipsBucketName}"'
+                              - !Sub '"MicroserviceNumber": "${MicroserviceNumber}"'
+                              - '"LambdaZipVersionId1": "#{LambdaZipVars1.VersionId}"'
+                              - Fn::If:
+                                  - LambdasNamesLengthAtLeast2
+                                  - '"LambdaZipVersionId2": "#{LambdaZipVars2.VersionId}"'
+                                  - !Ref AWS::NoValue
+                              - Fn::If:
+                                  - LambdasNamesLengthAtLeast3
+                                  - '"LambdaZipVersionId3": "#{LambdaZipVars3.VersionId}"'
+                                  - !Ref AWS::NoValue
+                              - Fn::If:
+                                  - LambdasNamesLengthAtLeast4
+                                  - '"LambdaZipVersionId4": "#{LambdaZipVars4.VersionId}"'
+                                  - !Ref AWS::NoValue
+                              - Fn::If:
+                                  - LambdasNamesLengthAtLeast5
+                                  - '"LambdaZipVersionId5": "#{LambdaZipVars5.VersionId}"'
+                                  - !Ref AWS::NoValue
+                        - '}'
+                  RoleArn:
+                    Fn::If:
+                      - ActivateCrossAccountRoles
+                      - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                      - !Ref AWS::NoValue
+                InputArtifacts:
+                  - Name: UatEnanchedParamsArtifact
+                RunOrder: 4
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                    - !Ref AWS::NoValue
+          - !Ref AWS::NoValue
       ArtifactStore:
         Type: S3
         Location: !Ref ArtifactBucket
