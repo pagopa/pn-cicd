@@ -31,6 +31,9 @@ Parameters:
   ProdAccount:
     Description: AWS AccountNumber for Prod environment
     Type: Number
+  NotificationSNSTopic:
+    Description: Where to send failure notification
+    Type: String
   
   CrossAccountCondition:
     Description: Conditionally creates the resources for cross account access
@@ -841,4 +844,16 @@ Resources:
               - !Sub arn:aws:s3:::${ArtifactBucket}/*
               - !Sub arn:aws:s3:::${TemplateBucket}/*
       
-  
+  # FAILURE NOTIFICATIONS 
+  ###################################################
+  InfraPipelineNotifications:
+    Type: AWS::CodeStarNotifications::NotificationRule
+    Properties:
+      DetailType: FULL
+      Name: !Sub '${ProjectName}-InfraPipeline-msg'
+      EventTypeIds:
+        - codepipeline-pipeline-pipeline-execution-failed
+      Resource: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${InfraPipeline}'
+      Targets:
+        - TargetAddress: !Ref 'NotificationSNSTopic'
+          TargetType: SNS
