@@ -11,10 +11,11 @@ The CI pipeline stack is deployed by the Cloud Formation template _ci/bootstrap/
 This is the only one need manual deployment with the following command:
 
 ```
-aws cloudformation deploy --stack-name pn-ci-pipeline --template-body ci/bootstrap/pn-ci-pipeline.yaml --profile cicd --capabilities=CAPABILITY_IAM
+source bootstrap.sh cicd eu-central-1
 ```
 
 - __NOTE__: a _cicd_ profile configuration in `~/.aws/config` and `~/.aws/credential` are needed. 
+The CI/CD resources are deployed in Frankfurt because that region support Github connections version 2.
 
 The pipeline read _[infra/root.yaml](infra/root.yaml)_ template to create the CI Stacks. 
 

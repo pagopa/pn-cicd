@@ -41,7 +41,6 @@ Parameters:
     Description: Path of the Github Repository containing infrastructure cloudformation templates
     Type: String
     Default: runtime-infra
-  
   DevAccount:
     Description: AWS AccountNumber for Dev environment
     Type: Number
@@ -51,6 +50,9 @@ Parameters:
   ProdAccount:
     Description: AWS AccountNumber for Prod environment
     Type: Number
+  NotificationSNSTopic:
+    Description: Where to send failure notification
+    Type: String
   
   CrossAccountCondition:
     Description: Conditionally creates the resources for cross account access
@@ -750,5 +752,17 @@ Resources:
             Resource:
               - !Sub arn:aws:s3:::${ArtifactBucket}/*
               - !Sub arn:aws:s3:::${TemplateBucket}/*
-      
-  
+
+  # FAILURE NOTIFICATIONS 
+  ###################################################
+  MicroservicePipelineNotifications:
+    Type: AWS::CodeStarNotifications::NotificationRule
+    Properties:
+      DetailType: FULL
+      Name: !Sub '${ProjectName}-${MicroserviceName}-pipeline-msg'
+      EventTypeIds:
+        - codepipeline-pipeline-pipeline-execution-failed
+      Resource: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${MicroservicePipeline}'
+      Targets:
+        - TargetAddress: !Ref 'NotificationSNSTopic'
+          TargetType: SNS      

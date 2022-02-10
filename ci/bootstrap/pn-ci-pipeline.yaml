@@ -11,10 +11,8 @@ Parameters:
   BranchName:
     Type: String
     Default: main
-  SlackInfo:
+  NotificationSNSTopic:
     Type: String
-    Description: <slack workspace id>:<slack channel id>
-    Default: TQSBH3ZS4:C02V0SRC4TV
 
 Resources:
   # Global Definition of credential needed by CodeBuild to access to GitHub
@@ -200,88 +198,6 @@ Resources:
         - !Ref S3Policy
         - !Ref CodePipelinePolicy
         - !Ref CodestarPolicy
-
-  # BUILD FAILURE SLACK NOTIFICATION TOPIC
-  ########################################
-  NotificationSNSTopic:
-    Type: AWS::SNS::Topic
-  TopicPolicy:
-    Type: AWS::SNS::TopicPolicy
-    Properties:
-      PolicyDocument:
-        Statement:
-          - Sid: AllowServices
-            Effect: Allow
-            Principal:
-              Service:
-                - "codestar-notifications.amazonaws.com"
-            Action:
-              - 'sns:Publish'
-            Resource:
-              - !Ref NotificationSNSTopic
-          - Sid: AllowAWS
-            Effect: Allow
-            Principal:
-              AWS: "*"
-            Action:
-              - "SNS:GetTopicAttributes"
-              - "SNS:SetTopicAttributes"
-              - "SNS:AddPermission"
-              - "SNS:RemovePermission"
-              - "SNS:DeleteTopic"
-              - "SNS:Subscribe"
-              - "SNS:ListSubscriptionsByTopic"
-              - "SNS:Publish"
-              - "SNS:Receive"
-            Resource:
-              - !Ref NotificationSNSTopic
-      Topics:
-        - !Ref NotificationSNSTopic
-
-  BuildNotificationChatbotIAMRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Description: Role for build notifications chatbot
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - chatbot.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: "/service_role/"
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
-  BuildNotificationChatbot:
-    Type: AWS::Chatbot::SlackChannelConfiguration
-    Properties:
-      ConfigurationName: !Sub '${AWS::StackName}-notifications-chatbot'
-      IamRoleArn:
-        Fn::GetAtt: [ BuildNotificationChatbotIAMRole, Arn ]
-      LoggingLevel: INFO
-      SlackChannelId:
-        Fn::Select:
-          - '1'
-          - Fn::Split:
-              - ":"
-              - Ref: SlackInfo
-      SlackWorkspaceId:
-        Fn::Select:
-          - '0'
-          - Fn::Split:
-              - ":"
-              - Ref: SlackInfo
-      SnsTopicArns:
-        - Ref: NotificationSNSTopic
-  BuildNotificationTopicChatbot:
-    Type: AWS::SNS::Subscription
-    Properties:
-      TopicArn:
-        Ref: NotificationSNSTopic
-      Endpoint: "https://global.sns-api.chatbot.amazonaws.com"
-      Protocol: https
 
   CodePipelineNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule

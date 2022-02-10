@@ -115,6 +115,15 @@ echo ""
 echo ""
 echo ""
 
+echo "###########     GET NOTIFICATIONS SNS TOPIC FROM C.I.     ####################"
+get_sns_topic_command="aws --profile $CiCdProfile --region $CiCdRegion cloudformation describe-stacks \
+                           --stack-name cicd-pipeline-notification-sns-topic \
+                           --query \"Stacks[0].Outputs[?OutputKey=='NotificationSNSTopicArn'].OutputValue\" \
+                           --output text"
+sns_topic_arn=$(eval $get_sns_topic_command)
+echo "Got sns topic ARN: $sns_topic_arn"
+echo ""
+
 echo "########### PREPARE Continuos Delivery BUCKETS AND ROLSE ####################"
 echo "# Deploying pre-requisite stack to the ci cd account... "
 aws --profile "$CiCdProfile" --region "$CiCdRegion" cloudformation deploy \
@@ -201,7 +210,8 @@ deployStackAndUpdateCrossAccountCondition \
         InfraRepoSubdir="$InfraRepoSubdir" \
         DevAccount="$DevAccount" \
         UatAccount="$UatAccount" \
-        ProdAccount="$ProdAccount"
+        ProdAccount="$ProdAccount" \
+        NotificationSNSTopic=${sns_topic_arn}
 
 for (( m=0; m<${NumberOfMicroservices}; m++ ))
 do
@@ -234,6 +244,7 @@ do
           MicroserviceRepoName="${MicroserviceRepoName}" \
           MicroserviceBranchName="${MicroserviceBranchName}" \
           MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag}" \
-          MicroserviceNumber="$[ ${m} + 1 ]"
+          MicroserviceNumber="$[ ${m} + 1 ]"\
+          NotificationSNSTopic=${sns_topic_arn}
 done
 
