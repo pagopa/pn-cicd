@@ -1,0 +1,651 @@
+# TODO: multiregion CFN deploy 
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Continuos Delivery pipeline for infrastructure deployment'
+Parameters:
+  ProjectName:
+    Description: Usually "pn", can be changed for feature branch deployment
+    Type: String
+  CodeStarGithubConnectionArnInfra:
+    Description: CodeStar connection for github infrastructure project
+    Type: String
+  CodeStarGithubConnectionArnMicro:
+    Description: CodeStar connection for github microservice project
+    Type: String
+  CMKARN:
+    Description: ARN of the KMS CMK creates in Tools account
+    Type: String
+  LambdasZipsBucketName:
+    Description: Name of the bucket containing lambdas compiled and compressed artifacts.
+    Type: String
+  LambdasNames:
+    Description: Names of the lambdas functions
+    Type: List<String>
+  LambdasNamesLength:
+    Description: Number of elements in LambdasNames parameter
+    Type: Number
+  MicroserviceName:
+    Description: Logical name of the microservice
+    Type: String
+  MicroserviceRepoName:
+    Description: Name of the Github Repository containing microservice templates
+    Type: String
+  MicroserviceBranchName:
+    Description: Name of the Github Repository branch containing microservice templates
+    Type: String
+  MicroserviceNumber:
+    Description: Microservice disambiguation number useful for load-balancer rules
+    Type: Number
+  InfraRepoName:
+    Description: Name of the Github Repository containing infrastructure templates
+    Type: String
+  InfraBranchName:
+    Description: Name of the Github Repository branch containing infrastructure templates
+    Type: String
+  InfraRepoSubdir:
+    Description: Path of the Github Repository containing infrastructure cloudformation templates
+    Type: String
+    Default: runtime-infra
+  DevAccount:
+    Description: AWS AccountNumber for Dev environment
+    Type: Number
+  UatAccount:
+    Description: AWS AccountNumber for Uat environment
+    Type: Number
+  ProdAccount:
+    Description: AWS AccountNumber for Prod environment
+    Type: Number
+  NotificationSNSTopic:
+    Description: Where to send failure notification
+    Type: String
+  
+  CrossAccountCondition:
+    Description: Conditionally creates the resources for cross account access
+    Type: String
+    Default: false
+
+Conditions:
+  ActivateCrossAccountRoles: !Equals [ !Ref CrossAccountCondition, true ]
+  LambdasNamesLengthAtLeast5: !Equals [ !Ref LambdasNamesLength, 5 ]
+  LambdasNamesLengthAtLeast4: !Or [ !Equals [ !Ref LambdasNamesLength, 4 ], Condition: LambdasNamesLengthAtLeast5 ]
+  LambdasNamesLengthAtLeast3: !Or [ !Equals [ !Ref LambdasNamesLength, 3 ], Condition: LambdasNamesLengthAtLeast4 ]
+  LambdasNamesLengthAtLeast2: !Or [ !Equals [ !Ref LambdasNamesLength, 2 ], Condition: LambdasNamesLengthAtLeast3 ]
+  HasUatStage: !Not [ !Equals [ !Ref DevAccount, !Ref UatAccount ] ]
+
+Resources:
+
+
+  # GITHUB ACCESS
+  ###############
+
+  GithubAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-GithubAccessRole-${MicroserviceName}
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub ${AWS::AccountId}
+            Action:
+              - sts:AssumeRole
+      Path: /
+
+  GithubAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-GithubAccessPolicy-${MicroserviceName}
+      Roles:
+        - !Ref GithubAccessRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:*
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - kms:*
+            Resource: !Ref CMKARN
+          -
+            Effect: Allow
+            Action:
+              - codestar-connections:ListTagsForResource
+              - codestar-connections:UseConnection
+              - codestar-connections:GetConnection
+            Resource: 
+              - !Ref CodeStarGithubConnectionArnInfra
+              - !Ref CodeStarGithubConnectionArnMicro
+      
+
+  # PIPELINE PERMISSION
+  ###############
+  PipeLineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-${MicroserviceName}-PipelineRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+                - events.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+  
+  PipelinePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-${MicroserviceName}-CdPipelinePolicy
+      Roles:
+        - !Ref PipeLineRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - codepipeline:*
+              - iam:ListRoles
+              - cloudformation:Describe*
+              - cloudFormation:List*
+              - codecommit:List*
+              - codecommit:Get*
+              - codecommit:GitPull
+              - codecommit:UploadArchive
+              - codecommit:CancelUploadArchive
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              - cloudformation:CreateStack
+              - cloudformation:DeleteStack
+              - cloudformation:DescribeStacks
+              - cloudformation:UpdateStack
+              - cloudformation:CreateChangeSet
+              - cloudformation:DeleteChangeSet
+              - cloudformation:DescribeChangeSet
+              - cloudformation:ExecuteChangeSet
+              - cloudformation:SetStackPolicy
+              - cloudformation:ValidateTemplate
+              - iam:PassRole
+              - s3:ListAllMyBuckets
+              - s3:GetBucketLocation
+              - "ecr:*"
+              - "*"
+            Resource:
+              - "*"
+          -
+            Effect: Allow
+            Action:
+              - kms:Decrypt
+            Resource: !Ref CMKARN
+          -
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetBucketPolicy
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - !Sub arn:aws:s3:::${ArtifactBucket}/*
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+              - !Sub arn:aws:s3:::${LambdasZipsBucketName}/*
+          -
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - !Sub ${GithubAccessRole.Arn}
+              - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+              - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+              - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CdPipelineRole
+
+  
+  # PIPELINE DEFINITION
+  #######################
+  MicroservicePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipeLineRole.Arn
+      Name: !Sub '${ProjectName}-${MicroserviceName}-Pipeline'
+      Stages:
+        # Download sources: lambdas Zip and files for CFN templates
+        - Name: Get_Sources
+          Actions:
+            # First lambda is required
+            - Name: Get_lambda_zip_1_from_bucket
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                S3Bucket: !Ref LambdasZipsBucketName
+                S3ObjectKey: 
+                  Fn::Join:
+                    - ''
+                    - - !Select [ 0, !Ref LambdasNames ]
+                      - '.zip'
+              OutputArtifacts:
+                - Name: LambdaArtifact1
+              Namespace: 'LambdaZipVars1'
+              RunOrder: 1
+            # The second lambda is optional
+            - Fn::If:
+              - LambdasNamesLengthAtLeast2
+              - Name: Get_lambda_zip_2_from_bucket
+                ActionTypeId:
+                  Provider: S3
+                  Owner: AWS
+                  Version: 1
+                  Category: Source
+                Configuration:
+                  S3Bucket: !Ref LambdasZipsBucketName
+                  S3ObjectKey: 
+                    Fn::Join:
+                      - ''
+                      - - !Select [ 1, !Ref LambdasNames ]
+                        - '.zip'
+                OutputArtifacts:
+                  - Name: LambdaArtifact2
+                Namespace: 'LambdaZipVars2'
+                RunOrder: 1
+              - !Ref AWS::NoValue
+            # The third lambda is optional
+            - Fn::If:
+              - LambdasNamesLengthAtLeast3
+              - Name: Get_lambda_zip_3_from_bucket
+                ActionTypeId:
+                  Provider: S3
+                  Owner: AWS
+                  Version: 1
+                  Category: Source
+                Configuration:
+                  S3Bucket: !Ref LambdasZipsBucketName
+                  S3ObjectKey: 
+                    Fn::Join:
+                      - ''
+                      - - !Select [ 2, !Ref LambdasNames ]
+                        - '.zip'
+                OutputArtifacts:
+                  - Name: LambdaArtifact3
+                Namespace: 'LambdaZipVars3'
+                RunOrder: 1
+              - !Ref AWS::NoValue
+            # The fourth lambda is optional
+            - Fn::If:
+              - LambdasNamesLengthAtLeast4
+              - Name: Get_lambda_zip_4_from_bucket
+                ActionTypeId:
+                  Provider: S3
+                  Owner: AWS
+                  Version: 1
+                  Category: Source
+                Configuration:
+                  S3Bucket: !Ref LambdasZipsBucketName
+                  S3ObjectKey: 
+                    Fn::Join:
+                      - ''
+                      - - !Select [ 3, !Ref LambdasNames ]
+                        - '.zip'
+                OutputArtifacts:
+                  - Name: LambdaArtifact4
+                Namespace: 'LambdaZipVars4'
+                RunOrder: 1
+              - !Ref AWS::NoValue
+            # The fifth lambda is optional
+            - Fn::If:
+              - LambdasNamesLengthAtLeast5
+              - Name: Get_lambda_zip_5_from_bucket
+                ActionTypeId:
+                  Provider: S3
+                  Owner: AWS
+                  Version: 1
+                  Category: Source
+                Configuration:
+                  S3Bucket: !Ref LambdasZipsBucketName
+                  S3ObjectKey: 
+                    Fn::Join:
+                      - ''
+                      - - !Select [ 4, !Ref LambdasNames ]
+                        - '.zip'
+                OutputArtifacts:
+                  - Name: LambdaArtifact5
+                Namespace: 'LambdaZipVars5'
+                RunOrder: 1
+              - !Ref AWS::NoValue
+            # Checkout infrastructures CFN templates from Github
+            - Name: Infra_form_Github
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeStarSourceConnection
+              Configuration:
+                DetectChanges: false
+                ConnectionArn: !Ref CodeStarGithubConnectionArnInfra
+                FullRepositoryId: !Ref InfraRepoName
+                BranchName: !Ref InfraBranchName
+              RoleArn:
+                Fn::If:
+                  - ActivateCrossAccountRoles
+                  - !Sub ${GithubAccessRole.Arn}
+                  - !Ref AWS::NoValue
+              OutputArtifacts:
+                - Name: InfraSCCheckoutArtifact
+              RunOrder: 1
+            # Checkout microservice CFN templates from Github
+            - Name: Microservice_form_Github
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeStarSourceConnection
+              Configuration:
+                DetectChanges: false
+                ConnectionArn: !Ref CodeStarGithubConnectionArnMicro
+                FullRepositoryId: !Ref MicroserviceRepoName
+                BranchName: !Ref MicroserviceBranchName
+              RoleArn:
+                Fn::If:
+                  - ActivateCrossAccountRoles
+                  - !Sub ${GithubAccessRole.Arn}
+                  - !Ref AWS::NoValue
+              OutputArtifacts:
+                - Name: MicrosvcSCCheckoutArtifact
+              RunOrder: 1
+        # Copy reusable templates fragment to bucket for later inclusion
+        - Name: Save_CFN_template_fragments
+          Actions:
+            # Save infrastructure template fragment for inclusion from once4account template
+            - Name: Save_templates_to_S3
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: S3
+              Configuration:
+                Extract: true
+                BucketName: !Ref TemplateBucket
+              InputArtifacts:
+                - Name: InfraSCCheckoutArtifact
+              RunOrder: 1
+        ### Deploy to DEV account ###
+        #############################
+        - Name: Prepare_dev_account
+          Actions:
+            # collect parameters for microservice DEV
+            - Name: Enrich_microservice_dev_cfg
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref EnrichCfnParametersCodeBuildProject
+                PrimarySource: MicrosvcSCCheckoutArtifact
+                EnvironmentVariables: !Sub '[
+                    {"name":"TemplateFilePath", "value":"scripts/aws/cfn/microservice.yml", "type":"PLAINTEXT"},
+                    {"name":"ParamFilePath", "value":"scripts/aws/cfn/microservice-dev-cfg.json", "type":"PLAINTEXT"},
+                    {"name":"ACCOUNT_ROLE", "value":"arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole", "type":"PLAINTEXT"},
+                    {"name":"StackName", "value":"${ProjectName}-ipc-dev", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: MicrosvcSCCheckoutArtifact
+              OutputArtifacts:
+                - Name: DevEnanchedParamsArtifact
+              RunOrder: 2
+            # Deploy microservice on DEV
+            - Name: Deploy_microservice_dev_CFN
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub '${ProjectName}-${MicroserviceName}-microsvc-dev'
+                Capabilities: CAPABILITY_NAMED_IAM
+                TemplatePath: DevEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
+                TemplateConfiguration: 'DevEnanchedParamsArtifact::scripts/aws/cfn/microservice-dev-cfg.json.enanched' 
+                ParameterOverrides: 
+                  Fn::Join:
+                    - ''
+                    - - '{'
+                      - Fn::Join: 
+                          - ','
+                          - - !Sub '"TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}"'
+                            - !Sub '"ProjectName": "${ProjectName}"'
+                            - !Sub '"LambdasBucketName": "${LambdasZipsBucketName}"'
+                            - !Sub '"MicroserviceNumber": "${MicroserviceNumber}"'
+                            - '"LambdaZipVersionId1": "#{LambdaZipVars1.VersionId}"'
+                            - Fn::If:
+                                - LambdasNamesLengthAtLeast2
+                                - '"LambdaZipVersionId2": "#{LambdaZipVars2.VersionId}"'
+                                - !Ref AWS::NoValue
+                            - Fn::If:
+                                - LambdasNamesLengthAtLeast3
+                                - '"LambdaZipVersionId3": "#{LambdaZipVars3.VersionId}"'
+                                - !Ref AWS::NoValue
+                            - Fn::If:
+                                - LambdasNamesLengthAtLeast4
+                                - '"LambdaZipVersionId4": "#{LambdaZipVars4.VersionId}"'
+                                - !Ref AWS::NoValue
+                            - Fn::If:
+                                - LambdasNamesLengthAtLeast5
+                                - '"LambdaZipVersionId5": "#{LambdaZipVars5.VersionId}"'
+                                - !Ref AWS::NoValue
+                      - '}'
+                RoleArn:
+                  Fn::If:
+                    - ActivateCrossAccountRoles
+                    - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                    - !Ref AWS::NoValue
+              InputArtifacts:
+                - Name: DevEnanchedParamsArtifact
+              RunOrder: 3
+              RoleArn:
+                Fn::If:
+                  - ActivateCrossAccountRoles
+                  - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                  - !Ref AWS::NoValue
+        
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+        EncryptionKey:
+          Id: !Ref CMKARN
+          Type: KMS
+
+
+  # PIPELINE ARTIFACT BUCKET AND POLICY 
+  ########################################
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArtifactBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:*
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${ArtifactBucket}
+              - !Sub arn:aws:s3:::${ArtifactBucket}/*
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CdPipelineRole
+                - !GetAtt [PipeLineRole,Arn]
+                - !GetAtt [GithubAccessRole,Arn]
+
+  
+  # CFN TEMPLATE BUCKET AND POLICY 
+  ########################################
+  
+  TemplateBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    
+  TemplateBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TemplateBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:*
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${TemplateBucket}
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CfnDeployerRole
+                - !Sub arn:aws:iam::${ProdAccount}:role/${ProjectName}-CdPipelineRole
+                - !GetAtt [PipeLineRole,Arn]
+                - !GetAtt [GithubAccessRole,Arn]
+
+  
+  # CODEBUILD for Cloudformation Template parameters enrichement
+  ###################################################
+  EnrichCfnParametersCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-${MicroserviceName}-EnrichParamsCodeBuildProject
+      ServiceRole: !GetAtt EnrichParamsCodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - apt-key adv --keyserver keyserver.ubuntu.com --recv-keys CC86BB64
+                - add-apt-repository ppa:rmescandon/yq
+                - apt-get update
+                - apt-get install -y yq=4.16.2
+            build:
+              commands:
+                - "export JQ_EXP='{ \"AWS_ACCESS_KEY_ID\": .Credentials.AccessKeyId, \"AWS_SECRET_ACCESS_KEY\": .Credentials.SecretAccessKey, \"AWS_SESSION_TOKEN\": .Credentials.SessionToken } | to_entries | map(\"export \" + .key + \"=\" + .value) | .[]'"
+                - "$( aws sts assume-role --role-arn $ACCOUNT_ROLE --role-session-name codebuildReadStacks | jq -r \"$JQ_EXP\" )"
+                - echo "Infrastructure parameters"
+                - |
+                    aws cloudformation describe-stacks --stack-name $StackName | \
+                        jq '.Stacks[0].Outputs | reduce .[] as $i ({}; .[$i.OutputKey] = $i.OutputValue) ' | \
+                        tee infrastructure_parameters.json
+                - echo "# Infrastructure outputs"
+                - echo ""
+                - echo "# Keep parameters"
+                - "keepKeys=$( yq eval '.Parameters | keys' $TemplateFilePath | sed -e 's/#.*//' | sed -e '/^ *$/d' | sed -e 's/^. //g' | tr '\n' ',' | sed -e 's/,$//' )"
+                - echo "$keepKeys"
+                - echo ""
+                - echo "Merge all parameters"
+                - "jqMergeExpr='.[0] * { \"Parameters\": .[1] }'"
+                - |
+                    jq -s "$jqMergeExpr" ${ParamFilePath} infrastructure_parameters.json | \
+                        jq '[.Parameters] ' | jq " map({ $keepKeys }) | { \"Parameters\": .[0] } " |
+                        tee ${ParamFilePath}.enanched
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+  
+  EnrichParamsCodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-${MicroserviceName}-EnrichParamsCodeBuildRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - 
+            Effect: Allow
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  
+  EnrichParamsCodeBuildPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-${MicroserviceName}-EnrichParamsCodeBuildPolicy
+      Roles:
+        - !Ref EnrichParamsCodeBuildRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - codebuild:BatchGetBuilds
+              - codebuild:StartBuild
+              - "*"
+            Resource:
+              - "*"
+          -
+            Effect: Allow
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: !Ref CMKARN
+          -
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetBucketPolicy
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - !Sub arn:aws:s3:::${ArtifactBucket}/*
+              - !Sub arn:aws:s3:::${TemplateBucket}/*
+
+  # FAILURE NOTIFICATIONS 
+  ###################################################
+  MicroservicePipelineNotifications:
+    Type: AWS::CodeStarNotifications::NotificationRule
+    Properties:
+      DetailType: FULL
+      Name: !Sub '${ProjectName}-${MicroserviceName}-pipeline-msg'
+      EventTypeIds:
+        - codepipeline-pipeline-pipeline-execution-failed
+      Resource: !Sub 'arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${MicroservicePipeline}'
+      Targets:
+        - TargetAddress: !Ref 'NotificationSNSTopic'
+          TargetType: SNS      

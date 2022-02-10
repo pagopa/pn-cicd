@@ -101,13 +101,17 @@ do
   MicroserviceRepoName=$(jq -r ".microservices[$m].\"repo-name\"" $ConfigFile )
   MicroserviceBranchName=$(jq -r ".microservices[$m].\"branch-name\"" $ConfigFile )
   MicroserviceImageNameAndTag=$(jq -r ".microservices[$m].\"image-name-and-tag\"" $ConfigFile )
+  MicroserviceType=$(jq -r ".microservices[$m].type" $ConfigFile )
+  MicroserviceLambdaList=$(jq -r "try .microservices[$m].\"lambda-names\"[]" $ConfigFile | tr "\n" "," | sed -e 's/,$//' )
   MicroCodeStarGithubConnectionArn=$(jq -r ".microservices[$m].\"codestar-connection-arn\"" $ConfigFile )
 
   echo " --- ${MicroserviceName} "
-  echo " -    Repository name: ${MicroserviceRepoName}"
-  echo " -        Branch name: ${MicroserviceBranchName}"
-  echo " - Image name and tag: ${MicroserviceImageNameAndTag}"
-  echo " - Codestar connection: ${MicroCodeStarGithubConnectionArn}"   
+  echo " - Type (container|lambdas): ${MicroserviceType}"
+  echo " -          Repository name: ${MicroserviceRepoName}"
+  echo " -              Branch name: ${MicroserviceBranchName}"
+  echo " -       Image name and tag: ${MicroserviceImageNameAndTag}"
+  echo " -       Lambdas names list: ${MicroserviceLambdaList}"
+  echo " -      Codestar connection: ${MicroCodeStarGithubConnectionArn}"   
 done
 
 echo ""
@@ -116,12 +120,21 @@ echo ""
 echo ""
 
 echo "###########     GET NOTIFICATIONS SNS TOPIC FROM C.I.     ####################"
-get_sns_topic_command="aws --profile $CiCdProfile --region $CiCdRegion cloudformation describe-stacks \
+getSnsTopicCommand="aws --profile $CiCdProfile --region $CiCdRegion cloudformation describe-stacks \
                            --stack-name cicd-pipeline-notification-sns-topic \
                            --query \"Stacks[0].Outputs[?OutputKey=='NotificationSNSTopicArn'].OutputValue\" \
                            --output text"
-sns_topic_arn=$(eval $get_sns_topic_command)
-echo "Got sns topic ARN: $sns_topic_arn"
+SnsTopicArn=$(eval $getSnsTopicCommand)
+echo "Got sns topic ARN: $SnsTopicArn"
+echo ""
+
+echo "########### GET WEB / LAMBDA ARTIFACTS BUCKET NAME FROM C.I. ####################"
+getWebLambdaBucketCommand="aws --profile $CiCdProfile --region $CiCdRegion cloudformation describe-stacks \
+                           --stack-name pn-ci-root \
+                           --query \"Stacks[0].Outputs[?OutputKey=='CiArtifactBucket'].OutputValue\" \
+                           --output text"
+WebLambdaBucketName=$(eval $getWebLambdaBucketCommand)
+echo "Got web and lambda artifacts bucket name: $WebLambdaBucketName"
 echo ""
 
 echo "########### PREPARE Continuos Delivery BUCKETS AND ROLSE ####################"
@@ -211,40 +224,84 @@ deployStackAndUpdateCrossAccountCondition \
         DevAccount="$DevAccount" \
         UatAccount="$UatAccount" \
         ProdAccount="$ProdAccount" \
-        NotificationSNSTopic=${sns_topic_arn}
+        NotificationSNSTopic=${SnsTopicArn}
 
 for (( m=0; m<${NumberOfMicroservices}; m++ ))
 do
   MicroserviceName=$(jq -r ".microservices[$m].name" $ConfigFile )
   MicroserviceRepoName=$(jq -r ".microservices[$m].\"repo-name\"" $ConfigFile )
   MicroserviceBranchName=$(jq -r ".microservices[$m].\"branch-name\"" $ConfigFile )
+  MicroserviceType=$(jq -r ".microservices[$m].type" $ConfigFile )
   MicroserviceImageNameAndTag=$(jq -r ".microservices[$m].\"image-name-and-tag\"" $ConfigFile )
+  MicroserviceLambdaList=$(jq -r "try .microservices[$m].\"lambda-names\"[]" $ConfigFile | tr "\n" "," | sed -e 's/,$//' )
+  MicroserviceLambdaListLength=$(jq -r "try .microservices[$m].\"lambda-names\" | length" $ConfigFile )
   MicroCodeStarGithubConnectionArn=$(jq -r ".microservices[$m].\"codestar-connection-arn\"" $ConfigFile )
 
-  echo ""
-  echo ""
-  echo "########## Deploy MICROSERVICE ${MicroserviceName} pipeline ##########"
-  deployStackAndUpdateCrossAccountCondition \
-    aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
-        --stack-name "${ProjectName}-microsvc-${MicroserviceName}-pipeline" \
-        --template-file ${scriptDir}/cfn-templates/70-microservice_deployer_pipeline.yaml \
-        --capabilities CAPABILITY_NAMED_IAM \
-        --parameter-overrides \
-          CodeStarGithubConnectionArnInfra="$InfraCodeStarGithubConnectionArn" \
-          CodeStarGithubConnectionArnMicro="$MicroCodeStarGithubConnectionArn" \
-          CMKARN=$CMKArn \
-          ProjectName="$ProjectName" \
-          InfraRepoName="$InfraRepoName" \
-          InfraBranchName="$InfraBranchName" \
-          InfraRepoSubdir="$InfraRepoSubdir" \
-          DevAccount="$DevAccount" \
-          UatAccount="$UatAccount" \
-          ProdAccount="$ProdAccount" \
-          MicroserviceName="${MicroserviceName}" \
-          MicroserviceRepoName="${MicroserviceRepoName}" \
-          MicroserviceBranchName="${MicroserviceBranchName}" \
-          MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag}" \
-          MicroserviceNumber="$[ ${m} + 1 ]"\
-          NotificationSNSTopic=${sns_topic_arn}
+  if ( [ "container" = "${MicroserviceType}" ] ) then
+    echo ""
+    echo ""
+    echo "########## Deploy CONTAINER MICROSERVICE ${MicroserviceName} pipeline ##########"
+    deployStackAndUpdateCrossAccountCondition \
+      aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
+          --stack-name "${ProjectName}-microsvc-${MicroserviceName}-pipeline" \
+          --template-file ${scriptDir}/cfn-templates/70-microservice_container_deployer_pipeline.yaml \
+          --capabilities CAPABILITY_NAMED_IAM \
+          --parameter-overrides \
+            CodeStarGithubConnectionArnInfra="$InfraCodeStarGithubConnectionArn" \
+            CodeStarGithubConnectionArnMicro="$MicroCodeStarGithubConnectionArn" \
+            CMKARN=$CMKArn \
+            ProjectName="$ProjectName" \
+            InfraRepoName="$InfraRepoName" \
+            InfraBranchName="$InfraBranchName" \
+            InfraRepoSubdir="$InfraRepoSubdir" \
+            DevAccount="$DevAccount" \
+            UatAccount="$UatAccount" \
+            ProdAccount="$ProdAccount" \
+            MicroserviceName="${MicroserviceName}" \
+            MicroserviceRepoName="${MicroserviceRepoName}" \
+            MicroserviceBranchName="${MicroserviceBranchName}" \
+            MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag}" \
+            MicroserviceNumber="$[ ${m} + 1 ]"\
+            NotificationSNSTopic=${SnsTopicArn}
+  
+  elif ( [ "lambdas" = "${MicroserviceType}" ] ) then
+    echo ""
+    echo ""
+    echo "########## Deploy LAMBDAS MICROSERVICE ${MicroserviceName} pipeline ##########"
+    deployStackAndUpdateCrossAccountCondition \
+      aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
+          --stack-name "${ProjectName}-microsvc-${MicroserviceName}-pipeline" \
+          --template-file ${scriptDir}/cfn-templates/70-microservice_lambdas_deployer_pipeline.yaml \
+          --capabilities CAPABILITY_NAMED_IAM \
+          --parameter-overrides \
+            CodeStarGithubConnectionArnInfra="$InfraCodeStarGithubConnectionArn" \
+            CodeStarGithubConnectionArnMicro="$MicroCodeStarGithubConnectionArn" \
+            LambdasZipsBucketName="${WebLambdaBucketName}" \
+            CMKARN=$CMKArn \
+            ProjectName="$ProjectName" \
+            InfraRepoName="$InfraRepoName" \
+            InfraBranchName="$InfraBranchName" \
+            InfraRepoSubdir="$InfraRepoSubdir" \
+            DevAccount="$DevAccount" \
+            UatAccount="$UatAccount" \
+            ProdAccount="$ProdAccount" \
+            MicroserviceName="${MicroserviceName}" \
+            MicroserviceRepoName="${MicroserviceRepoName}" \
+            MicroserviceBranchName="${MicroserviceBranchName}" \
+            LambdasNames="${MicroserviceLambdaList}" \
+            LambdasNamesLength="${MicroserviceLambdaListLength}" \
+            MicroserviceNumber="$[ ${m} + 1 ]"\
+            NotificationSNSTopic=${SnsTopicArn}
+  
+  else 
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ERROR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    echo "!!!  Unknown microservice ${MicroserviceName} type \"${MicroserviceType}\" "
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    if ( [ "$BASH_SOURCE" = "" ] ) then
+      return 1
+    else
+      exit 1
+    fi
+  fi  
 done
 
