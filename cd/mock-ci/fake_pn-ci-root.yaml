@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: FAKE CI Bucket
+
+Parameters:
+  DevAccount:
+    Description: AWS AccountNumber for Dev environment
+    Type: Number
+    Default: 558518206506
+  
+
+Resources:
+
+  CiArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+  
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CiArtifactBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:*
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${CiArtifactBucket}
+              - !Sub arn:aws:s3:::${CiArtifactBucket}/*
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${DevAccount}:root
+                - !Sub arn:aws:iam::${DevAccount}:root
+  
+Outputs:
+  CiArtifactBucket:
+    Value: !Ref 'CiArtifactBucket'
