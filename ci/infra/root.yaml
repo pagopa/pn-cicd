@@ -17,6 +17,23 @@ Parameters:
     Type: String
     Default: 'none'
     Description: Topic for build and pipeline notification
+  
+  AllowedDeployAccount1:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount2:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount3:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount4:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount5:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+
 
 Resources:
   CodeArtifactStack:
@@ -35,6 +52,26 @@ Resources:
     Properties:
       VersioningConfiguration:
         Status: Enabled
+  
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CiArtifactBucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:*
+            Effect: Allow
+            Resource:
+              - !Sub arn:aws:s3:::${CiArtifactBucket}
+              - !Sub arn:aws:s3:::${CiArtifactBucket}/*
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${AllowedDeployAccount1}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount2}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount3}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount4}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount5}:root
 
 # Progetti CI jar
   ParentPomCI:
@@ -77,6 +114,11 @@ Resources:
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+        AllowedDeployAccount1: !Ref AllowedDeployAccount1
+        AllowedDeployAccount2: !Ref AllowedDeployAccount2
+        AllowedDeployAccount3: !Ref AllowedDeployAccount3
+        AllowedDeployAccount4: !Ref AllowedDeployAccount4
+        AllowedDeployAccount5: !Ref AllowedDeployAccount5
       TimeoutInMinutes: 5
   PnDeliveryPushCI:
     Type: AWS::CloudFormation::Stack
@@ -87,6 +129,11 @@ Resources:
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+        AllowedDeployAccount1: !Ref AllowedDeployAccount1
+        AllowedDeployAccount2: !Ref AllowedDeployAccount2
+        AllowedDeployAccount3: !Ref AllowedDeployAccount3
+        AllowedDeployAccount4: !Ref AllowedDeployAccount4
+        AllowedDeployAccount5: !Ref AllowedDeployAccount5
       TimeoutInMinutes: 5
   PnExternalChannelsCI:
     Type: AWS::CloudFormation::Stack
@@ -97,6 +144,11 @@ Resources:
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+        AllowedDeployAccount1: !Ref AllowedDeployAccount1
+        AllowedDeployAccount2: !Ref AllowedDeployAccount2
+        AllowedDeployAccount3: !Ref AllowedDeployAccount3
+        AllowedDeployAccount4: !Ref AllowedDeployAccount4
+        AllowedDeployAccount5: !Ref AllowedDeployAccount5
       TimeoutInMinutes: 5
 # Progetti Lambda
   PnApikeyAuthorizerLambda:

@@ -31,5 +31,12 @@ echo "Deploy CI pipeline"
 aws --profile $CiCdAccountProfile --region $AWSRegion cloudformation deploy \
     --stack-name pn-ci-pipeline \
     --template-file ${scriptDir}/bootstrap/pn-ci-pipeline.yaml  \
-    --parameter-overrides NotificationSNSTopic=$sns_topic_arn \
-    --capabilities CAPABILITY_NAMED_IAM
+    --capabilities CAPABILITY_NAMED_IAM \
+    --parameter-overrides \
+      NotificationSNSTopic=$sns_topic_arn \
+      AllowedDeployAccount1=558518206506 \
+      AllowedDeployAccount2=946373734005 \
+      AllowedDeployAccount3=946373734005 \
+      AllowedDeployAccount4=946373734005 \
+      AllowedDeployAccount5=946373734005
+
