@@ -1,3 +1,7 @@
+# Disclamers
+- Create DNS and certificates before run Continuos Delivery initialization. 
+  Follow the instruction in [pn-infra project](https://github.com/pagopa/pn-infra)
+
 # CD pipeline
 
 A continuous delivery "environment" pipeline is really structured in multiple pipelines:
