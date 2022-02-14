@@ -53,7 +53,7 @@
         {
             "name": "auth-fleet",
             "repo-name": "pagopa/pn-auth-fleet",
-            "branch-name": "feature/PN-611",
+            "branch-name": "feature/PN-670",
             "type": "lambdas",
             "lambda-names": [
                 "pn-auth-fleet/main/apikeyAuthorizer",
