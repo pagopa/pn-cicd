@@ -6,7 +6,10 @@ Parameters:
     Description: AWS AccountNumber for Dev environment
     Type: Number
     Default: 558518206506
-  
+  UatAccount:
+    Description: AWS AccountNumber for Uat environment
+    Type: Number
+    Default: 946373734005
 
 Resources:
 
@@ -32,7 +35,7 @@ Resources:
             Principal:
               AWS:
                 - !Sub arn:aws:iam::${DevAccount}:root
-                - !Sub arn:aws:iam::${DevAccount}:root
+                - !Sub arn:aws:iam::${UatAccount}:root
   
 Outputs:
   CiArtifactBucket:
