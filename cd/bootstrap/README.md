@@ -40,7 +40,7 @@ is composed of the following steps
 
 *<base>* means the *infrastructure.repo-subdir* configuration value.
 
-#### 1. Deploy infrastructure CNF template on each _dev_, _uat_, _prod_ account.
+#### 1. Global environment infrastructure CNF template on each _dev_, _uat_, _prod_ account.
 
 This script is read from the infrastructure git repository 
 [pagopa:pn-infra](https://github.com/pagopa/pn-infra) the file
@@ -57,7 +57,7 @@ This script is read from the infrastructure git repository
 - __Output__: 
     - _AlarmSNSTopicArn_: SNS Topic Arn for slack Chat-bot
 
-### 2. Networking infrastructure CNF template
+#### 2. Networking infrastructure CNF template
 This script is read from the infrastructure git repository [pagopa:pn-infra](https://github.com/pagopa/pn-infra) 
 with path `<base>/pn-infra.yaml`
 
@@ -74,7 +74,7 @@ with path `<base>/pn-infra.yaml`
     - File ```<base>/pn-infra-<env-name>-cfg.json``` from infrastructure repository
 - __Output__: any output useful for next steps.
 
-### Ipc infrastructure CNF template
+#### 3. Ipc infrastructure CNF template
 This script is read from the infrastructure git repository [pagopa:pn-infra](https://github.com/pagopa/pn-infra)
 with path `<base>/pn-ipc.yaml`
 
