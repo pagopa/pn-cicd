@@ -19,6 +19,18 @@
     },
     "microservices": [
         {
+            "name": "auth-fleet",
+            "repo-name": "pagopa/pn-auth-fleet",
+            "branch-name": "feature/PN-670",
+            "type": "lambdas",
+            "lambda-names": [
+                "pn-auth-fleet/main/apikeyAuthorizer",
+                "pn-auth-fleet/main/jwtAuthorizer",
+                "pn-auth-fleet/main/tokenExchange"
+            ],
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
+        },
+        {
             "name": "delivery",
             "repo-name": "pagopa/pn-delivery",
             "branch-name": "feature/PN-611",
@@ -37,21 +49,9 @@
         {
             "name": "external-channels",
             "repo-name": "pagopa/pn-external-channels",
-            "branch-name": "feature/PN-611",
+            "branch-name": "feature/develop",
             "image-name-and-tag": "pn-external-channels:latest",
             "type": "container",
-            "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
-        },
-        {
-            "name": "auth-fleet",
-            "repo-name": "pagopa/pn-auth-fleet",
-            "branch-name": "feature/PN-670",
-            "type": "lambdas",
-            "lambda-names": [
-                "pn-auth-fleet/main/apikeyAuthorizer",
-                "pn-auth-fleet/main/jwtAuthorizer",
-                "pn-auth-fleet/main/tokenExchange"
-            ],
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
         }
     ]
