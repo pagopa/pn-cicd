@@ -101,6 +101,7 @@ do
   MicroserviceRepoName=$(jq -r ".microservices[$m].\"repo-name\"" $ConfigFile )
   MicroserviceBranchName=$(jq -r ".microservices[$m].\"branch-name\"" $ConfigFile )
   MicroserviceImageNameAndTag=$(jq -r ".microservices[$m].\"image-name-and-tag\"" $ConfigFile )
+  MicroserviceIdx=$(jq -r ".microservices[$m].\"microservice-idx\"" $ConfigFile )
   MicroserviceType=$(jq -r ".microservices[$m].type" $ConfigFile )
   MicroserviceLambdaList=$(jq -r "try .microservices[$m].\"lambda-names\"[]" $ConfigFile | tr "\n" "," | sed -e 's/,$//' )
   MicroCodeStarGithubConnectionArn=$(jq -r ".microservices[$m].\"codestar-connection-arn\"" $ConfigFile )
@@ -110,6 +111,7 @@ do
   echo " -          Repository name: ${MicroserviceRepoName}"
   echo " -              Branch name: ${MicroserviceBranchName}"
   echo " -       Image name and tag: ${MicroserviceImageNameAndTag}"
+  echo " - Microservice index in LB: ${MicroserviceIdx}"
   echo " -       Lambdas names list: ${MicroserviceLambdaList}"
   echo " -      Codestar connection: ${MicroCodeStarGithubConnectionArn}"   
 done
@@ -233,6 +235,7 @@ do
   MicroserviceBranchName=$(jq -r ".microservices[$m].\"branch-name\"" $ConfigFile )
   MicroserviceType=$(jq -r ".microservices[$m].type" $ConfigFile )
   MicroserviceImageNameAndTag=$(jq -r ".microservices[$m].\"image-name-and-tag\"" $ConfigFile )
+  MicroserviceIdx=$(jq -r ".microservices[$m].\"microservice-idx\"" $ConfigFile )
   MicroserviceLambdaList=$(jq -r "try .microservices[$m].\"lambda-names\"[]" $ConfigFile | tr "\n" "," | sed -e 's/,$//' )
   MicroserviceLambdaListLength=$(jq -r "try .microservices[$m].\"lambda-names\" | length" $ConfigFile )
   MicroCodeStarGithubConnectionArn=$(jq -r ".microservices[$m].\"codestar-connection-arn\"" $ConfigFile )
@@ -261,7 +264,7 @@ do
             MicroserviceRepoName="${MicroserviceRepoName}" \
             MicroserviceBranchName="${MicroserviceBranchName}" \
             MicroserviceImageNameAndTag="${MicroserviceImageNameAndTag}" \
-            MicroserviceNumber="$[ ${m} + 1 ]"\
+            MicroserviceNumber="${MicroserviceIdx}" \
             NotificationSNSTopic=${SnsTopicArn}
   
   elif ( [ "lambdas" = "${MicroserviceType}" ] ) then
@@ -290,7 +293,7 @@ do
             MicroserviceBranchName="${MicroserviceBranchName}" \
             LambdasNames="${MicroserviceLambdaList}" \
             LambdasNamesLength="${MicroserviceLambdaListLength}" \
-            MicroserviceNumber="$[ ${m} + 1 ]"\
+            MicroserviceNumber="${MicroserviceIdx}" \
             NotificationSNSTopic=${SnsTopicArn}
   
   else 

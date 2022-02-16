@@ -28,6 +28,7 @@
                 "pn-auth-fleet/main/jwtAuthorizer",
                 "pn-auth-fleet/main/tokenExchange"
             ],
+            "microservice-idx": 0,
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
         },
         {
@@ -36,6 +37,7 @@
             "branch-name": "feature/PN-611",
             "image-name-and-tag": "pn-delivery:latest",
             "type": "container",
+            "microservice-idx": 1,
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
         },
         {
@@ -44,14 +46,16 @@
             "branch-name": "feature/PN-611",
             "image-name-and-tag": "pn-delivery-push:latest",
             "type": "container",
+            "microservice-idx": 2,
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
         },
         {
             "name": "external-channels",
             "repo-name": "pagopa/pn-external-channels",
-            "branch-name": "feature/develop",
+            "branch-name": "develop",
             "image-name-and-tag": "pn-external-channels:latest",
             "type": "container",
+            "microservice-idx": 3,
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
         }
     ]
