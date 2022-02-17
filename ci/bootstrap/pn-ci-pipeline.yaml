@@ -14,6 +14,23 @@ Parameters:
   NotificationSNSTopic:
     Type: String
 
+  AllowedDeployAccount1:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount2:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount3:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount4:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount5:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+
+
 Resources:
   # Global Definition of credential needed by CodeBuild to access to GitHub
   CodeBuildSourceCredential:
@@ -86,7 +103,15 @@ Resources:
                 Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
                 RoleArn: !GetAtt 'CFNRole.Arn'
                 TemplatePath: 'TemplateSource::ci/infra/root.yaml'
-                ParameterOverrides: !Sub '{"PnCiCdTemplatesBucketName" : "${PnCiCdTemplatesBucket}", "NotificationSNSTopic": "${NotificationSNSTopic}" }'
+                ParameterOverrides: !Sub '{
+                    "PnCiCdTemplatesBucketName" : "${PnCiCdTemplatesBucket}", 
+                    "NotificationSNSTopic": "${NotificationSNSTopic}",
+                    "AllowedDeployAccount1": "${AllowedDeployAccount1}",
+                    "AllowedDeployAccount2": "${AllowedDeployAccount2}",
+                    "AllowedDeployAccount3": "${AllowedDeployAccount3}",
+                    "AllowedDeployAccount4": "${AllowedDeployAccount4}",
+                    "AllowedDeployAccount5": "${AllowedDeployAccount5}"
+                  }'
               OutputArtifacts: [ ]
               RunOrder: 2
 
