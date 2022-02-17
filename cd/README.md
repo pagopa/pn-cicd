@@ -1,5 +1,5 @@
-# Disclamers
-- Create DNS and certificates before run Continuos Delivery initialization. 
+# Disclaimers
+- Create DNS and certificates before run Continuous Delivery initialization. 
   Follow the instruction in [pn-infra project](https://github.com/pagopa/pn-infra)
 
 # CD pipeline
@@ -112,7 +112,7 @@ and microservices templates are available [here](bootstrap/README.md).
  - PN-666: Template bucket shared between multiple pipeline executions. We can solve "partitioning" 
    the bucket by pipeline execution id. (We can also write all the pipeline in the same stage :( ).
  - PN-667: Add changeset web link to manual approval steps
- - PN-668: (NICE TO HAVE) move "parameters enrichement" to a lambda function
+ - PN-668: (NICE TO HAVE) move "parameters enrichment" to a lambda function
  
  - (LATER) Support prod environment in the pipelines
 
