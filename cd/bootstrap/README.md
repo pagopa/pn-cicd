@@ -33,7 +33,7 @@ is composed of the following steps
   - Merge CFN parameters file for next step with output from previous step
   - Deploy "network infrastructure" CFN template
   - Merge CFN parameters file for next step with output from previous step
-  - Deploy "Inter Process Comunication infrastructure" CFN template (usually some queue)
+  - Deploy "Inter Process Communication infrastructure" CFN template (usually some queue)
 - Deploy User Acceptance Test account: same step of dev account but ask manual approval and
   use different parameters file.
 - (TODO) Deploy Production account
@@ -106,12 +106,12 @@ has the following steps
 ```
 scripts/aws/cfn/storage.yml
 ```
- - __Responsability__: configure storage resources for the microservice.
+ - __Responsibility__: configure storage resources for the microservice.
  - __Input__: some mandatory parameters
    - ProjectName: the _project name_ configuration value
    - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
    - MicroserviceNumber: an unique number for each microservice in a microservice 
-     group (usefull to disambiguate two instance of the same microservice)
+     group (useful to disambiguate two instance of the same microservice)
  - **Output**: any output useful to the microservice.
 
 
@@ -120,7 +120,7 @@ scripts/aws/cfn/storage.yml
 ```
 scripts/aws/cfn/microservice.yml
 ```
- - __Responsability__: configure microservice runtime and API exposition.
+ - __Responsibility__: configure microservice runtime and API exposition.
  - __Input__: file, previous step and some mandatory parameters
    - A file ```scripts/aws/cfn/microservice-<env-name>-cfg.json``` from microservice repository
    - The outputs of "microservice storage" CFN templates
@@ -128,7 +128,7 @@ scripts/aws/cfn/microservice.yml
    - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
    - ContainerImageUri: the full URI of the container image with digest
    - MicroserviceNumber: an unique number for each microservice in a microservice 
-     group (usefull to disambiguate load balancer rules)
+     group (useful to disambiguate load balancer rules)
  - __Output__: nobody use this output
 
 
@@ -151,7 +151,7 @@ has the following steps
 ```
 scripts/aws/cfn/microservice.yml
 ```
- - __Responsability__: configure microservice runtime and API exposition.
+ - __Responsibility__: configure microservice runtime and API exposition.
  - __Input__: file, previous step, infrastructure parameters and some mandatory parameters
    - A file ```scripts/aws/cfn/microservice-<env-name>-cfg.json``` from microservice repository
    - The outputs of "infrastructure ipc" CFN templates
@@ -159,7 +159,7 @@ scripts/aws/cfn/microservice.yml
    - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
    - ContainerImageUri: the full URI of the container image with digest
    - MicroserviceNumber: an unique number for each microservice in a microservice 
-     group (usefull to disambiguate load balancer rules)
+     group (useful to disambiguate load balancer rules)
    - LambdasBucketName: Bucket name where C.I. save lambda ZIP package
    - LambdaZipVersionIdN (with N in [1, ..., 5]): The ZIP file S3 versionId for the key specified
      in microservice configuration.

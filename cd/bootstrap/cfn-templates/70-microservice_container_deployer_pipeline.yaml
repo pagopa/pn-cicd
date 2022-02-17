@@ -13,7 +13,7 @@ Parameters:
     Description: CodeStar connection for github microservice project
     Type: String
   CMKARN:
-    Description: ARN of the KMS CMK creates in Tools account
+    Description: ARN of the KMS CMK created in CiCd account
     Type: String
 
   MicroserviceName:
