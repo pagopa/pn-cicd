@@ -163,7 +163,8 @@ scripts/aws/cfn/microservice.yml
    - LambdasBucketName: Bucket name where C.I. save lambda ZIP package
    - LambdaZipVersionIdN (with N in [1, ..., 5]): The ZIP file S3 versionId for the key specified
      in microservice configuration.
- - __Output__: nobody uses this output
+ - __Output__: nobody uses this output, you can have some output for diagnostic purpose
+
 
 
 

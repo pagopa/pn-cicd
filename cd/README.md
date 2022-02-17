@@ -28,8 +28,8 @@ Each microservice repository must have two files
 Prepare a configuration file as described in the next section and use the 
 [boostrap.sh](bootstrap/bootstrap.sh) script.
 
-More information about pipelines internals and how to structure infrastructure 
-and microservices templates are available [here](bootstrap/README.md).
+__More information about pipelines internals and how to structure infrastructure 
+and microservices templates are available [here](bootstrap/README.md).__
 
 ## Configuration file example with comments
 ```
