@@ -1,5 +1,5 @@
 # Disclaimers
-- Create DNS domains and certificates before run Continuos Delivery initialization. 
+- Create DNS domains and certificates before run Continuous Delivery initialization. 
   Follow the instruction in [pn-infra project](https://github.com/pagopa/pn-infra)
 
 # CD pipeline

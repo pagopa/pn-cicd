@@ -1,4 +1,4 @@
-# Continuos Delivery Pipelines internals
+# Continuous Delivery Pipelines internals
 
 ## Big Picture
 ![Big picture image](big-picture.drawio.png)
@@ -46,9 +46,9 @@ This script is read from the infrastructure git repository
 [pagopa:pn-infra](https://github.com/pagopa/pn-infra) the file
 `once4account/<env-name>.yaml` 
 
-- __Responsability__: configure global resources.
+- __Responsibility__: configure global resources.
     - API-Gateway log configuration & Role
-    - Chat-bot slack subscriptions (exported in output)
+    - Chatbot slack subscriptions (exported in output)
     - Certificate Expiration Alarm
 - __Input__: 
      - _TemplateBucketBaseUrl_: [mandatory] containing the base URL of 
@@ -61,7 +61,7 @@ This script is read from the infrastructure git repository
 This script is read from the infrastructure git repository [pagopa:pn-infra](https://github.com/pagopa/pn-infra) 
 with path `<base>/pn-infra.yaml`
 
-- __Responsability__: configure networking infrastructure
+- __Responsibility__: configure networking infrastructure
   - _VPC_ (see: fragments/vpc.yaml)
   - _VPC Endpoints_ (see: fragments/vpc-endpoints.yaml)
   - _Load Balancer_ (see: fragments/load-balancer.yaml)
@@ -78,7 +78,7 @@ with path `<base>/pn-infra.yaml`
 This script is read from the infrastructure git repository [pagopa:pn-infra](https://github.com/pagopa/pn-infra)
 with path `<base>/pn-ipc.yaml`
 
-- __Responsability__: configure communication between microservices and define all CFN
+- __Responsibility__: configure communication between microservices and define all CFN
   parameters that microservices can use.
 - __Input__: file, previous step and some mandatory parameters
   - _ProjectName_: the _project name_ configuration value
@@ -110,8 +110,8 @@ scripts/aws/cfn/storage.yml
  - __Input__: some mandatory parameters
    - ProjectName: the _project name_ configuration value
    - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
-   - MicroserviceNumber: an unique number for each microservice in a microservice 
-     group (useful to disambiguate two instance of the same microservice)
+   - MicroserviceNumber: a unique number for each microservice in a microservice 
+     group (usefully disambiguate two instance of the same microservice)
  - **Output**: any output useful to the microservice.
 
 
@@ -127,9 +127,9 @@ scripts/aws/cfn/microservice.yml
    - ProjectName: the _project name_ configuration value
    - TemplateBucketBaseUrl: containing the base URL of infrastructure CFN fragments
    - ContainerImageUri: the full URI of the container image with digest
-   - MicroserviceNumber: an unique number for each microservice in a microservice 
+   - MicroserviceNumber: a unique number for each microservice in a microservice 
      group (useful to disambiguate load balancer rules)
- - __Output__: nobody use this output
+ - __Output__: nobody uses this output, you can have some output for diagnostic purpose
 
 
 ## The lambda microservices pipelines
@@ -140,7 +140,7 @@ has the following steps
   infrastructure CFN templates from github 
 - Copy infrastructure CFN templates to an S3 bucket (useful for nested stack)
 - Deploy development account
-  - Merge CFN parameters file for next step with output from infrastructure CFN tempaltes
+  - Merge CFN parameters file for next step with output from infrastructure CFN templates
   - Deploy "microservice runtime" CFN template
 - Deploy User Acceptance Test account: same step of dev account but ask manual approval and
   use different parameters file.
@@ -163,7 +163,7 @@ scripts/aws/cfn/microservice.yml
    - LambdasBucketName: Bucket name where C.I. save lambda ZIP package
    - LambdaZipVersionIdN (with N in [1, ..., 5]): The ZIP file S3 versionId for the key specified
      in microservice configuration.
- - __Output__: nobody use this output
+ - __Output__: nobody uses this output
 
 
 
