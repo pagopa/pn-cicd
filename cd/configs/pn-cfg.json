@@ -2,13 +2,13 @@
     "project-name": "pn",
     "infrastructure": {
         "repo-name": "pagopa/pn-infra",
-        "branch-name": "feature/PN-611",
+        "branch-name": "develop",
         "repo-subdir": "runtime-infra-new",
         "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
     },
     "accounts": {
         "cicd": {
-            "region": "eu-west-3"
+            "region": "eu-central-1"
         },
         "dev": {
             "region": "eu-south-1"
@@ -21,7 +21,7 @@
         {
             "name": "auth-fleet",
             "repo-name": "pagopa/pn-auth-fleet",
-            "branch-name": "feature/PN-670",
+            "branch-name": "main",
             "type": "lambdas",
             "lambda-names": [
                 "pn-auth-fleet/main/apikeyAuthorizer",
@@ -34,7 +34,7 @@
         {
             "name": "delivery",
             "repo-name": "pagopa/pn-delivery",
-            "branch-name": "feature/PN-611",
+            "branch-name": "develop",
             "image-name-and-tag": "pn-delivery:latest",
             "type": "container",
             "microservice-idx": 1,
@@ -43,7 +43,7 @@
         {
             "name": "delivery-push",
             "repo-name": "pagopa/pn-delivery-push",
-            "branch-name": "feature/PN-611",
+            "branch-name": "develop",
             "image-name-and-tag": "pn-delivery-push:latest",
             "type": "container",
             "microservice-idx": 2,
