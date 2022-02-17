@@ -18,51 +18,24 @@ Parameters:
     Default: 'none'
     Description: Topic for build and pipeline notification
 
+  AllowedDeployAccount1:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount2:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount3:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount4:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount5:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+
 Resources:
 
-  EcrRepository:
-    Type: AWS::ECR::Repository
-    Properties:
-      ImageScanningConfiguration:
-        ScanOnPush: true
-      ImageTagMutability: MUTABLE
-      RepositoryName: !Sub '${GitHubProjectName}'
-      RepositoryPolicyText: '{
-          "Version": "2008-10-17",
-          "Statement": [
-            {
-              "Sid": "Allow cicd",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::558518206506:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::946373734005:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            }
-          ]
-        }'
-  
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -347,3 +320,90 @@ Resources:
         - TargetAddress: !Ref 'NotificationSNSTopic'
           TargetType: SNS
 
+  EcrRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      ImageTagMutability: MUTABLE
+      RepositoryName: !Sub '${GitHubProjectName}'
+      RepositoryPolicyText: !Sub '{
+          "Version": "2008-10-17",
+          "Statement": [
+            {
+              "Sid": "Allow cicd",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount1}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount2}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount3}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount4}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount5}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            }
+          ]
+        }'

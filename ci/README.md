@@ -24,16 +24,16 @@ It will deploy common resource shared with the CD pipeline like:
 - ArtifactBuckets: Used to store artifact like lambda, static website  
 - CodeBuildNotifications: to connect build failure to SNSTopic (ChatBot on Slack)
 
-It use nested templates in _[builders](builders)_ directory to deploy resources
+It uses nested templates in _[builders](builders)_ directory to deploy resources
 needed for the CI process like:
 - CodeBuild
-- ECR (for docker artificats)
+- ECR (for docker artifacts)
 
 ## Add a project to CI pipeline
 
 The process to add a project in the CI pipeline is done by add some lines in _root.yaml_ file.
 
-Exaple: Properties depends on the selected _builder_ type.
+Example: Properties depends on the selected _builder_ type.
 
 ````yaml
 <Name for CI Stack>:

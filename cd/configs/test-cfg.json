@@ -23,6 +23,7 @@
             "repo-name": "marco-vit-pagopa/api-first-springboot",
             "branch-name": "main",
             "image-name-and-tag": "api-first-springboot:latest",
+            "type": "container",
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-west-3:911845998067:connection/03777403-e8c7-46ec-9d0b-9a6bf2c115f9"
         },
         {
@@ -30,6 +31,7 @@
             "repo-name": "marco-vit-pagopa/api-first-springboot",
             "branch-name": "main",
             "image-name-and-tag": "api-first-springboot:latest",
+            "type": "container",
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-west-3:911845998067:connection/03777403-e8c7-46ec-9d0b-9a6bf2c115f9"
         }
     ]
