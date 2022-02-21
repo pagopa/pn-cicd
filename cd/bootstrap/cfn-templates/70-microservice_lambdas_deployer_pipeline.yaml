@@ -344,6 +344,7 @@ Resources:
                   - !Ref AWS::NoValue
               OutputArtifacts:
                 - Name: InfraSCCheckoutArtifact
+              Namespace: InfraGithubVars
               RunOrder: 1
             # Checkout microservice CFN templates from Github
             - Name: Microservice_form_Github
@@ -378,6 +379,7 @@ Resources:
               Configuration:
                 Extract: true
                 BucketName: !Ref TemplateBucket
+                ObjectKey: '#{InfraGithubVars.CommitId}'
               InputArtifacts:
                 - Name: InfraSCCheckoutArtifact
               RunOrder: 1
@@ -425,7 +427,7 @@ Resources:
                     - - '{'
                       - Fn::Join: 
                           - ','
-                          - - !Sub '"TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}"'
+                          - - !Sub '"TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/#{InfraGithubVars.CommitId}/${InfraRepoSubdir}"'
                             - !Sub '"ProjectName": "${ProjectName}"'
                             - !Sub '"LambdasBucketName": "${LambdasZipsBucketName}"'
                             - !Sub '"MicroserviceNumber": "${MicroserviceNumber}"'
@@ -508,7 +510,7 @@ Resources:
                       - - '{'
                         - Fn::Join: 
                             - ','
-                            - - !Sub '"TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}"'
+                            - - !Sub '"TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/#{InfraGithubVars.CommitId}/${InfraRepoSubdir}"'
                               - !Sub '"ProjectName": "${ProjectName}"'
                               - !Sub '"LambdasBucketName": "${LambdasZipsBucketName}"'
                               - !Sub '"MicroserviceNumber": "${MicroserviceNumber}"'
@@ -571,7 +573,7 @@ Resources:
                       - - '{'
                         - Fn::Join: 
                             - ','
-                            - - !Sub '"TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}"'
+                            - - !Sub '"TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/#{InfraGithubVars.CommitId}/${InfraRepoSubdir}"'
                               - !Sub '"ProjectName": "${ProjectName}"'
                               - !Sub '"LambdasBucketName": "${LambdasZipsBucketName}"'
                               - !Sub '"MicroserviceNumber": "${MicroserviceNumber}"'
