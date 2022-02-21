@@ -244,6 +244,7 @@ Resources:
                   - !Ref AWS::NoValue
               OutputArtifacts:
                 - Name: InfraSCCheckoutArtifact
+              Namespace: InfraGithubVars
               RunOrder: 1
             # Checkout microservice CFN templates from Github
             - Name: Microservice_form_Github
@@ -278,6 +279,7 @@ Resources:
               Configuration:
                 Extract: true
                 BucketName: !Ref TemplateBucket
+                ObjectKey: '#{InfraGithubVars.CommitId}'
               InputArtifacts:
                 - Name: InfraSCCheckoutArtifact
               RunOrder: 1
@@ -298,7 +300,7 @@ Resources:
                 Capabilities: CAPABILITY_NAMED_IAM
                 TemplatePath: MicrosvcSCCheckoutArtifact::scripts/aws/cfn/storage.yml
                 ParameterOverrides: !Sub '{
-                    "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                    "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/#{InfraGithubVars.CommitId}/${InfraRepoSubdir}",
                     "ProjectName": "${ProjectName}",
                     "MicroserviceNumber": "${MicroserviceNumber}"
                   }'
@@ -355,7 +357,7 @@ Resources:
                 TemplatePath: DevEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
                 TemplateConfiguration: 'DevEnanchedParamsArtifact::scripts/aws/cfn/microservice-dev-cfg.json.enanched' 
                 ParameterOverrides: !Sub '{
-                    "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                    "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/#{InfraGithubVars.CommitId}/${InfraRepoSubdir}",
                     "ProjectName": "${ProjectName}",
                     "ContainerImageUri": "#{MicrosvcImageVars.ImageURI}",
                     "MicroserviceNumber": "${MicroserviceNumber}"
@@ -394,7 +396,7 @@ Resources:
                   Capabilities: CAPABILITY_NAMED_IAM
                   TemplatePath: MicrosvcSCCheckoutArtifact::scripts/aws/cfn/storage.yml
                   ParameterOverrides: !Sub '{
-                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/#{InfraGithubVars.CommitId}/${InfraRepoSubdir}",
                       "ProjectName": "${ProjectName}",
                       "MicroserviceNumber": "${MicroserviceNumber}"
                     }'
@@ -434,7 +436,7 @@ Resources:
                   Capabilities: CAPABILITY_NAMED_IAM
                   TemplatePath: MicrosvcSCCheckoutArtifact::scripts/aws/cfn/storage.yml
                   ParameterOverrides: !Sub '{
-                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/#{InfraGithubVars.CommitId}/${InfraRepoSubdir}",
                       "ProjectName": "${ProjectName}",
                       "MicroserviceNumber": "${MicroserviceNumber}"
                     }'
@@ -492,7 +494,7 @@ Resources:
                   TemplatePath: UatEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
                   TemplateConfiguration: 'UatEnanchedParamsArtifact::scripts/aws/cfn/microservice-uat-cfg.json.enanched' 
                   ParameterOverrides: !Sub '{
-                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/#{InfraGithubVars.CommitId}/${InfraRepoSubdir}",
                       "ProjectName": "${ProjectName}",
                       "ContainerImageUri": "#{MicrosvcImageVars.ImageURI}",
                       "MicroserviceNumber": "${MicroserviceNumber}"
@@ -534,7 +536,7 @@ Resources:
                   TemplatePath: UatEnanchedParamsArtifact::scripts/aws/cfn/microservice.yml
                   TemplateConfiguration: 'UatEnanchedParamsArtifact::scripts/aws/cfn/microservice-uat-cfg.json.enanched' 
                   ParameterOverrides: !Sub '{
-                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/${InfraRepoSubdir}",
+                      "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/#{InfraGithubVars.CommitId}/${InfraRepoSubdir}",
                       "ProjectName": "${ProjectName}",
                       "ContainerImageUri": "#{MicrosvcImageVars.ImageURI}",
                       "MicroserviceNumber": "${MicroserviceNumber}"
