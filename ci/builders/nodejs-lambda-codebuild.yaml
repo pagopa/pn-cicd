@@ -44,6 +44,8 @@ Resources:
           version: 0.2
           env:
             shell: bash
+            secrets-manager:
+              SONAR_TOKEN: arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM:token
           phases:
             pre_build:
               on-failure: ABORT
