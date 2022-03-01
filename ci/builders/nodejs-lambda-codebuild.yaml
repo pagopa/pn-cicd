@@ -59,6 +59,7 @@ Resources:
               on-failure: ABORT
               commands:
                 - echo Build started on `date`
+                - npm install
                 - npm run-script test-build
             post_build:
               on-failure: ABORT
