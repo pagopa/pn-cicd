@@ -15,7 +15,15 @@ Parameters:
   CMKARN:
     Description: ARN of the KMS CMK created in CiCd account
     Type: String
-
+  ApplicationCMKArn:
+    Description: ARN of the KMS CMK creates in Tools account in Dev Region
+    Type: String
+  ApplicationRegionArtifactBucketName:
+    Description: The s3 bucket in Dev Region for codepipeline
+    Type: String
+  ApplicationRegion:
+    Description: The dev region where PN-infra is deployed
+    Type: String
   MicroserviceName:
     Description: Logical name of the microservice
     Type: String
@@ -103,7 +111,9 @@ Resources:
             Effect: Allow
             Action:
               - kms:*
-            Resource: !Ref CMKARN
+            Resource:
+              - !Ref CMKARN
+              - !Ref ApplicationCMKArn
           -
             Effect: Allow
             Action:
@@ -178,7 +188,9 @@ Resources:
             Effect: Allow
             Action:
               - kms:Decrypt
-            Resource: !Ref CMKARN
+            Resource:
+              - !Ref CMKARN
+              - !Ref ApplicationCMKArn
           -
             Effect: Allow
             Action:
@@ -188,6 +200,7 @@ Resources:
               - s3:ListBucket
             Resource:
               - !Sub arn:aws:s3:::${ArtifactBucket}/*
+              - !Sub arn:aws:s3:::${ApplicationRegionArtifactBucketName}/*
               - !Sub arn:aws:s3:::${TemplateBucket}/*
           -
             Effect: Allow
@@ -315,6 +328,7 @@ Resources:
               OutputArtifacts:
                 - Name: DevMicroserviceStorageOutputsArtifact
               RunOrder: 1
+              Region: !Ref ApplicationRegion
               RoleArn:
                 Fn::If:
                   - ActivateCrossAccountRoles
@@ -335,7 +349,9 @@ Resources:
                     {"name":"ParamFilePath", "value":"scripts/aws/cfn/microservice-dev-cfg.json", "type":"PLAINTEXT"},
                     {"name":"PreviousOutputFileArtifactAndPath", "value":"DevMicroserviceStorageOutputsArtifact/StorageOutputs.json", "type":"PLAINTEXT"},
                     {"name":"ACCOUNT_ROLE", "value":"arn:aws:iam::${DevAccount}:role/${ProjectName}-CdPipelineRole", "type":"PLAINTEXT"},
-                    {"name":"StackName", "value":"${ProjectName}-ipc-dev", "type":"PLAINTEXT"}
+                    {"name":"StackName", "value":"${ProjectName}-ipc-dev", "type":"PLAINTEXT"},
+                    {"name":"ApplicationRegion", "value":"${ApplicationRegion}", "type":"PLAINTEXT"}
+
                   ]'
               InputArtifacts:
                 - Name: MicrosvcSCCheckoutArtifact
@@ -370,6 +386,7 @@ Resources:
               InputArtifacts:
                 - Name: DevEnanchedParamsArtifact
               RunOrder: 3
+              Region: !Ref ApplicationRegion
               RoleArn:
                 Fn::If:
                   - ActivateCrossAccountRoles
@@ -408,6 +425,7 @@ Resources:
                 InputArtifacts:
                   - Name: MicrosvcSCCheckoutArtifact
                 RunOrder: 1
+                Region: !Ref ApplicationRegion
                 RoleArn:
                   Fn::If:
                     - ActivateCrossAccountRoles
@@ -451,6 +469,7 @@ Resources:
                 OutputArtifacts:
                   - Name: UatMicroserviceStorageOutputsArtifact
                 RunOrder: 3
+                Region: !Ref ApplicationRegion
                 RoleArn:
                   Fn::If:
                     - ActivateCrossAccountRoles
@@ -471,7 +490,8 @@ Resources:
                       {"name":"ParamFilePath", "value":"scripts/aws/cfn/microservice-uat-cfg.json", "type":"PLAINTEXT"},
                       {"name":"PreviousOutputFileArtifactAndPath", "value":"UatMicroserviceStorageOutputsArtifact/StorageOutputs.json", "type":"PLAINTEXT"},
                       {"name":"ACCOUNT_ROLE", "value":"arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole", "type":"PLAINTEXT"},
-                      {"name":"StackName", "value":"${ProjectName}-ipc-uat", "type":"PLAINTEXT"}
+                      {"name":"StackName", "value":"${ProjectName}-ipc-uat", "type":"PLAINTEXT"},
+                      {"name":"ApplicationRegion", "value":"${ApplicationRegion}", "type":"PLAINTEXT"}
                     ]'
                 InputArtifacts:
                   - Name: MicrosvcSCCheckoutArtifact
@@ -507,6 +527,7 @@ Resources:
                 InputArtifacts:
                   - Name: UatEnanchedParamsArtifact
                 RunOrder: 5
+                Region: !Ref ApplicationRegion
                 RoleArn:
                   Fn::If:
                     - ActivateCrossAccountRoles
@@ -549,18 +570,32 @@ Resources:
                 InputArtifacts:
                   - Name: UatEnanchedParamsArtifact
                 RunOrder: 7
+                Region: !Ref ApplicationRegion
                 RoleArn:
                   Fn::If:
                     - ActivateCrossAccountRoles
                     - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
                     - !Ref AWS::NoValue
           - !Ref AWS::NoValue  
-      ArtifactStore:
-        Type: S3
-        Location: !Ref ArtifactBucket
-        EncryptionKey:
-          Id: !Ref CMKARN
-          Type: KMS
+
+      ArtifactStores:
+        -
+          Region: !Ref AWS::Region
+          ArtifactStore:
+            Type: S3
+            Location: !Ref ArtifactBucket
+            EncryptionKey:
+              Id: !Ref CMKARN
+              Type: KMS
+        -
+          Region: !Ref ApplicationRegion
+          ArtifactStore:
+            Type: S3
+            Location: !Ref ApplicationRegionArtifactBucketName
+            EncryptionKey:
+              Id: !Ref ApplicationCMKArn
+              Type: KMS
+
 
   # - Pipeline ECR Activation Event Rule
   EcrTriggeringEventRule:
@@ -676,7 +711,7 @@ Resources:
                 - "$( aws sts assume-role --role-arn $ACCOUNT_ROLE --role-session-name codebuildReadStacks | jq -r \"$JQ_EXP\" )"
                 - echo "Infrastructure parameters"
                 - |
-                    aws cloudformation describe-stacks --stack-name $StackName | \
+                    aws cloudformation describe-stacks --stack-name $StackName --region $ApplicationRegion | \
                         jq '.Stacks[0].Outputs | reduce .[] as $i ({}; .[$i.OutputKey] = $i.OutputValue) ' | \
                         tee infrastructure_parameters.json
                 - echo "# Infrastructure outputs"

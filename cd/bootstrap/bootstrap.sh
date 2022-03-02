@@ -36,24 +36,20 @@ CiCdRegion=$(jq -r '.accounts.cicd.region' $ConfigFile )
 CiCdAccount=$(aws sts get-caller-identity --profile $CiCdProfile | jq -r .Account)
 
 DevProfile=$3
-DevRegion=$(jq -r '.accounts.dev.region' $ConfigFile ) # Ignored, reserved for future use
+ApplicationRegion=$(jq -r '.accounts.application.region' $ConfigFile )
 DevAccount=$(aws sts get-caller-identity --profile $DevProfile | jq -r .Account)
 
 UatProfile="$DevProfile"
-UatRegion="$DevRegion"
 UatAccount="$DevAccount"
 if ( [ $# -ge 4 ] ) then
   UatProfile=$4
-  UatRegion=$(jq -r '.accounts.uat.region' $ConfigFile ) # Ignored, reserved for future use
   UatAccount=$(aws sts get-caller-identity --profile $UatProfile | jq -r .Account)
 fi
 
 ProdProfile="$DevProfile"
-ProdRegion="$DevRegion"
 ProdAccount="$DevAccount"
 if ( [ $# -eq 5 ] ) then
   ProdProfile=$5
-  ProdRegion=$(jq -r '.accounts.prod.region' $ConfigFile ) # Ignored, reserved for future use
   ProdAccount=$(aws sts get-caller-identity --profile $ProdProfile | jq -r .Account)
 fi
 
@@ -81,12 +77,12 @@ echo "---------------------------------------------------------------------"
 echo "| EnvName |  Account Id  |   Region    |  Profile "
 echo "|---------|--------------|-------------|-----------------------------"
 echo "|    cicd | $CiCdAccount | ${CiCdRegion}${padding:${#CiCdRegion}}| $CiCdProfile"
-echo "|     dev | $DevAccount | ${DevRegion}${padding:${#DevRegion}}| $DevProfile"
+echo "|     dev | $DevAccount | ${ApplicationRegion}${padding:${#ApplicationRegion}}| $DevProfile"
 if ( [ ! "$UatAccount" = "$DevAccount" ] ) then
-echo "|     uat | $UatAccount | ${UatRegion}${padding:${#UatRegion}}| $UatProfile"
+echo "|     uat | $UatAccount | ${ApplicationRegion}${padding:${#ApplicationRegion}}| $UatProfile"
 fi
 if ( [ ! "$ProdAccount" = "$DevAccount" ] ) then
-echo "|    prod | $ProdAccount | ${ProdRegion}${padding:${#ProdRegion}}| $ProdProfile"
+echo "|    prod | $ProdAccount | ${ApplicationRegion}${padding:${#ApplicationRegion}}| $ProdProfile"
 fi
 echo "---------------------------------------------------------------------"
 
@@ -159,6 +155,26 @@ get_cmk_command="aws --profile $CiCdProfile --region $CiCdRegion \
 CMKArn=$(eval $get_cmk_command)
 echo "# Got CMK ARN: $CMKArn"
 
+
+echo "# Deploying pre-requisite stack to the ci cd account, but for ApplicationRegion... "
+aws --profile "$CiCdProfile" --region "$ApplicationRegion" cloudformation deploy \
+    --stack-name "${ProjectName}-bucket-crypto-keys" \
+    --template-file ${scriptDir}/cfn-templates/00-shared_buckets_key.yaml \
+    --parameter-overrides \
+      ProjectName="$ProjectName" \
+      DevAccount="$DevAccount" \
+      UatAccount="$UatAccount" \
+      ProdAccount="$ProdAccount"
+echo ""
+echo "Fetching Application Region CMK ARN from CloudFormation automatically..."
+
+get_cmk_command="aws --profile $CiCdProfile --region $ApplicationRegion \
+    cloudformation describe-stacks --stack-name \"${ProjectName}-bucket-crypto-keys\" \
+    --query \"Stacks[0].Outputs[?OutputKey=='CMK'].OutputValue\" --output text"
+
+ApplicationCMKArn=$(eval $get_cmk_command)
+echo "# Got Application CMK ARN: $ApplicationCMKArn"
+
 echo ""
 echo "# Enable CiCd roles in Dev Account"
 aws --profile $DevProfile --region $CiCdRegion cloudformation deploy \
@@ -196,6 +212,28 @@ if ( [ ! "$ProdAccount" = "$DevAccount" ] ) then
         CMKARN=$CMKArn 
 fi
 
+
+echo ""
+echo ""
+echo ""
+echo ""
+
+echo "########## Creating S3 bucket for CodePipeline, in CiCdAccount, in Application Region ##########"
+
+aws --profile "$CiCdProfile" --region "$ApplicationRegion" cloudformation deploy \
+    --stack-name "${ProjectName}-codepipeline-bucket" \
+    --template-file ${scriptDir}/cfn-templates/30-codepipeline_bucket.yaml \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --parameter-overrides \
+      DevAccount="$DevAccount" \
+      UatAccount="$UatAccount" \
+      ProdAccount="$ProdAccount"
+
+
+get_s3_command="aws cloudformation describe-stacks --stack-name "${ProjectName}-codepipeline-bucket" --profile $CiCdProfile --query \"Stacks[0].Outputs[?OutputKey=='ArtifactBucketName'].OutputValue\" --region "$ApplicationRegion" --output text"
+ApplicationRegionS3BucketName=$(eval $get_s3_command)
+echo "S3 bucket name in Application Region: $ApplicationRegionS3BucketName"
+
 echo ""
 echo ""
 echo ""
@@ -209,7 +247,6 @@ function deployStackAndUpdateCrossAccountCondition() {
   eval $@ CrossAccountCondition=true
 }
 
-
 echo "########## Deploy INFRASTRUCTURE pipeline ##########"
 deployStackAndUpdateCrossAccountCondition \
   aws --profile $CiCdProfile --region $CiCdRegion cloudformation deploy \
@@ -219,6 +256,9 @@ deployStackAndUpdateCrossAccountCondition \
       --parameter-overrides \
         CodeStarGithubConnectionArn="$InfraCodeStarGithubConnectionArn" \
         CMKARN=$CMKArn \
+        ApplicationCMKArn=$ApplicationCMKArn \
+        ApplicationRegionArtifactBucketName=$ApplicationRegionS3BucketName \
+        ApplicationRegion=$ApplicationRegion \
         ProjectName="$ProjectName" \
         InfraRepoName="$InfraRepoName" \
         InfraBranchName="$InfraBranchName" \
@@ -253,6 +293,9 @@ do
             CodeStarGithubConnectionArnInfra="$InfraCodeStarGithubConnectionArn" \
             CodeStarGithubConnectionArnMicro="$MicroCodeStarGithubConnectionArn" \
             CMKARN=$CMKArn \
+            ApplicationCMKArn=$ApplicationCMKArn \
+            ApplicationRegionArtifactBucketName=$ApplicationRegionS3BucketName \
+            ApplicationRegion=$ApplicationRegion \
             ProjectName="$ProjectName" \
             InfraRepoName="$InfraRepoName" \
             InfraBranchName="$InfraBranchName" \
@@ -307,4 +350,3 @@ do
     fi
   fi  
 done
-

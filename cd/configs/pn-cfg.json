@@ -10,10 +10,7 @@
         "cicd": {
             "region": "eu-central-1"
         },
-        "dev": {
-            "region": "eu-south-1"
-        },
-        "uat": {
+        "application": {
             "region": "eu-south-1"
         }
     },
