@@ -11,7 +11,7 @@
             "region": "eu-central-1"
         },
         "application": {
-            "region": "eu-south-1"
+            "region": "eu-central-1"
         }
     },
     "microservices": [
