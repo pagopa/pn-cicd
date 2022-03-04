@@ -10,11 +10,8 @@
         "cicd": {
             "region": "eu-central-1"
         },
-        "dev": {
-            "region": "eu-south-1"
-        },
-        "uat": {
-            "region": "eu-south-1"
+        "application": {
+            "region": "eu-central-1"
         }
     },
     "microservices": [

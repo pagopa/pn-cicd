@@ -1,5 +1,3 @@
-# TODO: multiregion CFN deploy 
-
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Continuos Delivery pipeline for infrastructure deployment'
 Parameters:
@@ -11,6 +9,15 @@ Parameters:
     Type: String
   CMKARN:
     Description: ARN of the KMS CMK creates in Tools account
+    Type: String
+  ApplicationCMKArn:
+    Description: ARN of the KMS CMK creates in Tools account in Dev Region
+    Type: String
+  ApplicationRegionArtifactBucketName:
+    Description: The s3 bucket in Dev Region for codepipeline
+    Type: String
+  ApplicationRegion:
+    Description: The dev region where PN-infra is deployed
     Type: String
   InfraRepoName:
     Description: Name of the Github Repository containing infrastructure templates
@@ -43,6 +50,7 @@ Parameters:
 Conditions:
   ActivateCrossAccountRoles: !Equals [ !Ref CrossAccountCondition, true ]
   HasUatStage: !Not [ !Equals [ !Ref DevAccount, !Ref UatAccount ] ]
+  IsMultiRegion: !Not [ !Equals [ !Ref ApplicationRegionArtifactBucketName, '-' ] ] 
 
 Resources:
 
@@ -84,7 +92,8 @@ Resources:
             Effect: Allow
             Action:
               - kms:*
-            Resource: !Ref CMKARN
+            Resource:
+              - !Ref CMKARN
           -
             Effect: Allow
             Action:
@@ -156,7 +165,9 @@ Resources:
             Effect: Allow
             Action:
               - kms:Decrypt
-            Resource: !Ref CMKARN
+            Resource:
+              - !Ref CMKARN
+              - !Ref ApplicationCMKArn
           -
             Effect: Allow
             Action:
@@ -166,6 +177,10 @@ Resources:
               - s3:ListBucket
             Resource:
               - !Sub arn:aws:s3:::${ArtifactBucket}/*
+              - Fn::If:
+                - IsMultiRegion
+                - !Sub arn:aws:s3:::${ApplicationRegionArtifactBucketName}/*
+                - !Ref AWS::NoValue
               - !Sub arn:aws:s3:::${TemplateBucket}/*
           -
             Effect: Allow
@@ -256,6 +271,7 @@ Resources:
               OutputArtifacts:
                 - Name: DevOnce4AccountOutputsArtifact
               RunOrder: 1
+              Region: !Ref ApplicationRegion
               RoleArn:
                 Fn::If:
                   - ActivateCrossAccountRoles
@@ -324,6 +340,7 @@ Resources:
               OutputArtifacts:
                 - Name: DevInfraOutputsArtifact
               RunOrder: 4
+              Region: !Ref ApplicationRegion
               RoleArn:
                 Fn::If:
                   - ActivateCrossAccountRoles
@@ -376,7 +393,7 @@ Resources:
                 StackName: !Sub ${ProjectName}-ipc-dev
                 Capabilities: CAPABILITY_NAMED_IAM
                 TemplatePath: !Sub DevEnanchedParamsArtifact2::${InfraRepoSubdir}/pn-ipc.yaml
-                TemplateConfiguration: !Sub 'DevEnanchedParamsArtifact2::${InfraRepoSubdir}/pn-ipc-dev-cfg.json.enanched' 
+                TemplateConfiguration: !Sub 'DevEnanchedParamsArtifact2::${InfraRepoSubdir}/pn-ipc-dev-cfg.json.enanched'
                 ParameterOverrides: !Sub '{
                     "TemplateBucketBaseUrl": "https://s3.${AWS::Region}.amazonaws.com/${TemplateBucket}/#{InfraGithubVars.CommitId}/${InfraRepoSubdir}",
                     "ProjectName": "${ProjectName}"
@@ -389,6 +406,7 @@ Resources:
               InputArtifacts:
                 - Name: DevEnanchedParamsArtifact2
               RunOrder: 7
+              Region: !Ref ApplicationRegion
               RoleArn:
                 Fn::If:
                   - ActivateCrossAccountRoles
@@ -426,6 +444,7 @@ Resources:
                 InputArtifacts:
                   - Name: SCCheckoutArtifact
                 RunOrder: 1
+                Region: !Ref ApplicationRegion
                 RoleArn:
                   Fn::If:
                     - ActivateCrossAccountRoles
@@ -466,6 +485,7 @@ Resources:
                 OutputArtifacts:
                   - Name: UatOnce4AccountOutputsArtifact
                 RunOrder: 3
+                Region: !Ref ApplicationRegion
                 RoleArn:
                   Fn::If:
                     - ActivateCrossAccountRoles
@@ -532,6 +552,7 @@ Resources:
                 InputArtifacts:
                   - Name: UatEnanchedParamsArtifact
                 RunOrder: 6
+                Region: !Ref ApplicationRegion
                 RoleArn:
                   Fn::If:
                     - ActivateCrossAccountRoles
@@ -574,6 +595,7 @@ Resources:
                 OutputArtifacts:
                   - Name: UatInfraOutputsArtifact
                 RunOrder: 8
+                Region: !Ref ApplicationRegion
                 RoleArn:
                   Fn::If:
                     - ActivateCrossAccountRoles
@@ -640,6 +662,7 @@ Resources:
                 InputArtifacts:
                   - Name: UatEnanchedParamsArtifact2
                 RunOrder: 11
+                Region: !Ref ApplicationRegion
                 RoleArn:
                   Fn::If:
                     - ActivateCrossAccountRoles
@@ -679,18 +702,33 @@ Resources:
                 InputArtifacts:
                   - Name: UatEnanchedParamsArtifact2
                 RunOrder: 13
+                Region: !Ref ApplicationRegion
                 RoleArn:
                   Fn::If:
                     - ActivateCrossAccountRoles
                     - !Sub arn:aws:iam::${UatAccount}:role/${ProjectName}-CdPipelineRole
                     - !Ref AWS::NoValue
           - !Ref AWS::NoValue  
-      ArtifactStore:
-        Type: S3
-        Location: !Ref ArtifactBucket
-        EncryptionKey:
-          Id: !Ref CMKARN
-          Type: KMS
+
+      ArtifactStores:
+        -
+          Region: !Ref AWS::Region
+          ArtifactStore:
+            Type: S3
+            Location: !Ref ArtifactBucket
+            EncryptionKey:
+              Id: !Ref CMKARN
+              Type: KMS
+        - Fn::If:
+          - IsMultiRegion
+          - Region: !Ref ApplicationRegion
+            ArtifactStore:
+              Type: S3
+              Location: !Ref ApplicationRegionArtifactBucketName
+              EncryptionKey:
+                Id: !Ref ApplicationCMKArn
+                Type: KMS
+          - !Ref AWS::NoValue
 
   # PIPELINE ARTIFACT BUCKET AND POLICY 
   ########################################
