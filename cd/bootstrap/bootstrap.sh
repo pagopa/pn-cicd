@@ -64,7 +64,9 @@ InfraCodeStarGithubConnectionArn=$(jq -r '.infrastructure."codestar-connection-a
 echo ""
 padding="            "
 echo "======================== PARAMETRIZATION ==========================="
-echo "Project Name = ${ProjectName}"
+echo "      Project Name = ${ProjectName}"
+echo "       Cicd Region = ${CiCdRegion}"
+echo "Application Region = ${ApplicationRegion}"
 echo ""
 echo " === Infrastructure repository connection"
 echo " -  Repository name: ${InfraRepoName}"
@@ -218,20 +220,25 @@ echo ""
 echo ""
 echo ""
 
-echo "########## Creating S3 bucket for CodePipeline, in CiCdAccount, in Application Region ##########"
+if ( [ ! "$CiCdRegion" = "$ApplicationRegion" ] ) then
+  echo "########## Creating S3 bucket for CodePipeline, in CiCdAccount, in Application Region ##########"
 
-aws --profile "$CiCdProfile" --region "$ApplicationRegion" cloudformation deploy \
-    --stack-name "${ProjectName}-codepipeline-bucket" \
-    --template-file ${scriptDir}/cfn-templates/30-codepipeline_bucket.yaml \
-    --capabilities CAPABILITY_NAMED_IAM \
-    --parameter-overrides \
-      DevAccount="$DevAccount" \
-      UatAccount="$UatAccount" \
-      ProdAccount="$ProdAccount"
+  aws --profile "$CiCdProfile" --region "$ApplicationRegion" cloudformation deploy \
+      --stack-name "${ProjectName}-codepipeline-bucket" \
+      --template-file ${scriptDir}/cfn-templates/30-codepipeline_bucket.yaml \
+      --capabilities CAPABILITY_NAMED_IAM \
+      --parameter-overrides \
+        DevAccount="$DevAccount" \
+        UatAccount="$UatAccount" \
+        ProdAccount="$ProdAccount"
 
 
-get_s3_command="aws cloudformation describe-stacks --stack-name "${ProjectName}-codepipeline-bucket" --profile $CiCdProfile --query \"Stacks[0].Outputs[?OutputKey=='ArtifactBucketName'].OutputValue\" --region "$ApplicationRegion" --output text"
-ApplicationRegionS3BucketName=$(eval $get_s3_command)
+  get_s3_command="aws cloudformation describe-stacks --stack-name "${ProjectName}-codepipeline-bucket" --profile $CiCdProfile --query \"Stacks[0].Outputs[?OutputKey=='ArtifactBucketName'].OutputValue\" --region "$ApplicationRegion" --output text"
+  ApplicationRegionS3BucketName=$(eval $get_s3_command)
+else
+  echo "########## CiCd and Application are in the same region ##########"
+  ApplicationRegionS3BucketName="-"
+fi
 echo "S3 bucket name in Application Region: $ApplicationRegionS3BucketName"
 
 echo ""
@@ -324,6 +331,9 @@ do
             CodeStarGithubConnectionArnMicro="$MicroCodeStarGithubConnectionArn" \
             LambdasZipsBucketName="${WebLambdaBucketName}" \
             CMKARN=$CMKArn \
+            ApplicationCMKArn=$ApplicationCMKArn \
+            ApplicationRegionArtifactBucketName=$ApplicationRegionS3BucketName \
+            ApplicationRegion=$ApplicationRegion \
             ProjectName="$ProjectName" \
             InfraRepoName="$InfraRepoName" \
             InfraBranchName="$InfraBranchName" \

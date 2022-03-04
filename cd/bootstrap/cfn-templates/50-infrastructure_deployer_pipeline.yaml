@@ -1,5 +1,3 @@
-# TODO: multiregion CFN deploy 
-
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Continuos Delivery pipeline for infrastructure deployment'
 Parameters:
@@ -52,6 +50,7 @@ Parameters:
 Conditions:
   ActivateCrossAccountRoles: !Equals [ !Ref CrossAccountCondition, true ]
   HasUatStage: !Not [ !Equals [ !Ref DevAccount, !Ref UatAccount ] ]
+  IsMultiRegion: !Not [ !Equals [ !Ref ApplicationRegionArtifactBucketName, '-' ] ] 
 
 Resources:
 
@@ -178,7 +177,10 @@ Resources:
               - s3:ListBucket
             Resource:
               - !Sub arn:aws:s3:::${ArtifactBucket}/*
-              - !Sub arn:aws:s3:::${ApplicationRegionArtifactBucketName}/*
+              - Fn::If:
+                - IsMultiRegion
+                - !Sub arn:aws:s3:::${ApplicationRegionArtifactBucketName}/*
+                - !Ref AWS::NoValue
               - !Sub arn:aws:s3:::${TemplateBucket}/*
           -
             Effect: Allow
@@ -717,14 +719,16 @@ Resources:
             EncryptionKey:
               Id: !Ref CMKARN
               Type: KMS
-        -
-          Region: !Ref ApplicationRegion
-          ArtifactStore:
-            Type: S3
-            Location: !Ref ApplicationRegionArtifactBucketName
-            EncryptionKey:
-              Id: !Ref ApplicationCMKArn
-              Type: KMS
+        - Fn::If:
+          - IsMultiRegion
+          - Region: !Ref ApplicationRegion
+            ArtifactStore:
+              Type: S3
+              Location: !Ref ApplicationRegionArtifactBucketName
+              EncryptionKey:
+                Id: !Ref ApplicationCMKArn
+                Type: KMS
+          - !Ref AWS::NoValue
 
   # PIPELINE ARTIFACT BUCKET AND POLICY 
   ########################################
