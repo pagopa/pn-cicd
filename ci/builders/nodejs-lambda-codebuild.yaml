@@ -55,10 +55,6 @@ Resources:
                 - export PR_NUM, BRANCH_TARGET
                 - export CI_PROFILE="$CODEBUILD_CI"
             build:
-
-                - export CI_PROFILE="$CODEBUILD_CI"
-                - cd $SUB_PRJ_NAME
-            build:
               on-failure: ABORT
               commands:
                 - echo Build started on `date`
