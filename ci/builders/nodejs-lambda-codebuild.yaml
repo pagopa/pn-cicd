@@ -51,8 +51,7 @@ Resources:
               on-failure: ABORT
               commands:
                 - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
-                - if $(echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/); then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///'); fi;
-                - export PR_NUM, BRANCH_TARGET
+                - if $(echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/); then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///'); export PR_NUM, BRANCH_TARGET; fi;
                 - export CI_PROFILE="$CODEBUILD_CI"
             build:
               on-failure: ABORT
