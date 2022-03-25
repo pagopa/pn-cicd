@@ -31,7 +31,9 @@ needed for the CI process like:
 
 ## Add a project to CI pipeline
 
-The process to add a project in the CI pipeline is done by add some lines in _root.yaml_ file.
+The process to add a project in the CI pipeline is done by
+1. add some lines in _root.yaml_ file.
+2. commit and push the root.yaml file into main branch or merge from a feature
 
 Example: Properties depends on the selected _builder_ type.
 

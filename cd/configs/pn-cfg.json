@@ -54,6 +54,33 @@
             "type": "container",
             "microservice-idx": 3,
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
+        },
+        {
+            "name": "mandate",
+            "repo-name": "pagopa/pn-mandate",
+            "branch-name": "develop",
+            "image-name-and-tag": "pn-mandate:latest",
+            "type": "container",
+            "microservice-idx": 4,
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
+        },
+        {
+            "name": "data-vault",
+            "repo-name": "pagopa/pn-data-vault",
+            "branch-name": "develop",
+            "image-name-and-tag": "pn-data-vault:latest",
+            "type": "container",
+            "microservice-idx": 5,
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
+        },
+        {
+            "name": "external-registries",
+            "repo-name": "pagopa/pn-external-registries",
+            "branch-name": "develop",
+            "image-name-and-tag": "pn-external-registries:latest",
+            "type": "container",
+            "microservice-idx": 6,
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
         }
     ]
 }
