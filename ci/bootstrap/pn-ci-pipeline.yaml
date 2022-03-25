@@ -36,7 +36,7 @@ Resources:
   CodeBuildSourceCredential:
     Type: AWS::CodeBuild::SourceCredential
     Properties:
-      Token: '{{resolve:secretsmanager:github:SecretString:token_old}}'
+      Token: '{{resolve:secretsmanager:github:SecretString:token}}'
       ServerType: GITHUB
       AuthType: PERSONAL_ACCESS_TOKEN
 
