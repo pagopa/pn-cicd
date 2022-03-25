@@ -195,21 +195,6 @@ Resources:
         AllowedDeployAccount4: !Ref AllowedDeployAccount4
         AllowedDeployAccount5: !Ref AllowedDeployAccount5
       TimeoutInMinutes: 5
-  PnSafeStorageCI:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
-      Parameters:
-        GitHubProjectName: 'pn-safe-storage'
-        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
-        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
-        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-      TimeoutInMinutes: 5
 # Progetti Lambda
   PnApikeyAuthorizerLambda:
     Type: AWS::CloudFormation::Stack
