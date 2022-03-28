@@ -106,6 +106,16 @@ and microservices templates are available [here](bootstrap/README.md).__
   - _codestar-connection-arn_: AWS CodeStar connection to use for microservice repository checkout.
     Microservice pipelines checkout and use CFN templates for storage and runtime definition.
 
+## Add a new component to CD Pipeline
+
+To add a new component and create its CD pipeline:
+
+- add the definition in _cd/configs/pn-cfg.json_ 
+- run the _bootstrap.sh_ script
+
+i.e.:  `cd/bootstrap/bootstrap.sh cd/configs/pn-cfg.json cicd dev uat`
+
+Note: _bootstrap.sh_ script is idempotent and deploy only the new components added.
 
 ## TODO
  - PN-665 Multiregion Pipeline
