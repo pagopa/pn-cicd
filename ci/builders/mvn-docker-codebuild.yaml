@@ -5,6 +5,10 @@ Parameters:
     Description: Name of pagopa project name
     Type: String
     Default: pn-delivery
+  GitHubDefaultBranch:
+    Description: Name of the dafult github branch
+    Type: String
+    Default: main
   CodeArtifactDomainName:
     Description: Used for maven repository access
     Type: String
@@ -67,7 +71,7 @@ Resources:
             Value: !Sub "${GitHubProjectName}"
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
-            Value: develop
+            Value: !Sub "${GitHubDefaultBranch}"
           - Name: ECR_URL
             Type: PLAINTEXT
             Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com'

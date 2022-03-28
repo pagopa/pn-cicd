@@ -113,6 +113,7 @@ Resources:
         GitHubProjectName: 'pn-delivery'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+        GitHubDefaultBranch: 'develop'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
         AllowedDeployAccount1: !Ref AllowedDeployAccount1
         AllowedDeployAccount2: !Ref AllowedDeployAccount2
@@ -126,6 +127,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-delivery-push'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -141,6 +143,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-external-channels'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
