@@ -31,6 +31,20 @@ needed for the CI process like:
 
 ## Add a project to CI pipeline
 
+### 1. Add the project to SonarCloud
+
+SonarCloud is used to collect the static code analysis and code coverage metrics for the project.
+
+Login to [SonarCloud](https://sonarcloud.io) with your github account.
+
+Click on the blue + (plus sign) in the upper toolbar and select "Analyze New Project"  
+![Analyze New Project](docs/01-AddSonarProject.png)
+
+Select the project in the list and click the blue button "Set Up" on the right panel.
+![Select Project](docs/02-SelectSonarProject.png)
+
+### 2. Configure the project in the CI pipeline
+
 The process to add a project in the CI pipeline is done by
 1. add some lines in _root.yaml_ file.
 2. commit and push the root.yaml file into main branch or merge from a feature
