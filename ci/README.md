@@ -43,7 +43,19 @@ Click on the blue + (plus sign) in the upper toolbar and select "Analyze New Pro
 Select the project in the list and click the blue button "Set Up" on the right panel.
 ![Select Project](docs/02-SelectSonarProject.png)
 
-### 2. Configure the project in the CI pipeline
+### 2. Configure GitHub Personal Access Token
+
+AWS Code Build deve interagire con il repository GitHub per segnalare il successo o meno della compilazione.
+
+Per abilitare l'interazione con GitHub viene utilizzato per ora un Personal Access Token memorizzato come
+secret su _AWS Secrets Manager_
+
+Poichè non ha senso utilizzare token personali associati ad un utente, si è pensato di utilizzare in futuro
+degli utenti fittizzi per queste configurazioni (vedi https://pagopa.atlassian.net/browse/PN-1013)
+
+https://docs.aws.amazon.com/codebuild/latest/userguide/access-tokens.html
+
+### 3. Configure the project in the CI pipeline
 
 The process to add a project in the CI pipeline is done by
 1. add some lines in _root.yaml_ file.
