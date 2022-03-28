@@ -58,7 +58,7 @@
         {
             "name": "mandate",
             "repo-name": "pagopa/pn-mandate",
-            "branch-name": "develop",
+            "branch-name": "main",
             "image-name-and-tag": "pn-mandate:latest",
             "type": "container",
             "microservice-idx": 4,
@@ -67,7 +67,7 @@
         {
             "name": "data-vault",
             "repo-name": "pagopa/pn-data-vault",
-            "branch-name": "develop",
+            "branch-name": "main",
             "image-name-and-tag": "pn-data-vault:latest",
             "type": "container",
             "microservice-idx": 5,
@@ -76,7 +76,7 @@
         {
             "name": "external-registries",
             "repo-name": "pagopa/pn-external-registries",
-            "branch-name": "develop",
+            "branch-name": "main",
             "image-name-and-tag": "pn-external-registries:latest",
             "type": "container",
             "microservice-idx": 6,
