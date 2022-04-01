@@ -81,6 +81,15 @@
             "type": "container",
             "microservice-idx": 6,
             "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
+        },
+        {
+            "name": "user-attributes",
+            "repo-name": "pagopa/pn-user-attributes",
+            "branch-name": "main",
+            "image-name-and-tag": "pn-user-attributes:latest",
+            "type": "container",
+            "microservice-idx": 6,
+            "codestar-connection-arn": "arn:aws:codestar-connections:eu-central-1:911845998067:connection/b28acf11-85de-478c-8ed2-2823f8c2a92d"
         }
     ]
 }
