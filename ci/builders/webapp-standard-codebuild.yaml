@@ -8,7 +8,7 @@ Parameters:
   BaseDir:
     Description: base directory of the front end project pattern = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
-  BuildProjectName:
+  PackageName:
     Description: build project name pattern = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
   CiArtifactBucket:
@@ -32,7 +32,7 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${GitHubProjectName}-${BuildProjectName}-CodeBuild"
+      Name: !Sub "${GitHubProjectName}-${PackageName}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Artifacts:
         Type: NO_ARTIFACTS
@@ -181,7 +181,7 @@ Resources:
     Type: AWS::CodeStarNotifications::NotificationRule
     Properties:
       DetailType: FULL
-      Name: !Sub '${GitHubProjectName}-CI'
+      Name: !Sub '${GitHubProjectName}-${PackageName}-CI'
       EventTypeIds:
         - codebuild-project-build-state-failed
       Resource: !Sub '${CodeBuildProject.Arn}'

@@ -262,7 +262,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-frontend'
-        BuildProjectName: 'pn-pa-webapp'
+        PackageName: 'pn-pa-webapp'
         BaseDir: 'packages/pn-pa-webapp'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
