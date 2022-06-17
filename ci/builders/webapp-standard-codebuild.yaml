@@ -84,10 +84,14 @@ Resources:
               Pattern: PUSH, PULL_REQUEST_MERGED
             - Type: HEAD_REF
               Pattern: ^refs/heads/(main|develop)$
+            - Type: FILE_PATH
+              Pattern: !Sub "^${BaseDir}/.*"
           - - Type: EVENT
               Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
             - Type: BASE_REF
               Pattern: ^refs/heads/(main|develop)$
+            - Type: FILE_PATH
+              Pattern: !Sub "^${BaseDir}/.*"
 
   BuildBatchServiceRole:
     Type: AWS::IAM::Role
