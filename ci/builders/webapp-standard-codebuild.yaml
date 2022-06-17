@@ -34,6 +34,9 @@ Resources:
     Properties:
       Name: !Sub "${GitHubProjectName}-${PackageName}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      BuildBatchConfig:
+        ServiceRole: !GetAtt BuildBatchServiceRole.Arn
+        TimeoutInMins: 15
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -62,7 +65,7 @@ Resources:
             Value: !Sub "${BaseDir}"
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
-            Value: develop
+            Value: main
       Source:
         Type: GITHUB
         Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
@@ -85,6 +88,32 @@ Resources:
               Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
             - Type: BASE_REF
               Pattern: ^refs/heads/(main|develop)$
+
+  BuildBatchServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeBuildPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: ''
+                Effect: Allow
+                Resource:
+                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${GitHubProjectName}-${PackageName}-CodeBuild"
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:StopBuild
+                  - codebuild:RetryBuild
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
