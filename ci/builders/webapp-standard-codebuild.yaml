@@ -29,7 +29,7 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${GitHubProjectName}-CodeBuild"
+      Name: !Sub "${GitHubProjectName}-${BaseDir}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Artifacts:
         Type: NO_ARTIFACTS
@@ -54,6 +54,9 @@ Resources:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
             Value: !Sub "${GitHubProjectName}"
+          - Name: SUB_PRJ_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${BaseDir}"
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
             Value: develop

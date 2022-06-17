@@ -256,7 +256,7 @@ Resources:
       TimeoutInMinutes: 5
 
   # Progetti WebApp
-  PnWebapp:
+  PnPaWebapp:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml'
