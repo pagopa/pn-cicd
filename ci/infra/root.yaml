@@ -259,9 +259,10 @@ Resources:
   PnWebapp:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/npm-webapp-codebuild.yaml'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml'
       Parameters:
-        GitHubProjectName: 'pn-webapp'
+        GitHubProjectName: 'pn-frontend'
+        BaseDir: 'packages/pn-pa-webapp'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         CiArtifactBucket: !Ref 'CiArtifactBucket'
