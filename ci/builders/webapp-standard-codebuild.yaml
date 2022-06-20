@@ -66,6 +66,9 @@ Resources:
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
             Value: main
+          - Name: CI_ARTIFACT_BUCKET
+            Type: PLAINTEXT
+            Value: !Sub "${CiArtifactBucket}" 
       Source:
         Type: GITHUB
         Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
