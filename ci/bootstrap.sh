@@ -36,7 +36,7 @@ aws --profile $CiCdAccountProfile --region $AWSRegion cloudformation deploy \
       NotificationSNSTopic=$sns_topic_arn \
       AllowedDeployAccount1=558518206506 \
       AllowedDeployAccount2=946373734005 \
-      AllowedDeployAccount3=946373734005 \
-      AllowedDeployAccount4=946373734005 \
-      AllowedDeployAccount5=946373734005
+      AllowedDeployAccount3=517983699462 \
+      AllowedDeployAccount4=748275689270 \
+      AllowedDeployAccount5=615714398925
 
