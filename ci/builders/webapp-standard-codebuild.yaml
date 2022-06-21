@@ -82,6 +82,7 @@ Resources:
           - LOCAL_SOURCE_CACHE
       Triggers:
         Webhook: true
+        BuildType: BUILD_BATCH
         FilterGroups:
           - - Type: EVENT
               Pattern: PUSH, PULL_REQUEST_MERGED
