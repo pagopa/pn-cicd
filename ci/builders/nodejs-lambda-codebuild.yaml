@@ -72,9 +72,11 @@ Resources:
             post_build:
               on-failure: ABORT
               commands:
-                - git rev-parse --verify HEAD > commitID.txt
+                - export COMMIT_ID=$(git rev-parse --verify HEAD)
+                - echo $COMMIT_ID > commitID.txt
                 - zip -u function.zip commitID.txt
                 - aws s3 cp function.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/$SUB_PRJ_NAME.zip"
+                - aws s3 cp function.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/commits/$COMMIT_ID/$SUB_PRJ_NAME.zip"
       Artifacts:
         Type: NO_ARTIFACTS
       TimeoutInMinutes: 10
