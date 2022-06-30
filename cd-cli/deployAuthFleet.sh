@@ -178,30 +178,29 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive
 
-
-aws ${aws_command_base_args} s3 cp \
-      "s3://$LambdasBucketName/pn-auth-fleet/commits/${pn_authfleet_commitid}/apikeyAuthorizer.zip" \
+ ws ${aws_command_base_args} s3api get-object \
+      --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/apikeyAuthorizer.zip" \
       "apikeyAuthorizer.zip"
 aws ${aws_command_base_args} s3 cp \
       "apikeyAuthorizer.zip" \
       "s3://$bucketName/pn-auth-fleet/main/apikeyAuthorizer.zip" 
 
-aws ${aws_command_base_args} s3 cp \
-      "s3://$LambdasBucketName/pn-auth-fleet/commits/${pn_authfleet_commitid}/jwtAuthorizer.zip" \
+aws ${aws_command_base_args} s3api get-object \
+      --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/jwtAuthorizer.zip" \
       "jwtAuthorizer.zip"
 aws ${aws_command_base_args} s3 cp \
       "jwtAuthorizer.zip"
       "s3://$bucketName/pn-auth-fleet/main/jwtAuthorizer.zip" 
 
-aws ${aws_command_base_args} s3 cp \
-      "s3://$LambdasBucketName/pn-auth-fleet/commits/${pn_authfleet_commitid}/tokenExchange.zip" \
+aws ${aws_command_base_args} s3api get-object \
+      --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/tokenExchange.zip" \
       "tokenExchange.zip"
 aws ${aws_command_base_args} s3 cp \
       "tokenExchange.zip" \
       "s3://$bucketName/pn-auth-fleet/main/tokenExchange.zip" 
 
-aws ${aws_command_base_args} s3 cp \
-      "s3://$LambdasBucketName/pn-auth-fleet/commits/${pn_authfleet_commitid}/ioAuthorizer.zip" \
+aws ${aws_command_base_args} s3api get-object \
+      --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/ioAuthorizer.zip" \
       "ioAuthorizer.zip"
 aws ${aws_command_base_args} s3 cp \
       "ioAuthorizer.zip" \
