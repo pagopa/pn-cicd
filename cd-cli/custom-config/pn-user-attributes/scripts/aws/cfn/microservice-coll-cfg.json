@@ -1,0 +1,9 @@
+{
+  "Parameters" : {
+    "ExternalChannelBasePath": "https://x406psk281.execute-api.eu-south-1.amazonaws.com/coll/",
+    "HeaderValueExternalChannelCxId": "pn-delivery-002",
+    "ExternalChannelSenderPEC": "",
+    "ExternalChannelSenderEMAIL": "",
+    "ExternalChannelSenderSMS": ""
+  }
+}

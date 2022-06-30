@@ -1,0 +1,5 @@
+{
+  "Parameters" : {
+    "CheckoutBaseUrl": "https://api.uat.platform.pagopa.it/checkout/auth/payments/v2"
+  }
+}

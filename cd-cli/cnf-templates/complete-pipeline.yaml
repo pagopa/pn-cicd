@@ -1,0 +1,208 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Continuos Delivery pipeline for infrastructure deployment'
+Parameters:
+  ProjectName:
+    Description: Usually "pn", can be changed for feature branch deployment
+    Type: String
+  
+  EnvName:
+    Description: 'dev, svil, test, coll, ...'
+    Type: String
+
+
+
+
+
+Resources:
+
+  CiArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+  
+  PipelineArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: "Allow"
+            Action: "sts:AssumeRole"
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+      Path: "/"
+      Policies:
+        - PolicyName: PipelinePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            # Allow pipeline to read/write from CiArtifactBucket
+            - Effect: Allow
+              Action:
+                - "s3:Get*"
+                - "s3:List*"
+                - "s3-object-lambda:Get*"
+                - "s3-object-lambda:List*"
+                - "*"
+              Resource: 
+                - !Sub "arn:aws:s3:::${CiArtifactBucket}"
+                - !Sub "arn:aws:s3:::${CiArtifactBucket}/*"
+                - "*"
+  
+  # PIPELINE DEFINITION
+  #######################
+  DeployPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipelineRole.Arn
+      Name: !Sub '${ProjectName}-InfraPipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                S3Bucket: !Ref CiArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                S3Bucket: !Ref CiArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: Download_Scripts
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref EmptyCodeBuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CiArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 2
+
+
+  # CODEBUILD for Cloudformation Template parameters enrichement
+  ###################################################
+  EmptyCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-EnrichParamsCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - VERSION=v4.20.1
+                - BINARY=yq_linux_amd64
+                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
+                - chmod +x /usr/bin/yq
+                - VERSION=`yq --version`
+                - echo "$VERSION"
+                - yq --version
+            build:
+              commands:
+                - 'echo "### ENVIRONMENT ###"'
+                - 'echo "###################"'
+                - env
+                - 'echo ""'
+                - 'echo "### DOWNLOAD DESIRED COMMIT IDS ###"'
+                - 'aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}'
+                - 'cat desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "### UPDATED ENVIRONMENT ###"'
+                - 'echo "###########################"'
+                - env
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+        
+  
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-EnrichParamsCodeBuildRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - 
+            Effect: Allow
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  
+  CodeBuildPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${ProjectName}-CodeBuildPolicy
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - "*"
+            Resource:
+              - "*"
+
+Outputs:
+  CiArtifactBucketName:
+    Value: !Ref CiArtifactBucket
+
