@@ -13,28 +13,130 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") <microcvs-name> <microcvs-idx> <aws-profile> <aws-region> <env-type> <pn-infra-github-commitid> <pn-microsvc-github-commitid> <countainer-image-uri>  <custom_config_dir>
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] -n <microcvs-name> -N <microcvs-idx> [-p <aws-profile>] -r  <aws-region> -e <env-type> -i <pn-infra-github-commitid> -m <pn-microsvc-github-commitid> -C <countainer-image-uri> [-c <custom_config_dir>]
+    
+    [-h]                             : this help message
+    [-v]                             : verbose mode
+    [-p <aws-profile>]               : aws cli profile (optional)
+    -r <aws-region>                  : aws region as eu-south-1
+    -e <env-type>                    : one of dev / uat / svil / coll / cert / prod
+    -i <infra-github-commitid>       : commitId for github repository pagopa/pn-infra
+    -m <pn-microsvc-github-commitid> : commitId for github repository del microservizio
+    [-c <custom_config_dir>]         : where tor read additional env-type configurations
+    -b <artifactBucketName>          : bucket name to use as temporary artifacts storage
+    -n <microcvs-name>               : nome del microservizio
+    -N <microcvs-idx>                : id del microservizio
+    -I <image-uri>                   : url immagine docker microservizio
     
 EOF
   exit
 }
 
+parse_params() {
+  # default values of variables set from params
+  project_name=pn
+  work_dir=$HOME/tmp/poste_deploy
+  custom_config_dir=""
+  aws_profile=""
+  aws_region=""
+  env_type=""
+  pn_infra_commitid=""
+  pn_microsvc_commitid=""
+  bucketName=""
+  LambdasBucketName=""
 
-if ( [ $# -ne 9 ] ) then
-  usage
-fi
+  while :; do
+    case "${1-}" in
+    -h | --help) usage ;;
+    -v | --verbose) set -x ;;
+    -p | --profile) 
+      aws_profile="${2-}"
+      shift
+      ;;
+    -r | --region) 
+      aws_region="${2-}"
+      shift
+      ;;
+    -e | --env-name) 
+      env_type="${2-}"
+      shift
+      ;;
+    -i | --infra-commitid) 
+      pn_infra_commitid="${2-}"
+      shift
+      ;;
+    -m | --ms-commitid) 
+      pn_microsvc_commitid="${2-}"
+      shift
+      ;;
+    -n | --ms-name) 
+      microcvs_name="${2-}"
+      shift
+      ;;
+    -N | --ms-number)
+      MicroserviceNumber="${2-}"
+      shift
+      ;;
+    -c | --custom-config-dir) 
+      custom_config_dir="${2-}"
+      shift
+      ;;
+    -w | --work-dir) 
+      work_dir="${2-}"
+      shift
+      ;;
+    -b | --bucket-name) 
+      bucketName="${2-}"
+      shift
+      ;;
+    -I | --container-image-url) 
+      ContainerImageUri="${2-}"
+      shift
+      ;;
+    -?*) die "Unknown option: $1" ;;
+    *) break ;;
+    esac
+    shift
+  done
 
-project_name=pn
-work_dir=$HOME/tmp/poste_deploy 
-microcvs_name=$1
-MicroserviceNumber=$2
-aws_profile=$3
-aws_region=$4
-env_type=$5
-pn_infra_commitid=$6
-pn_microsvc_commitid=$7
-ContainerImageUri=$8
-custom_config_dir=$9
+  args=("$@")
+
+  # check required params and arguments
+  [[ -z "${env_type-}" ]] && usage 
+  [[ -z "${pn_infra_commitid-}" ]] && usage
+  [[ -z "${pn_microsvc_commitid-}" ]] && usage
+  [[ -z "${bucketName-}" ]] && usage
+  [[ -z "${aws_region-}" ]] && usage
+  [[ -z "${ContainerImageUri-}" ]] && usage
+  [[ -z "${microcvs_name-}" ]] && usage
+  [[ -z "${MicroserviceNumber-}" ]] && usage
+  return 0
+}
+
+dump_params(){
+  echo ""
+  echo "######      PARAMETERS      ######"
+  echo "##################################"
+  echo "Project Name:        ${project_name}"
+  echo "Work directory:      ${work_dir}"
+  echo "Custom config dir:   ${custom_config_dir}"
+  echo "Infra CommitId:      ${pn_infra_commitid}"
+  echo "Microsvc CommitId:   ${pn_microsvc_commitid}"
+  echo "Microsvc Name:       ${microcvs_name}"
+  echo "Microsvc Idx:        ${MicroserviceNumber}"
+  echo "Env Name:            ${env_type}"
+  echo "AWS region:          ${aws_region}"
+  echo "AWS profile:         ${aws_profile}"
+  echo "Bucket Name:         ${bucketName}"
+  echo "Container image URL: ${ContainerImageUri}"
+}
+
+
+# START SCRIPT
+
+parse_params "$@"
+dump_params
+
 
 cd $work_dir
 
@@ -47,7 +149,9 @@ echo ""
 echo "=== Checkout pn-infra commitId=${pn_infra_commitid}"
 ( cd pn-infra && git fetch && git checkout $pn_infra_commitid )
 echo " - copy custom config"
-cp -r $custom_config_dir/pn-infra .
+if ( [ ! -z "${custom_config_dir}" ] ) then
+  cp -r $custom_config_dir/pn-infra .
+fi
 
 
 echo "=== Download microservizio ${microcvs_name}" 
@@ -59,23 +163,24 @@ echo ""
 echo "=== Checkout ${microcvs_name} commitId=${pn_microsvc_commitid}"
 ( cd ${microcvs_name} && git fetch && git checkout $pn_microsvc_commitid )
 echo " - copy custom config"
-cp -r $custom_config_dir/${microcvs_name} .
+if ( [ ! -z "${custom_config_dir}" ] ) then
+  cp -r $custom_config_dir/${microcvs_name} .
+fi
 
 
-echo ""
-echo "=== Ensure bucket"
-aws --profile $aws_profile --region $aws_region \
-    cloudformation deploy \
-      --stack-name ArtifactBucket \
-      --template-file ${script_dir}/cnf-templates/ArtifactBucket.yaml
 
 echo ""
-echo "=== Get bucket name"
-getBucketNameCommand="aws --profile $aws_profile --region $aws_region cloudformation describe-stacks \
-                           --stack-name ArtifactBucket \
-                           --output json"
+echo "=== Base AWS command parameters"
+aws_command_base_args=""
+if ( [ ! -z "${aws_profile}" ] ) then
+  aws_command_base_args="${aws_command_base_args} --profile $aws_profile"
+fi
+if ( [ ! -z "${aws_region}" ] ) then
+  aws_command_base_args="${aws_command_base_args} --region  $aws_region"
+fi
+echo ${aws_command_base_args}
 
-bucketName=$( $( echo $getBucketNameCommand ) | jq -r ".Stacks[0].Outputs[0].OutputValue" )
+
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
 templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
 echo " - Bucket Name: ${bucketName}"
@@ -86,7 +191,7 @@ echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
 
 echo ""
 echo "=== Upload files to bucket"
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive
 
@@ -118,7 +223,7 @@ echo " - PipelineParams: ${PipelineParams}"
 
 echo ""
 echo "= Read Outputs from previous stack"
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args} \
     cloudformation describe-stacks \
       --stack-name pn-ipc-$env_type \
       --query "Stacks[0].Outputs" \
@@ -140,7 +245,7 @@ cat ${EnanchedParamFilePath}
 
 echo ""
 echo "=== Deploy $microcvs_name STORAGE FOR $env_type ACCOUNT"
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name ${microcvs_name}-storage-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \
@@ -190,7 +295,7 @@ echo " - PipelineParams: ${PipelineParams}"
 
 echo ""
 echo "= Read Outputs from previous stack"
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args} \
     cloudformation describe-stacks \
       --stack-name ${microcvs_name}-storage-$env_type \
       --query "Stacks[0].Outputs" \
@@ -200,7 +305,7 @@ aws --profile $aws_profile --region $aws_region \
 
 echo ""
 echo "= Read Outputs from infrastructure stack"
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args} \
     cloudformation describe-stacks \
       --stack-name pn-ipc-$env_type \
       --query "Stacks[0].Outputs" \
@@ -228,7 +333,7 @@ cat ${EnanchedParamFilePath}
 
 echo ""
 echo "=== Deploy $microcvs_name MICROSERVICE FOR $env_type ACCOUNT"
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name ${microcvs_name}-microsvc-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \

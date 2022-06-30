@@ -16,7 +16,7 @@ usage() {
     Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -a <pn-authfleet-github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaArtifactBucketName> 
     
     
-    [-h]                  x         : this help message
+    [-h]                           : this help message
     [-v]                           : verbose mode
     [-p <aws-profile>]             : aws cli profile (optional)
     -r <aws-region>                : aws region as eu-south-1
