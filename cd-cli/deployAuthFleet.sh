@@ -178,7 +178,7 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive
 
- ws ${aws_command_base_args} s3api get-object \
+aws ${aws_command_base_args} s3api get-object \
       --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/apikeyAuthorizer.zip" \
       "apikeyAuthorizer.zip"
 aws ${aws_command_base_args} s3 cp \
