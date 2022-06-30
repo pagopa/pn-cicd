@@ -13,24 +13,90 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") <aws-profile> <aws-region> <env-type> <github-commitid> <custom_config_dir>
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] [-r <aws-region>] -e <env-type> -i <github-commitid> [-c <custom_config_dir>] -b <artifactBucketName>
     
 EOF
   exit
 }
 
+parse_params() {
+  # default values of variables set from params
+  project_name=pn
+  work_dir=$HOME/tmp/poste_deploy
+  custom_config_dir=""
+  aws_profile=""
+  aws_region=""
+  env_type=""
+  pn_infra_commitid=""
+  bucketName=""
 
-if ( [ $# -ne 5 ] ) then
-  usage
-fi
+  while :; do
+    case "${1-}" in
+    -h | --help) usage ;;
+    -v | --verbose) set -x ;;
+    -p | --profile) 
+      aws_profile="${2-}"
+      shift
+      ;;
+    -r | --region) 
+      aws_region="${2-}"
+      shift
+      ;;
+    -e | --env-name) 
+      env_type="${2-}"
+      shift
+      ;;
+    -i | --infra-commitid) 
+      pn_infra_commitid="${2-}"
+      shift
+      ;;
+    -c | --custom-config-dir) 
+      custom_config_dir="${2-}"
+      shift
+      ;;
+    -w | --work-dir) 
+      work_dir="${2-}"
+      shift
+      ;;
+    -b | --bucket-name) 
+      bucketName="${2-}"
+      shift
+      ;;
+    -?*) die "Unknown option: $1" ;;
+    *) break ;;
+    esac
+    shift
+  done
 
-project_name=pn
-work_dir=$HOME/tmp/poste_deploy 
-aws_profile=$1
-aws_region=$2
-env_type=$3
-pn_infra_commitid=$4
-custom_config_dir=$5
+  args=("$@")
+
+  # check required params and arguments
+  [[ -z "${env_type-}" ]] && usage 
+  [[ -z "${pn_infra_commitid-}" ]] && usage
+  [[ -z "${bucketName-}" ]] && usage
+  return 0
+}
+
+dump_params(){
+  echo ""
+  echo "######      PARAMETERS      ######"
+  echo "##################################"
+  echo "Project Name:      ${project_name}"
+  echo "Work directory:    ${work_dir}"
+  echo "Custom config dir: ${custom_config_dir}"
+  echo "Infra CommitId:    ${pn_infra_commitid}"
+  echo "Env Name:          ${env_type}"
+  echo "AWS region:        ${aws_region}"
+  echo "AWS profile:       ${aws_profile}"
+  echo "Bucket Name:       ${bucketName}"
+}
+
+
+# START SCRIPT
+
+parse_params "$@"
+dump_params
+
 
 cd $work_dir
 
@@ -43,22 +109,22 @@ echo ""
 echo "=== Checkout pn-infra commitId=${pn_infra_commitid}"
 ( cd pn-infra && git fetch && git checkout $pn_infra_commitid )
 echo " - copy custom config"
-cp -r $custom_config_dir/pn-infra .
+if ( [ ! -z "${custom_config_dir}" ] ) then
+  cp -r $custom_config_dir/pn-infra .
+fi
 
 echo ""
-echo "=== Ensure bucket"
-aws --profile $aws_profile --region $aws_region \
-    cloudformation deploy \
-      --stack-name ArtifactBucket \
-      --template-file ${script_dir}/cnf-templates/ArtifactBucket.yaml
+echo "=== Base AWS command parameters"
+aws_command_base_args=""
+if ( [ ! -z "${aws_profile}" ] ) then
+  aws_command_base_args="${aws_command_base_args} --profile $aws_profile"
+fi
+if ( [ ! -z "${aws_region}" ] ) then
+  aws_command_base_args="${aws_command_base_args} --region  $aws_region"
+fi
+echo ${aws_command_base_args}
 
-echo ""
-echo "=== Get bucket name"
-getBucketNameCommand="aws --profile $aws_profile --region $aws_region cloudformation describe-stacks \
-                           --stack-name ArtifactBucket \
-                           --output json"
 
-bucketName=$( $( echo $getBucketNameCommand ) | jq -r ".Stacks[0].Outputs[0].OutputValue" )
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
 templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
 echo " - Bucket Name: ${bucketName}"
@@ -68,7 +134,7 @@ echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
 
 echo ""
 echo "=== Upload files to bucket"
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args}  \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive
 
@@ -83,7 +149,7 @@ echo ""
 echo ""
 echo "=== Deploy ONCE FOR $env_type ACCOUNT"
 echo "======================================================================="
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args}  \
     cloudformation deploy \
       --stack-name once-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \
@@ -124,7 +190,7 @@ echo " - PipelineParams: ${PipelineParams}"
 
 echo ""
 echo "= Read Outputs from previous stack"
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args}  \
     cloudformation describe-stacks \
       --stack-name once-$env_type \
       --query "Stacks[0].Outputs" \
@@ -150,7 +216,7 @@ cat ${EnanchedParamFilePath}
 
 echo ""
 echo "=== Deploy PN-INFRA FOR $env_type ACCOUNT"
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name pn-infra-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \
@@ -199,7 +265,7 @@ echo " - PipelineParams: ${PipelineParams}"
 
 echo ""
 echo "= Read Outputs from previous stack"
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args} \
     cloudformation describe-stacks \
       --stack-name pn-infra-$env_type \
       --query "Stacks[0].Outputs" \
@@ -225,7 +291,7 @@ cat ${EnanchedParamFilePath}
 
 echo ""
 echo "=== Deploy PN-IPC FOR $env_type ACCOUNT"
-aws --profile $aws_profile --region $aws_region \
+aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name pn-ipc-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \

@@ -3,6 +3,7 @@ Description: 'Continuos Delivery pipeline for infrastructure deployment'
 Parameters:
   ProjectName:
     Description: Usually "pn", can be changed for feature branch deployment
+    Default: 'pn'
     Type: String
   
   EnvName:
@@ -64,7 +65,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-InfraPipeline'
+      Name: !Sub '${ProjectName}-env-update-pipeline'
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -98,7 +99,7 @@ Resources:
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
-        - Name: Download_Scripts
+        - Name: DeployAll
           Actions:
             # Download cd-cli scripts
             - Name: Download_CLI_Scripts
@@ -108,7 +109,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref EmptyCodeBuildProject
+                ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
                     {"name":"DesiredCommitIdsBucketName", "value":"${CiArtifactBucket}", "type":"PLAINTEXT"},
@@ -119,15 +120,34 @@ Resources:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            # UpdateInfrastructure
+            - Name: Update_Infrastructure
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateInfraCodeBuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucket}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: InfraOutput
               RunOrder: 2
 
 
-  # CODEBUILD for Cloudformation Template parameters enrichement
+  # CODEBUILD used to download scripts
   ###################################################
-  EmptyCodeBuildProject:
+  DownloadScriptsCodebuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${ProjectName}-EnrichParamsCodeBuildProject
+      Name: !Sub ${ProjectName}-DownloadScriptsCodebuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source: 
         Type: CODEPIPELINE
@@ -136,13 +156,7 @@ Resources:
           phases:
             pre_build:
               commands:
-                - VERSION=v4.20.1
-                - BINARY=yq_linux_amd64
-                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
-                - chmod +x /usr/bin/yq
-                - VERSION=`yq --version`
-                - echo "$VERSION"
-                - yq --version
+                - echo "### NO PRE_BUILD"
             build:
               commands:
                 - 'echo "### ENVIRONMENT ###"'
@@ -160,6 +174,67 @@ Resources:
                 - 'echo "### UPDATED ENVIRONMENT ###"'
                 - 'echo "###########################"'
                 - env
+                - 'echo ""'
+                - 'echo "### CLONE SCRIPTS ###"'
+                - 'echo "#####################"'
+                - 'git clone https://github.com/pagopa/pn-cicd.git'
+                - '( cd pn-cicd && git checkout $cd_scripts_commitId )'
+                - 'ls -r pn-cicd'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "### PREPARE ARTIFACT ###"'
+                - 'echo "########################"'
+                - 'mkdir scripts'
+                - 'cp -r pn-cicd/cd-cli scripts'
+                - 'cp desired-commit-ids-env.sh scripts'
+                - 'find scripts'
+          artifacts:
+            files:
+              - 'scripts/**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+        
+  # CODEBUILD used to update infrastructure
+  ###################################################
+  UpdateInfraCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateInfraCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###                   UPDATE INFRA                   ###"'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo ""'
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)''
+                - '(cd scripts/cd-cli && ./deployInfra.sh -e $EnvName -i $pn_infra_commitId -b ${CiArtifactBucketName} -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
@@ -169,7 +244,6 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:5.0"
-        
   
   CodeBuildRole:
     Type: AWS::IAM::Role
