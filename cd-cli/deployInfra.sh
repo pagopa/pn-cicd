@@ -13,7 +13,16 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] [-r <aws-region>] -e <env-type> -i <github-commitid> [-c <custom_config_dir>] -b <artifactBucketName>
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> [-c <custom_config_dir>] -b <artifactBucketName>
+
+    [-h]                      : this help message
+    [-v]                      : verbose mode
+    [-p <aws-profile>]        : aws cli profile (optional)
+    -r <aws-region>           : aws region as eu-south-1
+    -e <env-type>             : one of dev / uat / svil / coll / cert / prod
+    -i <github-commitid>      : commitId for github repository pagopa/pn-infra
+    [-c <custom_config_dir>]  : where tor read additional env-type configurations
+    -b <artifactBucketName>   : bucket name to use as temporary artifacts storage
     
 EOF
   exit
@@ -74,6 +83,7 @@ parse_params() {
   [[ -z "${env_type-}" ]] && usage 
   [[ -z "${pn_infra_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
+  [[ -z "${aws_region-}" ]] && usage
   return 0
 }
 
@@ -134,7 +144,7 @@ echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
 
 echo ""
 echo "=== Upload files to bucket"
-aws ${aws_command_base_args}  \
+aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive
 
