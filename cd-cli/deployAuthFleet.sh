@@ -189,7 +189,7 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
       --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/jwtAuthorizer.zip" \
       "jwtAuthorizer.zip"
 aws ${aws_command_base_args} s3 cp \
-      "jwtAuthorizer.zip"
+      "jwtAuthorizer.zip" \
       "s3://$bucketName/pn-auth-fleet/main/jwtAuthorizer.zip" 
 
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
