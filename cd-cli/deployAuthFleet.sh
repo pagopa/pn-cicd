@@ -16,7 +16,7 @@ usage() {
     Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -a <pn-authfleet-github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaArtifactBucketName> 
     
     
-    [-h]                           : this help message
+    [-h]                  x         : this help message
     [-v]                           : verbose mode
     [-p <aws-profile>]             : aws cli profile (optional)
     -r <aws-region>                : aws region as eu-south-1
@@ -179,26 +179,34 @@ aws ${aws_command_base_args} \
       --recursive
 
 
-
-aws ${aws_command_base_args} \
-    s3 cp \
+aws ${aws_command_base_args} s3 cp \
       "s3://$LambdasBucketName/pn-auth-fleet/commits/${pn_authfleet_commitid}/apikeyAuthorizer.zip" \
+      "apikeyAuthorizer.zip"
+aws ${aws_command_base_args} s3 cp \
+      "apikeyAuthorizer.zip" \
       "s3://$bucketName/pn-auth-fleet/main/apikeyAuthorizer.zip" 
 
-aws ${aws_command_base_args} \
-    s3 cp \
+aws ${aws_command_base_args} s3 cp \
       "s3://$LambdasBucketName/pn-auth-fleet/commits/${pn_authfleet_commitid}/jwtAuthorizer.zip" \
+      "jwtAuthorizer.zip"
+aws ${aws_command_base_args} s3 cp \
+      "jwtAuthorizer.zip"
       "s3://$bucketName/pn-auth-fleet/main/jwtAuthorizer.zip" 
 
-aws ${aws_command_base_args} \
-    s3 cp \
+aws ${aws_command_base_args} s3 cp \
       "s3://$LambdasBucketName/pn-auth-fleet/commits/${pn_authfleet_commitid}/tokenExchange.zip" \
+      "tokenExchange.zip"
+aws ${aws_command_base_args} s3 cp \
+      "tokenExchange.zip" \
       "s3://$bucketName/pn-auth-fleet/main/tokenExchange.zip" 
 
-aws ${aws_command_base_args} \
-    s3 cp \
+aws ${aws_command_base_args} s3 cp \
       "s3://$LambdasBucketName/pn-auth-fleet/commits/${pn_authfleet_commitid}/ioAuthorizer.zip" \
+      "ioAuthorizer.zip"
+aws ${aws_command_base_args} s3 cp \
+      "ioAuthorizer.zip" \
       "s3://$bucketName/pn-auth-fleet/main/ioAuthorizer.zip" 
+
 
 LambdaZipVersionId1=$( aws ${aws_command_base_args} \
     s3api head-object \
