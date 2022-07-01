@@ -126,7 +126,8 @@ Resources:
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            # UpdateInfrastructure
+            
+            # UpdateInfrastructure AND AuthFleet
             - Name: Update_Infrastructure
               ActionTypeId:
                 Category: Build
@@ -135,19 +136,187 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Ref UpdateInfraCodeBuildProject
-                PrimarySource: EmptyZip
+                PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-
-                    CiArtifactBucketName
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketName}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: InfraOutput
               RunOrder: 2
+            
+            # Update pn-delivery
+            - Name: Update_PnDelivery
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-delivery", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_delivery", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnDeliveryOutput
+              RunOrder: 3
+            
+            # Update pn-delivery-push
+            - Name: Update_PnDeliveryPush
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProjectP1
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-delivery-push", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_delivery_push", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnDeliveryPushOutput
+              RunOrder: 3
+            
+            # Update pn-mandate
+            - Name: Update_PnMandate
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProjectP2
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-mandate", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"4", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_mandate", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnMandateOutput
+              RunOrder: 3
+            
+            # Update pn-data-vault
+            - Name: Update_PnDataVault
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProjectP3
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"5", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnDataVaultOutput
+              RunOrder: 3
+            
+            # Update pn-external-registries
+            - Name: Update_ExternalRegistries
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProjectP1
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-external-registries", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"6", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_ExternalRegistry", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnExternalRegistriesOutput
+              RunOrder: 3
+            
+            # Update pn-UserAttributes
+            - Name: Update_UserAttributes
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProjectP2
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-user-attributes", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"7", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_UserAttributes", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnUserAttributesOutput
+              RunOrder: 3
+
+
+            # Update Frontend
+            - Name: Update_Frontend
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateFrontendCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketName}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: FrontEndOutput
+              RunOrder: 3
+              # FIXME 4 is more secure but we need to speed up svil update
+              #RunOrder: 4
 
 
   # CODEBUILD used to download scripts
@@ -206,7 +375,7 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:5.0"
         
-  # CODEBUILD used to update infrastructure
+  # CODEBUILD used to update infrastructure and authFleet
   ###################################################
   UpdateInfraCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
@@ -248,7 +417,7 @@ Resources:
                 - 'echo "###                   UPDATE INFRA                   ###"'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && ./deployInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucket -w /tmp -c $custom_config_dir )'
+                - '(cd scripts/cd-cli && ./deployInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
@@ -259,7 +428,7 @@ Resources:
                 - 'echo "###                 UPDATE AUTHFLEET                 ###"'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && ./deployAuthFleet.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucket -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - '(cd scripts/cd-cli && ./deployAuthFleet.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
@@ -270,6 +439,120 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:5.0"
   
+
+  # CODEBUILD used to update an ecs microservice
+  ###################################################
+  UpdateMicroserviceCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - VERSION=v4.20.1
+                - BINARY=yq_linux_amd64
+                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
+                - chmod +x /usr/bin/yq
+                - VERSION=`yq --version`
+                - echo "$VERSION"
+                - yq --version
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
+                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+  
+
+  # CODEBUILD used to update frontend
+  ###################################################
+  UpdateFrontendCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateFrontendCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - VERSION=v4.20.1
+                - BINARY=yq_linux_amd64
+                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
+                - chmod +x /usr/bin/yq
+                - VERSION=`yq --version`
+                - echo "$VERSION"
+                - yq --version
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###                  UPDATE FRONTEND                 ###"'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo "./deployFrontend.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_frontend_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir"'
+                - '(cd scripts/cd-cli && ./deployFrontend.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_frontend_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+  
+
+
   CodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
@@ -300,6 +583,173 @@ Resources:
               - "*"
             Resource:
               - "*"
+
+  # FIXME TEMPORARY SOLUTION TO PARALLELISM
+  ###################################################
+  UpdateMicroserviceCodeBuildProjectP1:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProjectP1
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - VERSION=v4.20.1
+                - BINARY=yq_linux_amd64
+                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
+                - chmod +x /usr/bin/yq
+                - VERSION=`yq --version`
+                - echo "$VERSION"
+                - yq --version
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
+                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+  UpdateMicroserviceCodeBuildProjectP2:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProjectP2
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - VERSION=v4.20.1
+                - BINARY=yq_linux_amd64
+                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
+                - chmod +x /usr/bin/yq
+                - VERSION=`yq --version`
+                - echo "$VERSION"
+                - yq --version
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
+                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+  UpdateMicroserviceCodeBuildProjectP3:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProjectP3
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - VERSION=v4.20.1
+                - BINARY=yq_linux_amd64
+                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
+                - chmod +x /usr/bin/yq
+                - VERSION=`yq --version`
+                - echo "$VERSION"
+                - yq --version
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
+                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+
+
+
+
+
 
 Outputs:
   CiArtifactBucketName:
