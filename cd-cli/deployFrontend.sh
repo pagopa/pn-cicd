@@ -26,7 +26,7 @@ usage() {
     -b <artifactBucketName>        : bucket name to use as temporary artifacts storage
     -B <lambdaArtifactBucketName>  : bucket name where lambda artifact are memorized
 EOF
-  exit
+  exit 1
 }
 parse_params() {
   # default values of variables set from params

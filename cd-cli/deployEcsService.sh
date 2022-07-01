@@ -29,7 +29,7 @@ usage() {
     -I <image-uri>                   : url immagine docker microservizio
     
 EOF
-  exit
+  exit 1
 }
 
 parse_params() {

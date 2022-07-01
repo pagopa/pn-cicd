@@ -25,7 +25,7 @@ usage() {
     -b <artifactBucketName>   : bucket name to use as temporary artifacts storage
     
 EOF
-  exit
+  exit 1
 }
 
 parse_params() {
