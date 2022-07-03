@@ -53,6 +53,11 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
   
+  CiEventBus:
+    Type: AWS::Events::EventBus
+    Properties: 
+      Name: 'CiEventBus'
+  
   S3BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:

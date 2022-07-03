@@ -196,7 +196,7 @@ Resources:
                     EVENT_DETAIL="[{ \"event_type\": \"BUILD_DONE\", \"project_branch\":\"${BRANCH_NAME}\",\"project_type\":\"MICROSERVICE_CONTAINER\" \"project\":\"${GITHUB_PRJ_NAME}\", \"commit_id\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\", \"image_url\":\"${IMAGE_URL_WITH_SHA}\" }]"
                     echo $EVENT_DETAIL | jq -R -s '[{ "DetailType": "CiEvent","EventBusName": "CiEventBus", "Source":"Builder", "Detail": . }]' > ci_event.json
                     cat ci_event.json
-                    aws --region eu-south-1 events put-events --entries file://ci_event.json
+                    aws events put-events --entries file://ci_event.json
                   fi
           cache:
             paths:
@@ -248,6 +248,12 @@ Resources:
                   - codebuild:BatchPutCodeCoverages
                 Resource:
                   - !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*'
+              - Sid: SendBuildEvents
+                Effect: Allow
+                Action:
+                  - events:PutEvents
+                Resource:
+                  - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
               - Sid: CloudWatchLogsPolicy
                 Effect: Allow
                 Action:
