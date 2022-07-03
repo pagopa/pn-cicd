@@ -139,6 +139,7 @@ Resources:
                   - 'ecr:*'
                   - 's3:*'
                   - 'codeartifact:*'
+                  - 'events:*'
                 Effect: Allow
                 Resource: '*'
 
