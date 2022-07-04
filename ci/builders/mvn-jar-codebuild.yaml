@@ -136,6 +136,11 @@ Resources:
                   if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
                     echo "Deploy"
                     ./mvnw $MAVEN_OPTS clean deploy $MAVEN_ADD_GOAL
+                    echo Generate build event
+                    EVENT_DETAIL="{ \"event_type\": \"BUILD_DONE\", \"project_branch\":\"${BRANCH_NAME}\",\"project_type\":\"LIBRARY\", \"project\":\"${GITHUB_PRJ_NAME}\", \"commit_id\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\" }"
+                    echo $EVENT_DETAIL | jq -R -s '[{ "DetailType": "CiEvent","EventBusName": "CiEventBus", "Source":"Builder", "Detail": . }]' > ci_event.json
+                    cat ci_event.json
+                    aws events put-events --entries file://ci_event.json
                   else
                     ./mvnw $MAVEN_OPTS clean verify $MAVEN_ADD_GOAL
                   fi
@@ -237,6 +242,12 @@ Resources:
                   - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:package/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}/*'
                   - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}'
                   - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}'
+              - Sid: SendBuildEvents
+                Effect: Allow
+                Action:
+                  - events:PutEvents
+                Resource:
+                  - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
