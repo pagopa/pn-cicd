@@ -11,14 +11,285 @@ Parameters:
     Description: 'dev, svil, test, coll, ...'
     Type: String
   
+  CiAccountId:
+    Default: '911845998067'
+    Description: 'AWS AccountID used for C.I. tasks'
+    Type: String
+
   CiArtifactBucketName:
     Default: 'pn-ci-root-ciartifactbucket-p7efvlz7rmox'
     Description: 'Bucket name containing lambda and frontend artifacts'
     Type: String
 
+Conditions:
+  IsDevCondition: !Equals [ !Ref EnvName, 'dev' ]
 
 Resources:
 
+  ###                    Continuos Delivery EVENT BUS                     ###
+  ###########################################################################
+  # - Receive Continuos Integration build events and activate the needed 
+  #   Continuos Delivery pipeline
+  CdEventBus:
+    Condition: IsDevCondition
+    Type: AWS::Events::EventBus
+    Properties: 
+      Name: 'CdEventBus'
+  
+  # Receive Events from CI system
+  CdEventBusAccessPolicy: 
+    Condition: IsDevCondition
+    Type: AWS::Events::EventBusPolicy
+    Properties: 
+      EventBusName: !Ref CdEventBus
+      StatementId: "allowEventsFromCI"
+      Statement: 
+        Effect: "Allow"
+        Principal: 
+            AWS: !Sub "arn:aws:iam::${CiAccountId}:root"
+        Action: "events:PutEvents"
+        Resource: !GetAtt "CdEventBus.Arn"
+  
+
+  ###                           CI to CD BRIDGE                           ###
+  ###########################################################################
+  # EVENT BRIDGE RULE: transform events into CodeBuild Execution
+  SendAllBuildEventsToCodeBuild:
+    Condition: IsDevCondition
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: Save build events
+      RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
+      EventBusName: !Ref CdEventBus
+      EventPattern:
+        source: [{"prefix": "" }]
+      Targets: 
+        - Id: 'CdEventBus-ToPipelineChooser'
+          Arn: !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
+          RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
+          InputTransformer:
+            InputPathsMap:
+              "project_type": "$.detail.project_type"
+              "project": "$.detail.project"
+              "project_branch": "$.detail.project_branch"
+              "image_url": "$.detail.image_url"
+              "commit_id": "$.detail.commit_id"
+            InputTemplate: |
+              {
+                "environmentVariablesOverride": [{
+                    "name": "PROJECT_TYPE",
+                    "type": "PLAINTEXT",
+                    "value": <project_type>
+                  },
+                  {
+                    "name": "PROJECT",
+                    "type": "PLAINTEXT",
+                    "value": <project>
+                  },
+                  {
+                    "name": "PROJECT_BRANCH",
+                    "type": "PLAINTEXT",
+                    "value": <project_branch>
+                  },
+                  {
+                    "name": "COMMIT_ID",
+                    "type": "PLAINTEXT",
+                    "value": <commit_id>
+                  },
+                  {
+                    "name": "IMAGE_URL",
+                    "type": "PLAINTEXT",
+                    "value": <image_url>
+                  }
+                ]
+              }
+
+  # - Role and policy used to activate CodeBuild from EventBridge rule
+  EventBusRunCodeBuildRole:
+    Condition: IsDevCondition
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+        Version: "2012-10-17"
+      Policies:
+        - PolicyName: runCodeBuild
+          PolicyDocument:
+            Statement:
+              - Sid: startProjectRun
+                Action:
+                  - "codebuild:*"
+                Effect: Allow
+                Resource: 
+                  - !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
+
+
+  ###           CodeBuild: CHOOSE AND EXECUTE THE C.D. PIPELINE           ###
+  ###########################################################################
+  # - The codebuild project
+  ChooseAndLaunchPipelineCodeBuild:
+    Condition: IsDevCondition
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: 'ChooseCdPipeline'
+      ServiceRole: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Source: 
+        Type: NO_SOURCE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - env
+            build:
+              commands:
+                - 'echo " launch right pipeline"'
+                - 'echo "PROJECT_NAME=$PROJECT"'
+                - 'echo "PROJECT_TYPE=$PROJECT_TYPE"'
+                - 'echo "PROJECT_BRANCH=$PROJECT_BRANCH"'
+                - 'echo "COMMIT_ID=$COMMIT_ID"'
+                - 'echo "IMAGE_URL=$IMAGE_URL"'
+                - 'echo ""'
+                - 'echo "Retrieve commit configuration file"'
+                - 'aws s3 cp s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh desired-commit-ids-env.sh'
+                - 'cat desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "Mutate commit configuration file"'
+                - |
+                  if ( [ "$PROJECT" = "pn-infra" ] ) then
+                    sed -i -e "s|pn_infra_commitId=.*|pn_infra_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-infra-authfleet-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-auth-fleet" ] ) then
+                    sed -i -e "s|pn_authfleet_commitId=.*|pn_authfleet_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-infra-authfleet-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-frontend" ] ) then
+                    sed -i -e "s|pn_frontend_commitId=.*|pn_frontend_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-frontend-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-delivery" ] ) then
+                    sed -i -e "s|pn_delivery_commitId=.*|pn_delivery_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_delivery_imageUrl=.*|pn_delivery_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-pn-delivery-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-delivery-push" ] ) then
+                    sed -i -e "s|pn_delivery_push_commitId=.*|pn_delivery_push_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_delivery_push_imageUrl=.*|pn_delivery_push_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-pn-delivery-push-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-mandate" ] ) then
+                    sed -i -e "s|pn_mandate_commitId=.*|pn_mandate_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_mandate_imageUrl=.*|pn_mandate_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-pn-mandate-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-user-attributes" ] ) then
+                    sed -i -e "s|pn_UserAttributes_commitId=.*|pn_UserAttributes_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_UserAttributes_imageUrl=.*|pn_UserAttributes_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-pn-user-attributes-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-data-vault" ] ) then
+                    sed -i -e "s|pn_data_vault_commitId=.*|pn_data_vault_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_data_vault_imageUrl=.*|pn_data_vault_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-pn-data-vault-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-external-registries" ] ) then
+                    sed -i -e "s|pn_ExternalRegistry_commitId=.*|pn_ExternalRegistry_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_ExternalRegistry_imageUrl=.*|pn_ExternalRegistry_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-pn-external-registries-update-pipeline"
+                  fi
+                - 'cat desired-commit-ids-env.sh'
+                - 'echo "Upload commit configuration file"'
+                - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo ""'
+                - |
+                  if ( [ "$PROJECT" = "pn-auth-fleet" ] ) then
+                    echo "Check pn-auth-fleet build end"
+                    
+                    apiKeyAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/apikeyAuthorizer.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "apiKeyAuth is build ${apiKeyAuth}"
+
+                    ioAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/ioAuthorizer.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "ioAuth is build ${ioAuth}"
+                    
+                    jwtAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/jwtAuthorizer.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "jwtAuth is build ${jwtAuth}"
+                    
+                    tokenExchange=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/tokenExchange.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "tokenExchange is build ${tokenExchange}"
+
+                    if ( [ "${apiKeyAuth}" = "KO" -o "${ioAuth}" = "KO" -o "${jwtAuth}" = "KO" -o "${tokenExchange}" = "KO" ] ) then
+                      echo "##### WARNING pn-auth-fleet have not ended"
+                      export PIPELINE_NAME=""
+                    fi
+                  fi
+                - |
+                  if ( [ "$PIPELINE_NAME" != "" ] ) then
+                    echo "Launch pipeline ${PIPELINE_NAME}"
+                    aws codepipeline  start-pipeline-execution --name ${PIPELINE_NAME}
+                  fi
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+        EnvironmentVariables:
+          - Name: CdArtifactBucketName
+            Type: PLAINTEXT
+            Value: !Ref CdArtifactBucket
+          - Name: CiArtifactBucketName
+            Type: PLAINTEXT
+            Value: !Ref CiArtifactBucketName
+
+
+  # CodeBuild Role used during the choose of right codepipeline
+  ChooseAndLaunchPipelineCodeBuildRole:
+    Condition: IsDevCondition
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - 
+            Effect: Allow
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: ChooseAndLaunchPipelineCodeBuildRolePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - "*"
+                Resource:
+                  - "*"
+      
+  ###########################################################################
+  ###             EFFECTIVE CONTINUOS INTEGRATIONS PIPELINES              ###
+  ###########################################################################
+  # - Where the tasks downloads github project; lambda zip and frontend tgz
   CdArtifactBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -27,11 +298,13 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
   
+  # - Required by code-pipeline 
   PipelineArtifactBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
-    
+  
+  # - The role used by all the pipelines
   PipelineRole:
     Type: AWS::IAM::Role
     Properties:
@@ -49,7 +322,6 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-            # Allow pipeline to read/write from CiArtifactBucket
             - Effect: Allow
               Action:
                 - "s3:Get*"
@@ -181,7 +453,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProjectP1
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -205,7 +477,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProjectP2
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -229,7 +501,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProjectP3
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -253,7 +525,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProjectP1
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -277,7 +549,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProjectP2
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -314,9 +586,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: FrontEndOutput
-              RunOrder: 3
-              # FIXME 4 is more secure but we need to speed up svil update
-              #RunOrder: 4
+              RunOrder: 4
 
 
   # CODEBUILD used to download scripts
@@ -556,7 +826,7 @@ Resources:
   CodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ProjectName}-EnrichParamsCodeBuildRole
+      RoleName: !Sub ${ProjectName}-cd-pipeline-CodeBuildRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -584,174 +854,745 @@ Resources:
             Resource:
               - "*"
 
-  # FIXME TEMPORARY SOLUTION TO PARALLELISM
-  ###################################################
-  UpdateMicroserviceCodeBuildProjectP1:
-    Type: 'AWS::CodeBuild::Project'
+
+
+
+
+
+  ###########################################################################
+  ###                          PARTIAL PIPELINES                          ###
+  ###########################################################################
+  
+  # INFRA AND AUTHFLEET
+  #######################
+  InfraAndAuthFleetDeployPipeline:
+    Condition: IsDevCondition
+    Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProjectP1
-      ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
-        Type: CODEPIPELINE
-        BuildSpec: |
-          version: 0.2
-          phases:
-            pre_build:
-              commands:
-                - VERSION=v4.20.1
-                - BINARY=yq_linux_amd64
-                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
-                - chmod +x /usr/bin/yq
-                - VERSION=`yq --version`
-                - echo "$VERSION"
-                - yq --version
-                - 'echo "### SCRIPTS ###"'
-                - 'find scripts'
-                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
-                - '. ./scripts/desired-commit-ids-env.sh'
-                - 'echo ""'
-                - 'echo "###     ENVIRONMENT     ###"'
-                - 'echo "###########################"'
-                - env
-            build:
-              commands:
-                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
-                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
-                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo "########################################################"'
-                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
-                - 'echo "########################################################"'
-                - 'echo ""'
-                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
-          artifacts:
-            files:
-              - '**/*'
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
-        Type: LINUX_CONTAINER
-        Image: "aws/codebuild/standard:5.0"
-  UpdateMicroserviceCodeBuildProjectP2:
-    Type: 'AWS::CodeBuild::Project'
+      RoleArn: !GetAtt PipelineRole.Arn
+      Name: !Sub '${ProjectName}-infra-authfleet-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # UpdateInfrastructure AND AuthFleet
+            - Name: Update_Infrastructure
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateInfraCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketName}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: InfraOutput
+              RunOrder: 2
+            
+  # FRONTEND
+  #######################
+  FrontEndDeployPipeline:
+    Condition: IsDevCondition
+    Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProjectP2
-      ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
-        Type: CODEPIPELINE
-        BuildSpec: |
-          version: 0.2
-          phases:
-            pre_build:
-              commands:
-                - VERSION=v4.20.1
-                - BINARY=yq_linux_amd64
-                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
-                - chmod +x /usr/bin/yq
-                - VERSION=`yq --version`
-                - echo "$VERSION"
-                - yq --version
-                - 'echo "### SCRIPTS ###"'
-                - 'find scripts'
-                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
-                - '. ./scripts/desired-commit-ids-env.sh'
-                - 'echo ""'
-                - 'echo "###     ENVIRONMENT     ###"'
-                - 'echo "###########################"'
-                - env
-            build:
-              commands:
-                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
-                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
-                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo "########################################################"'
-                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
-                - 'echo "########################################################"'
-                - 'echo ""'
-                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
-          artifacts:
-            files:
-              - '**/*'
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
-        Type: LINUX_CONTAINER
-        Image: "aws/codebuild/standard:5.0"
-  UpdateMicroserviceCodeBuildProjectP3:
-    Type: 'AWS::CodeBuild::Project'
+      RoleArn: !GetAtt PipelineRole.Arn
+      Name: !Sub '${ProjectName}-frontend-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update Frontend
+            - Name: Update_Frontend
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateFrontendCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketName}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: FrontEndOutput
+              RunOrder: 2
+
+
+  # MICROSERVICE PN-DELIVERY
+  ############################
+  PnDeliveryDeployPipeline:
+    Condition: IsDevCondition
+    Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProjectP3
-      ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
-        Type: CODEPIPELINE
-        BuildSpec: |
-          version: 0.2
-          phases:
-            pre_build:
-              commands:
-                - VERSION=v4.20.1
-                - BINARY=yq_linux_amd64
-                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
-                - chmod +x /usr/bin/yq
-                - VERSION=`yq --version`
-                - echo "$VERSION"
-                - yq --version
-                - 'echo "### SCRIPTS ###"'
-                - 'find scripts'
-                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
-                - '. ./scripts/desired-commit-ids-env.sh'
-                - 'echo ""'
-                - 'echo "###     ENVIRONMENT     ###"'
-                - 'echo "###########################"'
-                - env
-            build:
-              commands:
-                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
-                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
-                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo "########################################################"'
-                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
-                - 'echo "########################################################"'
-                - 'echo ""'
-                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
-          artifacts:
-            files:
-              - '**/*'
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
-        Type: LINUX_CONTAINER
-        Image: "aws/codebuild/standard:5.0"
+      RoleArn: !GetAtt PipelineRole.Arn
+      Name: !Sub '${ProjectName}-pn-delivery-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-delivery
+            - Name: Update_PnDelivery
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-delivery", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_delivery", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnDeliveryOutput
+              RunOrder: 2
+            
+            
 
+  # MICROSERVICE PN-DELIVERY-PUSH
+  ############################
+  PnDeliveryPushDeployPipeline:
+    Condition: IsDevCondition
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipelineRole.Arn
+      Name: !Sub '${ProjectName}-pn-delivery-push-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-delivery-push
+            - Name: Update_PnDeliveryPush
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-delivery-push", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_delivery_push", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnDeliveryPushOutput
+              RunOrder: 2
+            
 
-
-
+  # MICROSERVICE PN-USER-ATTRIBUTES
+  ############################
+  PnUserAttributesDeployPipeline:
+    Condition: IsDevCondition
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipelineRole.Arn
+      Name: !Sub '${ProjectName}-pn-user-attributes-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-user-attributes
+            - Name: Update_UserAttributes
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-user-attributes", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"7", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_UserAttributes", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnUserAttributesOutput
+              RunOrder: 2
+            
+  
+  # MICROSERVICE PN-MANDATE
+  ############################
+  PnMandatesDeployPipeline:
+    Condition: IsDevCondition
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipelineRole.Arn
+      Name: !Sub '${ProjectName}-pn-mandate-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-mandate
+            - Name: Update_PnMandate
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-mandate", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"4", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_mandate", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnMandateOutput
+              RunOrder: 2
+  
+  # MICROSERVICE PN-DATA-VAULT
+  ############################
+  PnDataVaultDeployPipeline:
+    Condition: IsDevCondition
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipelineRole.Arn
+      Name: !Sub '${ProjectName}-pn-data-vault-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-data-vault
+            - Name: Update_PnDataVault
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"5", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnDataVaultOutput
+              RunOrder: 2
+            
+  
+  # MICROSERVICE PN-EXTERNAL-REGISTRIES
+  ############################
+  PnExternalRegistryDeployPipeline:
+    Condition: IsDevCondition
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipelineRole.Arn
+      Name: !Sub '${ProjectName}-pn-external-registries-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-external-registries
+            - Name: Update_ExternalRegistries
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-external-registries", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"6", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_ExternalRegistry", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnExternalRegistriesOutput
+              RunOrder: 3
 
 
 Outputs:
-  CiArtifactBucketName:
+  CdArtifactBucketName:
     Value: !Ref CdArtifactBucket
 
+  CdEventBusArn:
+    Value: 
+      Fn::If:
+        - IsDevCondition
+        - !GetAtt CdEventBus.Arn
+        - ''
