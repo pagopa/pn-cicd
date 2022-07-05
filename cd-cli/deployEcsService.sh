@@ -213,7 +213,7 @@ echo "=== Prepare parameters for $microcvs_name storage deployment in $env_type 
 PreviousOutputFilePath=pn-ipc-${env_type}-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/storage.yml
 EnanchedParamFilePath=${microcvs_name}-storage-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=infra_${pn_infra_commitid},ms=${pn_microsvc_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
@@ -283,7 +283,7 @@ EnanchedParamFilePath=${microcvs_name}-microservice-${env_type}-cfg-enanched.jso
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
      \"ContainerImageUri=${ContainerImageUri}\",\
-     \"Version=infra_${pn_infra_commitid},ms=${pn_microsvc_commitid}\""
+     \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - InfraIpcOutputFilePath: ${InfraIpcOutputFilePath}"

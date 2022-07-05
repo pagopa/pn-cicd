@@ -268,7 +268,7 @@ PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectN
   \"LambdasBucketName=${bucketName}\",\"MicroserviceNumber=${MicroserviceNumber}\",\
   \"LambdaZipVersionId1=${LambdaZipVersionId1}\",\"LambdaZipVersionId2=${LambdaZipVersionId2}\",\
   \"LambdaZipVersionId3=${LambdaZipVersionId3}\",\"LambdaZipVersionId4=${LambdaZipVersionId4}\",\
-  \"Version=infra_${pn_infra_commitid},authfleet_${pn_authfleet_commitid}\""
+  \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},pn_authfleet_commitId=${pn_authfleet_commitId}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"

@@ -166,7 +166,7 @@ aws ${aws_command_base_args}  \
       --template-file pn-infra/runtime-infra/once4account/${env_type}.yaml \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
-        Version="${pn_infra_commitid}"
+        Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
 
 
@@ -189,7 +189,7 @@ PreviousOutputFilePath=once4account-${env_type}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-infra.yaml
 ParamFilePath=pn-infra/runtime-infra/pn-infra-${env_type}-cfg.json
 EnanchedParamFilePath=pn-infra-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=${pn_infra_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
@@ -264,7 +264,7 @@ PreviousOutputFilePath=pn-infra-${env_type}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-ipc.yaml
 ParamFilePath=pn-infra/runtime-infra/pn-ipc-${env_type}-cfg.json
 EnanchedParamFilePath=pn-ipc-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=${pn_infra_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
