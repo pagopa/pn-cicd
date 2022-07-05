@@ -160,6 +160,11 @@ Resources:
                 - 'echo ""'
                 - 'echo "Mutate commit configuration file"'
                 - |
+                  if ( [ "$PROJECT" = "pn-cicd" ] ) then
+                    sed -i -e "s|cd_scripts_commitId=.*|cd_scripts_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME=""
+                  fi
+                - |
                   if ( [ "$PROJECT" = "pn-infra" ] ) then
                     sed -i -e "s|pn_infra_commitId=.*|pn_infra_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-infra-authfleet-update-pipeline"
