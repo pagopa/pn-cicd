@@ -1,0 +1,14 @@
+{
+  "Parameters" : {
+    "AddressBookUrl": "https://zkkwwk0v41.execute-api.eu-central-1.amazonaws.com/mock/develop/addresses/",
+    "PhysicalPersonPortalUrl": "https://portale.coll.pn.pagopa.it/",
+    "PecSecondAttemptWaitTime": "70s",
+    "RecipientTimeoutDelayAnalog": "3m",
+    "RecipientTimeoutDelayDigital": "2m",
+    "RefinementTimeCompletelyUnreachable": "4m",
+    "WebhookScanInterval": "60000",
+    "WebhookMaxLength": "10",
+    "SandboxSafeStorageBaseUrl": "https://eo6pdvms24.execute-api.eu-south-1.amazonaws.com/coll/",
+    "ExternalChannelBaseUrl": "https://x406psk281.execute-api.eu-south-1.amazonaws.com/coll/"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "Parameters" : {
+    "VpcId":"vpc-0a41767dedbde3532",
+    "VpcCidr": "10.7.0.0/16",
+    "VpcSubnets": "subnet-0f491979bf727092f,subnet-0508c66d3e540711c,subnet-021f01f39c55b9319",
+    "VpcSubnetsRoutingTables": "rtb-0f11bb27dec92516c",
+    "EcsDefaultSecurityGroup": "sg-0e65e8f31547c2969",
+    "LogsBucketName": "",
+    "LogsAccountId": "648535372866",
+    "BucketSuffix": "",
+    "DataLakeAccountId1": "-",
+    "DataLakeAccountId2": "-"
+  }
+}

@@ -1,0 +1,6 @@
+export REACT_APP_URL_API="https://webapi.coll.pn.pagopa.it/"
+export REACT_APP_CHECKOUT_URL="https://uat.checkout.pagopa.it"
+export REACT_APP_PAGOPA_HELP_EMAIL="pn.coll@assistenza.pagopa.it"
+export REACT_APP_PAYMENT_DISCLAIMER_URL="https://www.pagopa.it"
+export REACT_APP_URL_FE_LOGIN="https://portale-login.coll.pn.pagopa.it"
+export REACT_APP_DISABLE_INACTIVITY_HANDLER="true"
