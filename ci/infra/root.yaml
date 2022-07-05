@@ -311,6 +311,15 @@ Resources:
         GitHubDefaultBranch: 'develop'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
       TimeoutInMinutes: 5
+  PnCiCd:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/not-compiled-repo-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-cicd'
+        GitHubDefaultBranch: 'main'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
 
 Outputs:
   CiArtifactBucket:
