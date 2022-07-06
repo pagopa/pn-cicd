@@ -870,10 +870,10 @@ Resources:
   ListDeployedVersionsCodebuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${ProjectName}-DownloadScriptsCodebuildProject
+      Name: !Sub ${ProjectName}-ListDeployedVersionsCodebuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source: 
-        Type: CODEPIPELINE
+        Type: NO_SOURCE
         BuildSpec: |
           version: 0.2
           phases:
@@ -891,7 +891,7 @@ Resources:
             files:
               - 'scripts/**/*'
       Artifacts:
-        Type: CODEPIPELINE
+        Type: NO_ARTIFACTS
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
