@@ -865,6 +865,47 @@ Resources:
 
 
   ###########################################################################
+  ###  Utility codebuild used to list the deployed artifacts versions
+  ###########################################################################
+  ListDeployedVersionsCodebuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-DownloadScriptsCodebuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - echo "### NO PRE_BUILD"
+            build:
+              commands:
+                - 'echo "### CLONE SCRIPTS ###"'
+                - 'echo "#####################"'
+                - 'git clone https://github.com/pagopa/pn-cicd.git'
+                - '( cd pn-cicd && git checkout $cd_scripts_commitId )'
+                - '( cd pn-cicd/cd-cli && ./readEnv.sh -r ${REGION} -e ${ENV_NAME} )'
+          artifacts:
+            files:
+              - 'scripts/**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+        EnvironmentVariables:
+          - Name: REGION
+            Type: PLAINTEXT
+            Value: !Ref AWS::Region
+          - Name: ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref EnvName
+
+
+  ###########################################################################
   ###                          PARTIAL PIPELINES                          ###
   ###########################################################################
   
