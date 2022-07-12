@@ -41,7 +41,7 @@ Resources:
         Type: NO_ARTIFACTS
       Environment:
         Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
+        ComputeType: BUILD_GENERAL1_MEDIUM
         Image: aws/codebuild/standard:5.0
         EnvironmentVariables:
           - Name: CODEARTIFACT_DOMAIN_NAME
