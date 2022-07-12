@@ -1,5 +1,6 @@
 {
   "Parameters" : {
-    "CheckoutBaseUrl": "https://api.uat.platform.pagopa.it/checkout/auth/payments/v2"
+    "CheckoutBaseUrl": "https://api.uat.platform.pagopa.it/checkout/auth/payments/v2",
+    "SelfcareUsergroupBaseUrl": "https://api.uat.selfcare.pagopa.it/external/"
   }
 }
