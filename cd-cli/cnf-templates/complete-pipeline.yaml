@@ -16,7 +16,7 @@ Parameters:
     Description: 'AWS AccountID used for C.I. tasks'
     Type: String
 
-  CiArtifactBucketName:
+  CiArtifactBucketNameParam:
     Default: 'pn-ci-root-ciartifactbucket-p7efvlz7rmox'
     Description: 'Bucket name containing lambda and frontend artifacts'
     Type: String
@@ -106,7 +106,6 @@ Resources:
 
   # - Role and policy used to activate CodeBuild from EventBridge rule
   EventBusRunCodeBuildRole:
-    Condition: IsDevCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -125,7 +124,11 @@ Resources:
                   - "codebuild:*"
                 Effect: Allow
                 Resource: 
-                  - !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
+                  - Fn::If:
+                    - IsDevCondition
+                    - !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
+                    - !Ref AWS::NoValue
+                  - !GetAtt RunTestsCodebuildProject.Arn
 
 
   ###           CodeBuild: CHOOSE AND EXECUTE THE C.D. PIPELINE           ###
@@ -261,7 +264,7 @@ Resources:
             Value: !Ref CdArtifactBucket
           - Name: CiArtifactBucketName
             Type: PLAINTEXT
-            Value: !Ref CiArtifactBucketName
+            Value: !Ref CiArtifactBucketNameParam
 
 
   # CodeBuild Role used during the choose of right codepipeline
@@ -418,7 +421,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketName}", "type":"PLAINTEXT"}
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -585,13 +588,53 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketName}", "type":"PLAINTEXT"}
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: FrontEndOutput
               RunOrder: 4
+
+            # Run test if the environment is dev
+            - Fn::If:
+                - IsDevCondition
+                - Name: Run_e2e_Tests
+                  ActionTypeId:
+                    Category: Build
+                    Owner: AWS
+                    Version: 1
+                    Provider: CodeBuild
+                  Configuration:
+                    ProjectName: !Ref RunTestsCodebuildProject
+                    EnvironmentVariables: !Sub '[
+                        {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
+                        {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"}
+                      ]'
+                  InputArtifacts:
+                    - Name: EmptyZip
+                  RunOrder: 5
+                - !Ref AWS::NoValue
+            
+            # List versions if the environment is dev
+            - Fn::If:
+                - IsDevCondition
+                - Name: List_Versions
+                  ActionTypeId:
+                    Category: Build
+                    Owner: AWS
+                    Version: 1
+                    Provider: CodeBuild
+                  Configuration:
+                    ProjectName: !Ref ListDeployedVersionsCodebuildProject
+                    EnvironmentVariables: !Sub '[
+                        {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
+                        {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"}
+                      ]'
+                  InputArtifacts:
+                    - Name: EmptyZip
+                  RunOrder: 6
+                - !Ref AWS::NoValue
 
 
   # CODEBUILD used to download scripts
@@ -860,10 +903,6 @@ Resources:
               - "*"
 
 
-
-
-
-
   ###########################################################################
   ###  Utility codebuild used to list the deployed artifacts versions
   ###########################################################################
@@ -886,7 +925,16 @@ Resources:
                 - 'echo "#####################"'
                 - 'git clone https://github.com/pagopa/pn-cicd.git'
                 - '( cd pn-cicd && git checkout $cd_scripts_commitId )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "### EXECUTE READ ENV VERSIONS ###"'
                 - '( cd pn-cicd/cd-cli && ./readEnv.sh -r ${REGION} -e ${ENV_NAME} )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "### DOWNLOAD DESIRED COMMIT IDS ###"'
+                - 'aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh '
+                - 'cat desired-commit-ids-env.sh'
+                
           artifacts:
             files:
               - 'scripts/**/*'
@@ -989,7 +1037,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketName}", "type":"PLAINTEXT"}
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1077,7 +1125,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketName}", "type":"PLAINTEXT"}
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1631,6 +1679,69 @@ Resources:
                 - Name: PnExternalRegistriesOutput
               RunOrder: 3
 
+
+
+  ###########################################################################
+  ###  RUN E2E TESTS
+  ###########################################################################
+  ScheduledRule: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "ScheduledRule"
+      ScheduleExpression: "rate(10 minutes)"
+      State: "ENABLED"
+      RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
+      Targets: 
+        - Id: "TestRunner"
+          RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
+          Arn: 
+            Fn::GetAtt: 
+              - "RunTestsCodebuildProject"
+              - "Arn"
+          
+  
+  ###########################################################################
+  ###  Utility that run e2e tests
+  ###########################################################################
+  RunTestsCodebuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-RunE2eTestsCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: NO_SOURCE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - echo "### NO PRE_BUILD"
+            build:
+              commands:
+                - |
+                  API_KEY=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKey' )
+                - |
+                  echo "### CLONE E2E TEST REPOSITORY ###"
+                  echo "#####################"
+                  git clone https://github.com/pagopa/pn-b2b-client.git
+                  ( cd pn-b2b-client && echo "API_KEY=${API_KEY}" > config/application.properties )
+                  ( cd pn-b2b-client && ./mvnw -Dpn.external.base-url=https://api.${ENV_NAME}.pn.pagopa.it '-Dpn.external.api-key=${API_KEY}'  clean verify )
+          artifacts:
+            files:
+              - 'scripts/**/*'
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+        EnvironmentVariables:
+          - Name: REGION
+            Type: PLAINTEXT
+            Value: !Ref AWS::Region
+          - Name: ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref EnvName
 
 Outputs:
   CdArtifactBucketName:

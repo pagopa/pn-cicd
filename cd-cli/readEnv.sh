@@ -164,5 +164,6 @@ echo "===     ELENCO COMMIT ID E IMAGE URL, FARE ATTENZIONE AI DOPPI     ==="
 echo "======================================================================"
 echo ""
 echo ""
-echo $ALL_VERSIONS | tr " " "\n" | sed -e 's/^/export /' | sort 
+echo $ALL_VERSIONS | tr " " "\n" | sed -e 's/^/export /' | sort | sort -u
+
 
