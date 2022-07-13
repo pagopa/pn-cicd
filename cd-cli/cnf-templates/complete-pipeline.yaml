@@ -629,7 +629,9 @@ Resources:
                     ProjectName: !Ref ListDeployedVersionsCodebuildProject
                     EnvironmentVariables: !Sub '[
                         {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
-                        {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"}
+                        {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                        {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                        {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"}
                       ]'
                   InputArtifacts:
                     - Name: EmptyZip
@@ -933,13 +935,16 @@ Resources:
                 - 'echo ""'
                 - 'echo "### DOWNLOAD DESIRED COMMIT IDS ###"'
                 - 'aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh '
-                - 'cat desired-commit-ids-env.sh'
-                
+                - 'cat desired-commit-ids-env.sh'               
           artifacts:
             files:
-              - 'scripts/**/*'
+              - 'desired-commit-ids-env.sh'
       Artifacts:
-        Type: NO_ARTIFACTS
+        Type: S3
+        EncryptionDisabled: true
+        Location: !Ref PipelineArtifactBucket
+        Path: '/List_deployed_versions_codebuild_project/'
+        NamespaceType: BUILD_ID
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
@@ -951,7 +956,12 @@ Resources:
           - Name: ENV_NAME
             Type: PLAINTEXT
             Value: !Ref EnvName
-
+          - Name: DesiredCommitIdsBucketName
+            Type: PLAINTEXT
+            Value: !Ref CdArtifactBucket
+          - Name: DesiredCommitIdsPath
+            Type: PLAINTEXT
+            Value: 'config/desired-commit-ids-env.sh'
 
   ###########################################################################
   ###                          PARTIAL PIPELINES                          ###
@@ -1729,6 +1739,9 @@ Resources:
           artifacts:
             files:
               - 'scripts/**/*'
+          cache:
+            paths:
+              - '/root/.m2/**/*'
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
