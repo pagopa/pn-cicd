@@ -125,12 +125,6 @@ Resources:
                   - codebuild:StartBuild
                   - codebuild:StopBuild
                   - codebuild:RetryBuild
-              - Sid: SendBuildEvents
-                Effect: Allow
-                Action:
-                  - events:PutEvents
-                Resource:
-                  - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -222,6 +216,12 @@ Resources:
                   - 's3:PutObject*'
                 Resource:
                   - !Sub 'arn:aws:s3:::${CiArtifactBucket}/*'
+              - Sid: SendBuildEvents
+                Effect: Allow
+                Action:
+                  - events:PutEvents
+                Resource:
+                  - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
