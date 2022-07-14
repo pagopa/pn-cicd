@@ -125,6 +125,12 @@ Resources:
                   - codebuild:StartBuild
                   - codebuild:StopBuild
                   - codebuild:RetryBuild
+              - Sid: SendBuildEvents
+                Effect: Allow
+                Action:
+                  - events:PutEvents
+                Resource:
+                  - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
