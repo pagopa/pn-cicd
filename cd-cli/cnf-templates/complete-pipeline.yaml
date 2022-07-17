@@ -63,6 +63,8 @@ Resources:
       EventBusName: !Ref CdEventBus
       EventPattern:
         source: [{"prefix": "" }]
+        detail:
+          project_branch: ["main", "develop"]
       Targets: 
         - Id: 'CdEventBus-ToPipelineChooser'
           Arn: !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
@@ -179,8 +181,10 @@ Resources:
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-frontend" ] ) then
-                    sed -i -e "s|pn_frontend_commitId=.*|pn_frontend_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-frontend-update-pipeline"
+                    if ( [ "$PROJECT_BRANCH" = "main" ] ) then
+                      sed -i -e "s|pn_frontend_commitId=.*|pn_frontend_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                      export PIPELINE_NAME="pn-frontend-update-pipeline"
+                    fi
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-delivery" ] ) then
@@ -241,6 +245,34 @@ Resources:
 
                     if ( [ "${apiKeyAuth}" = "KO" -o "${ioAuth}" = "KO" -o "${jwtAuth}" = "KO" -o "${tokenExchange}" = "KO" ] ) then
                       echo "##### WARNING pn-auth-fleet have not ended"
+                      export PIPELINE_NAME=""
+                    fi
+                  fi
+                - |
+                  if ( [ "$PIPELINE_NAME" = "pn-frontend-update-pipeline" ] ) then
+                    echo "Check pn-frontend build end"
+                    
+                    pfSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-webapp_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pfSvil is build ${pfSvil}"
+
+                    pfColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-webapp_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pfColl is build ${pfColl}"
+
+                    pflSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-login_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pflSvil is build ${pflSvil}"
+
+                    pflColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-login_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pflColl is build ${pflColl}"
+
+                    paSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-pa-webapp_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "paSvil is build ${paSvil}"
+
+                    paColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-pa-webapp_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "paColl is build ${paColl}"
+
+                    
+                    if ( [ "${pfSvil}" = "KO" -o "${pfColl}" = "KO" -o "${pflSvil}" = "KO" -o "${pflColl}" = "KO" -o "${paSvil}" = "KO" -o "${paColl}" = "KO" ] ) then
+                      echo "##### WARNING pn-frontend have not ended"
                       export PIPELINE_NAME=""
                     fi
                   fi
@@ -595,6 +627,28 @@ Resources:
               OutputArtifacts:
                 - Name: FrontEndOutput
               RunOrder: 4
+            
+            # Update logs and Usage Plans
+            - Name: Infrastructure_Post_Deploy
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref PostDeployScriptsCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PostDeployScriptsOutput
+              RunOrder: 4
 
             # Run test if the environment is dev
             - Fn::If:
@@ -806,6 +860,59 @@ Resources:
                 - 'echo ""'
                 - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
                 - '(cd scripts/cd-cli && ./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+  
+  # CODEBUILD used for post microservices deployment scripts
+  ###################################################
+  PostDeployScriptsCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-PostDeployScriptsCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - VERSION=v4.20.1
+                - BINARY=yq_linux_amd64
+                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
+                - chmod +x /usr/bin/yq
+                - VERSION=`yq --version`
+                - echo "$VERSION"
+                - yq --version
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###                UPDATE LOGS EXPORTS                ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./deployLogStreaming.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
