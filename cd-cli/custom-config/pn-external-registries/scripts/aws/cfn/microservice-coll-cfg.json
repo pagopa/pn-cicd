@@ -1,6 +1,7 @@
 {
   "Parameters" : {
     "CheckoutBaseUrl": "https://api.uat.platform.pagopa.it/checkout/auth/payments/v2",
-    "SelfcareUsergroupBaseUrl": "https://api.uat.selfcare.pagopa.it/external/"
+    "SelfcareUsergroupBaseUrl": "https://api.uat.selfcare.pagopa.it/external/",
+    "IoWhiteList":  "EEEEEE00E00E000A,EEEEEE00E00E000B,EEEEEE00E00E000C,EEEEEE00E00E000D,AAAAAA00A00A000C,AAAAAA00A00A000D,AAAAAA00A00A000E,AAAAAA00A00A000B,PRVPRV25A01H501B,XXXXXP25A01H501L,YYYYYP25A01H501K,KKKKKP25A01H501U,QQQQQP25A01H501S,WWWWWP25A01H501A,ZZZZZP25A01H501J,JJJJJP25A01H501X,GGGGGP25A01H501Z"
   }
 }
