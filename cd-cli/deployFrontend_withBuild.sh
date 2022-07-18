@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}")  [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -f <pn-frontend-github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <webArtifactBucketName> 
+    Usage: $(basename "${BASH_SOURCE[0]}")  [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -f <pn-frontend-github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaArtifactBucketName> 
     
     [-h]                           : this help message
     [-v]                           : verbose mode
@@ -24,7 +24,7 @@ usage() {
     -f <frontend-github-commitid>  : commitId for github repository pagopa/pn-frontend
     [-c <custom_config_dir>]       : where tor read additional env-type configurations
     -b <artifactBucketName>        : bucket name to use as temporary artifacts storage
-    -B <webArtifactBucketName>     : bucket name where web application artifact are memorized
+    -B <lambdaArtifactBucketName>  : bucket name where lambda artifact are memorized
 EOF
   exit 1
 }
@@ -228,7 +228,7 @@ echo ""
 echo "====================================================================="
 echo "====================================================================="
 echo "===                                                               ==="
-echo "===                 DEPLOY WEB APPLICATION TO CDN                 ==="
+echo "===                    COMPILAZIONE E UPLOAD                      ==="
 echo "===                                                               ==="
 echo "====================================================================="
 echo "====================================================================="
@@ -237,51 +237,33 @@ echo "====================================================================="
 echo ""
 echo "===                          PORTALE PA                           ==="
 echo "====================================================================="
-aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-pa-webapp_${env_type}.tar.gz" \
-      "pn-pa-webapp_${env_type}.tar.gz"
-
-mkdir -p "pn-pa-webapp_${env_type}"
-( cd "pn-pa-webapp_${env_type}" \
-     && tar xvzf "../pn-pa-webapp_${env_type}.tar.gz" \
-)
+source "pn-frontend/compile_envs/${env_type}/pn-pa-webapp.sh" 
+( cd pn-frontend/packages/pn-pa-webapp && yarn install && yarn build )
 
 aws ${aws_command_base_args} \
-    s3 cp "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/" \
+    s3 cp pn-frontend/packages/pn-pa-webapp/build "s3://${webappPaBucketName}/" \
       --recursive
-
 
 echo ""
 echo "===                          PORTALE PF                           ==="
 echo "====================================================================="
-aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personafisica-webapp_${env_type}.tar.gz" \
-      "pn-personafisica-webapp_${env_type}.tar.gz"
-
-mkdir -p "pn-personafisica-webapp_${env_type}"
-( cd "pn-personafisica-webapp_${env_type}" \
-     && tar xvzf "../pn-personafisica-webapp_${env_type}.tar.gz" \
-)
+source "pn-frontend/compile_envs/${env_type}/pn-personafisica-webapp.sh" 
+( cd pn-frontend/packages/pn-personafisica-webapp && yarn install && yarn build )
 
 aws ${aws_command_base_args} \
-    s3 cp "pn-personafisica-webapp_${env_type}" "s3://${webappPfBucketName}/" \
+    s3 cp pn-frontend/packages/pn-personafisica-webapp/build "s3://${webappPfBucketName}/" \
       --recursive
+
 
 
 echo ""
 echo "===                       PORTALE PF LOGIN                        ==="
 echo "====================================================================="
-aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personafisica-login_${env_type}.tar.gz" \
-      "pn-personafisica-login_${env_type}.tar.gz"
-
-mkdir -p "pn-personafisica-login_${env_type}"
-( cd "pn-personafisica-login_${env_type}" \
-     && tar xvzf "../pn-personafisica-login_${env_type}.tar.gz" \
-)
+source "pn-frontend/compile_envs/${env_type}/pn-personafisica-login.sh" 
+( cd pn-frontend/packages/pn-personafisica-login && yarn install && yarn build )
 
 aws ${aws_command_base_args} \
-    s3 cp "pn-personafisica-login_${env_type}" "s3://${webappPflBucketName}/" \
+    s3 cp pn-frontend/packages/pn-personafisica-login/build "s3://${webappPflBucketName}/" \
       --recursive
 
 
