@@ -174,7 +174,7 @@ function prepareOneCloudFront() {
   aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name $CdnName \
-      --template-file ${script_dir}/cnf-templates/one-cdn.yaml \
+      --template-file aws-cdn-templates/one-cdn.yaml \
       --parameter-overrides \
         Name="${CdnName}" \
         WebDomain="${WebDomain}" \
@@ -189,7 +189,7 @@ function prepareOneCloudFront() {
   echo " - Created bucket name: ${bucketName}"
 }
 
-source "pn-frontend/compile_envs/${env_type}/env-cdn.sh" 
+source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
 
 prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "portale-pa.${env_type}.pn.pagopa.it" \
