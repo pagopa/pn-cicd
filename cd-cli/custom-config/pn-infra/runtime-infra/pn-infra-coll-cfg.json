@@ -7,8 +7,8 @@
     "EcsDefaultSecurityGroup": "sg-0e65e8f31547c2969",
     "LogsBucketName": "",
     "LogsAccountId": "648535372866",
-    "BucketSuffix": "",
-    "DataLakeAccountId1": "-",
-    "DataLakeAccountId2": "-"
+    "BucketSuffix": "001",
+    "DataLakeAccountId1": "688071769384",
+    "DataLakeAccountId2": "911845998067"
   }
 }
