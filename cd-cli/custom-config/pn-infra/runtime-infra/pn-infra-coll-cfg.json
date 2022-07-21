@@ -9,6 +9,7 @@
     "LogsAccountId": "648535372866",
     "BucketSuffix": "001",
     "DataLakeAccountId1": "688071769384",
-    "DataLakeAccountId2": "911845998067"
+    "DataLakeAccountId2": "911845998067",
+    "PrivateHostedZone": "Z02806033ULEM1WDRHCMH"
   }
 }

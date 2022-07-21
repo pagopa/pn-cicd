@@ -1,5 +1,0 @@
-export REACT_APP_PAGOPA_HELP_EMAIL="pn.dev@assistenza.pagopa.it"
-export REACT_APP_URL_API="https://webapi.dev.pn.pagopa.it/"
-export REACT_APP_URL_SELFCARE_BASE="https://dev.selfcare.pagopa.it"
-export REACT_APP_URL_SELFCARE_LOGIN="https://dev.selfcare.pagopa.it/auth/login"
-export REACT_APP_DISABLE_INACTIVITY_HANDLER="true"
