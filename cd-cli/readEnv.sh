@@ -157,6 +157,18 @@ done
 
 
 echo ""
+echo " === COMMIT FRONT END"
+echo " ==============================================================="
+pfCommitId=$( curl https://portale.${env_type}.pn.pagopa.it/commit_id.txt | head -1 )
+pflCommitId=$( curl https://portale-login.${env_type}.pn.pagopa.it/commit_id.txt | head -1 )
+paCommitId=$( curl https://portale-pa.${env_type}.pn.pagopa.it/commit_id.txt | head -1 )
+echo "CommitId portale Persona Fisica:  ${pfCommitId}"
+echo "CommitId login Persona Fisica:    ${pflCommitId}"
+echo "CommitId portale PA:              ${paCommitId}"
+
+ALL_VERSIONS="${ALL_VERSIONS} pn_frontend_commitId=${pfCommitId} pn_frontend_commitId=${pflCommitId} pn_frontend_commitId=${paCommitId}"
+
+echo ""
 echo ""
 echo ""
 echo "======================================================================"
