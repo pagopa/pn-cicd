@@ -210,7 +210,6 @@ aws ${aws_command_base_args}  \
       --stack-name once-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \
       --template-file ${microcvs_name}/scripts/aws/cfn/once4account/${env_type}.yaml \
-      --parame
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
