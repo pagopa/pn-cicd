@@ -68,12 +68,6 @@ Parameters:
   AllowedDeployAccount18:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount19:
-    Type: Number
-    Description: Account number allowed to read the artifacts
-  AllowedDeployAccount20:
-    Type: Number
-    Description: Account number allowed to read the artifacts
 
 
 Resources:
@@ -168,9 +162,7 @@ Resources:
                     "AllowedDeployAccount15": "${AllowedDeployAccount15}",
                     "AllowedDeployAccount16": "${AllowedDeployAccount16}",
                     "AllowedDeployAccount17": "${AllowedDeployAccount17}",
-                    "AllowedDeployAccount18": "${AllowedDeployAccount18}",
-                    "AllowedDeployAccount19": "${AllowedDeployAccount19}",
-                    "AllowedDeployAccount20": "${AllowedDeployAccount20}"
+                    "AllowedDeployAccount18": "${AllowedDeployAccount18}"
                   }'
               OutputArtifacts: [ ]
               RunOrder: 2
