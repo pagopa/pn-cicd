@@ -13,7 +13,7 @@ custom_config_dir="${script_dir}/custom-config"
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> [-s <stacks>] [-c <cluster-name>]
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> [-s <stacks>] [-c <cluster-name>] [--no-fe]
     
     [-h]                           : this help message
     [-v]                           : verbose mode
@@ -22,6 +22,7 @@ usage() {
     -e <env-type>                  : one of dev / uat / svil / coll / cert / prod
     [-s <stacks>]                  : stacks to check for version number
     [-c <cluster-name>]            : cluster to investigate for container image sha
+    [--no-fe]                      : Do not check Front End versions
 EOF
   exit 1
 }
@@ -33,6 +34,7 @@ parse_params() {
   env_type=""
   stacks="" 
   cluster_name="pn-core-ecs-cluster"
+  doFrontEnd="true"
 
   while :; do
     case "${1-}" in
@@ -65,6 +67,10 @@ parse_params() {
       ;;
     -c | --cluster-name) 
       cluster_name="${2-}"
+      shift
+      ;;
+    --no-fe)
+      doFrontEnd="false"
       shift
       ;;
     -?*) usage ;;
@@ -128,6 +134,7 @@ for stack in $( echo $stacks ) ; do
        | sed -e 's/^pn-user-attributes=/pn_UserAttributes_commitId=/' \
        | sed -e 's/^pn-mandate=/pn_mandate_commitId=/' \
        | sed -e 's/^pn-data-vault=/pn_data_vault_commitId=/' \
+       | sed -e 's/^pn_data_vault_sep_imageUrl=/pn_data_vault_imageUrl=/' \
        | sed -e 's/^pn-external-registries=/pn_ExternalRegistry_commitId=/' \
     )
   echo ${normalizedVersions} | tr " " "\n"
@@ -170,17 +177,20 @@ for serviceArn in $(aws ${aws_base_args}\
 done
 
 
-echo ""
-echo " === COMMIT FRONT END"
-echo " ==============================================================="
-pfCommitId=$( curl https://portale.${env_type}.pn.pagopa.it/commit_id.txt | head -1 )
-pflCommitId=$( curl https://portale-login.${env_type}.pn.pagopa.it/commit_id.txt | head -1 )
-paCommitId=$( curl https://portale-pa.${env_type}.pn.pagopa.it/commit_id.txt | head -1 )
-echo "CommitId portale Persona Fisica:  ${pfCommitId}"
-echo "CommitId login Persona Fisica:    ${pflCommitId}"
-echo "CommitId portale PA:              ${paCommitId}"
+if ( [ "false" -eq "${doFrontEnd}" ] ) then
+  echo ""
+  echo " === COMMIT FRONT END"
+  echo " ==============================================================="
+  pfCommitId=$( curl https://portale.${env_type}.pn.pagopa.it/commit_id.txt | head -1 )
+  pflCommitId=$( curl https://portale-login.${env_type}.pn.pagopa.it/commit_id.txt | head -1 )
+  paCommitId=$( curl https://portale-pa.${env_type}.pn.pagopa.it/commit_id.txt | head -1 )
+  echo "CommitId portale Persona Fisica:  ${pfCommitId}"
+  echo "CommitId login Persona Fisica:    ${pflCommitId}"
+  echo "CommitId portale PA:              ${paCommitId}"
 
-ALL_VERSIONS="${ALL_VERSIONS} pn_frontend_commitId=${pfCommitId} pn_frontend_commitId=${pflCommitId} pn_frontend_commitId=${paCommitId}"
+  ALL_VERSIONS="${ALL_VERSIONS} pn_frontend_commitId=${pfCommitId} pn_frontend_commitId=${pflCommitId} pn_frontend_commitId=${paCommitId}"
+fi
+
 
 echo ""
 echo ""

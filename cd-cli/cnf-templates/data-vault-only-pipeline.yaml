@@ -559,7 +559,7 @@ Resources:
                 - 'echo "### CLONE SCRIPTS ###"'
                 - 'echo "#####################"'
                 - 'git clone https://github.com/pagopa/pn-cicd.git'
-                - '( cd pn-cicd && git checkout $cd_scripts_commitId )'
+                - '( cd pn-cicd && git checkout feature/PN-1046 )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "### EXECUTE READ ENV VERSIONS ###"'
@@ -567,6 +567,7 @@ Resources:
                    ( cd pn-cicd/cd-cli && ./readEnv.sh -r ${REGION} -e ${ENV_NAME} \
                         -s "pn-data-vault-microsvc-${ENV_NAME}" \
                         -c "pn-confidential-ecs-cluster" \
+                        -no-fe
                    )
                 - 'echo ""'
                 - 'echo ""'
