@@ -93,15 +93,18 @@ echo ""
 echo "=== VERSIONI RICHIESTE DAI MICROSERVIZI ==="
 echo "==========================================="
 
-stacks="pn-ipc-${env_type} \
-        pn-auth-fleet-microsvc-${env_type} \
-        pn-delivery-microsvc-${env_type} \
-        pn-delivery-push-microsvc-${env_type} \
-        pn-user-attributes-microsvc-${env_type}
-        pn-mandate-microsvc-${env_type}
-        pn-data-vault-microsvc-${env_type}
-        pn-external-registries-microsvc-${env_type}
-      " 
+if ( [ -z "${stacks}" ] ) then
+  stacks="pn-ipc-${env_type} \
+          pn-auth-fleet-microsvc-${env_type} \
+          pn-delivery-microsvc-${env_type} \
+          pn-delivery-push-microsvc-${env_type} \
+          pn-user-attributes-microsvc-${env_type}
+          pn-mandate-microsvc-${env_type}
+          pn-data-vault-microsvc-${env_type}
+          pn-external-registries-microsvc-${env_type}
+        " 
+fi
+
 for stack in $( echo $stacks ) ; do
   version=$( aws ${aws_base_args} cloudformation describe-stacks --stack-name ${stack} \
       | jq -r '.Stacks[0].Parameters | .[] | select(.ParameterKey=="Version") | .ParameterValue' )

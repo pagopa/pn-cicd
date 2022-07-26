@@ -563,6 +563,7 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "### EXECUTE READ ENV VERSIONS ###"'
+                - 'export stasks=pn-data-vault-microsvc-${ENV_NAME}'
                 - '( cd pn-cicd/cd-cli && ./readEnv.sh -r ${REGION} -e ${ENV_NAME} )'
                 - 'echo ""'
                 - 'echo ""'
