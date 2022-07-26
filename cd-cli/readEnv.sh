@@ -33,7 +33,7 @@ parse_params() {
   env_type=""
   stacks="" 
   cluster_name="pn-core-ecs-cluster"
-  
+
   while :; do
     case "${1-}" in
     -h | --help) usage ;;
@@ -67,7 +67,7 @@ parse_params() {
       cluster_name="${2-}"
       shift
       ;;
-    -?*) die "Unknown option: $1" ;;
+    -?*) usage ;;
     *) break ;;
     esac
     shift
