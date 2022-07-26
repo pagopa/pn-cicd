@@ -563,8 +563,11 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "### EXECUTE READ ENV VERSIONS ###"'
-                - 'export stasks=pn-data-vault-microsvc-${ENV_NAME}'
-                - '( cd pn-cicd/cd-cli && ./readEnv.sh -r ${REGION} -e ${ENV_NAME} )'
+                - |
+                   ( cd pn-cicd/cd-cli && ./readEnv.sh -r ${REGION} -e ${ENV_NAME} \
+                        -s "pn-data-vault-microsvc-${ENV_NAME}" \
+                        -c "pn-confidential-ecs-cluster"
+                   )
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "### DOWNLOAD DESIRED COMMIT IDS ###"'

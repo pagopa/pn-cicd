@@ -13,13 +13,15 @@ custom_config_dir="${script_dir}/custom-config"
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> 
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> [-s <stacks>] [-c <cluster-name>]
     
     [-h]                           : this help message
     [-v]                           : verbose mode
     [-p <aws-profile>]             : aws cli profile (optional)
     -r <aws-region>                : aws region as eu-south-1
     -e <env-type>                  : one of dev / uat / svil / coll / cert / prod
+    [-s <stacks>]                  : stacks to check for version number
+    [-c <cluster-name>]            : cluster to investigate for container image sha
 EOF
   exit 1
 }
@@ -29,6 +31,8 @@ parse_params() {
   aws_profile=""
   aws_region=""
   env_type=""
+  stacks="" 
+  cluster_name="pn-core-ecs-cluster"
   
   while :; do
     case "${1-}" in
@@ -44,6 +48,23 @@ parse_params() {
       ;;
     -e | --env-name) 
       env_type="${2-}"
+      stacks="pn-ipc-${env_type} \
+          pn-auth-fleet-microsvc-${env_type} \
+          pn-delivery-microsvc-${env_type} \
+          pn-delivery-push-microsvc-${env_type} \
+          pn-user-attributes-microsvc-${env_type}
+          pn-mandate-microsvc-${env_type}
+          pn-data-vault-microsvc-${env_type}
+          pn-external-registries-microsvc-${env_type}
+        " 
+      shift
+      ;;
+    -s | --stacks) 
+      stacks="${2-}"
+      shift
+      ;;
+    -c | --cluster-name) 
+      cluster_name="${2-}"
       shift
       ;;
     -?*) die "Unknown option: $1" ;;
@@ -68,6 +89,8 @@ dump_params(){
   echo "Env Name:           ${env_type}"
   echo "AWS region:         ${aws_region}"
   echo "AWS profile:        ${aws_profile}"
+  echo "EC2 Cluster Name:   ${cluster_name}"
+  echo "Stacks:             ${stacks}"
 }
 
 
@@ -93,18 +116,6 @@ echo ""
 echo "=== VERSIONI RICHIESTE DAI MICROSERVIZI ==="
 echo "==========================================="
 
-if ( [ -z "${stacks}" ] ) then
-  stacks="pn-ipc-${env_type} \
-          pn-auth-fleet-microsvc-${env_type} \
-          pn-delivery-microsvc-${env_type} \
-          pn-delivery-push-microsvc-${env_type} \
-          pn-user-attributes-microsvc-${env_type}
-          pn-mandate-microsvc-${env_type}
-          pn-data-vault-microsvc-${env_type}
-          pn-external-registries-microsvc-${env_type}
-        " 
-fi
-
 for stack in $( echo $stacks ) ; do
   version=$( aws ${aws_base_args} cloudformation describe-stacks --stack-name ${stack} \
       | jq -r '.Stacks[0].Parameters | .[] | select(.ParameterKey=="Version") | .ParameterValue' )
@@ -128,7 +139,7 @@ done
 
 ecs_cluster_arn=$( aws ${aws_base_args} \
     ecs list-clusters \
-    | jq -r '.clusterArns | .[]' | grep '/pn-core-ecs-cluster' )
+    | jq -r '.clusterArns | .[]' | grep "/${cluster_name}" )
 
 echo ""
 echo " === Cluster ARN=${ecs_cluster_arn}"
