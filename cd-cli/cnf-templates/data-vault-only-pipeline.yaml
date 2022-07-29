@@ -64,7 +64,7 @@ Resources:
       EventPattern:
         source: [{"prefix": "" }]
         detail:
-          project_branch: ["main"]
+          project_branch: ["main", "develop"]
       Targets: 
         - Id: 'CdEventBus-ToPipelineChooser'
           Arn: !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
@@ -126,7 +126,7 @@ Resources:
                 Action:
                   - "codebuild:*"
                 Effect: Allow
-                Resource: ChooseAndLaunchPipelineCodeBuild.Arn
+                Resource: !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
 
 
   ###           CodeBuild: CHOOSE AND EXECUTE THE C.D. PIPELINE           ###
@@ -168,13 +168,13 @@ Resources:
                 - |
                   if ( [ "$PROJECT" = "pn-infra" ] ) then
                     sed -i -e "s|pn_infra_commitId=.*|pn_infra_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-infra-authfleet-update-pipeline"
+                    export PIPELINE_NAME="pn-env-update-pipeline"
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-data-vault" ] ) then
                     sed -i -e "s|pn_data_vault_commitId=.*|pn_data_vault_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_data_vault_imageUrl=.*|pn_data_vault_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-pn-data-vault-update-pipeline"
+                    export PIPELINE_NAME="pn-env-update-pipeline"
                   fi
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
