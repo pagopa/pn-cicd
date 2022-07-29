@@ -108,6 +108,7 @@ Resources:
 
   # - Role and policy used to activate CodeBuild from EventBridge rule
   EventBusRunCodeBuildRole:
+    Condition: IsDevCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -125,11 +126,7 @@ Resources:
                 Action:
                   - "codebuild:*"
                 Effect: Allow
-                Resource: 
-                  - Fn::If:
-                    - IsDevCondition
-                    - !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
-                    - !Ref AWS::NoValue
+                Resource: ChooseAndLaunchPipelineCodeBuild.Arn
 
 
   ###           CodeBuild: CHOOSE AND EXECUTE THE C.D. PIPELINE           ###
