@@ -167,6 +167,7 @@ function prepareOneCloudFront() {
   WebDomain=$2
   WebCertificateArn=$3
   HostedZoneId=$4
+  WebApiUrl=$5
 
   echo ""
   echo "=== Create CDN ${CdnName} with domain ${WebDomain} in zone ${HostedZoneId}"
@@ -179,7 +180,8 @@ function prepareOneCloudFront() {
         Name="${CdnName}" \
         WebDomain="${WebDomain}" \
         WebCertificateArn="${WebCertificateArn}" \
-        HostedZoneId="${HostedZoneId}"
+        HostedZoneId="${HostedZoneId}" \
+        WebApiUrl=${WebApiUrl}
   
   bucketName=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
@@ -194,20 +196,23 @@ source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh"
 prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "portale-pa.${env_type}.pn.pagopa.it" \
     "$PORTALE_PA_CERTIFICATE_ARN" \
-    "$ZONE_ID"
+    "$ZONE_ID" \
+    "$REACT_APP_URL_API"
 webappPaBucketName=${bucketName}
 
 
 prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "portale.${env_type}.pn.pagopa.it" \
     "$PORTALE_PF_CERTIFICATE_ARN" \
-    "$ZONE_ID"
+    "$ZONE_ID" \
+    "$REACT_APP_URL_API"
 webappPfBucketName=${bucketName}
 
 prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "portale-login.${env_type}.pn.pagopa.it" \
     "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
-    "$ZONE_ID"
+    "$ZONE_ID" \
+    "$REACT_APP_URL_API"
 webappPflBucketName=${bucketName}
 
 
