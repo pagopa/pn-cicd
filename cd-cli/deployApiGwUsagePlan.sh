@@ -113,6 +113,7 @@ function createUsagePlan() {
   local apigw_type=$2
   local STAGE=unique
   local API_STAGES
+  API_STAGES=""
   REST_APIS_IDS=$(getRestApiIdByTag $apigw_type)
   for CURR_ID in $REST_APIS_IDS; do
     API_STAGES="$API_STAGES apiId=$CURR_ID,stage=$STAGE"
