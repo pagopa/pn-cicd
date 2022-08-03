@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
     
-set -Exeuo pipefail
+set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 
 cleanup() {
@@ -72,7 +72,6 @@ parse_params() {
       ;;
     --no-fe)
       doFrontEnd="false"
-      shift
       ;;
     -?*) usage ;;
     *) break ;;
