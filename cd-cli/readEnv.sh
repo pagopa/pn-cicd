@@ -56,7 +56,6 @@ parse_params() {
           pn-delivery-push-microsvc-${env_type} \
           pn-user-attributes-microsvc-${env_type} \
           pn-mandate-microsvc-${env_type} \
-          pn-data-vault-microsvc-${env_type} \
           pn-external-registries-microsvc-${env_type} \
         " 
       shift
