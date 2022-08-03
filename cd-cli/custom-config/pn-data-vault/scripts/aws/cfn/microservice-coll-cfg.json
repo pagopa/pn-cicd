@@ -1,5 +1,11 @@
 {
   "Parameters" : {
+    "VpcId": "vpc-0df9bb5dbef233454",
+    "VpcCidr": "10.9.0.0/16",
+    "VpcSubnets": "subnet-0267ab1dcc39a0e50,subnet-019cca24dc4e17b5d,subnet-0cd79475b474a1b49",
+    "VpcSubnetsRoutingTables": "rtb-0cd2c03f908df9b30",
+    "PrivateHostedZone": "Z013292437UUGTVL315V4",
+    "EcsDefaultSecurityGroup": "sg-057c43d246e1cd9eb",
     "PDVTokenizerBasePath" : "https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1",
     "PDVUserRegistryBasePath" : "https://api.uat.pdv.pagopa.it/user-registry/v1",
     "CacheExpireMinutes": "36000",
