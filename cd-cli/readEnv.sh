@@ -23,7 +23,9 @@ usage() {
     [-s <stacks>]                  : stacks to check for version number
     [-c <cluster-name>]            : cluster to investigate for container image sha
     [--no-fe]                      : Do not check Front End versions
+    
 EOF
+  dump_params
   exit 1
 }
 parse_params() {
