@@ -181,7 +181,7 @@ function prepareOneCloudFront() {
         WebDomain="${WebDomain}" \
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
-        WebApiUrl=${WebApiUrl}
+        WebApiUrl="${WebApiUrl}"
   
   bucketName=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
