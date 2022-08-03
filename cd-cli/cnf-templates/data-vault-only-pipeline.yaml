@@ -563,7 +563,7 @@ Resources:
                    ( cd pn-cicd/cd-cli && ./readEnv.sh -r ${REGION} -e ${ENV_NAME} \
                         -s "pn-data-vault-microsvc-${ENV_NAME}" \
                         -c "pn-confidential-ecs-cluster" \
-                        -no-fe
+                        --no-fe \
                    )
                 - 'echo ""'
                 - 'echo ""'
