@@ -1642,7 +1642,7 @@ Resources:
               ActionTypeId:
                 Category: Build
                 Owner: AWS
-                Version: 1
+                Version: 1x
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
@@ -1726,12 +1726,14 @@ Resources:
                 - |
                   echo "### CLONE E2E TEST REPOSITORY ###"
                   echo "#####################"
-                  git clone https://github.com/pagopa/pn-b2b-client.git
+                  git clone https://github.com/pagopa/pn-b2b-client.git pn-b2b-client
                   ( cd pn-b2b-client && echo "API_KEY=${API_KEY}" > config/application.properties )
-                  ( cd pn-b2b-client && ./mvnw -Dpn.external.base-url=https://api.${ENV_NAME}.pn.pagopa.it '-Dpn.external.api-key=${API_KEY}'  clean verify )
-          artifacts:
-            files:
-              - 'scripts/**/*'
+                  ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.client.b2b.pa.cucumber.test.CucumberIntegrationTest -Dpn.external.base-url=https://api.${ENV_NAME}.pn.pagopa.it '-Dpn.external.api-key=${API_KEY}'  clean verify )
+          reports:
+            reportGroup: #Cucumber reports from json plugin
+              files:
+                - 'pn-b2b-client/target/cucumber-report.json'
+              file-format: CUCUMBERJSON #Type of the report, defaults to JUNITXML
           cache:
             paths:
               - '/root/.m2/**/*'
