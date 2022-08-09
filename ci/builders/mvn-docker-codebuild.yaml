@@ -226,13 +226,11 @@ Resources:
                 - ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.scm.exclusions.disabled=true -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
-                    echo "Ensure different image for each commit and add aws-opentelemetry-agent"
+                    echo "Ensure different image for each commit"
                     DOCKER_FILE=$(mktemp)
                     echo "FROM ${GITHUB_PRJ_NAME}:$VERSION" >$DOCKER_FILE
                     echo "LABEL VCS_COMMIT_ID=${CODEBUILD_RESOLVED_SOURCE_VERSION}" >>$DOCKER_FILE
                     echo "ENV VCS_COMMIT_ID=${CODEBUILD_RESOLVED_SOURCE_VERSION}" >>$DOCKER_FILE
-                    echo "ADD https://github.com/aws-observability/aws-otel-java-instrumentation/releases/latest/download/aws-opentelemetry-agent.jar /opt/aws-opentelemetry-agent.jar" >>$DOCKER_FILE
-                    echo "ENV JAVA_TOOL_OPTIONS=-javaagent:/opt/aws-opentelemetry-agent.jar" >>$DOCKER_FILE
                     cat $DOCKER_FILE
                     docker build --tag "${GITHUB_PRJ_NAME}:${VERSION}" - < $DOCKER_FILE
                     echo "Deploy"
