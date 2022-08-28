@@ -234,3 +234,23 @@ aws ${aws_command_base_args} cloudformation deploy \
         UserAttributesCdcKinesisKeyArn="${userAttributesCdcSKeyArn}" \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
+
+echo ""
+echo "###       UPDATE AGGREAGE ALARM FOR DOWNTIME LOGS       ###"
+echo "###########################################################"
+
+DowntimeLogsCompositeAlarmQueueARN=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name pn-ipc-${env_type} | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DowntimeLogsAggregateQueueARN\") | .OutputValue" \
+    )
+
+aws ${aws_command_base_args} cloudformation deploy \
+      --stack-name pn-aggregate-alarm-${env_type} \
+      --capabilities CAPABILITY_NAMED_IAM \
+      --template-file pn-infra/runtime-infra/pn-aggregate-alarms.yaml \
+      --parameter-overrides \
+        TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
+        ProjectName=${project_name} \
+        DowntimeLogsCompositeAlarmQueueARN=${DowntimeLogsCompositeAlarmQueueARN} \
+        Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
+
