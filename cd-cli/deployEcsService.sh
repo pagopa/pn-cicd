@@ -248,7 +248,7 @@ echo "=== Deploy $microcvs_name STORAGE FOR $env_type ACCOUNT"
 aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name ${microcvs_name}-storage-$env_type \
-      --capabilities CAPABILITY_NAMED_IAM \
+      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file ${TemplateFilePath} \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
    
@@ -336,7 +336,7 @@ echo "=== Deploy $microcvs_name MICROSERVICE FOR $env_type ACCOUNT"
 aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name ${microcvs_name}-microsvc-$env_type \
-      --capabilities CAPABILITY_NAMED_IAM \
+      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file ${TemplateFilePath} \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
    
