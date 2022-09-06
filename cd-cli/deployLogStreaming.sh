@@ -216,7 +216,7 @@ echo "   User Attributes CDC Key: ${userAttributesCdcSKeyArn}"
 
 
 aws ${aws_command_base_args} cloudformation deploy \
-      --stack-name pn-logs-export-dev \
+      --stack-name pn-logs-export-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM \
       --template-file pn-infra/runtime-infra/pn-logs-export.yaml \
       --parameter-overrides \
