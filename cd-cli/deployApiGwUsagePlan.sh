@@ -132,6 +132,7 @@ function updateUsagePlan() {
   CONF_APIS_IDS=$(getCurrentStages $PLAN_NAME)
   for CURR_ID in $REST_APIS_IDS; do
     if [[ ! " ${CONF_APIS_IDS[*]} " =~ " ${CURR_ID} " ]]; then
+      sleep 1
       aws ${aws_command_base_args} apigateway update-usage-plan --usage-plan-id $USAGE_PLAN_ID --patch-operations op=add,path="/apiStages",value="$CURR_ID:$STAGE"
     fi
   done
