@@ -217,10 +217,20 @@ webappPflBucketName=${bucketName}
 
 
 
+prepareOneCloudFront web-landing-cdn-${env_type} \
+    "www.${env_type}.pn.pagopa.it" \
+    "$LANDING_CERTIFICATE_ARN" \
+    "$ZONE_ID" \
+    "$REACT_APP_URL_API"
+landingBucketName=${bucketName}
+
+
+
 echo ""
 echo " === Bucket Portale PA = ${webappPaBucketName}"
 echo " === Bucket Portale PF = ${webappPfBucketName}"
 echo " === Bucket Portale PF login = ${webappPflBucketName}"
+echo " === Bucket Sito LAnding = ${landingBucketName}"
 
 
 
@@ -289,4 +299,22 @@ aws ${aws_command_base_args} \
     s3 cp "pn-personafisica-login_${env_type}" "s3://${webappPflBucketName}/" \
       --recursive
 
+
+
+
+echo ""
+echo "===                          SITO LANDING                         ==="
+echo "====================================================================="
+aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-landing-webapp_${env_type}.tar.gz" \
+      "pn-landing-webapp_${env_type}.tar.gz"
+
+mkdir -p "pn-landing-webapp_${env_type}"
+( cd "pn-landing-webapp_${env_type}" \
+     && tar xvzf "../pn-landing-webapp_${env_type}.tar.gz" \
+)
+
+aws ${aws_command_base_args} \
+    s3 cp "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" \
+      --recursive
 
