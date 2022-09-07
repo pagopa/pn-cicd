@@ -9,6 +9,10 @@ Parameters:
     Description: Name of the dafult github branch
     Type: String
     Default: main
+  IsPublicProject:
+    Description: true if the project is public
+    Type: String
+    Default: 'true'
   CodeArtifactDomainName:
     Description: Used for maven repository access
     Type: String
@@ -98,6 +102,9 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:5.0
         EnvironmentVariables:
+          - Name: IS_PUBLIC_PROJECT
+            Type: PLAINTEXT
+            Value: !Sub "${IsPublicProject}"
           - Name: CODEARTIFACT_DOMAIN_NAME
             Type: PLAINTEXT
             Value: !Sub "${CodeArtifactDomainName}"
@@ -199,9 +206,9 @@ Resources:
                   SRC_DIR=./src/main/java
                   if [ -e $SRC_DIR ]; then
                     if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
-                       SONAR_OPTS="-Dsonar.branch.name=$BRANCH_NAME -Dsonar.scm.exclusions.disabled=true"
+                        SONAR_OPTS="-Dsonar.branch.name=$BRANCH_NAME -Dsonar.scm.exclusions.disabled=true"
                     else 
-                       SONAR_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
+                        SONAR_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
                     fi
                     SONAR_OPTS="$SONAR_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}"
                     MAVEN_ADD_GOAL=org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
@@ -219,11 +226,14 @@ Resources:
                 - echo "Sonar"
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
-                     SONAR_ADD_OPTS="-Dsonar.branch.name=$BRANCH_NAME"
+                    SONAR_ADD_OPTS="-Dsonar.branch.name=$BRANCH_NAME"
                   else 
-                     SONAR_ADD_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
+                    SONAR_ADD_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
                   fi
-                - ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.scm.exclusions.disabled=true -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
+                - |
+                  if [[ "$IS_PUBLIC_PROJECT" = "true" ]] then
+                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.scm.exclusions.disabled=true -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
+                  fi
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
                     echo "Ensure different image for each commit"
