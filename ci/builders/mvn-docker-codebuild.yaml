@@ -231,7 +231,7 @@ Resources:
                     SONAR_ADD_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
                   fi
                 - |
-                  if [[ "$IS_PUBLIC_PROJECT" = "true" ]] then
+                  if [[ "$IS_PUBLIC_PROJECT" = "true" ]]; then
                     ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.scm.exclusions.disabled=true -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}
                   fi
                 - |
