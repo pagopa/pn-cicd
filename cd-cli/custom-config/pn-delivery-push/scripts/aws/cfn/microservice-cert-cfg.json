@@ -1,7 +1,7 @@
 {
   "Parameters" : {
     "AddressBookUrl": "ToBeRemoved",
-    "PhysicalPersonPortalUrl": "https://portale.cert.pn.pagopa.it/",
+    "PhysicalPersonPortalUrl": "http://cittadini.notifichedigitali.it/",
     "WaitingForReadCourtesyMessage": "10m",
     "SecondNotificationWorkflowWaitingTime": "30m",
     "SchedulingDaysSuccessDigitalRefinement": "1h",
