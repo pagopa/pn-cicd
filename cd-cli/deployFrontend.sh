@@ -168,6 +168,8 @@ function prepareOneCloudFront() {
   WebCertificateArn=$3
   HostedZoneId=$4
   WebApiUrl=$5
+  AlternateWebDomain=$6
+  AlternateHostedZoneId=$7
 
   echo ""
   echo "=== Create CDN ${CdnName} with domain ${WebDomain} in zone ${HostedZoneId}"
@@ -181,7 +183,9 @@ function prepareOneCloudFront() {
         WebDomain="${WebDomain}" \
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
-        WebApiUrl="${WebApiUrl}"
+        WebApiUrl="${WebApiUrl}" \
+        AlternateWebDomain="${AlternateWebDomain}" \
+        AlternateHostedZoneId="${AlternateHostedZoneId}"
   
   bucketName=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
@@ -190,6 +194,7 @@ function prepareOneCloudFront() {
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"WebAppBucketName\") | .OutputValue" )
   echo " - Created bucket name: ${bucketName}"
 }
+
 
 source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
 
@@ -249,6 +254,7 @@ echo "====================================================================="
 echo "====================================================================="
 
 
+
 echo ""
 echo "===                          PORTALE PA                           ==="
 echo "====================================================================="
@@ -264,6 +270,7 @@ mkdir -p "pn-pa-webapp_${env_type}"
 aws ${aws_command_base_args} \
     s3 cp "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/" \
       --recursive
+
 
 
 echo ""
@@ -317,4 +324,3 @@ mkdir -p "pn-landing-webapp_${env_type}"
 aws ${aws_command_base_args} \
     s3 cp "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" \
       --recursive
-
