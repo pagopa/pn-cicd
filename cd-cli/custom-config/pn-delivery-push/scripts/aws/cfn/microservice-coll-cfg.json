@@ -1,7 +1,7 @@
 {
   "Parameters" : {
     "AddressBookUrl": "https://zkkwwk0v41.execute-api.eu-central-1.amazonaws.com/mock/develop/addresses/",
-    "PhysicalPersonPortalUrl": "http://cittadini.notifichedigitali.it/",
+    "PhysicalPersonPortalUrl": "https://cittadini.notifichedigitali.it",
     "WaitingForReadCourtesyMessage": "10m",
     "SecondNotificationWorkflowWaitingTime": "30m",
     "SchedulingDaysSuccessDigitalRefinement": "1h",
