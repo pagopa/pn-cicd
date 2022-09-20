@@ -149,7 +149,19 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive
 
+PreviousOutputFilePath="previous-output-${env_type}.json"
+echo "{}" > $PreviousOutputFilePath
 
+function addKeyToJsonFile() {
+  json_file_path=$1
+  key=$2
+  value=$3
+
+  cat $json_file_path | jq \
+    --arg key "$key" \
+    --arg val "$value" \
+    '. += {($key): ($val)}' | tee $json_file_path >/dev/null
+}
 
 
 echo ""
@@ -170,6 +182,8 @@ logsExporterRoleArn=$( aws ${aws_command_base_args} \
 echo "LOGS Bucker: ${logsBucketName}"
 echo "LOGS Role Arn: ${logsExporterRoleArn}"
 
+addKeyToJsonFile $PreviousOutputFilePath "LogsBucketName" $logsBucketName
+addKeyToJsonFile $PreviousOutputFilePath "LogsExporterRoleArn" $logsExporterRoleArn
 
 echo ""
 echo "###                  LIST CDC STREAMS                  ###"
@@ -196,11 +210,17 @@ timelineCdcSKeyArn=${cdcSKeyArn}
 echo " - Timeline CDC Stream: ${timelineCdcStreamArn}"
 echo "   Timeline CDC Key: ${timelineCdcSKeyArn}"
 
+addKeyToJsonFile $PreviousOutputFilePath "TimelineCdcKinesisStreamArn" $timelineCdcStreamArn
+addKeyToJsonFile $PreviousOutputFilePath "TimelineCdcKinesisKeyArn" $timelineCdcSKeyArn
+
 getInfoForOneCdc pn-delivery-storage-${env_type} Notification
 notificationCdcStreamArn=${cdcStreamArn}
 notificationCdcSKeyArn=${cdcSKeyArn}
 echo " - Notification CDC Stream: ${notificationCdcStreamArn}"
 echo "   Notification CDC Key: ${notificationCdcSKeyArn}"
+
+addKeyToJsonFile $PreviousOutputFilePath "NotificationCdcKinesisStreamArn" $notificationCdcStreamArn
+addKeyToJsonFile $PreviousOutputFilePath "NotificationCdcKinesisKeyArn" $notificationCdcSKeyArn
 
 getInfoForOneCdc pn-mandate-storage-${env_type} Mandate
 mandateCdcStreamArn=${cdcStreamArn}
@@ -208,35 +228,51 @@ mandateCdcSKeyArn=${cdcSKeyArn}
 echo " - Mandate CDC Stream: ${mandateCdcStreamArn}"
 echo "   Mandate CDC Key: ${mandateCdcSKeyArn}"
 
+addKeyToJsonFile $PreviousOutputFilePath "MandateCdcKinesisStreamArn" $mandateCdcStreamArn
+addKeyToJsonFile $PreviousOutputFilePath "MandateCdcKinesisKeyArn" $mandateCdcSKeyArn
+
 getInfoForOneCdc pn-user-attributes-storage-${env_type} UserAttributes
 userAttributesCdcStreamArn=${cdcStreamArn}
 userAttributesCdcSKeyArn=${cdcSKeyArn}
 echo " - User Attributes CDC Stream: ${userAttributesCdcStreamArn}"
 echo "   User Attributes CDC Key: ${userAttributesCdcSKeyArn}"
 
+addKeyToJsonFile $PreviousOutputFilePath "UserAttributesCdcKinesisStreamArn" $userAttributesCdcStreamArn
+addKeyToJsonFile $PreviousOutputFilePath "UserAttributesCdcKinesisKeyArn" $userAttributesCdcSKeyArn
+
+
+echo "=== Prepare parameters for pn-logs-export.yaml deployment in $env_type ACCOUNT"
+TemplateFilePath="pn-infra/runtime-infra/pn-logs-export.yaml"
+ParamFilePath="pn-infra/runtime-infra/pn-logs-export-${env_type}-cfg.json"
+EnhancedParamFilePath="pn-logs-export-${env_type}-cfg-enhanced.json"
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+
+echo " - TemplateFilePath: ${TemplateFilePath}"
+echo " - ParamFilePath: ${ParamFilePath}"
+echo " - EnhancedParamFilePath: ${EnhancedParamFilePath}"
+echo " - PipelineParams: ${PipelineParams}"
+
+echo "= Previous output file"
+cat $PreviousOutputFilePath
+
+echo "= Enhanced parameters file"
+
+jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnhancedParamFilePath}
+echo "${PipelineParams} ]" >> ${EnhancedParamFilePath}
+
+cat $EnhancedParamFilePath
 
 aws ${aws_command_base_args} cloudformation deploy \
       --stack-name pn-logs-export-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM \
-      --template-file pn-infra/runtime-infra/pn-logs-export.yaml \
-      --parameter-overrides \
-        TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
-        ProjectName=${project_name} \
-        LogsBucketName="${logsBucketName}" \
-        LogsExporterRoleArn="${logsExporterRoleArn}" \
-        TimelineCdcKinesisStreamArn="${timelineCdcStreamArn}" \
-        TimelineCdcKinesisKeyArn="${timelineCdcSKeyArn}" \
-        NotificationCdcKinesisStreamArn="${notificationCdcStreamArn}" \
-        NotificationCdcKinesisKeyArn="${notificationCdcSKeyArn}" \
-        MandateCdcKinesisStreamArn="${mandateCdcStreamArn}" \
-        MandateCdcKinesisKeyArn="${mandateCdcSKeyArn}" \
-        UserAttributesCdcKinesisStreamArn="${userAttributesCdcStreamArn}" \
-        UserAttributesCdcKinesisKeyArn="${userAttributesCdcSKeyArn}" \
-        Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
+      --template-file "$TemplateFilePath" \
+      --parameter-overrides file://$(realpath $EnhancedParamFilePath)
 
 
 echo ""
-echo "###       UPDATE AGGREAGE ALARM FOR DOWNTIME LOGS       ###"
+echo "###       UPDATE AGGREGATE ALARM FOR DOWNTIME LOGS       ###"
 echo "###########################################################"
 
 DowntimeLogsCompositeAlarmQueueARN=$( aws ${aws_command_base_args} cloudformation describe-stacks \
@@ -253,4 +289,3 @@ aws ${aws_command_base_args} cloudformation deploy \
         ProjectName=${project_name} \
         DowntimeLogsCompositeAlarmQueueARN=${DowntimeLogsCompositeAlarmQueueARN} \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
-
