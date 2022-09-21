@@ -12,6 +12,8 @@
     "WebhookMaxLength": "10",
     "PnDeliveryPushPaperMessageNotHandled": "true",
     "SandboxSafeStorageBaseUrl": "ToBeDefined",
-    "ExternalChannelBaseUrl": "ToBeDefined"
+    "ExternalChannelBaseUrl": "ToBeDefined",
+    "NotificationNonVisibilityTime": "21:00",
+    "TimeToAddInNonVisibilityTimeCase": "1d"
   }
 }
