@@ -1,7 +1,7 @@
 {
   "Parameters" : {
     "AddressBookUrl": "ToBeRemoved",
-    "PhysicalPersonPortalUrl": "http://cittadini.notifichedigitali.it/",
+    "PhysicalPersonPortalUrl": "https://cittadini.notifichedigitali.it/",
     "WaitingForReadCourtesyMessage": "10m",
     "SecondNotificationWorkflowWaitingTime": "30m",
     "SchedulingDaysSuccessDigitalRefinement": "1h",
