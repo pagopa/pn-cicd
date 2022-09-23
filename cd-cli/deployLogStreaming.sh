@@ -250,9 +250,12 @@ addKeyToJsonFile $PreviousOutputFilePath "TemplateBucketBaseUrl" $templateBucket
 addKeyToJsonFile $PreviousOutputFilePath "ProjectName" $project_name
 addKeyToJsonFile $PreviousOutputFilePath "Version" "cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
+echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
 echo " - EnhancedParamFilePath: ${EnhancedParamFilePath}"
+echo " ==== Directory listing"
+ls -r
 
 echo "= Previous output file"
 cat $PreviousOutputFilePath
