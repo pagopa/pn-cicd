@@ -1,5 +1,0 @@
-export ZONE_ID="ToBeDefined"
-export PORTALE_PA_CERTIFICATE_ARN="ToBeDefined"
-export PORTALE_PF_CERTIFICATE_ARN="ToBeDefined"
-export PORTALE_PF_LOGIN_CERTIFICATE_ARN="ToBeDefined"
-export REACT_APP_URL_API="https://webapi.cert.pn.pagopa.it/ https://s3.eu-south-1.amazonaws.com/<NomeBucketLegalInput>/"
