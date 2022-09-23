@@ -1,0 +1,16 @@
+{
+  "Parameters" : {
+    "ApiDnsName": "api.cert.pn.pagopa.it",
+    "ApiCertificateArn": "ToBeDefined",
+    "WebApiDnsName": "webapi.cert.pn.pagopa.it",
+    "WebApiCertificateArn": "ToBeDefined",
+    "IoApiDnsName": "api-io.cert.pn.pagopa.it",
+    "IoApiCertificateArn": "ToBeDefined",
+    "HostedZoneId": "ToBeDefined",
+    "SafeStorageAccountId": "ToBeDefined",
+    "EventBusDeadLetterQueueMaximumRetentionPeriod": "1209600",
+    "CorsAllowedDomains" : "https://portale-pa.cert.pn.pagopa.it,https://portale.cert.pn.pagopa.it",
+    "DeliveryPushExtChUser": "pn-delivery-002",
+    "UserAttributesExtChUser": "pn-delivery-001"
+  }
+}

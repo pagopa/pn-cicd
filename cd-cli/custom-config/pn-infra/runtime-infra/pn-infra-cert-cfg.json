@@ -1,0 +1,15 @@
+{
+  "Parameters" : {
+    "VpcId":"ToBeDefined",
+    "VpcCidr": "ToBeDefined",
+    "VpcSubnets": "ToBeDefined",
+    "VpcSubnetsRoutingTables": "ToBeDefined",
+    "EcsDefaultSecurityGroup": "ToBeDefined",
+    "LogsBucketName": "",
+    "LogsAccountId": "NotUsedIfBucketNameIsEmpty",
+    "BucketSuffix": "NotUsedIfBucketNameIsEmpty",
+    "DataLakeAccountId1": "NotUsedIfBucketNameIsEmpty",
+    "DataLakeAccountId2": "NotUsedIfBucketNameIsEmpty",
+    "PrivateHostedZone": "ToBeDefined"
+  }
+}

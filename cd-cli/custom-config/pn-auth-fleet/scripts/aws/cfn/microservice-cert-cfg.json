@@ -1,0 +1,16 @@
+{
+  "Parameters" : {
+    "ApiKeyAuthorizerLambdaEnvironmentPaTagName": "cx_id",
+    "ApiKeyAuthorizerLambdaEnvironmentGroupsTagName": "cx_groups",
+    "JwtAuthorizerLambdaEnvironmentCacheTtl": "120",
+
+    "TokenExchangeLambdaEnvironmentCacheTtl": "120",
+    "TokenExchangeLambdaEnvironmentTokenTtl": "3200",
+    "TokenExchangeLambdaEnvironmentIssuer":"https://webapi.cert.pn.pagopa.it",
+    "TokenExchangeLambdaEnvironmentAllowedIssuer":"https://hub-login.spid.cert.pn.pagopa.it,https://uat.selfcare.pagopa.it ",
+    "TokenExchangeLambdaEnvironmentAllowedOrigin":"https://portale-pa.cert.pn.pagopa.it,https://portale.cert.pn.pagopa.it",
+    "TokenExchangeLambdaEnvironmentJwksMapping": "{ }",
+    "TokenExchangeLambdaEnvironmentAcceptedAudience":"portale-pa.cert.pn.pagopa.it,portale.cert.pn.pagopa.it",
+    "TokenExchangeLambdaEnvironmentAudience":"webapi.cert.pn.pagopa.it"
+  }
+}

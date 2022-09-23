@@ -1,0 +1,6 @@
+{
+  "Parameters" : {
+    "SandboxSafeStorageBaseUrl": "https://eo6pdvms24.execute-api.eu-south-1.amazonaws.com/coll/",
+    "NotificationCheckAddress": "false"
+  }
+}

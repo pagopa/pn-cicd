@@ -1,0 +1,7 @@
+{
+  "Parameters" : {
+    "ExternalChannelBasePath": "ToBeDefined",
+    "HeaderValueExternalChannelCxId": "pn-delivery-002",
+    "IoActivationSendOlderThanDays": "7"
+  }
+}
