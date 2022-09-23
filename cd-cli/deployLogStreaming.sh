@@ -245,12 +245,14 @@ echo "=== Prepare parameters for pn-logs-export.yaml deployment in $env_type ACC
 TemplateFilePath="pn-infra/runtime-infra/pn-logs-export.yaml"
 ParamFilePath="pn-infra/runtime-infra/pn-logs-export-${env_type}-cfg.json"
 EnhancedParamFilePath="pn-logs-export-${env_type}-cfg-enhanced.json"
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+
+addKeyToJsonFile $PreviousOutputFilePath "TemplateBucketBaseUrl" $templateBucketHttpsBaseUrl
+addKeyToJsonFile $PreviousOutputFilePath "ProjectName" $project_name
+addKeyToJsonFile $PreviousOutputFilePath "Version" "cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
 echo " - EnhancedParamFilePath: ${EnhancedParamFilePath}"
-echo " - PipelineParams: ${PipelineParams}"
 
 echo "= Previous output file"
 cat $PreviousOutputFilePath
@@ -260,7 +262,6 @@ echo "= Enhanced parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
    | jq -s ".[] | .Parameters" \
    > ${EnhancedParamFilePath}
-echo "${PipelineParams} ]" >> ${EnhancedParamFilePath}
 
 cat $EnhancedParamFilePath
 
