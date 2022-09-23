@@ -258,7 +258,7 @@ cat $PreviousOutputFilePath
 echo "= Enhanced parameters file"
 
 jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
-   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   | jq -s ".[] | .Parameters" \
    > ${EnhancedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnhancedParamFilePath}
 
