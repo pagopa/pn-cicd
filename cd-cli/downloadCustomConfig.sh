@@ -109,17 +109,27 @@ echo ${aws_command_base_args}
 
 
 if ( [ ! -z "${configuration_repository_secret_name}" ] ) then 
-  echo "=== Retrieve configuration repository informations" 
-  aws ${aws_command_base_args} secretsmanager get-secret-value \
-      --secret-id pn-configurations-repository \
-      --output text --query 'SecretString' > ./secret-config-repo.json
-  commit_id=$( cat ./secret-config-repo.json | jq -r '.commitId' )
-  echo "Commit id: ${commit_id}"
+  secretPresent=$( aws ${aws_command_base_args} secretsmanager list-secrets \
+    --filter Key="name",Values="${configuration_repository_secret_name}" \
+    | jq '.SecretList | length ' )
 
-  git clone $( cat ./secret-config-repo.json | jq -r '.repositoryUrl' ) custom-config
-  ( cd custom-config && git fetch && git checkout $commit_id )
-  
-  rm ./secret-config-repo.json
+  if ( [ "$secretPresent" -eq "1" ]) then
+
+    echo "=== Retrieve configuration repository informations" 
+    aws ${aws_command_base_args} secretsmanager get-secret-value \
+        --secret-id pn-configurations-repository \
+        --output text --query 'SecretString' > ./secret-config-repo.json
+    commit_id=$( cat ./secret-config-repo.json | jq -r '.commitId' )
+    echo "Commit id: ${commit_id}"
+
+    git clone $( cat ./secret-config-repo.json | jq -r '.repositoryUrl' ) custom-config
+    ( cd custom-config && git fetch && git checkout $commit_id )
+    
+    rm ./secret-config-repo.json
+  else 
+    echo "=== Secret $configuration_repository_secret_name not found"
+    mkdir custom-config
+  fi
 else 
   echo "=== Nothing to do!!" 
   mkdir custom-config
