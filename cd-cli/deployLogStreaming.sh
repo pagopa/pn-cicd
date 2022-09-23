@@ -156,7 +156,7 @@ function addKeyToJsonFile() {
   json_file_path=$1
   key=$2
   value=$3
-
+  echo "add key $2 and value $3"
   cat $json_file_path | jq \
     --arg key "$key" \
     --arg val "$value" \
