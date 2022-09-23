@@ -160,7 +160,7 @@ function addKeyToJsonFile() {
   cat $json_file_path | jq \
     --arg key "$key" \
     --arg val "$value" \
-    '. += {($key): ($val)}' | tee $json_file_path >/dev/null
+    '.Parameters += {($key): ($val)}' | tee $json_file_path >/dev/null
 }
 
 
