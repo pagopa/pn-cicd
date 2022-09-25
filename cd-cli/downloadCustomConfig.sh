@@ -124,7 +124,7 @@ if ( [ ! -z "${configuration_repository_secret_name}" ] ) then
 
     git clone $( cat ./secret-config-repo.json | jq -r '.repositoryUrl' ) custom-config
     ( cd custom-config && git fetch && git checkout $commit_id )
-    
+    touch custom-config/empty.txt
     rm ./secret-config-repo.json
   else 
     echo "=== Secret $configuration_repository_secret_name not found"
