@@ -129,8 +129,10 @@ if ( [ ! -z "${configuration_repository_secret_name}" ] ) then
   else 
     echo "=== Secret $configuration_repository_secret_name not found"
     mkdir custom-config
+    touch custom-config/empty.txt
   fi
 else 
   echo "=== Nothing to do!!" 
   mkdir custom-config
+  touch custom-config/empty.txt
 fi
