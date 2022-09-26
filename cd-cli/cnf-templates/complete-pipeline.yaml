@@ -108,6 +108,7 @@ Resources:
 
   # - Role and policy used to activate CodeBuild from EventBridge rule
   EventBusRunCodeBuildRole:
+    Condition: IsDevCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -126,10 +127,7 @@ Resources:
                   - "codebuild:*"
                 Effect: Allow
                 Resource: 
-                  - Fn::If:
-                    - IsDevCondition
-                    - !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
-                    - !Ref AWS::NoValue
+                  - !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
                   - !GetAtt RunTestsCodebuildProject.Arn
 
 
@@ -435,6 +433,8 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
@@ -760,6 +760,8 @@ Resources:
                 - 'echo "#####################"'
                 - 'git clone https://github.com/pagopa/pn-cicd.git'
                 - '( cd pn-cicd && git checkout $cd_scripts_commitId )'
+                - '( ./pn-cicd/cd-cli/downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) )'
+                - '( cp -r custom-config/* pn-cicd/cd-cli/custom-config )'
                 - 'ls -r pn-cicd'
                 - 'echo ""'
                 - 'echo ""'
@@ -1929,6 +1931,7 @@ Resources:
   ###  RUN E2E TESTS
   ###########################################################################
   ScheduledRule: 
+    Condition: IsDevCondition
     Type: AWS::Events::Rule
     Properties: 
       Description: "ScheduledRule"
@@ -1948,6 +1951,7 @@ Resources:
   ###  Utility that run e2e tests
   ###########################################################################
   RunTestsCodebuildProject:
+    Condition: IsDevCondition
     Type: 'AWS::CodeBuild::Project'
     Properties:
       Name: !Sub ${ProjectName}-RunE2eTestsCodeBuildProject
@@ -1994,6 +1998,7 @@ Resources:
 
   RunTestsCodebuildProjectLogGroup:
     Type: AWS::Logs::LogGroup
+    Condition: IsDevCondition
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsCodebuildProject}"
       RetentionInDays: 30
