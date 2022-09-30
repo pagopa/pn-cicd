@@ -217,6 +217,7 @@ ParamFilePath="pn-infra/runtime-infra/pn-logs-export-${env_type}-cfg.json"
 EnhancedParamFilePath="pn-logs-export-${env_type}-cfg-enhanced.json"
 
 
+PreviousOutputFilePath="previous-output-${env_type}.json"
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
@@ -225,7 +226,7 @@ echo " ==== Directory listing"
 ls -r
 
 echo "= Previous output file"
-PreviousOutputFilePath="previous-output-${env_type}.json"
+
 cat > $PreviousOutputFilePath <</EOF 
 {
   "LogsBucketName": "$logsBucketName",
