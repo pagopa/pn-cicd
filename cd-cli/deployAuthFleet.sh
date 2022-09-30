@@ -303,12 +303,37 @@ echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
 cat ${EnanchedParamFilePath}
 
 
+
+
+
+msStackName="pn-auth-fleet-microsvc-${env_type}"
+
+authFleetMicrosvcStackAlreadyDeployed=$( \
+  aws ${aws_command_base_args} cloudformation list-stacks \
+      | jq ".StackSummaries | .[] | select(.StackName==\"${msStackName}\" and .StackStatus!=\"DELETE_COMPLETE\") | .StackId " \
+      | wc -l \
+)
+
+if ( [ "$authFleetMicrosvcStackAlreadyDeployed" -eq "0" ] ) then
+  echo ""
+  echo "=== Deploy PN-AUTH-FLEET FOR $env_type ACCOUNT without LAMBDA VPC PLACEMENT"
+  cat ${EnanchedParamFilePath} | sed 's/]/,"PutIntoVpc=false"]/' > ${EnanchedParamFilePath}.pre
+
+  aws ${aws_command_base_args} \
+      cloudformation deploy \
+        --stack-name $msStackName \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --template-file ${TemplateFilePath} \
+        --parameter-overrides file://$( realpath ${EnanchedParamFilePath}.pre )  
+fi
+
 echo ""
 echo "=== Deploy PN-AUTH-FLEET FOR $env_type ACCOUNT"
+cat ${EnanchedParamFilePath} | sed 's/]/,"PutIntoVpc=true"]/' > ${EnanchedParamFilePath}.post
 aws ${aws_command_base_args} \
     cloudformation deploy \
-      --stack-name pn-auth-fleet-microsvc-$env_type \
+      --stack-name $msStackName \
       --capabilities CAPABILITY_NAMED_IAM \
       --template-file ${TemplateFilePath} \
-      --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+      --parameter-overrides file://$( realpath ${EnanchedParamFilePath}.post )
         
