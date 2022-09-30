@@ -249,9 +249,7 @@ cat $PreviousOutputFilePath
 echo "= Enhanced parameters file"
 
 jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
-   | jq -s ".[] | .Parameters" \
    > ${EnhancedParamFilePath}
-
 cat $EnhancedParamFilePath
 
 aws ${aws_command_base_args} cloudformation deploy \
