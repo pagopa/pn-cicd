@@ -149,21 +149,6 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive
 
-PreviousOutputFilePath="previous-output-${env_type}.json"
-echo "{}" > $PreviousOutputFilePath
-
-function addKeyToJsonFile() {
-  json_file_path=$1
-  key=$2
-  value=$3
-  echo "add key $2 and value $3"
-  cat $json_file_path | jq \
-    --arg key "$key" \
-    --arg val "$value" \
-    '.Parameters += {($key): ($val)}' | tee $json_file_path 
-}
-
-
 echo ""
 echo ""
 echo ""
@@ -210,17 +195,11 @@ timelineCdcSKeyArn=${cdcSKeyArn}
 echo " - Timeline CDC Stream: ${timelineCdcStreamArn}"
 echo "   Timeline CDC Key: ${timelineCdcSKeyArn}"
 
-addKeyToJsonFile $PreviousOutputFilePath "TimelineCdcKinesisStreamArn" $timelineCdcStreamArn
-addKeyToJsonFile $PreviousOutputFilePath "TimelineCdcKinesisKeyArn" $timelineCdcSKeyArn
-
 getInfoForOneCdc pn-delivery-storage-${env_type} Notification
 notificationCdcStreamArn=${cdcStreamArn}
 notificationCdcSKeyArn=${cdcSKeyArn}
 echo " - Notification CDC Stream: ${notificationCdcStreamArn}"
 echo "   Notification CDC Key: ${notificationCdcSKeyArn}"
-
-addKeyToJsonFile $PreviousOutputFilePath "NotificationCdcKinesisStreamArn" $notificationCdcStreamArn
-addKeyToJsonFile $PreviousOutputFilePath "NotificationCdcKinesisKeyArn" $notificationCdcSKeyArn
 
 getInfoForOneCdc pn-mandate-storage-${env_type} Mandate
 mandateCdcStreamArn=${cdcStreamArn}
@@ -228,17 +207,11 @@ mandateCdcSKeyArn=${cdcSKeyArn}
 echo " - Mandate CDC Stream: ${mandateCdcStreamArn}"
 echo "   Mandate CDC Key: ${mandateCdcSKeyArn}"
 
-addKeyToJsonFile $PreviousOutputFilePath "MandateCdcKinesisStreamArn" $mandateCdcStreamArn
-addKeyToJsonFile $PreviousOutputFilePath "MandateCdcKinesisKeyArn" $mandateCdcSKeyArn
-
 getInfoForOneCdc pn-user-attributes-storage-${env_type} UserAttributes
 userAttributesCdcStreamArn=${cdcStreamArn}
 userAttributesCdcSKeyArn=${cdcSKeyArn}
 echo " - User Attributes CDC Stream: ${userAttributesCdcStreamArn}"
 echo "   User Attributes CDC Key: ${userAttributesCdcSKeyArn}"
-
-addKeyToJsonFile $PreviousOutputFilePath "UserAttributesCdcKinesisStreamArn" $userAttributesCdcStreamArn
-addKeyToJsonFile $PreviousOutputFilePath "UserAttributesCdcKinesisKeyArn" $userAttributesCdcSKeyArn
 
 
 echo "=== Prepare parameters for pn-logs-export.yaml deployment in $env_type ACCOUNT"
@@ -246,9 +219,6 @@ TemplateFilePath="pn-infra/runtime-infra/pn-logs-export.yaml"
 ParamFilePath="pn-infra/runtime-infra/pn-logs-export-${env_type}-cfg.json"
 EnhancedParamFilePath="pn-logs-export-${env_type}-cfg-enhanced.json"
 
-addKeyToJsonFile $PreviousOutputFilePath "TemplateBucketBaseUrl" $templateBucketHttpsBaseUrl
-addKeyToJsonFile $PreviousOutputFilePath "ProjectName" $project_name
-addKeyToJsonFile $PreviousOutputFilePath "Version" "cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
@@ -258,6 +228,22 @@ echo " ==== Directory listing"
 ls -r
 
 echo "= Previous output file"
+PreviousOutputFilePath="previous-output-${env_type}.json"
+cat > $PreviousOutputFilePath <</EOF 
+{
+  "TimelineCdcKinesisStreamArn": "$timelineCdcStreamArn",
+  "TimelineCdcKinesisKeyArn": "$timelineCdcSKeyArn",
+  "NotificationCdcKinesisStreamArn": "$notificationCdcStreamArn",
+  "NotificationCdcKinesisKeyArn": "$notificationCdcSKeyArn",
+  "MandateCdcKinesisStreamArn": "$mandateCdcStreamArn",
+  "MandateCdcKinesisKeyArn": "$mandateCdcSKeyArn",
+  "UserAttributesCdcKinesisStreamArn": "$userAttributesCdcStreamArn",
+  "UserAttributesCdcKinesisKeyArn": "$userAttributesCdcSKeyArn",
+  "TemplateBucketBaseUrl": "$templateBucketHttpsBaseUrl",
+  "ProjectName": "$project_name",
+  "Version": "cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
+}
+/EOF
 cat $PreviousOutputFilePath
 
 echo "= Enhanced parameters file"
