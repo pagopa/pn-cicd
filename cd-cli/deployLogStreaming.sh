@@ -167,9 +167,6 @@ logsExporterRoleArn=$( aws ${aws_command_base_args} \
 echo "LOGS Bucker: ${logsBucketName}"
 echo "LOGS Role Arn: ${logsExporterRoleArn}"
 
-addKeyToJsonFile $PreviousOutputFilePath "LogsBucketName" $logsBucketName
-addKeyToJsonFile $PreviousOutputFilePath "LogsExporterRoleArn" $logsExporterRoleArn
-
 echo ""
 echo "###                  LIST CDC STREAMS                  ###"
 echo "##########################################################"
@@ -231,6 +228,8 @@ echo "= Previous output file"
 PreviousOutputFilePath="previous-output-${env_type}.json"
 cat > $PreviousOutputFilePath <</EOF 
 {
+  "LogsBucketName": "$logsBucketName",
+  "LogsExporterRoleArn": "$logsExporterRoleArn",
   "TimelineCdcKinesisStreamArn": "$timelineCdcStreamArn",
   "TimelineCdcKinesisKeyArn": "$timelineCdcSKeyArn",
   "NotificationCdcKinesisStreamArn": "$notificationCdcStreamArn",
