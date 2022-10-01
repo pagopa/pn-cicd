@@ -237,9 +237,6 @@ aws ${aws_command_base_args} \
       | jq " .Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
       | tee ${PreviousOutputFilePath}
 
-keepKeys=$( yq eval '.Parameters | keys' $TemplateFilePath | sed -e 's/#.*//' | sed -e '/^ *$/d' | sed -e 's/^. //g' | tr '\n' ',' | sed -e 's/,$//' )
-echo "Parameters required from stack: $keepKeys"
-
 echo ""
 echo "= Enanched parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
