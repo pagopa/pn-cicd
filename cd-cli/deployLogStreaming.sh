@@ -186,11 +186,11 @@ function getInfoForOneCdc() {
 
 }
 
-getInfoForOneCdc pn-delivery-push-storage-${env_type} Timeline
-timelineCdcStreamArn=${cdcStreamArn}
-timelineCdcSKeyArn=${cdcSKeyArn}
-echo " - Timeline CDC Stream: ${timelineCdcStreamArn}"
-echo "   Timeline CDC Key: ${timelineCdcSKeyArn}"
+# getInfoForOneCdc pn-delivery-push-storage-${env_type} Timeline
+# timelineCdcStreamArn=${cdcStreamArn}
+# timelineCdcSKeyArn=${cdcSKeyArn}
+# echo " - Timeline CDC Stream: ${timelineCdcStreamArn}"
+# echo "   Timeline CDC Key: ${timelineCdcSKeyArn}"
 
 getInfoForOneCdc pn-delivery-storage-${env_type} Notification
 notificationCdcStreamArn=${cdcStreamArn}
@@ -223,34 +223,29 @@ echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
 echo " - EnhancedParamFilePath: ${EnhancedParamFilePath}"
 echo " ==== Directory listing"
-ls -r
 
-echo "= Previous output file"
+echo ""
+echo "= Read Outputs from previous stack adding new parameters"
+aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | jq " .TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\""
+      | jq " .ProjectName = \"$project_name\""
+      | jq " .Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+      | tee ${PreviousOutputFilePath}
 
-cat > $PreviousOutputFilePath <</EOF 
-{
-  "LogsBucketName": "$logsBucketName",
-  "LogsExporterRoleArn": "$logsExporterRoleArn",
-  "TimelineCdcKinesisStreamArn": "$timelineCdcStreamArn",
-  "TimelineCdcKinesisKeyArn": "$timelineCdcSKeyArn",
-  "NotificationCdcKinesisStreamArn": "$notificationCdcStreamArn",
-  "NotificationCdcKinesisKeyArn": "$notificationCdcSKeyArn",
-  "MandateCdcKinesisStreamArn": "$mandateCdcStreamArn",
-  "MandateCdcKinesisKeyArn": "$mandateCdcSKeyArn",
-  "UserAttributesCdcKinesisStreamArn": "$userAttributesCdcStreamArn",
-  "UserAttributesCdcKinesisKeyArn": "$userAttributesCdcSKeyArn",
-  "TemplateBucketBaseUrl": "$templateBucketHttpsBaseUrl",
-  "ProjectName": "$project_name",
-  "Version": "cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
-}
-/EOF
-cat $PreviousOutputFilePath
+keepKeys=$( yq eval '.Parameters | keys' $TemplateFilePath | sed -e 's/#.*//' | sed -e '/^ *$/d' | sed -e 's/^. //g' | tr '\n' ',' | sed -e 's/,$//' )
+echo "Parameters required from stack: $keepKeys"
 
-echo "= Enhanced parameters file"
-
+echo ""
+echo "= Enanched parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
-   > ${EnhancedParamFilePath}
-cat $EnhancedParamFilePath
+   > ${EnanchedParamFilePath}
+cat ${EnanchedParamFilePath}
+
 
 aws ${aws_command_base_args} cloudformation deploy \
       --stack-name pn-logs-export-${env_type} \
