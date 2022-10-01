@@ -265,7 +265,7 @@ echo "###########################################################"
 
 DowntimeLogsCompositeAlarmQueueARN=$( aws ${aws_command_base_args} cloudformation describe-stacks \
       --stack-name pn-ipc-${env_type} | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DowntimeLogsAggregateQueueARN\") | .OutputValue" \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DowntimeLogsAggregateAlarmQueueARN\") | .OutputValue" \
     )
 
 aws ${aws_command_base_args} cloudformation deploy \
