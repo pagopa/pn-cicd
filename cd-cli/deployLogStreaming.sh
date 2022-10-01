@@ -214,14 +214,14 @@ echo "   User Attributes CDC Key: ${userAttributesCdcSKeyArn}"
 echo "=== Prepare parameters for pn-logs-export.yaml deployment in $env_type ACCOUNT"
 TemplateFilePath="pn-infra/runtime-infra/pn-logs-export.yaml"
 ParamFilePath="pn-infra/runtime-infra/pn-logs-export-${env_type}-cfg.json"
-EnhancedParamFilePath="pn-logs-export-${env_type}-cfg-enhanced.json"
+EnanchedParamFilePath="pn-logs-export-${env_type}-cfg-enhanced.json"
 
 
 PreviousOutputFilePath="previous-output-${env_type}.json"
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
-echo " - EnhancedParamFilePath: ${EnhancedParamFilePath}"
+echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " ==== Directory listing"
 
 echo ""
@@ -248,7 +248,7 @@ aws ${aws_command_base_args} cloudformation deploy \
       --stack-name pn-logs-export-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM \
       --template-file "$TemplateFilePath" \
-      --parameter-overrides file://$(realpath $EnhancedParamFilePath)
+      --parameter-overrides file://$(realpath $EnanchedParamFilePath)
 
 
 echo ""
