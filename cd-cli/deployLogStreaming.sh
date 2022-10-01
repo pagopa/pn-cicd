@@ -232,9 +232,9 @@ aws ${aws_command_base_args} \
       --query "Stacks[0].Outputs" \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | jq " .TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\""
-      | jq " .ProjectName = \"$project_name\""
-      | jq " .Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+      | jq " .TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\"" \
+      | jq " .ProjectName = \"$project_name\"" \
+      | jq " .Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\"" \
       | tee ${PreviousOutputFilePath}
 
 echo ""
