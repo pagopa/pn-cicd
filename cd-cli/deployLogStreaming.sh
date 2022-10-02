@@ -191,24 +191,24 @@ logsExporterRoleArn=$( aws ${aws_command_base_args} \
 echo "LOGS Bucker: ${logsBucketName}"
 echo "LOGS Role Arn: ${logsExporterRoleArn}"
 
-echo ""
-echo "###                  LIST CDC STREAMS                  ###"
-echo "##########################################################"
+# echo ""
+# echo "###                  LIST CDC STREAMS                  ###"
+# echo "##########################################################"
 
-function getInfoForOneCdc() {
-  stack_name=$1
-  output_prefix=$2
-  cdcStreamArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name ${stack_name} | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"${output_prefix}CdcKinesisStreamArn\") | .OutputValue" \
-    )
+# function getInfoForOneCdc() {
+#   stack_name=$1
+#   output_prefix=$2
+#   cdcStreamArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+#       --stack-name ${stack_name} | jq -r \
+#       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"${output_prefix}CdcKinesisStreamArn\") | .OutputValue" \
+#     )
 
-  cdcSKeyArn=$( aws ${aws_command_base_args}  cloudformation describe-stacks \
-      --stack-name ${stack_name} | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"${output_prefix}CdcKinesisKeyArn\") | .OutputValue" \
-    )
+#   cdcSKeyArn=$( aws ${aws_command_base_args}  cloudformation describe-stacks \
+#       --stack-name ${stack_name} | jq -r \
+#       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"${output_prefix}CdcKinesisKeyArn\") | .OutputValue" \
+#     )
 
-}
+# }
 
 # getInfoForOneCdc pn-delivery-push-storage-${env_type} Timeline
 # timelineCdcStreamArn=${cdcStreamArn}
@@ -216,23 +216,23 @@ function getInfoForOneCdc() {
 # echo " - Timeline CDC Stream: ${timelineCdcStreamArn}"
 # echo "   Timeline CDC Key: ${timelineCdcSKeyArn}"
 
-getInfoForOneCdc pn-delivery-storage-${env_type} Notification
-notificationCdcStreamArn=${cdcStreamArn}
-notificationCdcSKeyArn=${cdcSKeyArn}
-echo " - Notification CDC Stream: ${notificationCdcStreamArn}"
-echo "   Notification CDC Key: ${notificationCdcSKeyArn}"
+# getInfoForOneCdc pn-delivery-storage-${env_type} Notification
+# notificationCdcStreamArn=${cdcStreamArn}
+# notificationCdcSKeyArn=${cdcSKeyArn}
+# echo " - Notification CDC Stream: ${notificationCdcStreamArn}"
+# echo "   Notification CDC Key: ${notificationCdcSKeyArn}"
 
-getInfoForOneCdc pn-mandate-storage-${env_type} Mandate
-mandateCdcStreamArn=${cdcStreamArn}
-mandateCdcSKeyArn=${cdcSKeyArn}
-echo " - Mandate CDC Stream: ${mandateCdcStreamArn}"
-echo "   Mandate CDC Key: ${mandateCdcSKeyArn}"
+# getInfoForOneCdc pn-mandate-storage-${env_type} Mandate
+# mandateCdcStreamArn=${cdcStreamArn}
+# mandateCdcSKeyArn=${cdcSKeyArn}
+# echo " - Mandate CDC Stream: ${mandateCdcStreamArn}"
+# echo "   Mandate CDC Key: ${mandateCdcSKeyArn}"
 
-getInfoForOneCdc pn-user-attributes-storage-${env_type} UserAttributes
-userAttributesCdcStreamArn=${cdcStreamArn}
-userAttributesCdcSKeyArn=${cdcSKeyArn}
-echo " - User Attributes CDC Stream: ${userAttributesCdcStreamArn}"
-echo "   User Attributes CDC Key: ${userAttributesCdcSKeyArn}"
+# getInfoForOneCdc pn-user-attributes-storage-${env_type} UserAttributes
+# userAttributesCdcStreamArn=${cdcStreamArn}
+# userAttributesCdcSKeyArn=${cdcSKeyArn}
+# echo " - User Attributes CDC Stream: ${userAttributesCdcStreamArn}"
+# echo "   User Attributes CDC Key: ${userAttributesCdcSKeyArn}"
 
 
 echo "=== Prepare parameters for pn-logs-export.yaml deployment in $env_type ACCOUNT"
