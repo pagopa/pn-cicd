@@ -38,6 +38,7 @@ parse_params() {
   env_type=""
   pn_infra_commitid=""
   bucketName=""
+  LambdasBucketName=""
 
   while :; do
     case "${1-}" in
@@ -69,6 +70,10 @@ parse_params() {
       ;;
     -b | --bucket-name) 
       bucketName="${2-}"
+      shift
+      ;;
+    -B | --lambda-bucket-name) 
+      LambdasBucketName="${2-}"
       shift
       ;;
     -?*) die "Unknown option: $1" ;;
