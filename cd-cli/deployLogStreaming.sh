@@ -258,7 +258,7 @@ aws ${aws_command_base_args} \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | jq ".TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\"" \
       | jq ".OpenSearchDeliveryLambdaS3Bucket= \"$bucketName\"" \
-      | jq ".OpenSearchDeliveryLambdaS3Key = \"/pn-infra/opensearch-delivery.zip\"" \
+      | jq ".OpenSearchDeliveryLambdaS3Key = \"pn-infra/opensearch-delivery.zip\"" \
       | jq ".OpenSearchDeliveryLambdaS3ObjectVersion = \"$OpenSearchLambdaZipVersionId\"" \
       | jq ".ProjectName = \"$project_name\"" \
       | jq ".Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\"" \
