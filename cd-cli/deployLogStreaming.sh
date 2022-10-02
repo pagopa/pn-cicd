@@ -165,6 +165,13 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 aws ${aws_command_base_args} s3 cp \
       "opensearch-delivery.zip" \
       "s3://$bucketName/pn-infra/opensearch-delivery.zip" 
+OpenSearchLambdaZipVersionId=$( aws ${aws_command_base_args} \
+    s3api head-object \
+      --bucket $bucketName \
+      --key "pn-infra/opensearch-delivery.zip" \
+      --query "VersionId" \
+      --output text )
+
 
 echo ""
 echo ""
@@ -250,7 +257,9 @@ aws ${aws_command_base_args} \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | jq ".TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\"" \
-      | jq ".OpenSearchDeliveryLambdaZipUrl = \"s3://$bucketName/pn-infra/opensearch-delivery.zip\"" \
+      | jq ".OpenSearchDeliveryLambdaS3Bucket= \"$bucketName\"" \
+      | jq ".OpenSearchDeliveryLambdaS3Key = \"/pn-infra/opensearch-delivery.zip\"" \
+      | jq ".OpenSearchDeliveryLambdaS3ObjectVersion = \"$OpenSearchLambdaZipVersionId\"" \
       | jq ".ProjectName = \"$project_name\"" \
       | jq ".Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\"" \
       | tee ${PreviousOutputFilePath}
