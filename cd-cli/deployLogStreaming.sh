@@ -38,6 +38,7 @@ parse_params() {
   env_type=""
   pn_infra_commitid=""
   bucketName=""
+  LambdasBucketName=""
 
   while :; do
     case "${1-}" in
@@ -71,6 +72,10 @@ parse_params() {
       bucketName="${2-}"
       shift
       ;;
+    -B | --lambda-bucket-name) 
+      LambdasBucketName="${2-}"
+      shift
+      ;;
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -84,6 +89,7 @@ parse_params() {
   [[ -z "${pn_infra_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
+  [[ -z "${LambdasBucketName-}" ]] && usage
   return 0
 }
 
@@ -91,14 +97,15 @@ dump_params(){
   echo ""
   echo "######      PARAMETERS      ######"
   echo "##################################"
-  echo "Project Name:      ${project_name}"
-  echo "Work directory:    ${work_dir}"
-  echo "Custom config dir: ${custom_config_dir}"
-  echo "Infra CommitId:    ${pn_infra_commitid}"
-  echo "Env Name:          ${env_type}"
-  echo "AWS region:        ${aws_region}"
-  echo "AWS profile:       ${aws_profile}"
-  echo "Bucket Name:       ${bucketName}"
+  echo "Project Name:       ${project_name}"
+  echo "Work directory:     ${work_dir}"
+  echo "Custom config dir:  ${custom_config_dir}"
+  echo "Infra CommitId:     ${pn_infra_commitid}"
+  echo "Env Name:           ${env_type}"
+  echo "AWS region:         ${aws_region}"
+  echo "AWS profile:        ${aws_profile}"
+  echo "Bucket Name:        ${bucketName}"
+  echo "Lambda Bucket Name: ${LambdasBucketName}"
 }
 
 
@@ -148,6 +155,16 @@ echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive
+
+
+
+echo " - Copy Opensearch delivery lambda"
+aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+      --bucket "$LambdasBucketName" --key "pn-infra/commits/${pn_infra_commitid}/runtime-infra/lambdas/opensearch-delivery.zip" \
+      "opensearch-delivery.zip"
+aws ${aws_command_base_args} s3 cp \
+      "opensearch-delivery.zip" \
+      "s3://$bucketName/pn-infra/opensearch-delivery.zip" 
 
 echo ""
 echo ""
@@ -232,9 +249,10 @@ aws ${aws_command_base_args} \
       --query "Stacks[0].Outputs" \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | jq " .TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\"" \
-      | jq " .ProjectName = \"$project_name\"" \
-      | jq " .Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\"" \
+      | jq ".TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\"" \
+      | jq ".OpenSearchDeliveryLambdaZipUrl = \"s3://$bucketName/pn-infra/opensearch-delivery.zip\"" \
+      | jq ".ProjectName = \"$project_name\"" \
+      | jq ".Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\"" \
       | tee ${PreviousOutputFilePath}
 
 echo ""
