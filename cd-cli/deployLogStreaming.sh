@@ -89,6 +89,7 @@ parse_params() {
   [[ -z "${pn_infra_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
+  [[ -z "${LambdasBucketName-}" ]] && usage
   return 0
 }
 
@@ -96,14 +97,15 @@ dump_params(){
   echo ""
   echo "######      PARAMETERS      ######"
   echo "##################################"
-  echo "Project Name:      ${project_name}"
-  echo "Work directory:    ${work_dir}"
-  echo "Custom config dir: ${custom_config_dir}"
-  echo "Infra CommitId:    ${pn_infra_commitid}"
-  echo "Env Name:          ${env_type}"
-  echo "AWS region:        ${aws_region}"
-  echo "AWS profile:       ${aws_profile}"
-  echo "Bucket Name:       ${bucketName}"
+  echo "Project Name:       ${project_name}"
+  echo "Work directory:     ${work_dir}"
+  echo "Custom config dir:  ${custom_config_dir}"
+  echo "Infra CommitId:     ${pn_infra_commitid}"
+  echo "Env Name:           ${env_type}"
+  echo "AWS region:         ${aws_region}"
+  echo "AWS profile:        ${aws_profile}"
+  echo "Bucket Name:        ${bucketName}"
+  echo "Lambda Bucket Name: ${LambdasBucketName}"
 }
 
 
@@ -154,6 +156,23 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive
 
+
+
+echo " - Copy Opensearch delivery lambda"
+aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+      --bucket "$LambdasBucketName" --key "pn-infra/commits/${pn_infra_commitid}/runtime-infra/lambdas/opensearch-delivery.zip" \
+      "opensearch-delivery.zip"
+aws ${aws_command_base_args} s3 cp \
+      "opensearch-delivery.zip" \
+      "s3://$bucketName/pn-infra/opensearch-delivery.zip" 
+OpenSearchLambdaZipVersionId=$( aws ${aws_command_base_args} \
+    s3api head-object \
+      --bucket $bucketName \
+      --key "pn-infra/opensearch-delivery.zip" \
+      --query "VersionId" \
+      --output text )
+
+
 echo ""
 echo ""
 echo ""
@@ -172,96 +191,48 @@ logsExporterRoleArn=$( aws ${aws_command_base_args} \
 echo "LOGS Bucker: ${logsBucketName}"
 echo "LOGS Role Arn: ${logsExporterRoleArn}"
 
-echo ""
-echo "###                  LIST CDC STREAMS                  ###"
-echo "##########################################################"
-
-function getInfoForOneCdc() {
-  stack_name=$1
-  output_prefix=$2
-  cdcStreamArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name ${stack_name} | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"${output_prefix}CdcKinesisStreamArn\") | .OutputValue" \
-    )
-
-  cdcSKeyArn=$( aws ${aws_command_base_args}  cloudformation describe-stacks \
-      --stack-name ${stack_name} | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"${output_prefix}CdcKinesisKeyArn\") | .OutputValue" \
-    )
-
-}
-
-getInfoForOneCdc pn-delivery-push-storage-${env_type} Timeline
-timelineCdcStreamArn=${cdcStreamArn}
-timelineCdcSKeyArn=${cdcSKeyArn}
-echo " - Timeline CDC Stream: ${timelineCdcStreamArn}"
-echo "   Timeline CDC Key: ${timelineCdcSKeyArn}"
-
-getInfoForOneCdc pn-delivery-storage-${env_type} Notification
-notificationCdcStreamArn=${cdcStreamArn}
-notificationCdcSKeyArn=${cdcSKeyArn}
-echo " - Notification CDC Stream: ${notificationCdcStreamArn}"
-echo "   Notification CDC Key: ${notificationCdcSKeyArn}"
-
-getInfoForOneCdc pn-mandate-storage-${env_type} Mandate
-mandateCdcStreamArn=${cdcStreamArn}
-mandateCdcSKeyArn=${cdcSKeyArn}
-echo " - Mandate CDC Stream: ${mandateCdcStreamArn}"
-echo "   Mandate CDC Key: ${mandateCdcSKeyArn}"
-
-getInfoForOneCdc pn-user-attributes-storage-${env_type} UserAttributes
-userAttributesCdcStreamArn=${cdcStreamArn}
-userAttributesCdcSKeyArn=${cdcSKeyArn}
-echo " - User Attributes CDC Stream: ${userAttributesCdcStreamArn}"
-echo "   User Attributes CDC Key: ${userAttributesCdcSKeyArn}"
-
 
 echo "=== Prepare parameters for pn-logs-export.yaml deployment in $env_type ACCOUNT"
 TemplateFilePath="pn-infra/runtime-infra/pn-logs-export.yaml"
 ParamFilePath="pn-infra/runtime-infra/pn-logs-export-${env_type}-cfg.json"
-EnhancedParamFilePath="pn-logs-export-${env_type}-cfg-enhanced.json"
+EnanchedParamFilePath="pn-logs-export-${env_type}-cfg-enhanced.json"
 
 
 PreviousOutputFilePath="previous-output-${env_type}.json"
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
-echo " - EnhancedParamFilePath: ${EnhancedParamFilePath}"
+echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " ==== Directory listing"
-ls -r
 
-echo "= Previous output file"
+echo ""
+echo "= Read Outputs from previous stack adding new parameters"
+aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | jq ".TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\"" \
+      | jq ".OpenSearchDeliveryLambdaS3Bucket= \"$bucketName\"" \
+      | jq ".OpenSearchDeliveryLambdaS3Key = \"pn-infra/opensearch-delivery.zip\"" \
+      | jq ".OpenSearchDeliveryLambdaS3ObjectVersion = \"$OpenSearchLambdaZipVersionId\"" \
+      | jq ".ProjectName = \"$project_name\"" \
+      | jq ".Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\"" \
+      | tee ${PreviousOutputFilePath}
 
-cat > $PreviousOutputFilePath <</EOF 
-{
-  "LogsBucketName": "$logsBucketName",
-  "LogsExporterRoleArn": "$logsExporterRoleArn",
-  "TimelineCdcKinesisStreamArn": "$timelineCdcStreamArn",
-  "TimelineCdcKinesisKeyArn": "$timelineCdcSKeyArn",
-  "NotificationCdcKinesisStreamArn": "$notificationCdcStreamArn",
-  "NotificationCdcKinesisKeyArn": "$notificationCdcSKeyArn",
-  "MandateCdcKinesisStreamArn": "$mandateCdcStreamArn",
-  "MandateCdcKinesisKeyArn": "$mandateCdcSKeyArn",
-  "UserAttributesCdcKinesisStreamArn": "$userAttributesCdcStreamArn",
-  "UserAttributesCdcKinesisKeyArn": "$userAttributesCdcSKeyArn",
-  "TemplateBucketBaseUrl": "$templateBucketHttpsBaseUrl",
-  "ProjectName": "$project_name",
-  "Version": "cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
-}
-/EOF
-cat $PreviousOutputFilePath
-
-echo "= Enhanced parameters file"
-
+echo ""
+echo "= Enanched parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
-   > ${EnhancedParamFilePath}
-cat $EnhancedParamFilePath
+   > ${EnanchedParamFilePath}
+cat ${EnanchedParamFilePath}
+
 
 aws ${aws_command_base_args} cloudformation deploy \
       --stack-name pn-logs-export-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM \
       --template-file "$TemplateFilePath" \
-      --parameter-overrides file://$(realpath $EnhancedParamFilePath)
+      --parameter-overrides file://$(realpath $EnanchedParamFilePath)
 
 
 echo ""

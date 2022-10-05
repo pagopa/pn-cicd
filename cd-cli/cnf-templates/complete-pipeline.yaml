@@ -974,7 +974,7 @@ Resources:
                 - 'echo "###                UPDATE LOGS EXPORTS                ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && ./deployLogStreaming.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - '(cd scripts/cd-cli && ./deployLogStreaming.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'

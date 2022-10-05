@@ -595,10 +595,10 @@ Resources:
   PnInfra:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/not-compiled-repo-codebuild.yaml'
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/infra-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-infra'
-        GitHubDefaultBranch: 'develop'
+        CiArtifactBucket: !Ref 'CiArtifactBucket'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
       TimeoutInMinutes: 5
   PnCiCd:
