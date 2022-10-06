@@ -231,6 +231,7 @@ Resources:
                     sed -i -e "s|pn_external_channels_commitId=.*|pn_external_channels_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_external_channels_imageUrl=.*|pn_external_channels_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-pn-external-channels-update-pipeline"
+                  fi
                 - |
                   if ( [ "$PROJECT" = "pn-logsaver-be" ] ) then
                     sed -i -e "s|pn_logsaver_be_commitId=.*|pn_logsaver_be_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
