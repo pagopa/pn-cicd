@@ -139,6 +139,7 @@ Resources:
     Type: 'AWS::CodeBuild::Project'
     Properties:
       Name: 'ChooseCdPipeline'
+      ConcurrentBuildLimit: 1
       ServiceRole: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Source: 
         Type: NO_SOURCE
