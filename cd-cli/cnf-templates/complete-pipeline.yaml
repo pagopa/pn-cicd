@@ -2207,12 +2207,16 @@ Resources:
               commands:
                 - |
                   API_KEY=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKey' )
+                  CRISTOFORO_C=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestBearerTokenCristoforoC' )
+                  FIERAMOSCA_E=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestBearerTokenFieramoscaE' )
                 - |
                   echo "### CLONE E2E TEST REPOSITORY ###"
                   echo "#####################"
                   git clone https://github.com/pagopa/pn-b2b-client.git pn-b2b-client
                   ( cd pn-b2b-client && echo "API_KEY=${API_KEY}" > config/application.properties )
-                  ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.client.b2b.pa.cucumber.test.CucumberIntegrationTest -Dpn.external.base-url=https://api.${ENV_NAME}.pn.pagopa.it '-Dpn.external.api-key=${API_KEY}'  clean verify )
+                  ( cd pn-b2b-client && echo "CRISTOFORO_C=${CRISTOFORO_C}" > config/application.properties )
+                  ( cd pn-b2b-client && echo "FIERAMOSCA_E=${FIERAMOSCA_E}" > config/application.properties )
+                  ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.client.b2b.pa.cucumber.test.CucumberDevIntegrationTest -Dpn.external.base-url=https://api.${ENV_NAME}.pn.pagopa.it '-Dpn.external.api-key=${API_KEY}' '-Dpn.bearer-token.CristoforoC=${CRISTOFORO_C}' '-Dpn.bearer-token.FieramoscaE=${FIERAMOSCA_E}' clean verify )
           reports:
             reportGroup: #Cucumber reports from json plugin
               files:
