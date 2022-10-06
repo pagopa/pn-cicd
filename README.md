@@ -16,4 +16,3 @@ The list of the "AWS account id" allowed to access to Continuous Integration
 artifacts is hardcoded in the [ci/bootstrap.sh](ci/bootstrap.sh) file in the
 _"Deploy CI pipeline"_ command.
 
-
