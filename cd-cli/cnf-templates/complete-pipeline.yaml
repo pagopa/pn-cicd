@@ -226,6 +226,7 @@ Resources:
                     sed -i -e "s|pn_radd_fsu_imageUrl=.*|pn_radd_fsu_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-pn-radd-fsu-update-pipeline"
                   fi
+                - |
                   if ( [ "$PROJECT" = "pn-external-channels" ] ) then
                     sed -i -e "s|pn_external_channels_commitId=.*|pn_external_channels_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_external_channels_imageUrl=.*|pn_external_channels_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
