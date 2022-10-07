@@ -2066,12 +2066,12 @@ Resources:
                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                    {"name":"MsName", "value":"pn-external-channels", "type":"PLAINTEXT"},
                    {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
-                   {"name":"VarPrefix", "value":"pn-external-channels", "type":"PLAINTEXT"}
+                   {"name":"VarPrefix", "value":"pn_external_channels", "type":"PLAINTEXT"}
                  ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
-                - Name: PnDeliveryPushOutput
+                - Name: PnExternalChannelsOutput
               RunOrder: 3
 
 
