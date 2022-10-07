@@ -206,11 +206,12 @@ Resources:
                   SRC_DIR=./src/main/java
                   if [ -e $SRC_DIR ]; then
                     if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
-                        SONAR_OPTS="-Dsonar.branch.name=$BRANCH_NAME -Dsonar.scm.exclusions.disabled=true"
+                        SONAR_OPTS="-Dsonar.branch.name=$BRANCH_NAME"
                     else 
                         SONAR_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
                     fi
-                    SONAR_OPTS="$SONAR_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME} -Dsonar.scm.disabled=true"
+                    SONAR_OPTS="$SONAR_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}"
+                    SONAR_OPTS="$SONAR_OPTS -Dsonar.scm.disabled=true -Dsonar.scm.exclusions.disabled=true"
                     if [[ "$IS_PUBLIC_PROJECT" = "true" ]]; then
                       MAVEN_ADD_GOAL=org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                     fi
@@ -225,17 +226,6 @@ Resources:
             post_build:
               on-failure: ABORT
               commands:
-                - echo "Sonar"
-                - |
-                  if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
-                    SONAR_ADD_OPTS="-Dsonar.branch.name=$BRANCH_NAME"
-                  else 
-                    SONAR_ADD_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
-                  fi
-                - |
-                  if [[ "$IS_PUBLIC_PROJECT" = "true" ]]; then
-                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar $SONAR_ADD_OPTS -Dsonar.scm.exclusions.disabled=true -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME} -Dsonar.scm.disabled=true
-                  fi
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
                     echo "Ensure different image for each commit"
