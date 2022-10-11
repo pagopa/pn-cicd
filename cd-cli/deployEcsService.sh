@@ -44,7 +44,6 @@ parse_params() {
   env_type=""
   pn_infra_commitid=""
   pn_microsvc_commitid=""
-  cd_scripts_commitId=""
   bucketName=""
   LambdasBucketName=""
 
@@ -110,6 +109,7 @@ parse_params() {
 
   # check required params and arguments
   [[ -z "${env_type-}" ]] && usage 
+  [[ -z "${cd_scripts_commitId-}" ]] && usage
   [[ -z "${pn_infra_commitid-}" ]] && usage
   [[ -z "${pn_microsvc_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
@@ -127,6 +127,7 @@ dump_params(){
   echo "Project Name:        ${project_name}"
   echo "Work directory:      ${work_dir}"
   echo "Custom config dir:   ${custom_config_dir}"
+  echo "CICD Commit ID:      ${cd_scripts_commitId}"
   echo "Infra CommitId:      ${pn_infra_commitid}"
   echo "Microsvc CommitId:   ${pn_microsvc_commitid}"
   echo "Microsvc Name:       ${microcvs_name}"
