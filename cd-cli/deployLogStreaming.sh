@@ -154,7 +154,7 @@ echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
-      --recursive
+      --recursive --exclude ".git/*"
 
 
 
