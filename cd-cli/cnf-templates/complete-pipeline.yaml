@@ -2199,6 +2199,7 @@ Resources:
     Properties:
       Name: !Sub ${ProjectName}-RunE2eTestsCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
+      ConcurrentBuildLimit: 1
       Source: 
         Type: NO_SOURCE
         BuildSpec: |
