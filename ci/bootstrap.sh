@@ -43,8 +43,8 @@ aws --profile $CiCdAccountProfile --region $AWSRegion cloudformation deploy \
       AllowedDeployAccount7=615714398925 \
       AllowedDeployAccount8=205069730074 \
       AllowedDeployAccount9=648535372866 \
-      AllowedDeployAccount10=911845998067 \
-      AllowedDeployAccount11=911845998067 \
+      AllowedDeployAccount10=734487133479 \
+      AllowedDeployAccount11=603228414473 \
       AllowedDeployAccount12=911845998067 \
       AllowedDeployAccount13=911845998067 \
       AllowedDeployAccount14=911845998067 \

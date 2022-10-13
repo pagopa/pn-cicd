@@ -117,11 +117,12 @@ Resources:
                   SRC_DIR=./src/main/java
                   if [ -e $SRC_DIR ]; then
                     if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
-                       SONAR_OPTS="-Dsonar.branch.name=$BRANCH_NAME -Dsonar.scm.exclusions.disabled=true"
+                       SONAR_OPTS="-Dsonar.branch.name=$BRANCH_NAME"
                     else 
                        SONAR_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
                     fi
                     SONAR_OPTS="$SONAR_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}"
+                    SONAR_OPTS="$SONAR_OPTS -Dsonar.scm.disabled=true"
                     MAVEN_ADD_GOAL=org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                   fi
                   export MAVEN_OPTS="-DskipITs $SONAR_OPTS"

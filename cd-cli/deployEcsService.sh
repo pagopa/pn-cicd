@@ -13,13 +13,14 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] -n <microcvs-name> -N <microcvs-idx> [-p <aws-profile>] -r  <aws-region> -e <env-type> -i <pn-infra-github-commitid> -m <pn-microsvc-github-commitid> -I <countainer-image-uri> [-c <custom_config_dir>]
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] -n <microcvs-name> -N <microcvs-idx> [-p <aws-profile>] -r <aws-region> -e <env-type> -d <cicd-github-commitid> -i <pn-infra-github-commitid> -m <pn-microsvc-github-commitid> -I <countainer-image-uri> -b <artifactBucketName> [-w <work_dir>] [-c <custom_config_dir>]
     
     [-h]                             : this help message
     [-v]                             : verbose mode
     [-p <aws-profile>]               : aws cli profile (optional)
     -r <aws-region>                  : aws region as eu-south-1
     -e <env-type>                    : one of dev / uat / svil / coll / cert / prod
+    -d <cicd-github-commitid>        : commitId for github repository pagopa/pn-cicd
     -i <infra-github-commitid>       : commitId for github repository pagopa/pn-infra
     -m <pn-microsvc-github-commitid> : commitId for github repository del microservizio
     [-c <custom_config_dir>]         : where tor read additional env-type configurations
@@ -27,6 +28,7 @@ usage() {
     -n <microcvs-name>               : nome del microservizio
     -N <microcvs-idx>                : id del microservizio
     -I <image-uri>                   : url immagine docker microservizio
+    -w <work-dir>                    : working directory used by the script to download artifacts (default $HOME/tmp/deploy)
     
 EOF
   exit 1
@@ -35,7 +37,7 @@ EOF
 parse_params() {
   # default values of variables set from params
   project_name=pn
-  work_dir=$HOME/tmp/poste_deploy
+  work_dir=$HOME/tmp/deploy
   custom_config_dir=""
   aws_profile=""
   aws_region=""
@@ -61,6 +63,10 @@ parse_params() {
       env_type="${2-}"
       shift
       ;;
+    -d | --cicd-commitid) 
+      cd_scripts_commitId="${2-}"
+      shift
+      ;;  
     -i | --infra-commitid) 
       pn_infra_commitid="${2-}"
       shift
@@ -103,6 +109,7 @@ parse_params() {
 
   # check required params and arguments
   [[ -z "${env_type-}" ]] && usage 
+  [[ -z "${cd_scripts_commitId-}" ]] && usage
   [[ -z "${pn_infra_commitid-}" ]] && usage
   [[ -z "${pn_microsvc_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
@@ -120,6 +127,7 @@ dump_params(){
   echo "Project Name:        ${project_name}"
   echo "Work directory:      ${work_dir}"
   echo "Custom config dir:   ${custom_config_dir}"
+  echo "CICD Commit ID:      ${cd_scripts_commitId}"
   echo "Infra CommitId:      ${pn_infra_commitid}"
   echo "Microsvc CommitId:   ${pn_microsvc_commitid}"
   echo "Microsvc Name:       ${microcvs_name}"
@@ -193,7 +201,7 @@ echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
-      --recursive
+      --recursive --exclude ".git/*"
 
 
 echo ""
