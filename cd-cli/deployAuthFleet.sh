@@ -176,7 +176,7 @@ echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
-      --recursive
+      --recursive --exclude ".git/*"
 
 echo " - Copy apikeyAuthorizer.zip"
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
