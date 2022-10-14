@@ -208,7 +208,7 @@ prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "$PORTALE_PA_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "$PORTALE_PA_ALTERNATE_DNS"
+    "${PORTALE_PA_ALTERNATE_DNS-}"
 
 webappPaBucketName=${bucketName}
 
@@ -218,7 +218,7 @@ prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "$PORTALE_PF_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "$PORTALE_PF_ALTERNATE_DNS"
+    "${PORTALE_PF_ALTERNATE_DNS-}"
 webappPfBucketName=${bucketName}
 
 prepareOneCloudFront webapp-pfl-cdn-${env_type} \
@@ -226,7 +226,7 @@ prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "$PORTALE_PF_LOGIN_ALTERNATE_DNS"
+    "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
 webappPflBucketName=${bucketName}
 
 
@@ -236,7 +236,7 @@ prepareOneCloudFront web-landing-cdn-${env_type} \
     "$LANDING_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "$LANDING_SITE_ALTERNATE_DNS"
+    "${LANDING_SITE_ALTERNATE_DNS-}"
 landingBucketName=${bucketName}
 
 
