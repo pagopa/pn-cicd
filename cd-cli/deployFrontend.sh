@@ -172,9 +172,9 @@ function prepareOneCloudFront() {
   
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
-    OptionalParameters="${OptionalParameters} AlternateWebDomain=\"${AlternateWebDomain}\""
-    OptionalParameters="${OptionalParameters} WebDomainReferenceToSite=\"false\""
-    OptionalParameters="${OptionalParameters} AlternateWebDomainReferenceToSite=\"true\""
+    OptionalParameters="${OptionalParameters} AlternateWebDomain=${AlternateWebDomain}"
+    OptionalParameters="${OptionalParameters} WebDomainReferenceToSite=false"
+    OptionalParameters="${OptionalParameters} AlternateWebDomainReferenceToSite=true"
   fi
 
   echo ""
