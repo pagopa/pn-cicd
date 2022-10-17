@@ -168,6 +168,14 @@ function prepareOneCloudFront() {
   WebCertificateArn=$3
   HostedZoneId=$4
   WebApiUrl=$5
+  AlternateWebDomain=$6
+  
+  OptionalParameters=""
+  if ( [ ! -z "$AlternateWebDomain" ] ) then
+    OptionalParameters="${OptionalParameters} AlternateWebDomain=${AlternateWebDomain}"
+    OptionalParameters="${OptionalParameters} WebDomainReferenceToSite=false"
+    OptionalParameters="${OptionalParameters} AlternateWebDomainReferenceToSite=true"
+  fi
 
   echo ""
   echo "=== Create CDN ${CdnName} with domain ${WebDomain} in zone ${HostedZoneId}"
@@ -181,7 +189,8 @@ function prepareOneCloudFront() {
         WebDomain="${WebDomain}" \
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
-        WebApiUrl="${WebApiUrl}"
+        WebApiUrl="${WebApiUrl}" \
+        $OptionalParameters
   
   bucketName=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
@@ -191,13 +200,16 @@ function prepareOneCloudFront() {
   echo " - Created bucket name: ${bucketName}"
 }
 
+
 source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
 
 prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "portale-pa.${env_type}.pn.pagopa.it" \
     "$PORTALE_PA_CERTIFICATE_ARN" \
     "$ZONE_ID" \
-    "$REACT_APP_URL_API"
+    "$REACT_APP_URL_API" \
+    "${PORTALE_PA_ALTERNATE_DNS-}"
+
 webappPaBucketName=${bucketName}
 
 
@@ -205,14 +217,16 @@ prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "portale.${env_type}.pn.pagopa.it" \
     "$PORTALE_PF_CERTIFICATE_ARN" \
     "$ZONE_ID" \
-    "$REACT_APP_URL_API"
+    "$REACT_APP_URL_API" \
+    "${PORTALE_PF_ALTERNATE_DNS-}"
 webappPfBucketName=${bucketName}
 
 prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "portale-login.${env_type}.pn.pagopa.it" \
     "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
     "$ZONE_ID" \
-    "$REACT_APP_URL_API"
+    "$REACT_APP_URL_API" \
+    "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
 webappPflBucketName=${bucketName}
 
 
@@ -221,7 +235,8 @@ prepareOneCloudFront web-landing-cdn-${env_type} \
     "www.${env_type}.pn.pagopa.it" \
     "$LANDING_CERTIFICATE_ARN" \
     "$ZONE_ID" \
-    "$REACT_APP_URL_API"
+    "$REACT_APP_URL_API" \
+    "${LANDING_SITE_ALTERNATE_DNS-}"
 landingBucketName=${bucketName}
 
 
@@ -249,6 +264,7 @@ echo "====================================================================="
 echo "====================================================================="
 
 
+
 echo ""
 echo "===                          PORTALE PA                           ==="
 echo "====================================================================="
@@ -264,6 +280,7 @@ mkdir -p "pn-pa-webapp_${env_type}"
 aws ${aws_command_base_args} \
     s3 cp "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/" \
       --recursive
+
 
 
 echo ""
@@ -317,4 +334,3 @@ mkdir -p "pn-landing-webapp_${env_type}"
 aws ${aws_command_base_args} \
     s3 cp "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" \
       --recursive
-
