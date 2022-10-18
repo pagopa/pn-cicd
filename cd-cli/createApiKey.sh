@@ -86,7 +86,7 @@ dump_params(){
 
 function checkApiKeyDuplicate() {
   local APIKEY_NAME=$1
-  echo $(aws ${aws_command_base_args} apigateway get-api-keys --name-query $APIKEY_NAME  --query "items[].id" --output text)
+  echo $(aws ${aws_command_base_args} apigateway get-api-keys --name-query "$APIKEY_NAME"  --query "items[].id" --output text)
 }
 
 function getUsagePlan() {
@@ -110,7 +110,7 @@ if ( [ ! -z "${aws_region}" ] ) then
 fi
 echo ${aws_command_base_args}
 
-if [ -n "$(checkApiKeyDuplicate $apikey_name)" ]; then
+if [ -n "$(checkApiKeyDuplicate "$apikey_name")" ]; then
   echo "Key with name ${apikey_name} is already present"
   exit 0
 fi
@@ -123,7 +123,7 @@ if [ -z $USAGEPLAN_ID ]; then
 fi
 
 KEY_ID_VALUE=$(aws ${aws_command_base_args} apigateway create-api-key \
- --name ${apikey_name} \
+ --name "${apikey_name}" \
  --description "${apikey_desc}" \
  --enabled \
  --tags cx_id=${cx_id},cx_groups=${cx_groups} \
