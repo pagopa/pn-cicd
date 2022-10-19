@@ -2310,19 +2310,26 @@ Resources:
                 - echo "### NO PRE_BUILD"
             build:
               commands:
-                - |
-                  API_KEY=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKey' )
-                  CRISTOFORO_C=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestBearerTokenCristoforoC' )
-                  FIERAMOSCA_E=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestBearerTokenFieramoscaE' )
-                - |
-                  echo "### CLONE E2E TEST REPOSITORY ###"
-                  echo "#####################"
-                  git clone https://github.com/pagopa/pn-b2b-client.git pn-b2b-client
-                  ( cd pn-b2b-client && echo "API_KEY=${API_KEY}" > config/application.properties )
-                  ( cd pn-b2b-client && echo "CRISTOFORO_C=${CRISTOFORO_C}" > config/application.properties )
-                  ( cd pn-b2b-client && echo "FIERAMOSCA_E=${FIERAMOSCA_E}" > config/application.properties )
-                  ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.client.b2b.pa.cucumber.test.${TEST_SUITE:-CucumberDevIntegrationTest} -Dpn.external.base-url=https://api.${ENV_NAME}.pn.pagopa.it '-Dpn.external.api-key=${API_KEY}' '-Dpn.bearer-token.CristoforoC=${CRISTOFORO_C}' '-Dpn.bearer-token.FieramoscaE=${FIERAMOSCA_E}' clean verify )
-          reports:
+                    - |
+                      API_KEY=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKey' )
+                      API_KEY_APPIO=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eAppIOTestApiKey' )
+                      CRISTOFORO_C=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestBearerTokenCristoforoC' )
+                      FIERAMOSCA_E=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestBearerTokenFieramoscaE' )
+                      PRE_RETENTION_TIME=$(aws ssm get-parameters --names /pn-test-e2e/preLoadRetetionTime --query "Parameters[*].Value" --output text)
+                      LOAD_RETENTION_TIME=$(aws ssm get-parameters --names /pn-test-e2e/loadRetentionTime --query "Parameters[*].Value" --output text)
+                      SAFE_STORAGE_URL=$(aws ssm get-parameters --names /pn-test-e2e/safeStorageDevUrl --query "Parameters[*].Value" --output text)
+                    - |
+                      echo "### CLONE E2E TEST REPOSITORY ###"
+                      echo "#####################"
+                      git clone https://github.com/pagopa/pn-b2b-client.git pn-b2b-client
+                      ( cd pn-b2b-client && echo "API_KEY=${API_KEY}" > config/application.properties )
+                      ( cd pn-b2b-client && echo "PRE_RETENTION_TIME=${PRE_RETENTION_TIME}" > config/application.properties )
+                      ( cd pn-b2b-client && echo "LOAD_RETENTION_TIME=${LOAD_RETENTION_TIME}" > config/application.properties )
+                      ( cd pn-b2b-client && echo "SAFE_STORAGE_URL=${SAFE_STORAGE_URL}" > config/application.properties )
+                      ( cd pn-b2b-client && echo "CRISTOFORO_C=${CRISTOFORO_C}" > config/application.properties )
+                      ( cd pn-b2b-client && echo "FIERAMOSCA_E=${FIERAMOSCA_E}" > config/application.properties )
+                      ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.client.b2b.pa.cucumber.test.${TEST_SUITE:-CucumberDevIntegrationTest} -Dpn.external.base-url=https://api.${ENV_NAME}.pn.pagopa.it '-Dpn.external.api-key=${API_KEY}' '-Dpn.external.appio.api-key=${API_KEY_APPIO}' '-Dpn.webapi.external.base-url=https://webapi.${ENV_NAME}.pn.pagopa.it' '-Dpn.appio.externa.base-url=https://api-io.${ENV_NAME}.pn.pagopa.it' '-Dpn.bearer-token.CristoforoC=${CRISTOFORO_C}' '-Dpn.bearer-token.FieramoscaE=${FIERAMOSCA_E}' '-Dpn.retention.time.preload=${PRE_RETENTION_TIME}' '-Dpn.retention.time.load=${LOAD_RETENTION_TIME}' '-Dpn.safeStorage.base-url=${SAFE_STORAGE_URL}' clean verify )
+              reports:
             reportGroup: #Cucumber reports from json plugin
               files:
                 - 'pn-b2b-client/target/cucumber-report.json'
