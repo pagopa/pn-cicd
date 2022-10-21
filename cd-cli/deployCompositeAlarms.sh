@@ -158,78 +158,22 @@ aws ${aws_command_base_args} \
 
 
 
-echo " - Copy Opensearch delivery lambda"
-aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-infra/commits/${pn_infra_commitid}/runtime-infra/lambdas/opensearch-delivery.zip" \
-      "opensearch-delivery.zip"
-aws ${aws_command_base_args} s3 cp \
-      "opensearch-delivery.zip" \
-      "s3://$bucketName/pn-infra/opensearch-delivery.zip" 
-OpenSearchLambdaZipVersionId=$( aws ${aws_command_base_args} \
-    s3api head-object \
-      --bucket $bucketName \
-      --key "pn-infra/opensearch-delivery.zip" \
-      --query "VersionId" \
-      --output text )
-
 
 echo ""
-echo ""
-echo ""
-echo "###                  LOGS BUCKET INFO                  ###"
-echo "##########################################################"
+echo "###       UPDATE AGGREGATE ALARM FOR DOWNTIME LOGS       ###"
+echo "###########################################################"
 
-logsBucketName=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks --stack-name pn-ipc-${env_type} \
-      | jq -r '.Stacks[0].Outputs | .[] | select(.OutputKey=="LogsBucketName") | .OutputValue' )
-
-logsExporterRoleArn=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks --stack-name pn-ipc-${env_type} \
-      | jq -r '.Stacks[0].Outputs | .[] | select(.OutputKey=="LogsExporterRoleArn") | .OutputValue' )
-
-
-echo "LOGS Bucker: ${logsBucketName}"
-echo "LOGS Role Arn: ${logsExporterRoleArn}"
-
-
-echo "=== Prepare parameters for pn-logs-export.yaml deployment in $env_type ACCOUNT"
-TemplateFilePath="pn-infra/runtime-infra/pn-logs-export.yaml"
-ParamFilePath="pn-infra/runtime-infra/pn-logs-export-${env_type}-cfg.json"
-EnanchedParamFilePath="pn-logs-export-${env_type}-cfg-enhanced.json"
-
-
-PreviousOutputFilePath="previous-output-${env_type}.json"
-echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
-echo " - TemplateFilePath: ${TemplateFilePath}"
-echo " - ParamFilePath: ${ParamFilePath}"
-echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
-echo " ==== Directory listing"
-
-echo ""
-echo "= Read Outputs from previous stack adding new parameters"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | jq ".TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\"" \
-      | jq ".OpenSearchDeliveryLambdaS3Bucket= \"$bucketName\"" \
-      | jq ".OpenSearchDeliveryLambdaS3Key = \"pn-infra/opensearch-delivery.zip\"" \
-      | jq ".OpenSearchDeliveryLambdaS3ObjectVersion = \"$OpenSearchLambdaZipVersionId\"" \
-      | jq ".ProjectName = \"$project_name\"" \
-      | jq ".Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\"" \
-      | tee ${PreviousOutputFilePath}
-
-echo ""
-echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
-   > ${EnanchedParamFilePath}
-cat ${EnanchedParamFilePath}
-
+DowntimeLogsCompositeAlarmQueueARN=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name pn-ipc-${env_type} | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DowntimeLogsAggregateAlarmQueueARN\") | .OutputValue" \
+    )
 
 aws ${aws_command_base_args} cloudformation deploy \
-      --stack-name pn-logs-export-${env_type} \
+      --stack-name pn-aggregate-alarm-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM \
-      --template-file "$TemplateFilePath" \
-      --parameter-overrides file://$(realpath $EnanchedParamFilePath)
+      --template-file pn-infra/runtime-infra/pn-aggregate-alarms.yaml \
+      --parameter-overrides \
+        TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
+        ProjectName=${project_name} \
+        DowntimeLogsCompositeAlarmQueueARN=${DowntimeLogsCompositeAlarmQueueARN} \
+        Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
