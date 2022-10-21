@@ -2338,7 +2338,7 @@ Resources:
                       ( cd pn-b2b-client && echo "CRISTOFORO_C=${CRISTOFORO_C}" > config/application.properties )
                       ( cd pn-b2b-client && echo "FIERAMOSCA_E=${FIERAMOSCA_E}" > config/application.properties )
                       ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.client.b2b.pa.cucumber.test.${TEST_SUITE:-CucumberDevIntegrationTest} -Dpn.external.base-url=https://api.${ENV_NAME}.pn.pagopa.it '-Dpn.external.api-key=${API_KEY}' '-Dpn.external.appio.api-key=${API_KEY_APPIO}' '-Dpn.webapi.external.base-url=https://webapi.${ENV_NAME}.pn.pagopa.it' '-Dpn.appio.externa.base-url=https://api-io.${ENV_NAME}.pn.pagopa.it' '-Dpn.bearer-token.CristoforoC=${CRISTOFORO_C}' '-Dpn.bearer-token.FieramoscaE=${FIERAMOSCA_E}' '-Dpn.retention.time.preload=${PRE_RETENTION_TIME}' '-Dpn.retention.time.load=${LOAD_RETENTION_TIME}' '-Dpn.safeStorage.base-url=${SAFE_STORAGE_URL}' clean verify )
-              reports:
+          reports:
             reportGroup: #Cucumber reports from json plugin
               files:
                 - 'pn-b2b-client/target/cucumber-report.json'
