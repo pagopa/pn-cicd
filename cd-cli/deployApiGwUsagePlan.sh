@@ -32,6 +32,9 @@ parse_params() {
   aws_profile=""
   aws_region=""
   env_type=""
+  work_dir=$HOME/tmp/deploy
+  pn_infra_commitid=""
+  
 
   while :; do
     case "${1-}" in
@@ -45,6 +48,15 @@ parse_params() {
       aws_region="${2-}"
       shift
       ;;
+    -i | --infra-commitid) 
+      pn_infra_commitid="${2-}"
+      shift
+      ;;
+    -w | --work-dir) 
+      work_dir="${2-}"
+      shift
+      ;;
+    
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -60,6 +72,7 @@ parse_params() {
   [[ -z "${aws_region-}" ]] && usage
   [[ -z "${usageplan_name-}" ]] && usage
   [[ -z "${apigw_type-}" ]] && usage
+  [[ -z "${pn_infra_commitid-}" ]] && usage
   # [[ "${apigw_type-}" -ne "B2B" || "${apigw_type-}" -ne "IO" ]] && usage
   return 0
 }
@@ -73,6 +86,8 @@ dump_params(){
   echo "AWS profile:       ${aws_profile}"
   echo "Usage Plan Name    ${usageplan_name}"
   echo "Api Gateway type:  ${apigw_type}"
+  echo "Work directory:    ${work_dir}"
+  echo "Infra CommitId:    ${pn_infra_commitid}"
 }
 
 
@@ -112,13 +127,26 @@ function createUsagePlan() {
   local PLAN_NAME=$1
   local apigw_type=$2
   local STAGE=unique
-  local API_STAGES
-  API_STAGES=""
   REST_APIS_IDS=$(getRestApiIdByTag $apigw_type)
+
+  if [[ ${PLAN_NAME} == "APP_IO_BE" ]]
+  then
+    aws ${aws_command_base_args} cloudformation deploy \
+        --template-file pn-infra/runtime-infra/fragments/api-gw-usageplans-IO.yaml \
+        --stack-name "APP-IO-BE-api-usage-plan"
+  elif [[ ${PLAN_NAME} == "STANDARD_B2B" ]]
+  then
+      aws ${aws_command_base_args} cloudformation deploy \
+        --template-file pn-infra/runtime-infra/fragments/api-gw-usageplans-B2B.yaml \
+        --stack-name "STANDARD-B2B-api-usage-plan"
+  fi
+  USAGE_PLAN_ID=$(getUsagePlan $PLAN_NAME)
   for CURR_ID in $REST_APIS_IDS; do
-    API_STAGES="$API_STAGES apiId=$CURR_ID,stage=$STAGE"
+    sleep 5
+    aws ${aws_command_base_args} apigateway update-usage-plan --usage-plan-id $USAGE_PLAN_ID \
+        --patch-operations op=add,path="/apiStages",value="$CURR_ID:$STAGE" --no-cli-pager
   done
-  aws ${aws_command_base_args} apigateway create-usage-plan --name $PLAN_NAME --api-stages $API_STAGES
+  
 }
 
 function updateUsagePlan() {
@@ -132,12 +160,36 @@ function updateUsagePlan() {
   CONF_APIS_IDS=$(getCurrentStages $PLAN_NAME)
   for CURR_ID in $REST_APIS_IDS; do
     if [[ ! " ${CONF_APIS_IDS[*]} " =~ " ${CURR_ID} " ]]; then
-      sleep 1
-      aws ${aws_command_base_args} apigateway update-usage-plan --usage-plan-id $USAGE_PLAN_ID --patch-operations op=add,path="/apiStages",value="$CURR_ID:$STAGE"
+      sleep 5
+      aws ${aws_command_base_args} apigateway update-usage-plan --usage-plan-id $USAGE_PLAN_ID \
+        --patch-operations op=add,path="/apiStages",value="$CURR_ID:$STAGE" --no-cli-pager
     fi
   done
 }
 
+cd $work_dir
+
+echo "=== Download pn-infra" 
+if ( [ ! -e pn-infra ] ) then 
+  git clone https://github.com/pagopa/pn-infra.git
+fi
+
+echo ""
+echo "=== Checkout pn-infra commitId=${pn_infra_commitid}"
+( cd pn-infra && git fetch && git checkout $pn_infra_commitid )
+echo " - copy custom config"
+if ( [ ! -z "${custom_config_dir}" ] ) then
+  cp -r $custom_config_dir/pn-infra .
+fi
+
+
+echo "" 
+echo "" 
+echo "" 
+echo "" 
+echo "" 
+echo "===                  CREATE OR UPDATE USAGE PLANS                  ===" 
+echo "======================================================================"
 USAGE_PLAN_ID=$(getUsagePlan $usageplan_name)
 
 if [ "X$USAGE_PLAN_ID" == "X" ]; then
