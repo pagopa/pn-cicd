@@ -212,7 +212,8 @@ aws ${aws_command_base_args}  \
       --template-file ${microcvs_name}/scripts/aws/cfn/once4account/${env_type}.yaml \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
-        Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
+        Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}" \
+        ProjectName="${project_name}"
 
 echo ""
 echo ""
