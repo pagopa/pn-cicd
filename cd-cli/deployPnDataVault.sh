@@ -229,6 +229,7 @@ echo ""
 echo "= Read Outputs from previous stack"
 
 PreviousOutputFilePath=once-$env_type-out.json
+ParamFilePath=${microcvs_name}/scripts/aws/cfn/infra-${env_type}-cfg.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra.yml
 EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
@@ -246,7 +247,8 @@ echo "Parameters required from stack: $keepKeys"
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } " ${PreviousOutputFilePath} \
+jq -s "{ \"Parameters\": .[0] } * .[1]" \
+   ${PreviousOutputFilePath} ${ParamFilePath} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
