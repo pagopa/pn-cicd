@@ -209,7 +209,7 @@ echo ""
 echo ""
 echo ""
 echo "=== Prepare parameters for $microcvs_name storage deployment in $env_type ACCOUNT"
-PreviousOutputFilePath=once-$env_type-out.json
+PreviousOutputFilePath=infra-$env_type-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/storage.yml
 EnanchedParamFilePath=${microcvs_name}-storage-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
@@ -224,7 +224,7 @@ echo ""
 echo "= Read Outputs from previous stack"
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
-      --stack-name once-$env_type \
+      --stack-name infra-$env_type \
       --query "Stacks[0].Outputs" \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
@@ -275,7 +275,7 @@ echo ""
 echo ""
 echo "=== Prepare parameters for $microcvs_name microservice deployment in $env_type ACCOUNT"
 PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
-InfraOnceOutputFilePath=once-$env_type-out.json
+InfraOnceOutputFilePath=infra-$env_type-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/microservice.yml
 ParamFilePath=${microcvs_name}/scripts/aws/cfn/microservice-${env_type}-cfg.json
 EnanchedParamFilePath=${microcvs_name}-microservice-${env_type}-cfg-enanched.json
@@ -306,7 +306,7 @@ echo ""
 echo "= Read Outputs from infrastructure stack"
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
-      --stack-name once-$env_type \
+      --stack-name infra-$env_type \
       --query "Stacks[0].Outputs" \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \

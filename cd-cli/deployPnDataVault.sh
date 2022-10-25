@@ -212,8 +212,53 @@ aws ${aws_command_base_args}  \
       --template-file ${microcvs_name}/scripts/aws/cfn/once4account/${env_type}.yaml \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
-        Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}" \
-        ProjectName="${project_name}"
+        Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
+
+echo ""
+echo ""
+echo ""
+echo "======================================================================="
+echo "======================================================================="
+echo "======================================================================="
+echo ""
+echo ""
+echo "=== Deploy INFRA FOR $env_type ACCOUNT"
+echo "======================================================================="
+
+echo ""
+echo "= Read Outputs from previous stack"
+
+PreviousOutputFilePath=once-$env_type-out.json
+TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra.yml
+EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
+
+aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name once-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | tee ${PreviousOutputFilePath}
+
+keepKeys=$( yq eval '.Parameters | keys' $TemplateFilePath | sed -e 's/#.*//' | sed -e '/^ *$/d' | sed -e 's/^. //g' | tr '\n' ',' | sed -e 's/,$//' )
+echo "Parameters required from stack: $keepKeys"
+
+echo ""
+echo "= Enanched parameters file"
+jq -s "{ \"Parameters\": .[0] } " ${PreviousOutputFilePath} \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnanchedParamFilePath}
+echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+cat ${EnanchedParamFilePath}
+
+
+aws ${aws_command_base_args}  \
+    cloudformation deploy \
+      --stack-name infra-$env_type \
+      --capabilities CAPABILITY_NAMED_IAM \
+      --template-file ${microcvs_name}/scripts/aws/cfn/infra.yaml \
+      --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 echo ""
 echo ""
@@ -229,7 +274,7 @@ echo ""
 echo ""
 echo ""
 echo "=== Prepare parameters for $microcvs_name storage deployment in $env_type ACCOUNT"
-PreviousOutputFilePath=once-$env_type-out.json
+PreviousOutputFilePath=infra-$env_type-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/storage.yml
 EnanchedParamFilePath=${microcvs_name}-storage-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
@@ -244,7 +289,7 @@ echo ""
 echo "= Read Outputs from previous stack"
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
-      --stack-name once-$env_type \
+      --stack-name infra-$env_type \
       --query "Stacks[0].Outputs" \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
@@ -295,7 +340,7 @@ echo ""
 echo ""
 echo "=== Prepare parameters for $microcvs_name microservice deployment in $env_type ACCOUNT"
 PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
-InfraOnceOutputFilePath=once-$env_type-out.json
+InfraOnceOutputFilePath=infra-$env_type-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/microservice.yml
 ParamFilePath=${microcvs_name}/scripts/aws/cfn/microservice-${env_type}-cfg.json
 EnanchedParamFilePath=${microcvs_name}-microservice-${env_type}-cfg-enanched.json
@@ -326,7 +371,7 @@ echo ""
 echo "= Read Outputs from infrastructure stack"
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
-      --stack-name once-$env_type \
+      --stack-name infra-$env_type \
       --query "Stacks[0].Outputs" \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
