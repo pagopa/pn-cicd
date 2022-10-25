@@ -176,6 +176,12 @@ Resources:
                     sed -i -e "s|pn_data_vault_imageUrl=.*|pn_data_vault_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-env-update-pipeline"
                   fi
+                - |
+                  if ( [ "$PROJECT" = "pn-logsaver-be" ] ) then
+                    sed -i -e "s|pn_logsaver_be_commitId=.*|pn_logsaver_be_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_logsaver_be_imageUrl=.*|pn_logsaver_be_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-env-update-pipeline"
+                  fi  
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
                 - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
@@ -370,6 +376,30 @@ Resources:
                 - Name: PnDataVaultOutput
               RunOrder: 3
             
+            # Update pn-logsaver-be
+            - Name: Update_LogsaverBe
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnLogsaverBeOutput
+              RunOrder: 3
+
             # List versions if the environment is dev
             - Fn::If:
                 - IsDevCondition
