@@ -525,6 +525,36 @@ Resources:
         AllowedDeployAccount19: !Ref AllowedDeployAccount18
         AllowedDeployAccount20: !Ref AllowedDeployAccount18
       TimeoutInMinutes: 5
+  PnApikeyManagerCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-apikey-manager'
+        CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
+        CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+        AllowedDeployAccount1: !Ref AllowedDeployAccount1
+        AllowedDeployAccount2: !Ref AllowedDeployAccount2
+        AllowedDeployAccount3: !Ref AllowedDeployAccount3
+        AllowedDeployAccount4: !Ref AllowedDeployAccount4
+        AllowedDeployAccount5: !Ref AllowedDeployAccount5
+        AllowedDeployAccount6: !Ref AllowedDeployAccount6
+        AllowedDeployAccount7: !Ref AllowedDeployAccount7
+        AllowedDeployAccount8: !Ref AllowedDeployAccount8
+        AllowedDeployAccount9: !Ref AllowedDeployAccount9
+        AllowedDeployAccount10: !Ref AllowedDeployAccount10
+        AllowedDeployAccount11: !Ref AllowedDeployAccount11
+        AllowedDeployAccount12: !Ref AllowedDeployAccount12
+        AllowedDeployAccount13: !Ref AllowedDeployAccount13
+        AllowedDeployAccount14: !Ref AllowedDeployAccount14
+        AllowedDeployAccount15: !Ref AllowedDeployAccount15
+        AllowedDeployAccount16: !Ref AllowedDeployAccount16
+        AllowedDeployAccount17: !Ref AllowedDeployAccount17
+        AllowedDeployAccount18: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount18
+        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+      TimeoutInMinutes: 5
 # Progetti Lambda
   PnApikeyAuthorizerLambda:
     Type: AWS::CloudFormation::Stack
