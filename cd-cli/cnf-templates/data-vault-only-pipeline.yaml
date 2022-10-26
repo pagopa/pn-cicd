@@ -391,7 +391,7 @@ Resources:
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"99", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
@@ -538,8 +538,8 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:5.0"
   
-  # CODEBUILD used to update an ecs microservice
-  ###################################################
+  # CODEBUILD used to update an external microservice (logsaver-be)
+  #################################################################
   UpdateExternalMicroserviceCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
@@ -582,7 +582,7 @@ Resources:
                 - 'echo "###       UPDATE MICROSERVICE $MsName    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
+                - 'echo "./deployPnDataVaultExternalService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
                 - '(cd scripts/cd-cli && ./deployPnDataVaultExternalService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
