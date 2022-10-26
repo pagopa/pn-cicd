@@ -35,7 +35,7 @@ EOF
 parse_params() {
   # default values of variables set from params
   project_name=pn
-  work_dir=$HOME/tmp/poste_deploy
+  work_dir=$HOME/tmp/deploy
   custom_config_dir=""
   aws_profile=""
   aws_region=""
