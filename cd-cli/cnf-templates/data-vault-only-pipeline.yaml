@@ -176,6 +176,12 @@ Resources:
                     sed -i -e "s|pn_data_vault_imageUrl=.*|pn_data_vault_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-env-update-pipeline"
                   fi
+                - |
+                  if ( [ "$PROJECT" = "pn-logsaver-be" ] ) then
+                    sed -i -e "s|pn_logsaver_be_commitId=.*|pn_logsaver_be_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_logsaver_be_imageUrl=.*|pn_logsaver_be_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-env-update-pipeline"
+                  fi  
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
                 - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
@@ -370,6 +376,30 @@ Resources:
                 - Name: PnDataVaultOutput
               RunOrder: 3
             
+            # Update pn-logsaver-be
+            - Name: Update_LogsaverBe
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"99", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnLogsaverBeOutput
+              RunOrder: 4
+
             # List versions if the environment is dev
             - Fn::If:
                 - IsDevCondition
@@ -450,7 +480,8 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:5.0"
-        
+
+
   # CODEBUILD used to update an ecs microservice
   ###################################################
   UpdateMicroserviceCodeBuildProject:
@@ -507,6 +538,62 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:5.0"
   
+  # CODEBUILD used to update an external microservice (logsaver-be)
+  #################################################################
+  UpdateExternalMicroserviceCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateExternalMicroserviceCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - VERSION=v4.20.1
+                - BINARY=yq_linux_amd64
+                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
+                - chmod +x /usr/bin/yq
+                - VERSION=`yq --version`
+                - echo "$VERSION"
+                - yq --version
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
+                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo "./deployPnDataVaultExternalService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployPnDataVaultExternalService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:5.0"
+
   CodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
