@@ -160,7 +160,7 @@ echo "##########################################################"
 PreviousOutputFilePath=previous-output-${env_type}.json
 PreviousLogsOutputFilePath=previous-logs-output-${env_type}.json
 TemplateFilePath="pn-infra/runtime-infra/pn-infra-dashboard.yaml"
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 EnanchedParamFilePath="pn-infra-dashboard-${env_type}-enhanced.json"
 
 aws ${aws_command_base_args} \
