@@ -49,7 +49,7 @@ Resources:
             Value: !Sub "${GitHubProjectName}"
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
-            Value: develop
+            Value: main
           - Name: SETTINGS
             Type: PLAINTEXT
             Value: |
