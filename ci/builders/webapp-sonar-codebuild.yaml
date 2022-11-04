@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CodeBuild for sonar-webapp project (node)
+Parameters:
+  GitHubProjectName:
+    Description: Name of pagopa project name
+    Type: String
+    Default: pn-frontend
+  BaseDir:
+    Description: base directory of the front end project pattern = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
+    Type: String
+
+Resources:
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${GitHubProjectName}-CodeBuild"
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: aws/codebuild/standard:5.0
+        EnvironmentVariables:
+          - Name: GITHUB_PRJ_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${GitHubProjectName}"
+          - Name: GIT_DEFAULT_BRANCH
+            Type: PLAINTEXT
+            Value: main
+
+      Source:
+        Type: GITHUB
+        Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
+        BuildSpec: !Sub "${BaseDir}/sonar_buildspec.yaml"
+      TimeoutInMinutes: 10
+      Cache:
+        Type: LOCAL
+        Modes: # You can specify one or more cache mode,
+          - LOCAL_CUSTOM_CACHE
+          - LOCAL_DOCKER_LAYER_CACHE
+          - LOCAL_SOURCE_CACHE
+      Triggers:
+        Webhook: true
+        FilterGroups:
+          - - Type: EVENT
+              Pattern: PUSH, PULL_REQUEST_MERGED
+            #- Type: HEAD_REF
+            #  Pattern: ^refs/heads/(main|develop)$
+            #- Type: FILE_PATH
+            #  Pattern: !Sub "^${BaseDir}/.*"
+          - - Type: EVENT
+              Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+            - Type: BASE_REF
+              Pattern: ^refs/heads/(main|develop)$
+            - Type: FILE_PATH
+              Pattern: !Sub "^${BaseDir}/.*"
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeBuildPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: CodeBuildReportGroup
+                Effect: Allow
+                Action:
+                  - codebuild:CreateReportGroup
+                  - codebuild:CreateReport
+                  - codebuild:UpdateReport
+                  - codebuild:BatchPutTestCases
+                  - codebuild:BatchPutCodeCoverages
+                Resource:
+                  - !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*'
+              - Sid: CloudWatchLogsPolicy
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - "*"
+              - Sid: BearerTokenPolicy
+                Effect: Allow
+                Action:
+                  - sts:GetServiceBearerToken
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    'sts:AWSServiceName': codeartifact.amazonaws.com
+              - Sid: GitHubSecret
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: "*"
+              - Sid: SendBuildEvents
+                Effect: Allow
+                Action:
+                  - events:PutEvents
+                Resource:
+                  - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
