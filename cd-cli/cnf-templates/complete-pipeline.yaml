@@ -556,7 +556,8 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-mandate", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"4", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_mandate", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_mandate", "type":"PLAINTEXT"},
+                    {"name":"DisableIntegrationTest", "value":"false", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
