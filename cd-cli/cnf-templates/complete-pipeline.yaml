@@ -249,7 +249,7 @@ Resources:
                   if ( [ "$PROJECT" = "pn-apikey-manager" ] ) then
                     sed -i -e "s|pn_apikey_manager_commitId=.*|pn_apikey_manager_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_apikey_manager_imageUrl=.*|pn_apikey_manager_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-pn-apikey_manager-update-pipeline"
+                    export PIPELINE_NAME="pn-pn-apikey-manager-update-pipeline"
                   fi
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
