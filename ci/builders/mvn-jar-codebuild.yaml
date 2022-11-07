@@ -5,6 +5,10 @@ Parameters:
     Description: Name of pagopa project name
     Type: String
     Default: pn-model
+  DisableIntegrationTest:
+    Description: true if integration test skipped
+    Type: String
+    Default: 'true'
   CodeArtifactDomainName:
     Description: Used for maven repository access
     Type: String
@@ -31,6 +35,9 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:5.0
         EnvironmentVariables:
+          - Name: SKIP_ITS
+            Type: PLAINTEXT
+            Value: !Sub "${DisableIntegrationTest}"
           - Name: CODEARTIFACT_DOMAIN_NAME
             Type: PLAINTEXT
             Value: !Sub "${CodeArtifactDomainName}"
@@ -125,10 +132,14 @@ Resources:
                     SONAR_OPTS="$SONAR_OPTS -Dsonar.scm.disabled=true"
                     MAVEN_ADD_GOAL=org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                   fi
-                  export MAVEN_OPTS="-DskipITs $SONAR_OPTS"
                   if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
                     export MAVEN_OPTS="$MAVEN_OPTS -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL"
                   fi
+                  if [ "$SKIP_ITS" = "true" ];
+                    MAVEN_OPTS="$MAVEN_OPTS -DskipITs"
+                  fi
+                  MAVEN_OPTS="$MAVEN_OPTS $SONAR_OPTS"
+                  export MAVEN_OPTS          
                 - env
             build:
               commands:
