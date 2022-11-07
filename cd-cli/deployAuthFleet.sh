@@ -131,7 +131,7 @@ fi
 
 echo ""
 echo "=== Checkout pn-infra commitId=${pn_infra_commitid}"
-( cd pn-infra && git fetch && git checkout -c advice.detachedHead=false $pn_infra_commitid )
+( cd pn-infra && git fetch && git checkout $pn_infra_commitid )
 echo " - copy custom config"
 if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .
@@ -146,7 +146,7 @@ fi
 
 echo ""
 echo "=== Checkout pn-auth-fleet commitId=${pn_authfleet_commitid}"
-( cd pn-auth-fleet && git fetch && git checkout -c advice.detachedHead=false $pn_authfleet_commitid )
+( cd pn-auth-fleet && git fetch && git checkout $pn_authfleet_commitid )
 echo " - copy custom config"
 if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-auth-fleet .
