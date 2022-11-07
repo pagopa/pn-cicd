@@ -123,7 +123,7 @@ if ( [ ! -z "${configuration_repository_secret_name}" ] ) then
     echo "Commit id: ${commit_id}"
 
     git clone $( cat ./secret-config-repo.json | jq -r '.repositoryUrl' ) custom-config
-    ( cd custom-config && git fetch && git checkout $commit_id )
+    ( cd custom-config && git fetch && git checkout -c advice.detachedHead=false $commit_id )
     touch custom-config/empty.txt
     rm ./secret-config-repo.json
   else 

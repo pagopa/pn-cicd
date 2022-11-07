@@ -118,7 +118,7 @@ fi
 
 echo ""
 echo "=== Checkout pn-infra commitId=${pn_infra_commitid}"
-( cd pn-infra && git fetch && git checkout $pn_infra_commitid )
+( cd pn-infra && git fetch && git checkout -c advice.detachedHead=false $pn_infra_commitid )
 echo " - copy custom config"
 if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .

@@ -130,7 +130,7 @@ fi
 
 echo ""
 echo "=== Checkout pn-frontend commitId=${pn_frontend_commitid}"
-( cd pn-frontend && git fetch && git checkout $pn_frontend_commitid )
+( cd pn-frontend && git fetch && git checkout -c advice.detachedHead=false $pn_frontend_commitid )
 echo " - copy custom config"
 if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-frontend .
