@@ -223,7 +223,7 @@ Resources:
                       MAVEN_ADD_GOAL=org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                     fi
                   fi
-                  if [ "$SKIP_ITS" = "true" ];
+                  if [ "$SKIP_ITS" = "true" ]; then
                     MAVEN_OPTS="$MAVEN_OPTS -DskipITs"
                   fi
                   MAVEN_OPTS="$MAVEN_OPTS $SONAR_OPTS"

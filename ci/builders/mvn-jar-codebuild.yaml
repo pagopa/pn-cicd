@@ -135,7 +135,7 @@ Resources:
                   if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
                     export MAVEN_OPTS="$MAVEN_OPTS -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL"
                   fi
-                  if [ "$SKIP_ITS" = "true" ];
+                  if [ "$SKIP_ITS" = "true" ]; then
                     MAVEN_OPTS="$MAVEN_OPTS -DskipITs"
                   fi
                   MAVEN_OPTS="$MAVEN_OPTS $SONAR_OPTS"
