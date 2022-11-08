@@ -114,7 +114,8 @@ Resources:
               runtime-versions:
                  java: corretto11
               commands:
-                 - git config --global credential.helper '!aws codecommit credential-helper $@'
+                 - git config --global user.email "pn-pagopa-github-bot@pagopa.it"
+                 - git config --global user.name "pn-pagopa-github-bot"
             pre_build:
               on-failure: ABORT
               commands:
