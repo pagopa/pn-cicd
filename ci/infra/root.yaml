@@ -265,6 +265,7 @@ Resources:
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+        DisableIntegrationTest: 'false'
         AllowedDeployAccount1: !Ref AllowedDeployAccount1
         AllowedDeployAccount2: !Ref AllowedDeployAccount2
         AllowedDeployAccount3: !Ref AllowedDeployAccount3
@@ -386,6 +387,7 @@ Resources:
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+        DisableIntegrationTest: 'false'
         AllowedDeployAccount1: !Ref AllowedDeployAccount1
         AllowedDeployAccount2: !Ref AllowedDeployAccount2
         AllowedDeployAccount3: !Ref AllowedDeployAccount3
