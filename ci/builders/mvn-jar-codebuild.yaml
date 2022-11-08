@@ -113,6 +113,8 @@ Resources:
             install:
               runtime-versions:
                  java: corretto11
+              commands:
+                 - git config --global credential.helper '!aws codecommit credential-helper $@'
             pre_build:
               on-failure: ABORT
               commands:
