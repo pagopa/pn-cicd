@@ -166,7 +166,7 @@ Resources:
               finally:
                 - |
                   if [ "x$RELEASE" != "x" ]; then 
-                    RELEASE_GOAL=[[ $CODEBUILD_BUILD_SUCCEEDING -eq 0 ]] && echo "rollback" || echo "perform"
+                    RELEASE_GOAL=$([[ $CODEBUILD_BUILD_SUCCEEDING -eq 0 ]] && echo "rollback" || echo "perform")
                     echo "${RELEASE_GOAL} relase v${RELEASE}"
                     mvn release:${RELEASE_GOAL}
                   fi
