@@ -37,6 +37,7 @@ Resources:
         EnvironmentVariables:
           - Name: RELEASE
             Type: PLAINTEXT
+            Value: ''
           - Name: SKIP_ITS
             Type: PLAINTEXT
             Value: !Sub "${DisableIntegrationTest}"
