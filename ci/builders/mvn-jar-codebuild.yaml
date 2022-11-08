@@ -36,7 +36,7 @@ Resources:
         Image: aws/codebuild/standard:5.0
         EnvironmentVariables:
           - Name: RELEASE
-            type: PLAINTEXT
+            Type: PLAINTEXT
           - Name: SKIP_ITS
             Type: PLAINTEXT
             Value: !Sub "${DisableIntegrationTest}"
@@ -164,7 +164,7 @@ Resources:
                     ./mvnw $MAVEN_OPTS clean verify $MAVEN_ADD_GOAL
                   fi
               finally:
-                -!
+                - |
                   if [ "x$RELEASE" != "x" ]; then 
                     RELEASE_GOAL=[[ $CODEBUILD_BUILD_SUCCEEDING -eq 0 ]] && echo "rollback" || echo "perform"
                     echo "${RELEASE_GOAL} relase v${RELEASE}"
