@@ -2477,7 +2477,7 @@ Resources:
     Condition: IsDevCondition
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsCodebuildProject}"
-      RetentionInDays: 30
+      RetentionInDays: 14
 
 Outputs:
   CdArtifactBucketName:
