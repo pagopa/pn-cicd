@@ -654,6 +654,16 @@ Resources:
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
       TimeoutInMinutes: 5
   
+  # Sonar per pn-frontend
+  PnFrontendSonar:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-frontend'
+        BaseDir: '.'
+      TimeoutInMinutes: 5
+
   # Progetti template CFN
   PnInfra:
     Type: AWS::CloudFormation::Stack
