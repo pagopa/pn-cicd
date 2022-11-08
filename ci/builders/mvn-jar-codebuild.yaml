@@ -35,6 +35,8 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:5.0
         EnvironmentVariables:
+          - Name: RELEASE
+            type: PLAINTEXT
           - Name: SKIP_ITS
             Type: PLAINTEXT
             Value: !Sub "${DisableIntegrationTest}"
@@ -121,6 +123,11 @@ Resources:
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - export MAVEN_CONFIG="--settings maven-settings.xml --no-transfer-progress"
                 - |
+                  if [ "x$RELEASE" != "x" ]; then
+                    echo "Prepare relase $RELEASE"
+                    mvn --batch-mode -Dtag="v${RELEASE}" -DreleaseVersion="${RELEASE}" release:prepare
+                  fi
+                - |
                   SRC_DIR=./src/main/java
                   if [ -e $SRC_DIR ]; then
                     if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
@@ -155,6 +162,12 @@ Resources:
                     aws events put-events --entries file://ci_event.json
                   else
                     ./mvnw $MAVEN_OPTS clean verify $MAVEN_ADD_GOAL
+                  fi
+              finally:
+                  if [ "x$RELEASE" != "x" ]; then 
+                    RELEASE_GOAL=[[ $CODEBUILD_BUILD_SUCCEEDING -eq 0 ]] && echo "rollback" || echo "perform"
+                    echo "${RELEASE_GOAL} relase v${RELEASE}"
+                    mvn release:${RELEASE_GOAL}
                   fi
           cache:
             paths:
