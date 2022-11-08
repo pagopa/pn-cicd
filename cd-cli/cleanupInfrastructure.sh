@@ -13,13 +13,12 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type>
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region>
 
     [-h]                      : this help message
     [-v]                      : verbose mode
     [-p <aws-profile>]        : aws cli profile (optional)
     -r <aws-region>           : aws region as eu-south-1
-    -e <env-type>             : one of dev / uat / svil / coll / cert / prod
     
 EOF
   exit 1
@@ -45,10 +44,6 @@ parse_params() {
       aws_region="${2-}"
       shift
       ;;
-    -e | --env-name) 
-      env_type="${2-}"
-      shift
-      ;;
     -w | --work-dir) 
       work_dir="${2-}"
       shift
@@ -62,7 +57,6 @@ parse_params() {
   args=("$@")
 
   # check required params and arguments
-  [[ -z "${env_type-}" ]] && usage 
   [[ -z "${aws_region-}" ]] && usage
   return 0
 }
@@ -73,7 +67,6 @@ dump_params(){
   echo "##################################"
   echo "Project Name:       ${project_name}"
   echo "Work directory:     ${work_dir}"
-  echo "Env Name:           ${env_type}"
   echo "AWS region:         ${aws_region}"
   echo "AWS profile:        ${aws_profile}"
 }

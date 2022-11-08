@@ -1027,7 +1027,7 @@ Resources:
                 - 'echo "###                CLEANUP INFRASTRUCTURE            ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && ./cleanupInfrastructure.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion)'                
+                - '(cd scripts/cd-cli && ./cleanupInfrastructure.sh -w /tmp -r $AwsRegion)'                
           artifacts:
             files:
               - '**/*'
