@@ -225,6 +225,8 @@ Resources:
                   fi
                   if [ "$SKIP_ITS" = "true" ]; then
                     MAVEN_OPTS="$MAVEN_OPTS -DskipITs"
+                  else
+                    MAVEN_OPTS="$MAVEN_OPTS -Dlocalstack_image_name=911845998067.dkr.ecr.eu-central-1.amazonaws.com/localstack:latest"          
                   fi
                   MAVEN_OPTS="$MAVEN_OPTS $SONAR_OPTS"
                   export MAVEN_OPTS
