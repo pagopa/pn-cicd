@@ -1021,6 +1021,13 @@ Resources:
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - '(cd scripts/cd-cli && ./deployApiGwUsagePlan.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion STANDARD_B2B B2B && ./deployApiGwUsagePlan.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion APP_IO_BE IO)'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###                CLEANUP INFRASTRUCTURE            ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./cleanupInfrastructure.sh -w /tmp -r $AwsRegion)'                
           artifacts:
             files:
               - '**/*'
@@ -2478,7 +2485,7 @@ Resources:
     Condition: IsDevCondition
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsCodebuildProject}"
-      RetentionInDays: 30
+      RetentionInDays: 14
 
 Outputs:
   CdArtifactBucketName:
