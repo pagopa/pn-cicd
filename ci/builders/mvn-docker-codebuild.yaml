@@ -209,6 +209,7 @@ Resources:
                 - export IMAGE_TAG=$VERSION
                 - export IMAGE_REPO_NAME=$GITHUB_PRJ_NAME
                 - export SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}
+                - export TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=911845998067.dkr.ecr.eu-central-1.amazonaws.com/
                 - |
                   SRC_DIR=./src/main/java
                   if [ -e $SRC_DIR ]; then
@@ -226,7 +227,7 @@ Resources:
                   if [ "$SKIP_ITS" = "true" ]; then
                     MAVEN_OPTS="$MAVEN_OPTS -DskipITs"
                   else
-                    MAVEN_OPTS="$MAVEN_OPTS -Dlocalstack_image_name=911845998067.dkr.ecr.eu-central-1.amazonaws.com/localstack:latest"          
+                    MAVEN_OPTS="$MAVEN_OPTS"
                   fi
                   MAVEN_OPTS="$MAVEN_OPTS $SONAR_OPTS"
                   export MAVEN_OPTS

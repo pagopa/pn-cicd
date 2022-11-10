@@ -126,6 +126,7 @@ Resources:
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - export MAVEN_CONFIG="--settings maven-settings.xml --no-transfer-progress"
+                - export TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=911845998067.dkr.ecr.eu-central-1.amazonaws.com/
                 - |
                   if [ "x$RELEASE" != "x" ]; then
                     echo "Prepare relase $RELEASE"
