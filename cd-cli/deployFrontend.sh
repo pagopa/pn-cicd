@@ -31,7 +31,7 @@ EOF
 parse_params() {
   # default values of variables set from params
   project_name=pn
-  work_dir=$HOME/tmp/poste_deploy
+  work_dir=$HOME/tmp/deploy
   custom_config_dir=""
   aws_profile=""
   aws_region=""
@@ -40,6 +40,7 @@ parse_params() {
   pn_frontend_commitid=""
   bucketName=""
   LambdasBucketName=""
+  WafWebAclArn=""
 
   while :; do
     case "${1-}" in
@@ -162,13 +163,40 @@ echo "===                                                               ==="
 echo "====================================================================="
 echo "====================================================================="
 
+function prepareWaf() {
+  Name=$1
+  
+  aws_waf_base_args=""
+  if ( [ ! -z "${aws_profile}" ] ) then
+    aws_waf_base_args="${aws_waf_base_args} --profile $aws_profile"
+  fi
+
+  echo ""
+  echo "=== Create WAF waf-${Name}"
+  aws ${aws_waf_base_args} \
+    --region=us-east-1 \
+    cloudformation deploy \
+      --stack-name waf-$Name \
+      --template-file pn-frontend/aws-cdn-templates/one-waf.yaml \
+      --parameter-overrides \
+        Name="${Name}"
+  
+  WafWebAclArn=$( aws ${aws_waf_base_args} \
+    cloudformation describe-stacks \
+      --stack-name waf-$Name \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"WafWebAclArn\") | .OutputValue" )
+  echo " - created WAF: ${WafWebAclArn}"
+}
+
 function prepareOneCloudFront() {
   CdnName=$1
   WebDomain=$2
   WebCertificateArn=$3
   HostedZoneId=$4
   WebApiUrl=$5
-  AlternateWebDomain=$6
+  WafWebAclArn=$6
+  AlternateWebDomain=$7
   
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
@@ -190,6 +218,7 @@ function prepareOneCloudFront() {
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
         WebApiUrl="${WebApiUrl}" \
+        WafWebAclArn="${WafWebAclArn}" \
         $OptionalParameters
   
   bucketName=$( aws ${aws_command_base_args} \
@@ -203,12 +232,15 @@ function prepareOneCloudFront() {
 
 source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
 
+prepareWaf webapp-${env_type}
+
 prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "portale-pa.${env_type}.pn.pagopa.it" \
     "$PORTALE_PA_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "${PORTALE_PA_ALTERNATE_DNS-}"
+    "${PORTALE_PA_ALTERNATE_DNS-}" \
+    "$WafWebAclArn"
 
 webappPaBucketName=${bucketName}
 
