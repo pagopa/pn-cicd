@@ -144,7 +144,7 @@ Resources:
                     SONAR_OPTS="$SONAR_OPTS -Dsonar.scm.disabled=true"
                     MAVEN_ADD_GOAL=org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                   fi
-                  if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
+                  if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.* ]]; then
                     export MAVEN_OPTS="$MAVEN_OPTS -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL"
                   fi
                   if [ "$SKIP_ITS" = "true" ]; then
@@ -157,7 +157,7 @@ Resources:
               commands:
                 - echo "Maven Build"
                 - |
-                  if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
+                  if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.* ]]; then
                     echo "Deploy"
                     ./mvnw $MAVEN_OPTS clean deploy $MAVEN_ADD_GOAL
                     echo Generate build event
@@ -192,11 +192,11 @@ Resources:
           - - Type: EVENT
               Pattern: PUSH, PULL_REQUEST_MERGED
             - Type: HEAD_REF
-              Pattern: ^refs/heads/(main|develop)$
+              Pattern: ^refs/heads/(main|develop)|release\/.*$
           - - Type: EVENT
               Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
             - Type: BASE_REF
-              Pattern: ^refs/heads/(main|develop)$
+              Pattern: ^refs/heads/(main|develop)|release\/.*$
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role

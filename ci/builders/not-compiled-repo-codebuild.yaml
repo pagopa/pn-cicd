@@ -72,7 +72,7 @@ Resources:
               on-failure: ABORT
               commands:
                 - |
-                  if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
+                  if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.*$ ]]; then
                     echo Generate build event
                     EVENT_DETAIL="{ \"event_type\": \"BUILD_DONE\", \"project_branch\":\"${BRANCH_NAME}\",\"project_type\":\"TEMPLATES\", \"project\":\"${GITHUB_PRJ_NAME}\", \"commit_id\": \"${COMMIT_ID}\" }"
                     echo $EVENT_DETAIL | jq -R -s '[{ "DetailType": "CiEvent","EventBusName": "CiEventBus", "Source":"Builder", "Detail": . }]' > ci_event.json
@@ -96,11 +96,11 @@ Resources:
           - - Type: EVENT
               Pattern: PUSH, PULL_REQUEST_MERGED
             - Type: HEAD_REF
-              Pattern: ^refs/heads/(main|develop)$
+              Pattern: ^refs/heads/(main|develop)|release\/.*$
           - - Type: EVENT
               Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
             - Type: BASE_REF
-              Pattern: ^refs/heads/(main|develop)$
+              Pattern: ^refs/heads/(main|develop)|release\/.*$
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role

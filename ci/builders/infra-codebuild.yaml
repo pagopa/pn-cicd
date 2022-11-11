@@ -79,7 +79,7 @@ Resources:
                 - aws s3 cp function.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/$SUB_PRJ_NAME.zip"
                 - aws s3 cp function.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/commits/$COMMIT_ID/$SUB_PRJ_NAME.zip"
                 - |
-                  if [[ "$BRANCH_NAME" =~ ^(main|develop) ]]; then
+                  if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.* ]]; then
                     echo Generate build event
                     EVENT_DETAIL="{ \"event_type\": \"BUILD_DONE\", \"project_branch\":\"${BRANCH_NAME}\",\"project_type\":\"LAMBDA_SET\", \"project\":\"${GITHUB_PRJ_NAME}\", \"commit_id\": \"${COMMIT_ID}\" }"
                     echo $EVENT_DETAIL | jq -R -s '[{ "DetailType": "CiEvent","EventBusName": "CiEventBus", "Source":"Builder", "Detail": . }]' > ci_event.json
@@ -101,7 +101,7 @@ Resources:
           - - Type: EVENT
               Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
             - Type: BASE_REF
-              Pattern: ^refs/heads/(main|develop)$
+              Pattern: ^refs/heads/(main|develop)|release\/.*$
             - Type: FILE_PATH
               Pattern: !Sub "^${BaseDir}/.*"
 
