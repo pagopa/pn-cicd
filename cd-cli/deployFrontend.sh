@@ -196,8 +196,7 @@ function prepareOneCloudFront() {
   WebCertificateArn=$3
   HostedZoneId=$4
   WebApiUrl=$5
-  WafWebAclArn=$6
-  AlternateWebDomain=$7
+  AlternateWebDomain=$6
   
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
@@ -206,6 +205,10 @@ function prepareOneCloudFront() {
     OptionalParameters="${OptionalParameters} AlternateWebDomainReferenceToSite=true"
   fi
 
+  if ( [ ! -z "$WafWebAclArn" ] ) then
+    OptionalParameters="${OptionalParameters} WafWebAclArn=${WafWebAclArn}"
+  fi
+  
   echo ""
   echo "=== Create CDN ${CdnName} with domain ${WebDomain} in zone ${HostedZoneId}"
   echo "     CertificateARN=${WebCertificateArn}"
@@ -219,7 +222,6 @@ function prepareOneCloudFront() {
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
         WebApiUrl="${WebApiUrl}" \
-        WafWebAclArn="${WafWebAclArn}" \
         $OptionalParameters
   
   bucketName=$( aws ${aws_command_base_args} \
@@ -233,14 +235,17 @@ function prepareOneCloudFront() {
 
 source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
 
-prepareWaf webapp-${env_type}
+if [[ $USE_WAF ]]
+then
+  echo "Creating WAF webapp-${env_type}"
+  prepareWaf webapp-${env_type}
+fi
 
 prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "portale-pa.${env_type}.pn.pagopa.it" \
     "$PORTALE_PA_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "$WafWebAclArn" \
     "${PORTALE_PA_ALTERNATE_DNS-}"
 
 webappPaBucketName=${bucketName}
@@ -250,7 +255,6 @@ prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "$PORTALE_PF_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "$WafWebAclArn" \
     "${PORTALE_PF_ALTERNATE_DNS-}"
 webappPfBucketName=${bucketName}
 
@@ -259,7 +263,6 @@ prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "$WafWebAclArn" \
     "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
 webappPflBucketName=${bucketName}
 
@@ -268,7 +271,6 @@ prepareOneCloudFront web-landing-cdn-${env_type} \
     "$LANDING_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "$WafWebAclArn" \
     "${LANDING_SITE_ALTERNATE_DNS-}"
 landingBucketName=${bucketName}
 
