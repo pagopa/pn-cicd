@@ -41,6 +41,7 @@ parse_params() {
   bucketName=""
   LambdasBucketName=""
   WafWebAclArn=""
+  USE_WAF="false"
 
   while :; do
     case "${1-}" in
@@ -235,8 +236,7 @@ function prepareOneCloudFront() {
 
 source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
 
-if [[ $USE_WAF ]]
-then
+if [[ $USE_WAF = "true" ]]; then
   echo "Creating WAF webapp-${env_type}"
   prepareWaf webapp-${env_type}
 fi
