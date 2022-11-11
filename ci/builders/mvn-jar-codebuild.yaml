@@ -135,7 +135,7 @@ Resources:
                 - |
                   SRC_DIR=./src/main/java
                   if [ -e $SRC_DIR ]; then
-                    if [[ "$BRANCH_NAME" =~ ^(main|develop)$ ]]; then
+                    if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.*$ ]]; then
                        SONAR_OPTS="-Dsonar.branch.name=$BRANCH_NAME"
                     else 
                        SONAR_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
