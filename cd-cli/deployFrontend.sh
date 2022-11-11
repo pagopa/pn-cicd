@@ -171,10 +171,11 @@ function prepareWaf() {
     aws_waf_base_args="${aws_waf_base_args} --profile $aws_profile"
   fi
 
+  aws_waf_base_args="${aws_waf_base_args} --region us-east-1"
+
   echo ""
   echo "=== Create WAF waf-${Name}"
   aws ${aws_waf_base_args} \
-    --region=us-east-1 \
     cloudformation deploy \
       --stack-name waf-$Name \
       --template-file pn-frontend/aws-cdn-templates/one-waf.yaml \
@@ -239,17 +240,17 @@ prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "$PORTALE_PA_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "${PORTALE_PA_ALTERNATE_DNS-}" \
-    "$WafWebAclArn"
+    "$WafWebAclArn" \
+    "${PORTALE_PA_ALTERNATE_DNS-}"
 
 webappPaBucketName=${bucketName}
-
 
 prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "portale.${env_type}.pn.pagopa.it" \
     "$PORTALE_PF_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
+    "$WafWebAclArn" \
     "${PORTALE_PF_ALTERNATE_DNS-}"
 webappPfBucketName=${bucketName}
 
@@ -258,16 +259,16 @@ prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
+    "$WafWebAclArn" \
     "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
 webappPflBucketName=${bucketName}
-
-
 
 prepareOneCloudFront web-landing-cdn-${env_type} \
     "www.${env_type}.pn.pagopa.it" \
     "$LANDING_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
+    "$WafWebAclArn" \
     "${LANDING_SITE_ALTERNATE_DNS-}"
 landingBucketName=${bucketName}
 
