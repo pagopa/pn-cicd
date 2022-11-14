@@ -8,7 +8,7 @@ Continuous Integration and Continues Delivery per Piattaforma Notifiche
 See [ci/README.md](ci/README.md)
 
 ## Continuous Delivery
-See [cd/README.md](cd/README.md)
+See [cd-cli/README.md](cd-cli/README.md)
 
 
 ## WARNING: Hardcoded AccountId 
