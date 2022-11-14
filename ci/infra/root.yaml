@@ -147,7 +147,6 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-model'
-        DisableIntegrationTest: 'false'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
