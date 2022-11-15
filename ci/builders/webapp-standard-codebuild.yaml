@@ -222,6 +222,12 @@ Resources:
                   - events:PutEvents
                 Resource:
                   - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
+              - Sid: CodeBuildControlPolicy
+                Effect: Allow
+                Action:
+                  - codebuild:StopBuild
+                Resource:
+                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${GitHubProjectName}-${PackageName}-CodeBuild"
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
