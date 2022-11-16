@@ -137,6 +137,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-parent'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -147,6 +148,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-model'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -157,6 +159,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-commons'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
