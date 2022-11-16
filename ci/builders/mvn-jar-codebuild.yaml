@@ -5,6 +5,14 @@ Parameters:
     Description: Name of pagopa project name
     Type: String
     Default: pn-model
+  GitHubDefaultBranch:
+    Description: Name of the dafult github branch
+    Type: String
+    Default: main
+  IsPublicProject:
+    Description: true if the project is public
+    Type: String
+    Default: 'true'
   DisableIntegrationTest:
     Description: true if integration test skipped
     Type: String
@@ -38,6 +46,9 @@ Resources:
           - Name: RELEASE
             Type: PLAINTEXT
             Value: ''
+          - Name: IS_PUBLIC_PROJECT
+            Type: PLAINTEXT
+            Value: !Sub "${IsPublicProject}"
           - Name: SKIP_ITS
             Type: PLAINTEXT
             Value: !Sub "${DisableIntegrationTest}"
@@ -59,7 +70,7 @@ Resources:
             Value: !Sub "${GitHubProjectName}"
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
-            Value: main
+            Value: !Sub "${GitHubDefaultBranch}"
           - Name: SETTINGS
             Type: PLAINTEXT
             Value: |
@@ -142,8 +153,9 @@ Resources:
                     fi
                     SONAR_OPTS="$SONAR_OPTS -Dsonar.organization=pagopa -Dsonar.host.url=https://sonarcloud.io -Dsonar.projectKey=pagopa_${GITHUB_PRJ_NAME}"
                     SONAR_OPTS="$SONAR_OPTS -Dsonar.scm.disabled=true"
-                    MAVEN_ADD_GOAL=org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
-                  fi
+                    if [[ "$IS_PUBLIC_PROJECT" = "true" ]]; then
+                      MAVEN_ADD_GOAL=org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+                    fi
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.* ]]; then
                     export MAVEN_OPTS="$MAVEN_OPTS -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL"
                   fi
