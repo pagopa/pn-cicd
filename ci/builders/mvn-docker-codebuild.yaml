@@ -264,6 +264,15 @@ Resources:
                     cat ci_event.json
                     aws events put-events --entries file://ci_event.json
                   fi
+          reports: 
+            SurefireReports:
+              files:
+                - '**/*'
+              base-directory: 'target/surefire-reports'
+            FailsafeReports:
+              files:
+                - '**/*'
+              base-directory: 'target/failsafe-reports'
           cache:
             paths:
               - '/root/.m2/**/*'
