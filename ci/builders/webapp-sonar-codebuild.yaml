@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: CodeBuild for sonar-webapp project (node)
 Parameters:
   GitHubProjectName:
@@ -8,20 +8,22 @@ Parameters:
   BaseDir:
     Description: base directory of the front end project pattern = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
+  PackageName:
+    Description: build project name pattern = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
+    Type: String
 
 Resources:
-
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${GitHubProjectName}-sonarCloud-CodeBuild"
+      Name: !Sub "${GitHubProjectName}-${PackageName}-sonarCloud"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_MEDIUM
-        Image: aws/codebuild/standard:5.0
+        Image: aws/codebuild/standard:6.0
         EnvironmentVariables:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
@@ -29,11 +31,17 @@ Resources:
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
             Value: main
+          - Name: SUB_PRJ_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${BaseDir}"
+          - Name: PACKAGE_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${PackageName}"
       Source:
         Type: GITHUB
-        Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
+        Location: !Sub "https://github.com/pagopa/${GitHubProjectName}"
         BuildSpec: !Sub "${BaseDir}/sonar_buildspec.yaml"
-      TimeoutInMinutes: 30
+      TimeoutInMinutes: 15
       Cache:
         Type: LOCAL
         Modes: # You can specify one or more cache mode,
@@ -43,26 +51,26 @@ Resources:
       Triggers:
         Webhook: true
         FilterGroups:
+          # - - Type: EVENT
+          # Pattern: PUSH, PULL_REQUEST_MERGED
+          # - Type: HEAD_REF
+          #   Pattern: ^refs/heads/main$
+          # - Type: FILE_PATH
+          #   Pattern: !Sub "^${BaseDir}/.*"
           - - Type: EVENT
-              Pattern: PUSH, PULL_REQUEST_MERGED
-            - Type: HEAD_REF
-              Pattern: ^refs/heads/main$
+              Pattern: PUSH, PULL_REQUEST_MERGED, PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+            - Type: BASE_REF
+              Pattern: ^refs/heads/(main|develop|pn_ga)|release\/.*$
             - Type: FILE_PATH
               Pattern: !Sub "^${BaseDir}/.*"
-          # - - Type: EVENT
-          #     Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
-          #   - Type: BASE_REF
-          #     Pattern: ^refs/heads/(main|develop)|release\/.*$
-          #   - Type: FILE_PATH
-          #     Pattern: !Sub "^${BaseDir}/.*"
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
-          - Sid: ''
+          - Sid: ""
             Effect: Allow
             Principal:
               Service:
@@ -71,7 +79,7 @@ Resources:
       Policies:
         - PolicyName: CodeBuildPolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Sid: CodeBuildReportGroup
                 Effect: Allow
@@ -82,7 +90,7 @@ Resources:
                   - codebuild:BatchPutTestCases
                   - codebuild:BatchPutCodeCoverages
                 Resource:
-                  - !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*'
+                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*"
               - Sid: CloudWatchLogsPolicy
                 Effect: Allow
                 Action:
@@ -98,7 +106,7 @@ Resources:
                 Resource: "*"
                 Condition:
                   StringEquals:
-                    'sts:AWSServiceName': codeartifact.amazonaws.com
+                    "sts:AWSServiceName": codeartifact.amazonaws.com
               - Sid: GitHubSecret
                 Effect: Allow
                 Action:
@@ -109,4 +117,4 @@ Resources:
                 Action:
                   - events:PutEvents
                 Resource:
-                  - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
+                  - !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus"

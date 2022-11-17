@@ -137,6 +137,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-parent'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -147,6 +148,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-model'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -157,6 +159,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-commons'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -263,6 +266,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-data-vault'
+        GitHubDefaultBranch: 'develop'
         DisableIntegrationTest: 'false'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
@@ -294,6 +298,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-national-registries'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -324,6 +329,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-external-registries'
+        GitHubDefaultBranch: 'develop'
         DisableIntegrationTest: 'false'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
@@ -355,6 +361,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-mandate'
+        GitHubDefaultBranch: 'develop'
         DisableIntegrationTest: 'false'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
@@ -386,6 +393,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-user-attributes'
+        GitHubDefaultBranch: 'develop'
         DisableIntegrationTest: 'false'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
@@ -417,6 +425,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-downtime-logs'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -447,6 +456,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-radd-fsu'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -477,6 +487,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-logextractor-be'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -507,6 +518,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-logsaver-be'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -537,6 +549,7 @@ Resources:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-apikey-manager'
+        GitHubDefaultBranch: 'develop'
         CodeArtifactDomainName: !Ref 'CodeArtifactDomainName'
         CodeArtifactRepositoryName: !Ref 'CodeArtifactRepositoryName'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
@@ -656,16 +669,16 @@ Resources:
         CiArtifactBucket: !Ref 'CiArtifactBucket'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
       TimeoutInMinutes: 5
-  
-  # Sonar per pn-frontend
-  PnFrontendSonar:
+  # Web sonar pipeline
+  PnCommonsFeSonar:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml'
       Parameters:
         GitHubProjectName: 'pn-frontend'
-        BaseDir: '.'
-      TimeoutInMinutes: 5
+        PackageName: 'pn-commons'
+        BaseDir: 'packages/pn-commons'
+      TimeoutInMinutes: 5   
 
   # Progetti template CFN
   PnInfra:
