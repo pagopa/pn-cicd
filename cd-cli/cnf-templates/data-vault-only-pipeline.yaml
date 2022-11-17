@@ -49,7 +49,7 @@ Mappings:
       BuildEvtPatten: |
         {
           "source": [{"prefix": "" }],
-          "detail": { project_branch: ["main"] }
+          "detail": { "project_branch": ["main"] }
         }
 
 Resources:
