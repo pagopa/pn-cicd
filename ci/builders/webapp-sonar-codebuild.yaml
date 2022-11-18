@@ -40,7 +40,7 @@ Resources:
       Source:
         Type: GITHUB
         Location: !Sub "https://github.com/pagopa/${GitHubProjectName}"
-        BuildSpec: !Sub "${BaseDir}/sonar_buildspec.yaml"
+        BuildSpec: !Sub "./sonar_buildspec.yaml"
       TimeoutInMinutes: 15
       Cache:
         Type: LOCAL
