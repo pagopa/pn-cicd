@@ -58,7 +58,11 @@ Resources:
           # - Type: FILE_PATH
           #   Pattern: !Sub "^${BaseDir}/.*"
           - - Type: EVENT
-              Pattern: PUSH, PULL_REQUEST_MERGED, PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+              Pattern: PUSH
+            - Type: HEAD_REF
+              Pattern: ^refs/heads/(main|develop|pn_ga)|release\/.*$
+          - - Type: EVENT
+              Pattern: PULL_REQUEST_MERGED, PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
             - Type: BASE_REF
               Pattern: ^refs/heads/(main|develop|pn_ga)|release\/.*$
             - Type: FILE_PATH
