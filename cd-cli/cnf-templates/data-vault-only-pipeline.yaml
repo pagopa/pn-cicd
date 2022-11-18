@@ -543,13 +543,6 @@ Resources:
           phases:
             pre_build:
               commands:
-                - VERSION=v4.20.1
-                - BINARY=yq_linux_amd64
-                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
-                - chmod +x /usr/bin/yq
-                - VERSION=`yq --version`
-                - echo "$VERSION"
-                - yq --version
                 - 'echo "### SCRIPTS ###"'
                 - 'find scripts'
                 - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
@@ -599,13 +592,6 @@ Resources:
           phases:
             pre_build:
               commands:
-                - VERSION=v4.20.1
-                - BINARY=yq_linux_amd64
-                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
-                - chmod +x /usr/bin/yq
-                - VERSION=`yq --version`
-                - echo "$VERSION"
-                - yq --version
                 - 'echo "### SCRIPTS ###"'
                 - 'find scripts'
                 - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
@@ -655,13 +641,6 @@ Resources:
           phases:
             pre_build:
               commands:
-                - VERSION=v4.20.1
-                - BINARY=yq_linux_amd64
-                - wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/bin/yq
-                - chmod +x /usr/bin/yq
-                - VERSION=`yq --version`
-                - echo "$VERSION"
-                - yq --version
                 - 'echo "### SCRIPTS ###"'
                 - 'find scripts'
                 - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
