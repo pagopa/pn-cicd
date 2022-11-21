@@ -22,7 +22,37 @@ Parameters:
     Type: String
 
 Conditions:
+  IsHotfixCondition: !Equals [ !Ref EnvName, 'hotfix' ]
   IsDevCondition: !Equals [ !Ref EnvName, 'dev' ]
+  IsContinuosDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
+
+Mappings: 
+  EventPatternMap: 
+    dev: 
+      BuildEvtPatten: |
+        {
+          "$or": [{
+            "source": [{"prefix": "" }],
+            "detail": {
+                "project_branch": ["develop"],
+                "project": [{ "anything-but": [ "pn-cicd" ] }]
+            }
+          },{
+            "source": [{"prefix": "" }],
+            "detail": {
+                "project_branch": ["main"],
+                "project": ["pn-cicd"]
+            }
+          }]
+        }
+    hotfix: 
+      BuildEvtPatten: |
+        {
+          "source": [{"prefix": "" }],
+          "detail": { "project_branch": ["main"] }
+        }
+          
+
 
 Resources:
 
@@ -31,14 +61,14 @@ Resources:
   # - Receive Continuos Integration build events and activate the needed 
   #   Continuos Delivery pipeline
   CdEventBus:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::Events::EventBus
     Properties: 
       Name: 'CdEventBus'
   
   # Receive Events from CI system
   CdEventBusAccessPolicy: 
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::Events::EventBusPolicy
     Properties: 
       EventBusName: !Ref CdEventBus
@@ -55,16 +85,13 @@ Resources:
   ###########################################################################
   # EVENT BRIDGE RULE: transform events into CodeBuild Execution
   SendAllBuildEventsToCodeBuild:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::Events::Rule
     Properties: 
       Description: Save build events
       RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
       EventBusName: !Ref CdEventBus
-      EventPattern:
-        source: [{"prefix": "" }]
-        detail:
-          project_branch: ["main", "develop"]
+      EventPattern: !FindInMap [ EventPatternMap, !Ref EnvName, BuildEvtPatten ]
       Targets: 
         - Id: 'CdEventBus-ToPipelineChooser'
           Arn: !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
@@ -108,7 +135,7 @@ Resources:
 
   # - Role and policy used to activate CodeBuild from EventBridge rule
   EventBusRunCodeBuildRole:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -135,7 +162,7 @@ Resources:
   ###########################################################################
   # - The codebuild project
   ChooseAndLaunchPipelineCodeBuild:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: 'AWS::CodeBuild::Project'
     Properties:
       Name: 'ChooseCdPipeline'
@@ -180,10 +207,8 @@ Resources:
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-frontend" ] ) then
-                    if ( [ "$PROJECT_BRANCH" = "main" ] ) then
-                      sed -i -e "s|pn_frontend_commitId=.*|pn_frontend_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                      export PIPELINE_NAME="pn-frontend-update-pipeline"
-                    fi
+                    sed -i -e "s|pn_frontend_commitId=.*|pn_frontend_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-frontend-update-pipeline"
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-delivery" ] ) then
@@ -330,7 +355,7 @@ Resources:
 
   # CodeBuild Role used during the choose of right codepipeline
   ChooseAndLaunchPipelineCodeBuildRole:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -731,7 +756,7 @@ Resources:
 
             # Run test if the environment is dev
             - Fn::If:
-                - IsDevCondition
+                - IsContinuosDeliveryCondition
                 - Name: Run_e2e_Tests
                   ActionTypeId:
                     Category: Build
@@ -752,7 +777,7 @@ Resources:
             
             # List versions if the environment is dev
             - Fn::If:
-                - IsDevCondition
+                - IsContinuosDeliveryCondition
                 - Name: List_Versions
                   ActionTypeId:
                     Category: Build
@@ -1164,7 +1189,7 @@ Resources:
   # INFRA AND AUTHFLEET
   #######################
   InfraAndAuthFleetDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1254,7 +1279,7 @@ Resources:
   # FRONTEND
   #######################
   FrontEndDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1345,7 +1370,7 @@ Resources:
   # MICROSERVICE PN-DELIVERY
   ############################
   PnDeliveryDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1439,7 +1464,7 @@ Resources:
   # MICROSERVICE PN-DELIVERY-PUSH
   ############################
   PnDeliveryPushDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1532,7 +1557,7 @@ Resources:
   # MICROSERVICE PN-USER-ATTRIBUTES
   ############################
   PnUserAttributesDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1625,7 +1650,7 @@ Resources:
   # MICROSERVICE PN-MANDATE
   ############################
   PnMandatesDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1717,7 +1742,7 @@ Resources:
   # MICROSERVICE PN-EXTERNAL-REGISTRIES
   ############################
   PnExternalRegistryDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1810,7 +1835,7 @@ Resources:
   # MICROSERVICE PN-DOWNTIME_LOGS
   ############################
   PnDowntimeLogsDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1903,7 +1928,7 @@ Resources:
   # MICROSERVICE PN-RADD-FSU
   ############################
   PnRaddFsuDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1996,7 +2021,7 @@ Resources:
   # MICROSERVICE PN-EXTERNAL-CHANNELS
   ############################
   PnExternalChannelsPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2090,7 +2115,7 @@ Resources:
   # MICROSERVICE PN-LOGSAVER-BE
   ############################
   PnLogSaverDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2183,7 +2208,7 @@ Resources:
   # MICROSERVICE PN-NATIONAL-REGISTRIES
   ############################
   PnNationalRegistriesDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2275,7 +2300,7 @@ Resources:
   # MICROSERVICE PN-APIKEY-MANAGER
   ############################
   PnApikeyManagerDeployPipeline:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2370,7 +2395,7 @@ Resources:
   ###  RUN E2E TESTS
   ###########################################################################
   ScheduledRule: 
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::Events::Rule
     DependsOn: RunTestsCodebuildProject
     Properties: 
@@ -2391,7 +2416,7 @@ Resources:
   ###  Utility that run e2e tests
   ###########################################################################
   RunTestsCodebuildProject:
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Type: 'AWS::CodeBuild::Project'
     Properties:
       Name: !Sub ${ProjectName}-RunE2eTestsCodeBuildProject
@@ -2417,19 +2442,16 @@ Resources:
                       PRE_RETENTION_TIME=$(aws ssm get-parameters --names /pn-test-e2e/preLoadRetetionTime --query "Parameters[*].Value" --output text)
                       LOAD_RETENTION_TIME=$(aws ssm get-parameters --names /pn-test-e2e/loadRetentionTime --query "Parameters[*].Value" --output text)
                       SAFE_STORAGE_URL=$(aws ssm get-parameters --names /pn-test-e2e/safeStorageDevUrl --query "Parameters[*].Value" --output text)
+                      PA_TAX_ID_1=$(aws ssm get-parameters --names /pn-test-e2e/paTaxId1 --query "Parameters[*].Value" --output text)
+                      PA_TAX_ID_2=$(aws ssm get-parameters --names 	/pn-test-e2e/paTaxId2 --query "Parameters[*].Value" --output text)
+                      PA_TAX_ID_GA=$(aws ssm get-parameters --names /pn-test-e2e/paTaxIdGA --query "Parameters[*].Value" --output text)
+                      USER_TAX_ID_1=$(aws ssm get-parameters --names /pn-test-e2e/userTaxId1 --query "Parameters[*].Value" --output text)
+                      USER_TAX_ID_2=$(aws ssm get-parameters --names /pn-test-e2e/userTaxId2 --query "Parameters[*].Value" --output text)
                     - |
                       echo "### CLONE E2E TEST REPOSITORY ###"
                       echo "#####################"
                       git clone https://github.com/pagopa/pn-b2b-client.git pn-b2b-client
-                      ( cd pn-b2b-client && echo "API_KEY=${API_KEY}" > config/application.properties )
-                      ( cd pn-b2b-client && echo "API_KEY_2=${API_KEY_2}" > config/application.properties )
-                      ( cd pn-b2b-client && echo "API_KEY_GA=${API_KEY_GA}" > config/application.properties )
-                      ( cd pn-b2b-client && echo "PRE_RETENTION_TIME=${PRE_RETENTION_TIME}" > config/application.properties )
-                      ( cd pn-b2b-client && echo "LOAD_RETENTION_TIME=${LOAD_RETENTION_TIME}" > config/application.properties )
-                      ( cd pn-b2b-client && echo "SAFE_STORAGE_URL=${SAFE_STORAGE_URL}" > config/application.properties )
-                      ( cd pn-b2b-client && echo "CRISTOFORO_C=${CRISTOFORO_C}" > config/application.properties )
-                      ( cd pn-b2b-client && echo "FIERAMOSCA_E=${FIERAMOSCA_E}" > config/application.properties )
-                      ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.cucumber.${TEST_SUITE:-CucumberDevIntegrationTest} -Dpn.external.base-url=https://api.${ENV_NAME}.pn.pagopa.it '-Dpn.external.api-key=${API_KEY}' '-Dpn.external.appio.api-key-2=${API_KEY_2}' '-Dpn.external.appio.api-key-GA=${API_KEY_GA}' '-Dpn.external.appio.api-key=${API_KEY_APPIO}' '-Dpn.webapi.external.base-url=https://webapi.${ENV_NAME}.pn.pagopa.it' '-Dpn.appio.externa.base-url=https://api-io.${ENV_NAME}.pn.pagopa.it' '-Dpn.bearer-token.CristoforoC=${CRISTOFORO_C}' '-Dpn.bearer-token.FieramoscaE=${FIERAMOSCA_E}' '-Dpn.retention.time.preload=${PRE_RETENTION_TIME}' '-Dpn.retention.time.load=${LOAD_RETENTION_TIME}' '-Dpn.safeStorage.base-url=${SAFE_STORAGE_URL}' clean verify )
+                      ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.cucumber.${TEST_SUITE:-CucumberDevIntegrationTest} -Dpn.external.base-url=https://api.${ENV_NAME}.pn.pagopa.it '-Dpn.external.api-key=${API_KEY}' '-Dpn.external.api-key-taxID=${PA_TAX_ID_1}' '-Dpn.external.api-key-2-taxID=${PA_TAX_ID_2}' '-Dpn.external.api-key-GA-taxID=${PA_TAX_ID_GA}' '-Dpn.bearer-token.user1.taxID=${USER_TAX_ID_1}' '-Dpn.bearer-token.user2.taxID=${USER_TAX_ID_2}' '-Dpn.external.appio.api-key-2=${API_KEY_2}' '-Dpn.external.appio.api-key-GA=${API_KEY_GA}' '-Dpn.external.appio.api-key=${API_KEY_APPIO}' '-Dpn.webapi.external.base-url=https://webapi.${ENV_NAME}.pn.pagopa.it' '-Dpn.appio.externa.base-url=https://api-io.${ENV_NAME}.pn.pagopa.it' '-Dpn.bearer-token.CristoforoC=${CRISTOFORO_C}' '-Dpn.bearer-token.FieramoscaE=${FIERAMOSCA_E}' '-Dpn.retention.time.preload=${PRE_RETENTION_TIME}' '-Dpn.retention.time.load=${LOAD_RETENTION_TIME}' '-Dpn.safeStorage.base-url=${SAFE_STORAGE_URL}' clean verify )
           reports:
             reportGroup: #Cucumber reports from json plugin
               files:
@@ -2454,7 +2476,7 @@ Resources:
 
   RunTestsCodebuildProjectLogGroup:
     Type: AWS::Logs::LogGroup
-    Condition: IsDevCondition
+    Condition: IsContinuosDeliveryCondition
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsCodebuildProject}"
       RetentionInDays: 14
@@ -2466,6 +2488,6 @@ Outputs:
   CdEventBusArn:
     Value: 
       Fn::If:
-        - IsDevCondition
+        - IsContinuosDeliveryCondition
         - !GetAtt CdEventBus.Arn
         - ''
