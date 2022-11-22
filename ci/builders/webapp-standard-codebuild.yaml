@@ -97,9 +97,6 @@ Resources:
             - Type: FILE_PATH
               Pattern: !Sub "^${BaseDir}/.*"
 
-          #  - Type: FILE_PATH
-          #    Pattern: !Sub "^${BaseDir}/.*"
-
   BuildBatchServiceRole:
     Type: AWS::IAM::Role
     Properties:
