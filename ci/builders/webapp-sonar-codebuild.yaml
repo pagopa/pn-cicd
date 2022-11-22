@@ -23,7 +23,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_MEDIUM
-        Image: aws/codebuild/standard:5.0
+        Image: aws/codebuild/standard:6.0
         EnvironmentVariables:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
@@ -41,7 +41,7 @@ Resources:
         Type: GITHUB
         Location: !Sub "https://github.com/pagopa/${GitHubProjectName}"
         BuildSpec: !Sub "./sonar_buildspec.yaml"
-      TimeoutInMinutes: 15
+      TimeoutInMinutes: 10
       Cache:
         Type: LOCAL
         Modes: # You can specify one or more cache mode,
@@ -51,18 +51,14 @@ Resources:
       Triggers:
         Webhook: true
         FilterGroups:
-          # - - Type: EVENT
-          # Pattern: PUSH, PULL_REQUEST_MERGED
-          # - Type: HEAD_REF
-          #   Pattern: ^refs/heads/main$
-          # - Type: FILE_PATH
-          #   Pattern: !Sub "^${BaseDir}/.*"
           - - Type: EVENT
-              Pattern: PUSH
-            - Type: HEAD_REF
-              Pattern: ^refs/heads/(main|develop|pn_ga)|release\/.*$
+              Pattern: PUSH, PULL_REQUEST_MERGED
+            #- Type: HEAD_REF
+            #  Pattern: ^refs/heads/(main|develop|feature-*)$
+            #- Type: FILE_PATH
+            #  Pattern: !Sub "^${BaseDir}/.*"
           - - Type: EVENT
-              Pattern: PULL_REQUEST_MERGED, PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+              Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
             - Type: BASE_REF
               Pattern: ^refs/heads/(main|develop|pn_ga)|release\/.*$
             - Type: FILE_PATH
