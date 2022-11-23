@@ -56,7 +56,7 @@ Resources:
           - - Type: EVENT
               Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
             - Type: BASE_REF
-              Pattern: ^refs/heads/(main|develop|pn_ga)|release\/.*$
+              Pattern: ^refs/heads/(main|develop)|release\/.*$
             - Type: FILE_PATH
               Pattern: !Sub "^${BaseDir}/.*"
 

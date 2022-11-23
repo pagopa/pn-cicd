@@ -688,7 +688,43 @@ Resources:
         GitHubProjectName: 'pn-frontend'
         PackageName: 'pn-commons'
         BaseDir: 'packages/pn-commons'
-      TimeoutInMinutes: 5   
+      TimeoutInMinutes: 5
+  PnPaSonar:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-frontend'
+        PackageName: 'pn-pa-webapp'
+        BaseDir: 'packages/pn-pa-webapp'
+      TimeoutInMinutes: 5     
+  PnPersonafisicaSonar:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-frontend'
+        PackageName: 'pn-personafisica-webapp'
+        BaseDir: 'packages/pn-personafisica-webapp'
+      TimeoutInMinutes: 5 
+  PnPfLoginSonar:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-frontend'
+        PackageName: 'pn-personafisica-login'
+        BaseDir: 'packages/pn-personafisica-login'
+      TimeoutInMinutes: 5 
+  PnValidatorSonar:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-frontend'
+        PackageName: 'pn-validator'
+        BaseDir: 'packages/pn-validator'
+      TimeoutInMinutes: 5 
 
   # Progetti template CFN
   PnInfra:
