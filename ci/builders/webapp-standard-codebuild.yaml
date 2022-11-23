@@ -41,7 +41,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_MEDIUM
-        Image: aws/codebuild/standard:5.0
+        Image: aws/codebuild/standard:6.0
         EnvironmentVariables:
           - Name: CODEARTIFACT_DOMAIN_NAME
             Type: PLAINTEXT
@@ -96,9 +96,6 @@ Resources:
               Pattern: ^refs/heads/(main|develop)|release\/.*$
             - Type: FILE_PATH
               Pattern: !Sub "^${BaseDir}/.*"
-
-          #  - Type: FILE_PATH
-          #    Pattern: !Sub "^${BaseDir}/.*"
 
   BuildBatchServiceRole:
     Type: AWS::IAM::Role
