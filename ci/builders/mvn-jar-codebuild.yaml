@@ -156,6 +156,7 @@ Resources:
                     if [[ "$IS_PUBLIC_PROJECT" = "true" ]]; then
                       MAVEN_ADD_GOAL=org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                     fi
+                  fi
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.* ]]; then
                     export MAVEN_OPTS="$MAVEN_OPTS -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL"
                   fi
