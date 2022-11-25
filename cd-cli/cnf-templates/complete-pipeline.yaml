@@ -260,7 +260,7 @@ Resources:
                   if ( [ "$PROJECT" = "pn-auth-fleet" ] ) then
                     echo "Check pn-auth-fleet build end"
                     
-                    apiKeyAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/apikeyAuthorizer.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    apiKeyAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/apikeyAuthorizerV2.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
                     echo "apiKeyAuth is build ${apiKeyAuth}"
 
                     ioAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/ioAuthorizer.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
