@@ -276,7 +276,7 @@ Resources:
                     sed -i -e "s|pn_apikey_manager_imageUrl=.*|pn_apikey_manager_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-pn-apikey-manager-update-pipeline"
                   fi
-                 - |
+                - |
                   if ( [ "$PROJECT" = "pn-paper-channel" ] ) then
                     sed -i -e "s|pn_paper_channel_commitId=.*|pn_paper_channel_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_paper_channel_imageUrl=.*|pn_paper_channel_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
