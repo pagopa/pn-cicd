@@ -67,7 +67,7 @@ Resources:
               commands:
                 - cd $SUB_PRJ_NAME
                 - echo Build started on `date`
-                - npm install
+                - npm ci
                 - npm run-script test-build
             post_build:
               on-failure: ABORT

@@ -291,9 +291,6 @@ echo ""
 echo "= Read Parameters file"
 cat ${ParamFilePath} 
 
-keepKeys=$( yq eval '.Parameters | keys' $TemplateFilePath | sed -e 's/#.*//' | sed -e '/^ *$/d' | sed -e 's/^. //g' | tr '\n' ',' | sed -e 's/,$//' )
-echo "Parameters required from stack: $keepKeys"
-
 echo ""
 echo "= Enanched parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \

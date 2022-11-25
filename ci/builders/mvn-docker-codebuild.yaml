@@ -269,10 +269,6 @@ Resources:
               files:
                 - '**/*'
               base-directory: 'target/surefire-reports'
-            FailsafeReports:
-              files:
-                - '**/*'
-              base-directory: 'target/failsafe-reports'
           cache:
             paths:
               - '/root/.m2/**/*'
