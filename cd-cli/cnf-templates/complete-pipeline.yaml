@@ -716,28 +716,31 @@ Resources:
               RunOrder: 3
 
             # Update pn-paper-channel
-            - Name: Update_PnPaperChannel
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-                PrimarySource: DesiredCommitIdsAndScripts
-                EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-paper-channel", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_paper_channel", "type":"PLAINTEXT"}
-                  ]'
-              InputArtifacts:
-                - Name: DesiredCommitIdsAndScripts
-              OutputArtifacts:
-                - Name: PnPaperChannelOutput
-              RunOrder: 3
+            - Fn::If:
+              - IsDevCondition
+              - Name: Update_PnPaperChannel
+                ActionTypeId:
+                  Category: Build
+                  Owner: AWS
+                  Version: 1
+                  Provider: CodeBuild
+                Configuration:
+                  ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                  PrimarySource: DesiredCommitIdsAndScripts
+                  EnvironmentVariables: !Sub '[
+                      {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                      {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                      {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                      {"name":"MsName", "value":"pn-paper-channel", "type":"PLAINTEXT"},
+                      {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
+                      {"name":"VarPrefix", "value":"pn_paper_channel", "type":"PLAINTEXT"}
+                    ]'
+                InputArtifacts:
+                  - Name: DesiredCommitIdsAndScripts
+                OutputArtifacts:
+                  - Name: PnPaperChannelOutput
+                RunOrder: 3
+              - !Ref AWS::NoValue
 
             # Update Frontend
             - Name: Update_Frontend
