@@ -409,6 +409,8 @@ Resources:
 
   EcrRepository:
     Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       ImageScanningConfiguration:
         ScanOnPush: true
