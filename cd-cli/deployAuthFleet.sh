@@ -214,7 +214,7 @@ aws ${aws_command_base_args} s3 cp \
 LambdaZipVersionId1=$( aws ${aws_command_base_args} \
     s3api head-object \
       --bucket $bucketName \
-      --key "pn-auth-fleet/main/apikeyAuthorizer.zip" \
+      --key "pn-auth-fleet/main/apikeyAuthorizerV2.zip" \
       --query "VersionId" \
       --output text )
 LambdaZipVersionId2=$( aws ${aws_command_base_args} \
