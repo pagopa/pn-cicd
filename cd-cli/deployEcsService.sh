@@ -141,7 +141,7 @@ dump_params(){
 
 _clone_repository(){
   
-  _DEPLOYKEY="deploykey_${microcvs_name}"
+  _DEPLOYKEY="deploykey/${microcvs_name}"
   
   echo " - try to download ssh deploykey $_DEPLOYKEY"
   _AWSDEPLOYKEYEXIST=$(aws ${aws_command_base_args} \
@@ -151,9 +151,9 @@ _clone_repository(){
   _GITURI="https://github.com/pagopa/${microcvs_name}.git"
 
   if ( [ -z "${_AWSDEPLOYKEYEXIST}" ] ); then    
-    echo " - key $_DEPLOYKEY not found - git clone via HTTPS"
+    echo " - sshkey $_DEPLOYKEY not found - git clone via HTTPS"
   else
-    echo " - key $_DEPLOYKEY found - git clone via SSH"
+    echo " - sshkey $_DEPLOYKEY found - git clone via SSH"
     mkdir -p ~/.ssh
     _AWSDEPLOYKEY=$(aws ${aws_command_base_args} \
     secretsmanager get-secret-value --secret-id $_DEPLOYKEY --output json )
