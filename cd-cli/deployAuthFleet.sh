@@ -267,7 +267,7 @@ EnanchedParamFilePath=pn-auth-fleet-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\
   \"LambdasBucketName=${bucketName}\",\"MicroserviceNumber=${MicroserviceNumber}\",\
   \"LambdaZipVersionId1=${LambdaZipVersionId1}\",\"LambdaZipVersionId2=${LambdaZipVersionId2}\",\
-  \"LambdaZipVersionId3=${LambdaZipVersionId3}\",\"LambdaZipVersionId4=${LambdaZipVersionId4}\",\
+  \"LambdaZipVersionId3=${LambdaZipVersionId3}\",\"LambdaZipVersionId4=${LambdaZipVersionId4}\",\"LambdaZipVersionId5=none\",\
   \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},pn_authfleet_commitId=${pn_authfleet_commitId}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
