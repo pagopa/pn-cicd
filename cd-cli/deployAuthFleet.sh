@@ -178,13 +178,13 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
-echo " - Copy apikeyAuthorizer.zip"
+echo " - Copy apikeyAuthorizerV2.zip"
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/apikeyAuthorizer.zip" \
-      "apikeyAuthorizer.zip"
+      --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/apikeyAuthorizerV2.zip" \
+      "apikeyAuthorizerV2.zip"
 aws ${aws_command_base_args} s3 cp \
-      "apikeyAuthorizer.zip" \
-      "s3://$bucketName/pn-auth-fleet/main/apikeyAuthorizer.zip" 
+      "apikeyAuthorizerV2.zip" \
+      "s3://$bucketName/pn-auth-fleet/main/apikeyAuthorizerV2.zip"
 
 echo " - Copy jwtAuthorizer.zip"
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
@@ -214,7 +214,7 @@ aws ${aws_command_base_args} s3 cp \
 LambdaZipVersionId1=$( aws ${aws_command_base_args} \
     s3api head-object \
       --bucket $bucketName \
-      --key "pn-auth-fleet/main/apikeyAuthorizer.zip" \
+      --key "pn-auth-fleet/main/apikeyAuthorizerV2.zip" \
       --query "VersionId" \
       --output text )
 LambdaZipVersionId2=$( aws ${aws_command_base_args} \
@@ -267,7 +267,7 @@ EnanchedParamFilePath=pn-auth-fleet-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\
   \"LambdasBucketName=${bucketName}\",\"MicroserviceNumber=${MicroserviceNumber}\",\
   \"LambdaZipVersionId1=${LambdaZipVersionId1}\",\"LambdaZipVersionId2=${LambdaZipVersionId2}\",\
-  \"LambdaZipVersionId3=${LambdaZipVersionId3}\",\"LambdaZipVersionId4=${LambdaZipVersionId4}\",\
+  \"LambdaZipVersionId3=${LambdaZipVersionId3}\",\"LambdaZipVersionId4=${LambdaZipVersionId4}\",\"LambdaZipVersionId5=none\",\
   \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},pn_authfleet_commitId=${pn_authfleet_commitId}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
