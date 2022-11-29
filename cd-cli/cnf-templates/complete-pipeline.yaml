@@ -17,7 +17,7 @@ Parameters:
     Type: String
 
   CiArtifactBucketNameParam:
-    Default: 'pn-ci-root-ciartifactbucket-p7efvlz7rmox'
+    Default: 'pn-ci-root-ciartifactbucket-k85cgryf7xh3'
     Description: 'Bucket name containing lambda and frontend artifacts'
     Type: String
 
