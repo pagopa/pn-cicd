@@ -607,17 +607,7 @@ Resources:
         AllowedDeployAccount20: !Ref AllowedDeployAccount18
       TimeoutInMinutes: 5
 # Progetti Lambda
-  PnApikeyAuthorizerLambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml'
-      Parameters:
-        GitHubProjectName: 'pn-auth-fleet'
-        BaseDir: 'apikeyAuthorizer'
-        CiArtifactBucket: !Ref 'CiArtifactBucket'
-        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
-      TimeoutInMinutes: 5
-  PnApikeyAuthorizerV2Lambda:
+  PnApiKeyAuthorizerV2Lambda:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml'
