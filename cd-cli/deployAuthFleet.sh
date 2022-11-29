@@ -178,13 +178,13 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
-echo " - Copy apikeyAuthorizer.zip"
+echo " - Copy apikeyAuthorizerV2.zip"
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/apikeyAuthorizer.zip" \
-      "apikeyAuthorizer.zip"
+      --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/apikeyAuthorizerV2.zip" \
+      "apikeyAuthorizerV2.zip"
 aws ${aws_command_base_args} s3 cp \
-      "apikeyAuthorizer.zip" \
-      "s3://$bucketName/pn-auth-fleet/main/apikeyAuthorizer.zip" 
+      "apikeyAuthorizerV2.zip" \
+      "s3://$bucketName/pn-auth-fleet/main/apikeyAuthorizerV2.zip"
 
 echo " - Copy jwtAuthorizer.zip"
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
