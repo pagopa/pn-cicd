@@ -1056,7 +1056,7 @@ Resources:
                 - 'echo "###                UPDATE APIGW USAGE PLAN            ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && ./deployApiGwUsagePlan.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion STANDARD_B2B B2B && ./deployApiGwUsagePlan.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion APP_IO_BE IO)'
+                - '(cd scripts/cd-cli && ./deployApiGwUsagePlan.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion APP_IO_BE IO)'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
@@ -2519,8 +2519,7 @@ Resources:
   ScheduledRule: 
     Condition: IsContinuosDeliveryCondition
     Type: AWS::Events::Rule
-    DependsOn: RunTestsCodebuildProject
-    Properties: 
+    Properties:
       Description: "ScheduledRule"
       ScheduleExpression: "cron(0 7-19/2 ? * MON-FRI *)"
       State: "ENABLED"
