@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for EventBridge rule 'reRouteToMilan'
+Resources:
+  EventRule0:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Reroute CI events to Milan
+      EventBusName: CiEventBus
+      EventPattern:
+        source:
+          - prefix: ''
+      Name: reRouteToMilan
+      State: ENABLED
+      Targets:
+        - Id: Id1b845a56-fc19-40ab-a435-9cfaaf2c657c
+          Arn: arn:aws:events:eu-south-1:804103868123:event-bus/CdEventBus
+          RoleArn: >-
+            arn:aws:iam::911845998067:role/service-role/Amazon_EventBridge_Invoke_Event_Bus_1098279274
+        - Id: Id7cf95231-8bdb-495f-9c53-ce59c2a4ed5c
+          Arn: arn:aws:events:eu-south-1:558518206506:event-bus/CdEventBus
+          RoleArn: >-
+            arn:aws:iam::911845998067:role/service-role/Amazon_EventBridge_Invoke_Event_Bus_292227102
+        - Id: Id96cf4d8e-5855-4280-9732-30d1ca66d6b2
+          Arn: arn:aws:events:eu-south-1:118759374619:event-bus/CdEventBus
+          RoleArn: >-
+            arn:aws:iam::911845998067:role/service-role/Amazon_EventBridge_Invoke_Event_Bus_1952238975
+        - Id: Idfba52745-8683-46b0-935b-1087189cc07e
+          Arn: arn:aws:events:eu-south-1:946373734005:event-bus/CdEventBus
+          RoleArn: >-
+            arn:aws:iam::911845998067:role/service-role/Amazon_EventBridge_Invoke_Event_Bus_1296842131

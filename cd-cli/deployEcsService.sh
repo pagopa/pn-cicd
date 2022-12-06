@@ -139,6 +139,32 @@ dump_params(){
   echo "Container image URL: ${ContainerImageUri}"
 }
 
+_clone_repository(){
+  
+  _DEPLOYKEY="deploykey/${microcvs_name}"
+  
+  echo " - try to download ssh deploykey $_DEPLOYKEY"
+  _AWSDEPLOYKEYEXIST=$(aws ${aws_command_base_args} \
+    secretsmanager list-secrets | \
+    jq --arg keyname $_DEPLOYKEY  -c '.SecretList[] | select( .Name == $keyname )' )
+  
+  _GITURI="https://github.com/pagopa/${microcvs_name}.git"
+
+  if ( [ -z "${_AWSDEPLOYKEYEXIST}" ] ); then    
+    echo " - sshkey $_DEPLOYKEY not found - git clone via HTTPS"
+  else
+    echo " - sshkey $_DEPLOYKEY found - git clone via SSH"
+    mkdir -p ~/.ssh
+    _AWSDEPLOYKEY=$(aws ${aws_command_base_args} \
+    secretsmanager get-secret-value --secret-id $_DEPLOYKEY --output json )
+    echo $_AWSDEPLOYKEY | jq '.SecretString' | cut -d "\"" -f 2 | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
+    chmod 400 ~/.ssh/id_rsa
+    _GITURI="git@github.com:pagopa/${microcvs_name}.git"
+  fi
+
+  git clone ${_GITURI}
+}
+
 
 # START SCRIPT
 
@@ -161,22 +187,6 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .
 fi
 
-
-echo "=== Download microservizio ${microcvs_name}" 
-if ( [ ! -e ${microcvs_name} ] ) then 
-  git clone "https://github.com/pagopa/${microcvs_name}.git"
-fi
-
-echo ""
-echo "=== Checkout ${microcvs_name} commitId=${pn_microsvc_commitid}"
-( cd ${microcvs_name} && git fetch && git checkout $pn_microsvc_commitid )
-echo " - copy custom config"
-if ( [ ! -z "${custom_config_dir}" ] ) then
-  cp -r $custom_config_dir/${microcvs_name} .
-fi
-
-
-
 echo ""
 echo "=== Base AWS command parameters"
 aws_command_base_args=""
@@ -187,6 +197,20 @@ if ( [ ! -z "${aws_region}" ] ) then
   aws_command_base_args="${aws_command_base_args} --region  $aws_region"
 fi
 echo ${aws_command_base_args}
+
+echo "=== Download microservizio ${microcvs_name}" 
+if ( [ ! -e ${microcvs_name} ] ) then 
+  _clone_repository
+fi
+
+echo ""
+echo "=== Checkout ${microcvs_name} commitId=${pn_microsvc_commitid}"
+( cd ${microcvs_name} && git fetch && git checkout $pn_microsvc_commitid )
+echo " - copy custom config"
+if ( [ ! -z "${custom_config_dir}" ] ) then
+  cp -r $custom_config_dir/${microcvs_name} .
+fi
+
 
 
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
