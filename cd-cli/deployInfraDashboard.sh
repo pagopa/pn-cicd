@@ -192,7 +192,7 @@ aws ${aws_command_base_args} \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${PreviousMonitoringOutputFilePath}
 else
-jq '{}' | tee ${PreviousMonitoringOutputFilePath}
+echo '{ "Parameters": {} }' | tee ${PreviousMonitoringOutputFilePath}
 fi
 
 echo ""
