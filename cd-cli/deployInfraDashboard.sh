@@ -184,15 +184,15 @@ aws ${aws_command_base_args} \
 MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-monitoring.yaml 
 if [[ -f "$MONITORING_STACK_FILE" ]]; then
 
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-monitoring-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${PreviousMonitoringOutputFilePath}
+  aws ${aws_command_base_args} \
+      cloudformation describe-stacks \
+        --stack-name pn-monitoring-$env_type \
+        --query "Stacks[0].Outputs" \
+        --output json \
+        | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+        | tee ${PreviousMonitoringOutputFilePath}
 else
-echo '{ }' | tee ${PreviousMonitoringOutputFilePath}
+  echo '{ }' | tee ${PreviousMonitoringOutputFilePath}
 fi
 
 echo ""
