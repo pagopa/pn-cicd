@@ -159,6 +159,7 @@ echo "##########################################################"
 
 PreviousOutputFilePath=previous-output-${env_type}.json
 PreviousLogsOutputFilePath=previous-logs-output-${env_type}.json
+PreviousMonitoringOutputFilePath=previous-monitoring-output-${env_type}.json
 TemplateFilePath="pn-infra/runtime-infra/pn-infra-dashboard.yaml"
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 EnanchedParamFilePath="pn-infra-dashboard-${env_type}-enhanced.json"
@@ -179,10 +180,25 @@ aws ${aws_command_base_args} \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${PreviousLogsOutputFilePath}
 
+# Monitoring stack #
+MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-monitoring.yaml 
+if [[ -f "$MONITORING_STACK_FILE" ]]; then
+
+  aws ${aws_command_base_args} \
+      cloudformation describe-stacks \
+        --stack-name pn-monitoring-$env_type \
+        --query "Stacks[0].Outputs" \
+        --output json \
+        | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+        | tee ${PreviousMonitoringOutputFilePath}
+else
+  echo '{ }' | tee ${PreviousMonitoringOutputFilePath}
+fi
+
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] }" \
-   ${PreviousOutputFilePath} ${PreviousLogsOutputFilePath} \
+jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * { \"Parameters\": .[2] }" \
+   ${PreviousOutputFilePath} ${PreviousLogsOutputFilePath} ${PreviousMonitoringOutputFilePath} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
