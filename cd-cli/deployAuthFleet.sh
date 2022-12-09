@@ -319,7 +319,7 @@ if ( [ "$authFleetMicrosvcStackAlreadyDeployed" -eq "0" ] ) then
   aws ${aws_command_base_args} \
       cloudformation deploy \
         --stack-name $msStackName \
-        --capabilities CAPABILITY_NAMED_IAM \
+        --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
         --template-file ${TemplateFilePath} \
         --parameter-overrides file://$( realpath ${EnanchedParamFilePath}.pre )  
 fi
@@ -330,7 +330,7 @@ cat ${EnanchedParamFilePath} | sed 's/]/,"PutIntoVpc=true"]/' > ${EnanchedParamF
 aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name $msStackName \
-      --capabilities CAPABILITY_NAMED_IAM \
+      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file ${TemplateFilePath} \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath}.post )
         
