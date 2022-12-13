@@ -166,7 +166,7 @@ echo ${aws_command_base_args}
 
 
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
-templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra-new"
+templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
 echo " - Bucket Name: ${bucketName}"
 echo " - Bucket Template S3 Url: ${templateBucketS3BaseUrl}"
 echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
@@ -319,7 +319,7 @@ if ( [ "$authFleetMicrosvcStackAlreadyDeployed" -eq "0" ] ) then
   aws ${aws_command_base_args} \
       cloudformation deploy \
         --stack-name $msStackName \
-        --capabilities CAPABILITY_NAMED_IAM \
+        --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
         --template-file ${TemplateFilePath} \
         --parameter-overrides file://$( realpath ${EnanchedParamFilePath}.pre )  
 fi
@@ -330,7 +330,7 @@ cat ${EnanchedParamFilePath} | sed 's/]/,"PutIntoVpc=true"]/' > ${EnanchedParamF
 aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name $msStackName \
-      --capabilities CAPABILITY_NAMED_IAM \
+      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file ${TemplateFilePath} \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath}.post )
         
