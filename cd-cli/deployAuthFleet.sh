@@ -149,7 +149,7 @@ echo "=== Checkout pn-auth-fleet commitId=${pn_authfleet_commitid}"
 ( cd pn-auth-fleet && git fetch && git checkout $pn_authfleet_commitid )
 
 pwd
-ls -al
+ls -al pn-auth-fleet
 AUTHORIZER_V2_FOLDER="./pn-auth-fleet/apikeyAuthorizerV2"
 if ( [ -d "${AUTHORIZER_V2_FOLDER}" ] ) then
   AUTHORIZER_NAME=apikeyAuthorizerV2
