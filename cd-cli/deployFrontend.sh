@@ -342,6 +342,7 @@ if ( [ ! -z "$HAS_MONITORING" ]) then
     cloudformation deploy \
       --stack-name frontend-monitoring-${env_type} \
       --template-file pn-frontend/aws-cdn-templates/one-monitoring.yaml \
+      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --parameter-overrides \
         ProjectName="${project_name}" \
         TemplateBucketBaseUrl="${templateBucketHttpsBaseUrl}" \
