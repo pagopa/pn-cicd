@@ -152,6 +152,14 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-auth-fleet .
 fi
 
+AUTHORIZER_V2_FOLDER="./apikeyAuthorizerV2"
+if [ -d "$AUTHORIZER_V2_FOLDER" ]; then
+  AUTHORIZER_NAME=apikeyAuthorizerV2
+else
+  AUTHORIZER_NAME=apikeyAuthorizer
+fi
+echo "The selected authorizer is ${AUTHORIZER_NAME}"
+
 
 echo ""
 echo "=== Base AWS command parameters"
@@ -177,13 +185,6 @@ echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
-
-AUTHORIZER_V2_FOLDER=apikeyAuthorizerV2
-if [[ -d "$AUTHORIZER_V2_FOLDER" ]]; then
-  AUTHORIZER_NAME=apikeyAuthorizerV2
-else
-  AUTHORIZER_NAME=apikeyAuthorizer
-fi
 
 echo " - Copy ${AUTHORIZER_NAME}.zip"
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
