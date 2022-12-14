@@ -178,13 +178,20 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
-echo " - Copy apikeyAuthorizerV2.zip"
+AUTHORIZER_V2_FOLDER=apikeyAuthorizerV2
+if [[ -f "$AUTHORIZER_V2_FOLDER" ]]; then
+  AUTHORIZER_NAME=apikeyAuthorizerV2
+else
+  AUTHORIZER_NAME=apikeyAuthorizer
+fi
+
+echo " - Copy ${AUTHORIZER_NAME}.zip"
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/apikeyAuthorizerV2.zip" \
-      "apikeyAuthorizerV2.zip"
+      --bucket "$LambdasBucketName" --key "pn-auth-fleet/commits/${pn_authfleet_commitid}/${AUTHORIZER_NAME}.zip" \
+      "${AUTHORIZER_NAME}.zip"
 aws ${aws_command_base_args} s3 cp \
-      "apikeyAuthorizerV2.zip" \
-      "s3://$bucketName/pn-auth-fleet/main/apikeyAuthorizerV2.zip"
+      "${AUTHORIZER_NAME}.zip" \
+      "s3://$bucketName/pn-auth-fleet/main/${AUTHORIZER_NAME}.zip"
 
 echo " - Copy jwtAuthorizer.zip"
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
@@ -214,7 +221,7 @@ aws ${aws_command_base_args} s3 cp \
 LambdaZipVersionId1=$( aws ${aws_command_base_args} \
     s3api head-object \
       --bucket $bucketName \
-      --key "pn-auth-fleet/main/apikeyAuthorizerV2.zip" \
+      --key "pn-auth-fleet/main/${AUTHORIZER_NAME}.zip" \
       --query "VersionId" \
       --output text )
 LambdaZipVersionId2=$( aws ${aws_command_base_args} \
