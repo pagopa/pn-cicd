@@ -147,19 +147,22 @@ fi
 echo ""
 echo "=== Checkout pn-auth-fleet commitId=${pn_authfleet_commitid}"
 ( cd pn-auth-fleet && git fetch && git checkout $pn_authfleet_commitid )
-echo " - copy custom config"
-if ( [ ! -z "${custom_config_dir}" ] ) then
-  cp -r $custom_config_dir/pn-auth-fleet .
-fi
 
+pwd
+ls -al
 AUTHORIZER_V2_FOLDER="./apikeyAuthorizerV2"
-if [ -d "$AUTHORIZER_V2_FOLDER" ]; then
+if ( [ -d "${AUTHORIZER_V2_FOLDER}" ] ) then
   AUTHORIZER_NAME=apikeyAuthorizerV2
 else
   AUTHORIZER_NAME=apikeyAuthorizer
 fi
 echo "The selected authorizer is ${AUTHORIZER_NAME}"
 
+
+echo " - copy custom config"
+if ( [ ! -z "${custom_config_dir}" ] ) then
+  cp -r $custom_config_dir/pn-auth-fleet .
+fi
 
 echo ""
 echo "=== Base AWS command parameters"
