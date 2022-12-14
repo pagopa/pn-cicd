@@ -150,7 +150,7 @@ echo "=== Checkout pn-auth-fleet commitId=${pn_authfleet_commitid}"
 
 pwd
 ls -al
-AUTHORIZER_V2_FOLDER="./apikeyAuthorizerV2"
+AUTHORIZER_V2_FOLDER="./pn-auth-fleet/apikeyAuthorizerV2"
 if ( [ -d "${AUTHORIZER_V2_FOLDER}" ] ) then
   AUTHORIZER_NAME=apikeyAuthorizerV2
 else
