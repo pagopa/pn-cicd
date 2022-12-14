@@ -352,7 +352,7 @@ if ( [ ! -z "$HAS_MONITORING" ]) then
         PFLoginTooManyErrorsAlarmArn="${webappPflTooManyErrorsAlarmArn}" \
         PFLoginTooManyRequestsAlarmArn="${webappPflTooManyRequestsAlarmArn}" \
         LandingTooManyErrorsAlarmArn="${landingTooManyErrorsAlarmArn}" \
-        LandingTooManyRequestsAlarmArn="${landingTooManyRequestsAlarmArn}" \
+        LandingTooManyRequestsAlarmArn="${landingTooManyRequestsAlarmArn}"
 
 fi
 
