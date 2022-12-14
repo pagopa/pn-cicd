@@ -179,7 +179,7 @@ aws ${aws_command_base_args} \
       --recursive --exclude ".git/*"
 
 AUTHORIZER_V2_FOLDER=apikeyAuthorizerV2
-if [[ -f "$AUTHORIZER_V2_FOLDER" ]]; then
+if [[ -d "$AUTHORIZER_V2_FOLDER" ]]; then
   AUTHORIZER_NAME=apikeyAuthorizerV2
 else
   AUTHORIZER_NAME=apikeyAuthorizer
