@@ -181,6 +181,7 @@ AlarmSNSTopicArn=$( aws ${aws_command_base_args} \
       --output json \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"AlarmSNSTopicArn\") | .OutputValue" )
 
+echo "AlarmSNSTopicArn : ${AlarmSNSTopicArn}"
 
 HAS_MONITORING=""
 if ( [ -f "pn-frontend/aws-cdn-templates/one-monitoring.yaml" ] ) then
