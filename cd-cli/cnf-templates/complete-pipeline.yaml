@@ -1066,7 +1066,10 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && [ -f ./deployOerDashboard.sh ] && ./deployOerDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)'                 
+                - |
+                  if ( [ -f "./deployOerDashboard.sh" ] ) then
+                    cd scripts/cd-cli && ./deployOerDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)'
+                  fi
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
