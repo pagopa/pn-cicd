@@ -1067,8 +1067,9 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - |
-                  if ( [ -f "./deployOerDashboard.sh" ] ) then
-                    cd scripts/cd-cli && ./deployOerDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)'
+                  existsDashboardOer=$(find ./scripts/cd-cli -name deployOerDashboard.sh | wc -l)
+                  if ( [ "$existsDashboardOer" = "1" ] ) then
+                    (cd scripts/cd-cli && ./deployOerDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
                   fi
                 - 'echo ""'
                 - 'echo ""'
