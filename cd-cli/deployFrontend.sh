@@ -39,6 +39,8 @@ parse_params() {
   pn_infra_commitid=""
   pn_frontend_commitid=""
   bucketName=""
+  tooManyErrorsAlarmArn=""
+  tooManyRequestsAlarmArn=""
   LambdasBucketName=""
 
   while :; do
@@ -123,6 +125,19 @@ dump_params
 
 cd $work_dir
 
+echo "=== Download pn-infra" 
+if ( [ ! -e pn-infra ] ) then 
+  git clone https://github.com/pagopa/pn-infra.git
+fi
+
+echo ""
+echo "=== Checkout pn-infra commitId=${pn_infra_commitid}"
+( cd pn-infra && git fetch && git checkout $pn_infra_commitid )
+echo " - copy custom config"
+if ( [ ! -z "${custom_config_dir}" ] ) then
+  cp -r $custom_config_dir/pn-infra .
+fi
+
 echo "=== Download pn-frontend" 
 if ( [ ! -e pn-frontend ] ) then 
   git clone https://github.com/pagopa/pn-frontend.git
@@ -136,6 +151,11 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-frontend .
 fi
 
+templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
+templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
+echo " - Bucket Name: ${bucketName}"
+echo " - Bucket Template S3 Url: ${templateBucketS3BaseUrl}"
+echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
 
 
 echo ""
@@ -149,7 +169,24 @@ if ( [ ! -z "${aws_region}" ] ) then
 fi
 echo ${aws_command_base_args}
 
+echo ""
+echo "=== Upload files to bucket"
+aws ${aws_command_base_args} \
+    s3 cp pn-infra $templateBucketS3BaseUrl \
+      --recursive --exclude ".git/*"
 
+AlarmSNSTopicArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name once-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"AlarmSNSTopicArn\") | .OutputValue" )
+
+echo "AlarmSNSTopicArn : ${AlarmSNSTopicArn}"
+
+HAS_MONITORING=""
+if ( [ -f "pn-frontend/aws-cdn-templates/one-monitoring.yaml" ] ) then
+  HAS_MONITORING="true"
+fi
 
 echo ""
 echo ""
@@ -177,6 +214,10 @@ function prepareOneCloudFront() {
     OptionalParameters="${OptionalParameters} AlternateWebDomainReferenceToSite=true"
   fi
 
+  if ( [ ! -z "$HAS_MONITORING" ]) then
+    OptionalParameters="${OptionalParameters} AlarmSNSTopicArn=${AlarmSNSTopicArn}"
+  fi
+
   echo ""
   echo "=== Create CDN ${CdnName} with domain ${WebDomain} in zone ${HostedZoneId}"
   echo "     CertificateARN=${WebCertificateArn}"
@@ -197,6 +238,22 @@ function prepareOneCloudFront() {
       --stack-name $CdnName \
       --output json \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"WebAppBucketName\") | .OutputValue" )
+
+  if ( [ ! -z "$HAS_MONITORING" ]) then
+    tooManyRequestsAlarmArn=$( aws ${aws_command_base_args} \
+      cloudformation describe-stacks \
+        --stack-name $CdnName \
+        --output json \
+    | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"TooManyRequestsAlarmArn\") | .OutputValue" )
+
+
+    tooManyErrorsAlarmArn=$( aws ${aws_command_base_args} \
+      cloudformation describe-stacks \
+        --stack-name $CdnName \
+        --output json \
+    | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"TooManyErrorsAlarmArn\") | .OutputValue" )
+  fi
+
   echo " - Created bucket name: ${bucketName}"
 }
 
@@ -211,7 +268,8 @@ prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "${PORTALE_PA_ALTERNATE_DNS-}"
 
 webappPaBucketName=${bucketName}
-
+webappPaTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
+webappPaTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "portale.${env_type}.pn.pagopa.it" \
@@ -220,6 +278,8 @@ prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "$REACT_APP_URL_API" \
     "${PORTALE_PF_ALTERNATE_DNS-}"
 webappPfBucketName=${bucketName}
+webappPfTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
+webappPfTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "portale-login.${env_type}.pn.pagopa.it" \
@@ -228,6 +288,8 @@ prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "$REACT_APP_URL_API" \
     "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
 webappPflBucketName=${bucketName}
+webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
+webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 
 
@@ -238,17 +300,63 @@ prepareOneCloudFront web-landing-cdn-${env_type} \
     "$REACT_APP_URL_API" \
     "${LANDING_SITE_ALTERNATE_DNS-}"
 landingBucketName=${bucketName}
+landingTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
+landingTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 
 
 echo ""
 echo " === Bucket Portale PA = ${webappPaBucketName}"
+echo " === Too Many Request Alarm Portale PA = ${webappPaTooManyRequestsAlarmArn}"
+echo " === Too Many Errors Alarm Portale PA = ${webappPaTooManyErrorsAlarmArn}"
 echo " === Bucket Portale PF = ${webappPfBucketName}"
+echo " === Too Many Request Alarm Portale PF = ${webappPfTooManyRequestsAlarmArn}"
+echo " === Too Many Errors Alarm Portale PF = ${webappPfTooManyErrorsAlarmArn}"
 echo " === Bucket Portale PF login = ${webappPflBucketName}"
+echo " === Too Many Request Alarm Portale PFL = ${webappPflTooManyRequestsAlarmArn}"
+echo " === Too Many Errors Alarm Portale PFL = ${webappPflTooManyErrorsAlarmArn}"
 echo " === Bucket Sito LAnding = ${landingBucketName}"
+echo " === Too Many Request Alarm Landing = ${landingTooManyRequestsAlarmArn}"
+echo " === Too Many Errors Alarm Landing = ${landingTooManyErrorsAlarmArn}"
 
 
+if ( [ ! -z "$HAS_MONITORING" ]) then
 
+  echo ""
+  echo ""
+  echo ""
+  echo ""
+
+  echo "====================================================================="
+  echo "====================================================================="
+  echo "===                                                               ==="
+  echo "===               DEPLOY CDN MONITORING DASHBOARD                 ==="
+  echo "===                                                               ==="
+  echo "====================================================================="
+  echo "====================================================================="
+  
+
+
+  echo ""
+  echo "=== Create CDN monitoring dashboard"
+  aws ${aws_command_base_args} \
+    cloudformation deploy \
+      --stack-name frontend-monitoring-${env_type} \
+      --template-file pn-frontend/aws-cdn-templates/one-monitoring.yaml \
+      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+      --parameter-overrides \
+        ProjectName="${project_name}" \
+        TemplateBucketBaseUrl="${templateBucketHttpsBaseUrl}" \
+        PATooManyErrorsAlarmArn="${webappPaTooManyErrorsAlarmArn}" \
+        PATooManyRequestsAlarmArn="${webappPaTooManyRequestsAlarmArn}" \
+        PFTooManyErrorsAlarmArn="${webappPfTooManyErrorsAlarmArn}" \
+        PFTooManyRequestsAlarmArn="${webappPfTooManyRequestsAlarmArn}" \
+        PFLoginTooManyErrorsAlarmArn="${webappPflTooManyErrorsAlarmArn}" \
+        PFLoginTooManyRequestsAlarmArn="${webappPflTooManyRequestsAlarmArn}" \
+        LandingTooManyErrorsAlarmArn="${landingTooManyErrorsAlarmArn}" \
+        LandingTooManyRequestsAlarmArn="${landingTooManyRequestsAlarmArn}"
+
+fi
 
 echo ""
 echo ""
