@@ -160,7 +160,7 @@ aws ${aws_command_base_args} \
 if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     echo "Deploy OER dashboard deploy"
     aws ${aws_command_base_args} cloudwatch describe-alarms | jq -r '.MetricAlarms[].AlarmArn' | tee all_metric_alarms.txt
-    aws ${aws_command_base_args} cloudwatch describe-alarms --alarm-types CompositeAlarm | cloudwatch describe-alarms --alarm-types CompositeAlarm | jq -r '.CompositeAlarms[].AlarmRule' | grep -o '(.*)' | sed 's/[()]//g' | sed 's/ OR /\n/g' | sed 's/ALARM//g' | sort -u | tee used.txt
+    aws ${aws_command_base_args} cloudwatch describe-alarms --alarm-types CompositeAlarm | jq -r '.CompositeAlarms[].AlarmRule' | grep -o '(.*)' | sed 's/[()]//g' | sed 's/ OR /\n/g' | sed 's/ALARM//g' | sort -u | tee used.txt
 
     comm -3 all_metric_alarms.txt used.txt | tee not_referenced_metric_allarms.txt
 
