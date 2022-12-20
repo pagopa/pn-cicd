@@ -283,6 +283,28 @@ Resources:
                     export PIPELINE_NAME="pn-pn-paper-channel-update-pipeline"
                   fi
                 - |
+                  if ( [ "$PIPELINE_NAME" = "pn-frontend-update-pipeline" ] ) then
+                    echo "Check pn-frontend build end"
+                    
+                    pfSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-webapp_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pfSvil is build ${pfSvil}"
+                    pfColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-webapp_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pfColl is build ${pfColl}"
+                    pflSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-login_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pflSvil is build ${pflSvil}"
+                    pflColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-login_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pflColl is build ${pflColl}"
+                    paSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-pa-webapp_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "paSvil is build ${paSvil}"
+                    paColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-pa-webapp_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "paColl is build ${paColl}"
+                    
+                    if ( [ "${pfSvil}" = "KO" -o "${pfColl}" = "KO" -o "${pflSvil}" = "KO" -o "${pflColl}" = "KO" -o "${paSvil}" = "KO" -o "${paColl}" = "KO" ] ) then
+                      echo "##### WARNING pn-frontend have not ended"
+                      export PIPELINE_NAME=""
+                    fi
+                  fi                  
+                - |
                   if ( [ "$PROJECT" = "pn-progression-sensor" ] ) then
                     sed -i -e "s|pn_progression_sensor_commitId=.*|pn_progression_sensor_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-progression-sensor-update-pipeline"
