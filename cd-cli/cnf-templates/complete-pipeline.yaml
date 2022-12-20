@@ -1059,11 +1059,26 @@ Resources:
                 - '(cd scripts/cd-cli && ./deployApiGwUsagePlan.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion APP_IO_BE IO)'
                 - 'echo ""'
                 - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###                OER DASHBOARD                      ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - |
+                  existsDashboardOer=$(find ./scripts/cd-cli -name deployOerDashboard.sh | wc -l)
+                  if ( [ "$existsDashboardOer" = "1" ] ) then
+                    (cd scripts/cd-cli && ./deployOerDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
+                  fi
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
                 - 'echo "#########################################################"'
                 - 'echo "###                CLEANUP INFRASTRUCTURE            ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && ./cleanupInfrastructure.sh -w /tmp -r $AwsRegion)'                
+                - '(cd scripts/cd-cli && ./cleanupInfrastructure.sh -w /tmp -r $AwsRegion)'
           artifacts:
             files:
               - '**/*'
@@ -1491,7 +1506,95 @@ Resources:
                 - Name: PnDeliveryOutput
               RunOrder: 2
             
+  # POST-DEPLOY
+  ############################
+  InfrastructurePostDeployPipeline:
+    Condition: IsContinuosDeliveryCondition
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipelineRole.Arn
+      Name: !Sub '${ProjectName}-infrastructure-post-deploy-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
             
+            # Update infrastructure-post-deploy
+            - Name: Update_InfrastructurePostDeploy
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref PostDeployScriptsCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PostDeployScriptsOutput
+              RunOrder: 2            
 
   # MICROSERVICE PN-DELIVERY-PUSH
   ############################
