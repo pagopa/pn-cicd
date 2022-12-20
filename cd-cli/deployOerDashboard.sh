@@ -159,10 +159,10 @@ aws ${aws_command_base_args} \
 ## Script to get metric alarms not used by any composite alarm
 if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     echo "Deploy OER dashboard deploy"
-#    aws ${aws_command_base_args} cloudwatch describe-alarms | jq -r '.MetricAlarms[].AlarmName' | tee all_metric_alarms.txt
-#    aws ${aws_command_base_args} cloudwatch describe-alarms --alarm-types CompositeAlarm | jq -r '.CompositeAlarms[].AlarmRule' | sed -n -e 's/[^"]*"\([^"]*\)"[^"]*/\1#/g p' | tr '#' '\n' | grep -v -E "^$" | sort -u | tee used.txt
+    aws ${aws_command_base_args} cloudwatch describe-alarms | jq -r '.MetricAlarms[].AlarmArn' | tee all_metric_alarms.txt
+    aws ${aws_command_base_args} cloudwatch describe-alarms --alarm-types CompositeAlarm | cloudwatch describe-alarms --alarm-types CompositeAlarm | jq -r '.CompositeAlarms[].AlarmRule' | grep -o '(.*)' | sed 's/[()]//g' | sed 's/ OR /\n/g' | sed 's/ALARM//g' | sort -u | tee used.txt
 
-#    comm -3 all_metric_alarms.txt used.txt | tee not_referenced_metric_allarms.txt
+    comm -3 all_metric_alarms.txt used.txt | tee not_referenced_metric_allarms.txt
 
     aws ${aws_command_base_args} cloudformation deploy \
         --stack-name pn-aggregate-alarm-${env_type} \
