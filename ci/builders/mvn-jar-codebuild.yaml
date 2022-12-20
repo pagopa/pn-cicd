@@ -122,7 +122,7 @@ Resources:
           phases:
             install:
               runtime-versions:
-                 java: corretto11
+                 java: corretto17
               commands:
                  - git config --global user.email "pn-pagopa-github-bot@pagopa.it"
                  - git config --global user.name "pn-pagopa-github-bot"
