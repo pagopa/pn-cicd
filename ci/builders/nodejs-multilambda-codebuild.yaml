@@ -67,7 +67,14 @@ Resources:
               commands:
                 - cd $FUNCTIONS_FOLDER_NAME
                 - echo Build started on `date`
-                - npm ci
+                - |
+                  for i in */
+                  do
+                    echo "Bulding $i"
+                    cd $i
+                    npm ci
+                    cd ..
+                  done               
             post_build:
               on-failure: ABORT
               commands:
