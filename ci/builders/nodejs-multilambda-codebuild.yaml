@@ -68,7 +68,6 @@ Resources:
                 - cd $FUNCTIONS_FOLDER_NAME
                 - echo Build started on `date`
                 - npm ci
-                - npm run-script test-build
             post_build:
               on-failure: ABORT
               commands:
