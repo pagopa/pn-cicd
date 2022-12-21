@@ -185,8 +185,8 @@ lambdasZip='functions.zip'
 lambdasLocalPath='functions'
 
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-progression-sensor/commits/${pn_progressionsensor_commitId}/functions.zip" \
-      "${lambdasLocalPath}"
+      --bucket "$LambdasBucketName" --key "pn-progression-sensor/commits/${pn_progressionsensor_commitId}/${lambdasZip}" \
+      "${lambdasZip}"
 
 unzip ${lambdasZip} -d ./${lambdasLocalPath}
 
