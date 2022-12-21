@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -a <pn-progressionsensor-github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaArtifactBucketName> 
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -a <pn-progressionsensor-github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaArtifactBucketName> [-w <work_dir>]
     
     
     [-h]                           : this help message
@@ -26,6 +26,8 @@ usage() {
     [-c <custom_config_dir>]       : where tor read additional env-type configurations
     -b <artifactBucketName>        : bucket name to use as temporary artifacts storage
     -B <lambdaArtifactBucketName>  : bucket name where lambda artifact are memorized
+    -w <work-dir>                    : working directory used by the script to download artifacts (default $HOME/tmp/deploy)
+
 EOF
   exit 1
 }
