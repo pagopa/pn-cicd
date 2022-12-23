@@ -1056,7 +1056,7 @@ Resources:
                 - 'echo "########################################################"'
                 - 'echo ""'
                 - 'echo "./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n $MsName -a $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - '(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n $MsName -a $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
