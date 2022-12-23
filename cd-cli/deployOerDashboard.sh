@@ -165,7 +165,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     comm -3 all_metric_alarms.txt used.txt | tee not_referenced_metric_allarms.txt
 
     aws ${aws_command_base_args} cloudformation deploy \
-        --stack-name pn-aggregate-alarm-${env_type} \
+        --stack-name pn-oer-dashboard-${env_type} \
         --capabilities CAPABILITY_NAMED_IAM \
         --template-file pn-infra/runtime-infra/pn-oer-dashboard.yaml \
         --parameter-overrides \
