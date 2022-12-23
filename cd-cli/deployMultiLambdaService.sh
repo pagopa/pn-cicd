@@ -117,7 +117,8 @@ dump_params(){
   echo "Work directory:     ${work_dir}"
   echo "Custom config dir:  ${custom_config_dir}"
   echo "Infra CommitId:     ${pn_infra_commitid}"
-  echo "Progression Sensor CommitId: ${pn_microsvc_commitId}"
+  echo "Microsvc CommitId: ${pn_microsvc_commitId}"
+  echo "Repo Name: ${repo_name}"
   echo "Env Name:           ${env_type}"
   echo "AWS region:         ${aws_region}"
   echo "AWS profile:        ${aws_profile}"
@@ -149,7 +150,7 @@ fi
 
 
 echo "=== Download ${repo_name}" 
-if ( [ ! -e pn-progression-sensor ] ) then 
+if ( [ ! -e ${repo_name} ] ) then 
   git clone https://github.com/pagopa/${repo_name}.git
 fi
 
