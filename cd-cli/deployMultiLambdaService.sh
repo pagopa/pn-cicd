@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -a <pn-progressionsensor-github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaArtifactBucketName> [-w <work_dir>]
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -n <repo-name> -r <aws-region> -e <env-type> -i <github-commitid> -a <pn-microsvc-github-commitId> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaArtifactBucketName> [-w <work_dir>]
     
     
     [-h]                           : this help message
@@ -22,10 +22,11 @@ usage() {
     -r <aws-region>                : aws region as eu-south-1
     -e <env-type>                  : one of dev / uat / svil / coll / cert / prod
     -i <infra-github-commitid>     : commitId for github repository pagopa/pn-infra
-    -a <progressionsensor-github-commitid> : commitId for github repository pagopa/pn-infra
+    -a <microsvc-github-commitid> : commitId for github repository microsvc
     [-c <custom_config_dir>]       : where tor read additional env-type configurations
     -b <artifactBucketName>        : bucket name to use as temporary artifacts storage
     -B <lambdaArtifactBucketName>  : bucket name where lambda artifact are memorized
+    -n <repo-name>                 : nome del repository del servizio
     -w <work-dir>                    : working directory used by the script to download artifacts (default $HOME/tmp/deploy)
 
 EOF
@@ -39,8 +40,9 @@ parse_params() {
   aws_profile=""
   aws_region=""
   env_type=""
+  repo_name=""
   pn_infra_commitid=""
-  pn_progressionsensor_commitId=""
+  pn_microsvc_commitId=""
   bucketName=""
   LambdasBucketName=""
 
@@ -64,14 +66,18 @@ parse_params() {
       pn_infra_commitid="${2-}"
       shift
       ;;
-    -a | --progressionsensor-commitid) 
-      pn_progressionsensor_commitId="${2-}"
+    -a | --microsvc-commitid) 
+      pn_microsvc_commitId="${2-}"
       shift
       ;;
     -c | --custom-config-dir) 
       custom_config_dir="${2-}"
       shift
       ;;
+    -n | --repo-name) 
+      repo_name="${2-}"
+      shift
+      ;;      
     -w | --work-dir) 
       work_dir="${2-}"
       shift
@@ -95,7 +101,8 @@ parse_params() {
   # check required params and arguments
   [[ -z "${env_type-}" ]] && usage 
   [[ -z "${pn_infra_commitid-}" ]] && usage
-  [[ -z "${pn_progressionsensor_commitId-}" ]] && usage
+  [[ -z "${pn_microsvc_commitId-}" ]] && usage
+  [[ -z "${repo_name-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
   [[ -z "${LambdasBucketName-}" ]] && usage
@@ -110,7 +117,7 @@ dump_params(){
   echo "Work directory:     ${work_dir}"
   echo "Custom config dir:  ${custom_config_dir}"
   echo "Infra CommitId:     ${pn_infra_commitid}"
-  echo "Progression Sensor CommitId: ${pn_progressionsensor_commitId}"
+  echo "Progression Sensor CommitId: ${pn_microsvc_commitId}"
   echo "Env Name:           ${env_type}"
   echo "AWS region:         ${aws_region}"
   echo "AWS profile:        ${aws_profile}"
@@ -141,18 +148,18 @@ fi
 
 
 
-echo "=== Download pn-progression-sensor" 
+echo "=== Download ${repo_name}" 
 if ( [ ! -e pn-progression-sensor ] ) then 
-  git clone https://github.com/pagopa/pn-progression-sensor.git
+  git clone https://github.com/pagopa/${repo_name}.git
 fi
 
 echo ""
-echo "=== Checkout pn-progression-sensor commitId=${pn_progressionsensor_commitId}"
-( cd pn-progression-sensor && git fetch && git checkout $pn_progressionsensor_commitId )
+echo "=== Checkout ${repo_name} commitId=${pn_microsvc_commitId}"
+( cd ${repo_name} && git fetch && git checkout $pn_microsvc_commitId )
 
 echo " - copy custom config"
 if ( [ ! -z "${custom_config_dir}" ] ) then
-  cp -r $custom_config_dir/pn-progression-sensor .
+  cp -r $custom_config_dir/${repo_name} .
 fi
 
 echo ""
@@ -185,20 +192,75 @@ lambdasZip='functions.zip'
 lambdasLocalPath='functions'
 
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-progression-sensor/commits/${pn_progressionsensor_commitId}/${lambdasZip}" \
+      --bucket "$LambdasBucketName" --key "${repo_name}/commits/${pn_microsvc_commitId}/${lambdasZip}" \
       "${lambdasZip}"
 
 unzip ${lambdasZip} -d ./${lambdasLocalPath}
 
-bucketBasePath="pn-progression-sensor/main"
+bucketBasePath="${repo_name}/main"
 aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}/" \
       "s3://$bucketName/${bucketBasePath}/"
 
 MicroserviceNumber=0
 
+echo ""
+echo ""
+echo ""
+echo "======================================================================="
+echo "======================================================================="
+echo "===                                                                 ==="
+echo "===                $repo_name STORAGE DEPLOYMENT                    ==="
+echo "===                                                                 ==="
+echo "======================================================================="
+echo "======================================================================="
+echo ""
+echo ""
+echo ""
+echo "=== Prepare parameters for $repo_name storage deployment in $env_type ACCOUNT"
+PreviousOutputFilePath=pn-ipc-${env_type}-out.json
+TemplateFilePath=${repo_name}/scripts/aws/cfn/storage.yml
+EnanchedParamFilePath=${repo_name}-storage-${env_type}-cfg-enanched.json
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
+
+echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
+echo " - TemplateFilePath: ${TemplateFilePath}"
+echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
+echo " - PipelineParams: ${PipelineParams}"
+
+
+echo ""
+echo "= Read Outputs from previous stack"
+aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | tee ${PreviousOutputFilePath}
+
+echo ""
+echo "= Enanched parameters file"
+jq -s "{ \"Parameters\": .[0] } " ${PreviousOutputFilePath} \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnanchedParamFilePath}
+echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+cat ${EnanchedParamFilePath}
+
+
+echo ""
+echo "=== Deploy $repo_name STORAGE FOR $env_type ACCOUNT"
+aws ${aws_command_base_args} \
+    cloudformation deploy \
+      --stack-name ${repo_name}-storage-$env_type \
+      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+      --template-file ${TemplateFilePath} \
+      --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+   
+
 echo "=== PARAMETERS "
 echo " - LambdasBucketName: ${bucketName}"
+echo " - MicroserviceName: ${repo_name}"
 echo " - MicroserviceNumber: ${MicroserviceNumber}"
 
 
@@ -216,15 +278,17 @@ echo ""
 echo ""
 echo ""
 echo "=== Prepare parameters for pn-infra.yaml deployment in $env_type ACCOUNT"
-PreviousOutputFilePath=pn-ipc-${env_type}-out.json
-TemplateFilePath=pn-progression-sensor/scripts/aws/cfn/microservice.yml
-ParamFilePath=pn-progression-sensor/scripts/aws/cfn/microservice-${env_type}-cfg.json
-EnanchedParamFilePath=pn-progression-sensor-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\
-  \"LambdasBucketName=${bucketName}\",\"MicroserviceNumber=${MicroserviceNumber}\", \"BucketBasePath=${bucketBasePath}\", \
-  \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},pn_progressionsensor_commitId=${pn_progressionsensor_commitId}\""
+PreviousOutputFilePath=${repo_name}-storage-${env_type}-out.json
+InfraIpcOutputFilePath=pn-ipc-${env_type}-out.json
+TemplateFilePath=${repo_name}/scripts/aws/cfn/microservice.yml
+ParamFilePath=${repo_name}/scripts/aws/cfn/microservice-${env_type}-cfg.json
+EnanchedParamFilePath=${repo_name}-microservice-${env_type}-cfg-enanched.json
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
+     \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
+     \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
+echo " - InfraIpcOutputFilePath: ${InfraIpcOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
 echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
@@ -235,11 +299,21 @@ echo ""
 echo "= Read Outputs from previous stack"
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
+      --stack-name ${repo_name}-storage-$env_type \
       --query "Stacks[0].Outputs" \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${PreviousOutputFilePath}
+
+echo ""
+echo "= Read Outputs from infrastructure stack"
+aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | tee ${InfraIpcOutputFilePath}
 
 echo ""
 echo "= Read Parameters file"
@@ -247,25 +321,19 @@ cat ${ParamFilePath}
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+jq -s "{ \"Parameters\": .[0] } * .[1] * { \"Parameters\": .[2] }" \
+   ${PreviousOutputFilePath} ${ParamFilePath} ${InfraIpcOutputFilePath} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
 cat ${EnanchedParamFilePath}
 
 
-
-
-
-msStackName="pn-progression-sensor-microsvc-${env_type}"
-
 echo ""
-echo "=== Deploy PN-PROGRESSION-SENSOR FOR $env_type ACCOUNT"
-
+echo "=== Deploy $repo_name MICROSERVICE FOR $env_type ACCOUNT"
 aws ${aws_command_base_args} \
     cloudformation deploy \
-    --stack-name $msStackName \
-    --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-    --template-file ${TemplateFilePath} \
-    --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )  
-        
+      --stack-name ${repo_name}-microsvc-$env_type \
+      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+      --template-file ${TemplateFilePath} \
+      --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )

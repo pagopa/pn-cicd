@@ -1019,12 +1019,12 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
   
-  # CODEBUILD used to update an progression-sensor MICROSERVICE
+  # CODEBUILD used to update an multi-lambda MICROSERVICE
   ##############################################################
-  UpdateProgressionSensorCodeBuildProject:
+  UpdateMultiLambdaServiceCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${ProjectName}-UpdateProgressionSensorCodeBuildProject
+      Name: !Sub ${ProjectName}-UpdateMultiLambdaServiceCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source: 
         Type: CODEPIPELINE
@@ -1044,7 +1044,6 @@ Resources:
             build:
               commands:
                 - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
-                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
                 - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
                 - 'echo ""'
                 - 'echo ""'
@@ -1053,11 +1052,11 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "########################################################"'
-                - 'echo "###       UPDATE PROGRESSION SENSOR    "###'
+                - 'echo "###       UPDATE MULTI-LAMBDA MICROSERVICE          "###'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployProgressionSensor.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $pn_progression_sensor_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployProgressionSensor.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $pn_progression_sensor_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n $MsName -a $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
@@ -2746,7 +2745,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateProgressionSensorCodeBuildProject
+                ProjectName: !Ref UpdateMultiLambdaServiceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -2754,7 +2753,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-progression-sensor", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"0", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_progression_sensor", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
