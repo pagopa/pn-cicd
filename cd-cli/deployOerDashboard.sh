@@ -150,11 +150,6 @@ echo " - Bucket Template S3 Url: ${templateBucketS3BaseUrl}"
 echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
 
 
-confidentialInfoAccount=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks --stack-name pn-ipc-${env_type} \
-      | jq -r '.Stacks[0].Outputs | .[] | select(.OutputKey=="ConfidentialInfoAccountId") | .OutputValue' )
-
-
 echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
@@ -175,7 +170,6 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
         --template-file pn-infra/runtime-infra/pn-oer-dashboard.yaml \
         --parameter-overrides \
             ProjectName=${project_name} \
-            ConfidentialInfoAccountId=${confidentialInfoAccount} \
             Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 else
     echo "Skipped OER dashboard deploy"
