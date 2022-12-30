@@ -17,6 +17,9 @@ for PRJ in ${BE_PROJECTS[@]}; do
     if [[ $localDevBranch -eq 0 ]]; then
         git checkout -b develop
     fi
+    if [[ " ${BE_MVN_COMMON_PROJECTS[*]} " =~ " ${PRJ} " ]]; then
+      ./mvnw install -Dmaven.test.skip=true
+    fi
     ./mvnw org.owasp:dependency-check-maven:7.4.1:check -Dformat=ALL
     for CURR_REPORT in $( ls target/dependency-check-report.* ); do
       DEST_REPORT=${PRJ}${CURR_REPORT#target/dependency-check}
@@ -27,3 +30,7 @@ for PRJ in ${BE_PROJECTS[@]}; do
 done
 popd
 rm -rf $TMP_DIR
+
+echo "merge report"
+
+cat $DEST_DIR/*.csv | sort -u >$DEST_DIR/merge-report.csv
