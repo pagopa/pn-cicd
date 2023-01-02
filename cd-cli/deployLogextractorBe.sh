@@ -160,8 +160,8 @@ if ( [ ! -z "${aws_profile}" ] ) then
 fi
 echo "Profile option ${profile_option}"
 
-source $microcvs_name/aws/scripts/environments/.env.infra.${env_type}
-source $microcvs_name/aws/scripts/environments/.env.backend.${env_type}
+source $microcvs_name/scripts/aws/environments/.env.infra.${env_type}
+source $microcvs_name/scripts/aws/environments/.env.backend.${env_type}
 
 
 CognitoUserPoolArn=$( aws ${profile_option} --region="eu-central-1" cloudformation describe-stacks \
