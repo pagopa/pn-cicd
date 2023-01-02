@@ -208,7 +208,7 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
     --stack-name "pn-logextractor-service-${env_type}" \
     --parameter-overrides "AdditionalMicroserviceSecurityGroup=${ElasticacheSecurityGroup}" "MicroServiceUniqueName=pn-logextractor-be-${env_type}" \
         "ECSClusterName=pn-logextractor-${env_type}-ecs-cluster" "MappedPaths=/*" \
-        "ContainerImageURI=${container_image_url}" \
+        "ContainerImageURI=${ContainerImageUri}" \
         "CpuValue=1024" "MemoryAmount=4GB" "VpcId=${VpcId}" \
         "Subnets=${PrivateSubnetIds}" \
         "LoadBalancerListenerArn=${AlbListenerArn}" \
