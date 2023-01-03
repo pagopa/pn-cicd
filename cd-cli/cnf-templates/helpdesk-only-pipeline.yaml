@@ -390,6 +390,29 @@ Resources:
                 - Name: PnLogextractorBeOutput
               RunOrder: 3
             
+            # Update pn-helpdesk-fe
+            - Name: Update_PnHelpdeskFe
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateLogextractorCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-helpdesk-fe", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_helpdesk_fe", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnHelpdeskFeOutput
+              RunOrder: 3
+
              # Update logs and Usage Plans
             - Name: Infrastructure_Post_Deploy
               ActionTypeId:
@@ -471,7 +494,7 @@ Resources:
         Image: "aws/codebuild/standard:6.0"
 
 
-  # CODEBUILD used to update an ecs microservice
+  # CODEBUILD used to update logextractor microservice
   ###################################################
   UpdateLogextractorCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
@@ -520,6 +543,63 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
   
+  # CODEBUILD used to update helpdesk fe microservice
+  ###################################################
+  UpdateHelpdeskCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateHelpdeskCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                nodejs: 16
+              commands:
+                #install yarn
+                - echo installing yarn
+                - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+                - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+                - apt install --no-install-recommends yarn
+            pre_build:
+              commands:
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo "./deployHelpdeskFe.sh -r $AwsRegion -e $EnvName -m $ms_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployHelpdeskFe.sh -r $AwsRegion -e $EnvName -m $ms_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:6.0"
+
   # CODEBUILD used to cleanup infrastructure after deploy #
   #########################################################
   PostDeployScriptsCodeBuildProject:
