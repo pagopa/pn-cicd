@@ -161,6 +161,7 @@ sed -e "s/\${USER_POOL_ID}/${CognitoUserPoolId}/" \
     -e "s/\${WEB_CLIENT_ID}/${CognitoWebClientId}/" \
     -e "s/\${API_DOMAIN}/${ApiDomain}/"  .env.template > .env.production 
 
+yarn install
 yarn build
 
 cd build
