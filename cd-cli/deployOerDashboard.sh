@@ -185,6 +185,8 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       OptionalParameters="${OptionalParameters} ConfidentialInfoAccountId=${confidentialInfoAccountId}"
     fi
 
+    # The Radd is not currently exposed on Api Gateway but using an Application Load Balancer Target Group
+    # so we have to monitor metrics on ALB Target Group
     if ( [ ! -z "$raddTargetGroupArn" ] ) then
       delimiter="listener/"
       s=$applicationLoadBalancerListenerArn$delimiter
