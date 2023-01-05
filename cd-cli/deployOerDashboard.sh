@@ -164,13 +164,62 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
 
     comm -3 all_metric_alarms.txt used.txt | tee not_referenced_metric_allarms.txt
 
+    confidentialInfoAccountId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name "pn-ipc-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"ConfidentialInfoAccountId\") | .OutputValue" \
+    ) 
+    echo "ConfidentialInfoAccountId=${confidentialInfoAccountId}"
+
+    applicationLoadBalancerListenerArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name "pn-infra-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"ApplicationLoadBalancerListenerArn\") | .OutputValue" \
+    ) 
+    echo "ApplicationLoadBalancerListenerArn=${applicationLoadBalancerListenerArn}"
+
+    raddTargetGroupArn=$( aws ${aws_command_base_args}  elbv2 describe-rules --listener-arn ${applicationLoadBalancerListenerArn}  \
+       --query "Rules[].{Host:Conditions[0].Values[0],TargetGroup:Actions[0].TargetGroupArn}" | jq -r \
+       ".[] | select(.Host==\"/radd/*\") | .TargetGroup")
+    
+    OptionalParameters=""
+    if ( [ ! -z "$confidentialInfoAccountId" ] ) then
+      OptionalParameters="${OptionalParameters} ConfidentialInfoAccountId=${confidentialInfoAccountId}"
+    fi
+
+    # The Radd is not currently exposed on Api Gateway but using an Application Load Balancer Target Group
+    # so we have to monitor metrics on ALB Target Group
+    if ( [ ! -z "$raddTargetGroupArn" ] ) then
+      delimiter="listener/"
+      s=$applicationLoadBalancerListenerArn$delimiter
+      array=();
+      while [[ $s ]]; do
+          array+=( "${s%%"$delimiter"*}" );
+          s=${s#*"$delimiter"};
+      done;
+
+      albRef=${array[1]}
+
+      delimiter1="targetgroup/"
+      s1=$raddTargetGroupArn$delimiter1
+      array1=();
+      while [[ $s1 ]]; do
+          array1+=( "${s1%%"$delimiter1"*}" );
+          s1=${s1#*"$delimiter1"};
+      done;
+
+      raddRef="targetgroup/"${array1[1]}
+      OptionalParameters="${OptionalParameters} Alb=${albRef} RaddTargetGroup=${raddRef}"
+    fi
+
+    echo "Optional Parameters ${OptionalParameters}"
+    
     aws ${aws_command_base_args} cloudformation deploy \
         --stack-name pn-oer-dashboard-${env_type} \
         --capabilities CAPABILITY_NAMED_IAM \
         --template-file pn-infra/runtime-infra/pn-oer-dashboard.yaml \
         --parameter-overrides \
             ProjectName=${project_name} \
-            Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
+            Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}" \
+            $OptionalParameters
 else
     echo "Skipped OER dashboard deploy"
 fi
