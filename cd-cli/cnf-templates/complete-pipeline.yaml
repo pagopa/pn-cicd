@@ -720,6 +720,30 @@ Resources:
                 - Name: PnLogsaverBeOutput
               RunOrder: 3
 
+            # Update pn-apikey-manager
+            - Name: Update_ApiKeyManager
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-apikey-manager", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_apikey_manager", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnApiKeyManagerOutput
+              RunOrder: 3
+
             # Update pn-paper-channel
             #- Fn::If:
             #  - IsDevCondition
@@ -2574,7 +2598,7 @@ Resources:
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
-                - Name: PnNationalRegistriesOutput
+                - Name: PnApiKeyManagerOutput
               RunOrder: 3
 
   # MICROSERVICE PN-PAPER-CHANNEL
