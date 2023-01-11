@@ -176,6 +176,12 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     ) 
     echo "OpenSearchArn=${openSearchArn}"
 
+    logsBucketName=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name "pn-ipc-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"LogsBucketName\") | .OutputValue" \
+    ) 
+    echo "LogsBucketName=${logsBucketName}"
+
     applicationLoadBalancerListenerArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
       --stack-name "pn-infra-${env_type}" | jq -r \
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"ApplicationLoadBalancerListenerArn\") | .OutputValue" \
@@ -193,6 +199,10 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
 
     if ( [ ! -z "$openSearchArn" ] ) then
       OptionalParameters="${OptionalParameters} OpenSearchArn=${openSearchArn}"
+    fi
+
+    if ( [ ! -z "$logsBucketName" ] ) then
+      OptionalParameters="${OptionalParameters} LogsBucketName=${logsBucketName}"
     fi
 
     # The Radd is not currently exposed on Api Gateway but using an Application Load Balancer Target Group
