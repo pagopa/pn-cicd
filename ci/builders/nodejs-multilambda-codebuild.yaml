@@ -73,6 +73,7 @@ Resources:
                     echo "Bulding $i"
                     cd $i
                     npm ci
+                    npm run-script test-build
                     cd ..
                   done               
             post_build:
