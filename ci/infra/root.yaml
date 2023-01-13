@@ -617,6 +617,18 @@ Resources:
         CiArtifactBucket: !Ref 'CiArtifactBucket'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
       TimeoutInMinutes: 5
+  
+  PnAuthFleetLambdas:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-auth-fleet'
+        BaseDir: 'functions'
+        CiArtifactBucket: !Ref 'CiArtifactBucket'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 10
+
 # Progetti Lambda
   PnApikeyAuthorizerLambda:
     Type: AWS::CloudFormation::Stack
