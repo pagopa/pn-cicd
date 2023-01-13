@@ -227,6 +227,14 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
+echo ""
+echo "=== Upload microservice files to bucket"
+microserviceBucketName=$bucketName
+microserviceBucketBaseKey="projects/${microcvs_name}/${pn_microsvc_commitid}"
+microserviceBucketS3BaseUrl="s3://${microserviceBucketName}/${microserviceBucketBaseKey}"
+aws ${aws_command_base_args} \
+    s3 cp ${microcvs_name} $templateBucketS3BaseUrl \
+      --recursive --exclude ".git/*"
 
 echo ""
 echo ""
@@ -312,6 +320,7 @@ EnanchedParamFilePath=${microcvs_name}-microservice-${env_type}-cfg-enanched.jso
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
      \"ContainerImageUri=${ContainerImageUri}\",\
+     \"BucketName=${microserviceBucketName}\",\"BucketBaseKey=${microserviceBucketBaseKey}\"\
      \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
