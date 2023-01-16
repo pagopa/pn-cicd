@@ -294,8 +294,8 @@ Resources:
                 - 'echo ""'
                 - |
                   if ( [ "$PROJECT" = "pn-auth-fleet" ] ) then
-                    git clone https://github.com/pagopa/pn-auth-fleet.git'
-                    ( cd pn-auth-fleet && git checkout $COMMIT_ID )'
+                    git clone https://github.com/pagopa/pn-auth-fleet.git
+                    ( cd pn-auth-fleet && git checkout $COMMIT_ID )
                     existsFunctionsFolder=$(find ./pn-auth-fleet -name functions | wc -l)
                     if ( [ "$existsFunctionsFolder" != "1" ] ) then
 
@@ -997,11 +997,11 @@ Resources:
                 - 'echo "########################################################"'
                 - 'echo ""'
                 - |
-                  git clone https://github.com/pagopa/pn-auth-fleet.git'
-                  ( cd pn-auth-fleet && git checkout $COMMIT_ID )'
+                  git clone https://github.com/pagopa/pn-auth-fleet.git
+                  ( cd pn-auth-fleet && git checkout $COMMIT_ID )
                   existsFunctionsFolder=$(find ./pn-auth-fleet -name "functions" | wc -l)
                   existsDeployMultiLambdaScript=$(find ./scripts/cd-cli -name "deployMultiLambdaService.sh" | wc -l)
-                  if ( [ "$existsFunctionsFolder" = "1" -a "$existsDeployMultiLambdaScript" = "1"] ) then
+                  if ( [ "$existsFunctionsFolder" = "1" -a "$existsDeployMultiLambdaScript" = "1" ] ) then
                     echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
                     (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
                   else
