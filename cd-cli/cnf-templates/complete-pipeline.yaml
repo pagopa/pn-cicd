@@ -1,34 +1,34 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Continuos Delivery pipeline for infrastructure deployment'
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Continuos Delivery pipeline for infrastructure deployment"
 Parameters:
-  
   ProjectName:
     Description: Usually "pn", can be changed for feature branch deployment
-    Default: 'pn'
+    Default: "pn"
     Type: String
-  
+
   EnvName:
-    Description: 'dev, svil, test, coll, ...'
+    Description: "dev, svil, test, coll, ..."
     Type: String
-  
+
   CiAccountId:
-    Default: '911845998067'
-    Description: 'AWS AccountID used for C.I. tasks'
+    Default: "911845998067"
+    Description: "AWS AccountID used for C.I. tasks"
     Type: String
 
   CiArtifactBucketNameParam:
-    Default: 'pn-ci-root-ciartifactbucket-k85cgryf7xh3'
-    Description: 'Bucket name containing lambda and frontend artifacts'
+    Default: "pn-ci-root-ciartifactbucket-k85cgryf7xh3"
+    Description: "Bucket name containing lambda and frontend artifacts"
     Type: String
 
 Conditions:
-  IsHotfixCondition: !Equals [ !Ref EnvName, 'hotfix' ]
-  IsDevCondition: !Equals [ !Ref EnvName, 'dev' ]
-  IsContinuosDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
+  IsHotfixCondition: !Equals [!Ref EnvName, "hotfix"]
+  IsDevCondition: !Equals [!Ref EnvName, "dev"]
+  IsContinuosDeliveryCondition:
+    !Or [!Condition IsHotfixCondition, !Condition IsDevCondition]
 
-Mappings: 
-  EventPatternMap: 
-    dev: 
+Mappings:
+  EventPatternMap:
+    dev:
       BuildEvtPatten: |
         {
           "$or": [{
@@ -45,41 +45,37 @@ Mappings:
             }
           }]
         }
-    hotfix: 
+    hotfix:
       BuildEvtPatten: |
         {
           "source": [{"prefix": "" }],
           "detail": { "project_branch": ["main"] }
         }
-          
-
 
 Resources:
-
   ###                    Continuos Delivery EVENT BUS                     ###
   ###########################################################################
-  # - Receive Continuos Integration build events and activate the needed 
+  # - Receive Continuos Integration build events and activate the needed
   #   Continuos Delivery pipeline
   CdEventBus:
     Condition: IsContinuosDeliveryCondition
     Type: AWS::Events::EventBus
-    Properties: 
-      Name: 'CdEventBus'
-  
+    Properties:
+      Name: "CdEventBus"
+
   # Receive Events from CI system
-  CdEventBusAccessPolicy: 
+  CdEventBusAccessPolicy:
     Condition: IsContinuosDeliveryCondition
     Type: AWS::Events::EventBusPolicy
-    Properties: 
+    Properties:
       EventBusName: !Ref CdEventBus
       StatementId: "allowEventsFromCI"
-      Statement: 
+      Statement:
         Effect: "Allow"
-        Principal: 
-            AWS: !Sub "arn:aws:iam::${CiAccountId}:root"
+        Principal:
+          AWS: !Sub "arn:aws:iam::${CiAccountId}:root"
         Action: "events:PutEvents"
         Resource: !GetAtt "CdEventBus.Arn"
-  
 
   ###                           CI to CD BRIDGE                           ###
   ###########################################################################
@@ -87,13 +83,13 @@ Resources:
   SendAllBuildEventsToCodeBuild:
     Condition: IsContinuosDeliveryCondition
     Type: AWS::Events::Rule
-    Properties: 
+    Properties:
       Description: Save build events
       RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
       EventBusName: !Ref CdEventBus
-      EventPattern: !FindInMap [ EventPatternMap, !Ref EnvName, BuildEvtPatten ]
-      Targets: 
-        - Id: 'CdEventBus-ToPipelineChooser'
+      EventPattern: !FindInMap [EventPatternMap, !Ref EnvName, BuildEvtPatten]
+      Targets:
+        - Id: "CdEventBus-ToPipelineChooser"
           Arn: !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
           RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
           InputTransformer:
@@ -153,22 +149,21 @@ Resources:
                 Action:
                   - "codebuild:*"
                 Effect: Allow
-                Resource: 
+                Resource:
                   - !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
                   - !GetAtt RunTestsCodebuildProject.Arn
-
 
   ###           CodeBuild: CHOOSE AND EXECUTE THE C.D. PIPELINE           ###
   ###########################################################################
   # - The codebuild project
   ChooseAndLaunchPipelineCodeBuild:
     Condition: IsContinuosDeliveryCondition
-    Type: 'AWS::CodeBuild::Project'
+    Type: "AWS::CodeBuild::Project"
     Properties:
-      Name: 'ChooseCdPipeline'
+      Name: "ChooseCdPipeline"
       ConcurrentBuildLimit: 1
       ServiceRole: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
-      Source: 
+      Source:
         Type: NO_SOURCE
         BuildSpec: |
           version: 0.2
@@ -363,7 +358,6 @@ Resources:
             Type: PLAINTEXT
             Value: !Ref CiArtifactBucketNameParam
 
-
   # CodeBuild Role used during the choose of right codepipeline
   ChooseAndLaunchPipelineCodeBuildRole:
     Condition: IsContinuosDeliveryCondition
@@ -372,8 +366,7 @@ Resources:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - 
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service:
                 - "codebuild.amazonaws.com"
@@ -384,13 +377,12 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              -
-                Effect: Allow
+              - Effect: Allow
                 Action:
                   - "*"
                 Resource:
                   - "*"
-      
+
   ###########################################################################
   ###             EFFECTIVE CONTINUOS INTEGRATIONS PIPELINES              ###
   ###########################################################################
@@ -402,19 +394,19 @@ Resources:
     Properties:
       VersioningConfiguration:
         Status: Enabled
-  
-  # - Required by code-pipeline 
+
+  # - Required by code-pipeline
   PipelineArtifactBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
-  
+
   # - The role used by all the pipelines
   PipelineRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: "Allow"
             Action: "sts:AssumeRole"
@@ -425,27 +417,27 @@ Resources:
       Policies:
         - PolicyName: PipelinePolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
-            - Effect: Allow
-              Action:
-                - "s3:Get*"
-                - "s3:List*"
-                - "s3-object-lambda:Get*"
-                - "s3-object-lambda:List*"
-                - "*"
-              Resource: 
-                - !Sub "arn:aws:s3:::${CdArtifactBucket}"
-                - !Sub "arn:aws:s3:::${CdArtifactBucket}/*"
-                - "*"
-  
+              - Effect: Allow
+                Action:
+                  - "s3:Get*"
+                  - "s3:List*"
+                  - "s3-object-lambda:Get*"
+                  - "s3-object-lambda:List*"
+                  - "*"
+                Resource:
+                  - !Sub "arn:aws:s3:::${CdArtifactBucket}"
+                  - !Sub "arn:aws:s3:::${CdArtifactBucket}/*"
+                  - "*"
+
   # PIPELINE DEFINITION
   #######################
   DeployPipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-env-update-pipeline'
+      Name: !Sub "${ProjectName}-env-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -462,10 +454,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -477,7 +469,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -494,18 +486,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # UpdateInfrastructure AND AuthFleet
             - Name: Update_Infrastructure
               ActionTypeId:
@@ -517,17 +509,17 @@ Resources:
                 ProjectName: !Ref UpdateInfraCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: InfraOutput
               RunOrder: 2
-            
+
             # Update pn-delivery
             - Name: Update_PnDelivery
               ActionTypeId:
@@ -539,19 +531,19 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-delivery", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_delivery", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-delivery", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_delivery", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDeliveryOutput
               RunOrder: 3
-            
+
             # Update pn-delivery-push
             - Name: Update_PnDeliveryPush
               ActionTypeId:
@@ -563,19 +555,19 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-delivery-push", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_delivery_push", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-delivery-push", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_delivery_push", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDeliveryPushOutput
               RunOrder: 3
-            
+
             # Update pn-mandate
             - Name: Update_PnMandate
               ActionTypeId:
@@ -587,19 +579,19 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-mandate", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"4", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_mandate", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-mandate", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"4", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_mandate", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnMandateOutput
               RunOrder: 3
-            
+
             # Update pn-external-registries
             - Name: Update_ExternalRegistries
               ActionTypeId:
@@ -611,19 +603,19 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-external-registries", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"6", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_ExternalRegistry", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-external-registries", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"6", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_ExternalRegistry", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnExternalRegistriesOutput
               RunOrder: 3
-            
+
             # Update pn-UserAttributes
             - Name: Update_UserAttributes
               ActionTypeId:
@@ -635,19 +627,19 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-user-attributes", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"7", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_UserAttributes", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-user-attributes", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"7", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_UserAttributes", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnUserAttributesOutput
               RunOrder: 3
-            
+
             # Update pn-downtime-logs
             - Name: Update_DowntimeLogs
               ActionTypeId:
@@ -659,19 +651,19 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-downtime-logs", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"8", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_downtime_logs", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-downtime-logs", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"8", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_downtime_logs", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDowntimeLogsOutput
               RunOrder: 3
-            
+
             # Update pn-radd-fsu
             - Name: Update_RaddFsu
               ActionTypeId:
@@ -683,19 +675,19 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-radd-fsu", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"9", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_radd_fsu", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-radd-fsu", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"9", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_radd_fsu", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnRaddFsuOutput
               RunOrder: 3
-            
+
             # Update pn-logsaver-be
             - Name: Update_LogsaverBe
               ActionTypeId:
@@ -707,12 +699,12 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -731,12 +723,12 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-apikey-manager", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_apikey_manager", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-apikey-manager", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_apikey_manager", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -782,17 +774,17 @@ Resources:
                 ProjectName: !Ref UpdateFrontendCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: FrontEndOutput
               RunOrder: 4
-            
+
             # Update logs and Usage Plans
             - Name: Infrastructure_Post_Deploy
               ActionTypeId:
@@ -804,10 +796,10 @@ Resources:
                 ProjectName: !Ref PostDeployScriptsCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -827,15 +819,15 @@ Resources:
                   Configuration:
                     ProjectName: !Ref RunTestsCodebuildProject
                     EnvironmentVariables: !Sub '[
-                        {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
-                        {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                        {"name":"TEST_SUITE", "value":"CucumberSmokeTest", "type":"PLAINTEXT"}
+                      {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
+                      {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                      {"name":"TEST_SUITE", "value":"CucumberSmokeTest", "type":"PLAINTEXT"}
                       ]'
                   InputArtifacts:
                     - Name: EmptyZip
                   RunOrder: 5
                 - !Ref AWS::NoValue
-            
+
             # List versions if the environment is dev
             - Fn::If:
                 - IsContinuosDeliveryCondition
@@ -848,25 +840,24 @@ Resources:
                   Configuration:
                     ProjectName: !Ref ListDeployedVersionsCodebuildProject
                     EnvironmentVariables: !Sub '[
-                        {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
-                        {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                        {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                        {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"}
+                      {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
+                      {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                      {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                      {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"}
                       ]'
                   InputArtifacts:
                     - Name: EmptyZip
                   RunOrder: 6
                 - !Ref AWS::NoValue
 
-
   # CODEBUILD used to download scripts
   ###################################################
   DownloadScriptsCodebuildProject:
-    Type: 'AWS::CodeBuild::Project'
+    Type: "AWS::CodeBuild::Project"
     Properties:
       Name: !Sub ${ProjectName}-DownloadScriptsCodebuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
+      Source:
         Type: CODEPIPELINE
         BuildSpec: |
           version: 0.2
@@ -916,15 +907,15 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
-        
+
   # CODEBUILD used to update infrastructure and authFleet
   ###################################################
   UpdateInfraCodeBuildProject:
-    Type: 'AWS::CodeBuild::Project'
+    Type: "AWS::CodeBuild::Project"
     Properties:
       Name: !Sub ${ProjectName}-UpdateInfraCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
+      Source:
         Type: CODEPIPELINE
         BuildSpec: |
           version: 0.2
@@ -992,16 +983,15 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
-  
 
   # CODEBUILD used to update an ecs microservice
   ###################################################
   UpdateMicroserviceCodeBuildProject:
-    Type: 'AWS::CodeBuild::Project'
+    Type: "AWS::CodeBuild::Project"
     Properties:
       Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
+      Source:
         Type: CODEPIPELINE
         BuildSpec: |
           version: 0.2
@@ -1042,15 +1032,15 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
-  
+
   # CODEBUILD used to update an multi-lambda MICROSERVICE
   ##############################################################
   UpdateMultiLambdaServiceCodeBuildProject:
-    Type: 'AWS::CodeBuild::Project'
+    Type: "AWS::CodeBuild::Project"
     Properties:
       Name: !Sub ${ProjectName}-UpdateMultiLambdaServiceCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
+      Source:
         Type: CODEPIPELINE
         BuildSpec: |
           version: 0.2
@@ -1094,11 +1084,11 @@ Resources:
   # CODEBUILD used for post microservices deployment scripts
   ###################################################
   PostDeployScriptsCodeBuildProject:
-    Type: 'AWS::CodeBuild::Project'
+    Type: "AWS::CodeBuild::Project"
     Properties:
       Name: !Sub ${ProjectName}-PostDeployScriptsCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
+      Source:
         Type: CODEPIPELINE
         BuildSpec: |
           version: 0.2
@@ -1165,16 +1155,15 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
-  
 
   # CODEBUILD used to update frontend
   ###################################################
   UpdateFrontendCodeBuildProject:
-    Type: 'AWS::CodeBuild::Project'
+    Type: "AWS::CodeBuild::Project"
     Properties:
       Name: !Sub ${ProjectName}-UpdateFrontendCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
+      Source:
         Type: CODEPIPELINE
         BuildSpec: |
           version: 0.2
@@ -1213,7 +1202,6 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
-  
 
   CodeBuildRole:
     Type: AWS::IAM::Role
@@ -1756,7 +1744,6 @@ Resources:
               - apigateway:RemoveCertificateFromDomain
             Resource: "*"
 
-
   CodeBuildPolicyEventLogs:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -1799,7 +1786,6 @@ Resources:
               - logs:CreateLogGroup
               - logs:PutLogEvents
             Resource: "*"
-
 
   CodeBuildPolicyIAM:
     Type: AWS::IAM::ManagedPolicy
@@ -1846,8 +1832,6 @@ Resources:
               - kms:CreateKey
             Resource: "*"
 
-
-
   CodeBuildNetworking:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -1857,169 +1841,169 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-        - Action:
-          - ec2:AcceptVpcPeeringConnection
-          - ec2:AcceptVpcEndpointConnections
-          - ec2:AllocateAddress
-          - ec2:AssignIpv6Addresses
-          - ec2:AssignPrivateIpAddresses
-          - ec2:AssociateAddress
-          - ec2:AssociateDhcpOptions
-          - ec2:AssociateRouteTable
-          - ec2:AssociateSubnetCidrBlock
-          - ec2:AssociateVpcCidrBlock
-          - ec2:AttachClassicLinkVpc
-          - ec2:AttachInternetGateway
-          - ec2:AttachNetworkInterface
-          - ec2:AttachVpnGateway
-          - ec2:AuthorizeSecurityGroupEgress
-          - ec2:AuthorizeSecurityGroupIngress
-          - ec2:CreateCarrierGateway
-          - ec2:CreateCustomerGateway
-          - ec2:CreateDefaultSubnet
-          - ec2:CreateDefaultVpc
-          - ec2:CreateDhcpOptions
-          - ec2:CreateEgressOnlyInternetGateway
-          - ec2:CreateFlowLogs
-          - ec2:CreateInternetGateway
-          - ec2:CreateLocalGatewayRouteTableVpcAssociation
-          - ec2:CreateNatGateway
-          - ec2:CreateNetworkAcl
-          - ec2:CreateNetworkAclEntry
-          - ec2:CreateNetworkInterface
-          - ec2:CreateNetworkInterfacePermission
-          - ec2:CreateRoute
-          - ec2:CreateRouteTable
-          - ec2:CreateSecurityGroup
-          - ec2:CreateSubnet
-          - ec2:CreateTags
-          - ec2:CreateVpc
-          - ec2:CreateVpcEndpoint
-          - ec2:CreateVpcEndpointConnectionNotification
-          - ec2:CreateVpcEndpointServiceConfiguration
-          - ec2:CreateVpcPeeringConnection
-          - ec2:CreateVpnConnection
-          - ec2:CreateVpnConnectionRoute
-          - ec2:CreateVpnGateway
-          - ec2:DeleteCarrierGateway
-          - ec2:DeleteCustomerGateway
-          - ec2:DeleteDhcpOptions
-          - ec2:DeleteEgressOnlyInternetGateway
-          - ec2:DeleteFlowLogs
-          - ec2:DeleteInternetGateway
-          - ec2:DeleteLocalGatewayRouteTableVpcAssociation
-          - ec2:DeleteNatGateway
-          - ec2:DeleteNetworkAcl
-          - ec2:DeleteNetworkAclEntry
-          - ec2:DeleteNetworkInterface
-          - ec2:DeleteNetworkInterfacePermission
-          - ec2:DeleteRoute
-          - ec2:DeleteRouteTable
-          - ec2:DeleteSecurityGroup
-          - ec2:DeleteSubnet
-          - ec2:DeleteTags
-          - ec2:DeleteVpc
-          - ec2:DeleteVpcEndpoints
-          - ec2:DeleteVpcEndpointConnectionNotifications
-          - ec2:DeleteVpcEndpointServiceConfigurations
-          - ec2:DeleteVpcPeeringConnection
-          - ec2:DeleteVpnConnection
-          - ec2:DeleteVpnConnectionRoute
-          - ec2:DeleteVpnGateway
-          - ec2:DescribeAccountAttributes
-          - ec2:DescribeAddresses
-          - ec2:DescribeAvailabilityZones
-          - ec2:DescribeCarrierGateways
-          - ec2:DescribeClassicLinkInstances
-          - ec2:DescribeCustomerGateways
-          - ec2:DescribeDhcpOptions
-          - ec2:DescribeEgressOnlyInternetGateways
-          - ec2:DescribeFlowLogs
-          - ec2:DescribeInstances
-          - ec2:DescribeInternetGateways
-          - ec2:DescribeIpv6Pools
-          - ec2:DescribeLocalGatewayRouteTables
-          - ec2:DescribeLocalGatewayRouteTableVpcAssociations
-          - ec2:DescribeKeyPairs
-          - ec2:DescribeMovingAddresses
-          - ec2:DescribeNatGateways
-          - ec2:DescribeNetworkAcls
-          - ec2:DescribeNetworkInterfaceAttribute
-          - ec2:DescribeNetworkInterfacePermissions
-          - ec2:DescribeNetworkInterfaces
-          - ec2:DescribePrefixLists
-          - ec2:DescribeRouteTables
-          - ec2:DescribeSecurityGroupReferences
-          - ec2:DescribeSecurityGroupRules
-          - ec2:DescribeSecurityGroups
-          - ec2:DescribeStaleSecurityGroups
-          - ec2:DescribeSubnets
-          - ec2:DescribeTags
-          - ec2:DescribeVpcAttribute
-          - ec2:DescribeVpcClassicLink
-          - ec2:DescribeVpcClassicLinkDnsSupport
-          - ec2:DescribeVpcEndpointConnectionNotifications
-          - ec2:DescribeVpcEndpointConnections
-          - ec2:DescribeVpcEndpoints
-          - ec2:DescribeVpcEndpointServiceConfigurations
-          - ec2:DescribeVpcEndpointServicePermissions
-          - ec2:DescribeVpcEndpointServices
-          - ec2:DescribeVpcPeeringConnections
-          - ec2:DescribeVpcs
-          - ec2:DescribeVpnConnections
-          - ec2:DescribeVpnGateways
-          - ec2:DetachClassicLinkVpc
-          - ec2:DetachInternetGateway
-          - ec2:DetachNetworkInterface
-          - ec2:DetachVpnGateway
-          - ec2:DisableVgwRoutePropagation
-          - ec2:DisableVpcClassicLink
-          - ec2:DisableVpcClassicLinkDnsSupport
-          - ec2:DisassociateAddress
-          - ec2:DisassociateRouteTable
-          - ec2:DisassociateSubnetCidrBlock
-          - ec2:DisassociateVpcCidrBlock
-          - ec2:EnableVgwRoutePropagation
-          - ec2:EnableVpcClassicLink
-          - ec2:EnableVpcClassicLinkDnsSupport
-          - ec2:ModifyNetworkInterfaceAttribute
-          - ec2:ModifySecurityGroupRules
-          - ec2:ModifySubnetAttribute
-          - ec2:ModifyVpcAttribute
-          - ec2:ModifyVpcEndpoint
-          - ec2:ModifyVpcEndpointConnectionNotification
-          - ec2:ModifyVpcEndpointServiceConfiguration
-          - ec2:ModifyVpcEndpointServicePermissions
-          - ec2:ModifyVpcPeeringConnectionOptions
-          - ec2:ModifyVpcTenancy
-          - ec2:MoveAddressToVpc
-          - ec2:RejectVpcEndpointConnections
-          - ec2:RejectVpcPeeringConnection
-          - ec2:ReleaseAddress
-          - ec2:ReplaceNetworkAclAssociation
-          - ec2:ReplaceNetworkAclEntry
-          - ec2:ReplaceRoute
-          - ec2:ReplaceRouteTableAssociation
-          - ec2:ResetNetworkInterfaceAttribute
-          - ec2:RestoreAddressToClassic
-          - ec2:RevokeSecurityGroupEgress
-          - ec2:RevokeSecurityGroupIngress
-          - ec2:UnassignIpv6Addresses
-          - ec2:UnassignPrivateIpAddresses
-          - ec2:UpdateSecurityGroupRuleDescriptionsEgress
-          - ec2:UpdateSecurityGroupRuleDescriptionsIngress
-          Resource: "*"
-          Effect: Allow
+          - Action:
+              - ec2:AcceptVpcPeeringConnection
+              - ec2:AcceptVpcEndpointConnections
+              - ec2:AllocateAddress
+              - ec2:AssignIpv6Addresses
+              - ec2:AssignPrivateIpAddresses
+              - ec2:AssociateAddress
+              - ec2:AssociateDhcpOptions
+              - ec2:AssociateRouteTable
+              - ec2:AssociateSubnetCidrBlock
+              - ec2:AssociateVpcCidrBlock
+              - ec2:AttachClassicLinkVpc
+              - ec2:AttachInternetGateway
+              - ec2:AttachNetworkInterface
+              - ec2:AttachVpnGateway
+              - ec2:AuthorizeSecurityGroupEgress
+              - ec2:AuthorizeSecurityGroupIngress
+              - ec2:CreateCarrierGateway
+              - ec2:CreateCustomerGateway
+              - ec2:CreateDefaultSubnet
+              - ec2:CreateDefaultVpc
+              - ec2:CreateDhcpOptions
+              - ec2:CreateEgressOnlyInternetGateway
+              - ec2:CreateFlowLogs
+              - ec2:CreateInternetGateway
+              - ec2:CreateLocalGatewayRouteTableVpcAssociation
+              - ec2:CreateNatGateway
+              - ec2:CreateNetworkAcl
+              - ec2:CreateNetworkAclEntry
+              - ec2:CreateNetworkInterface
+              - ec2:CreateNetworkInterfacePermission
+              - ec2:CreateRoute
+              - ec2:CreateRouteTable
+              - ec2:CreateSecurityGroup
+              - ec2:CreateSubnet
+              - ec2:CreateTags
+              - ec2:CreateVpc
+              - ec2:CreateVpcEndpoint
+              - ec2:CreateVpcEndpointConnectionNotification
+              - ec2:CreateVpcEndpointServiceConfiguration
+              - ec2:CreateVpcPeeringConnection
+              - ec2:CreateVpnConnection
+              - ec2:CreateVpnConnectionRoute
+              - ec2:CreateVpnGateway
+              - ec2:DeleteCarrierGateway
+              - ec2:DeleteCustomerGateway
+              - ec2:DeleteDhcpOptions
+              - ec2:DeleteEgressOnlyInternetGateway
+              - ec2:DeleteFlowLogs
+              - ec2:DeleteInternetGateway
+              - ec2:DeleteLocalGatewayRouteTableVpcAssociation
+              - ec2:DeleteNatGateway
+              - ec2:DeleteNetworkAcl
+              - ec2:DeleteNetworkAclEntry
+              - ec2:DeleteNetworkInterface
+              - ec2:DeleteNetworkInterfacePermission
+              - ec2:DeleteRoute
+              - ec2:DeleteRouteTable
+              - ec2:DeleteSecurityGroup
+              - ec2:DeleteSubnet
+              - ec2:DeleteTags
+              - ec2:DeleteVpc
+              - ec2:DeleteVpcEndpoints
+              - ec2:DeleteVpcEndpointConnectionNotifications
+              - ec2:DeleteVpcEndpointServiceConfigurations
+              - ec2:DeleteVpcPeeringConnection
+              - ec2:DeleteVpnConnection
+              - ec2:DeleteVpnConnectionRoute
+              - ec2:DeleteVpnGateway
+              - ec2:DescribeAccountAttributes
+              - ec2:DescribeAddresses
+              - ec2:DescribeAvailabilityZones
+              - ec2:DescribeCarrierGateways
+              - ec2:DescribeClassicLinkInstances
+              - ec2:DescribeCustomerGateways
+              - ec2:DescribeDhcpOptions
+              - ec2:DescribeEgressOnlyInternetGateways
+              - ec2:DescribeFlowLogs
+              - ec2:DescribeInstances
+              - ec2:DescribeInternetGateways
+              - ec2:DescribeIpv6Pools
+              - ec2:DescribeLocalGatewayRouteTables
+              - ec2:DescribeLocalGatewayRouteTableVpcAssociations
+              - ec2:DescribeKeyPairs
+              - ec2:DescribeMovingAddresses
+              - ec2:DescribeNatGateways
+              - ec2:DescribeNetworkAcls
+              - ec2:DescribeNetworkInterfaceAttribute
+              - ec2:DescribeNetworkInterfacePermissions
+              - ec2:DescribeNetworkInterfaces
+              - ec2:DescribePrefixLists
+              - ec2:DescribeRouteTables
+              - ec2:DescribeSecurityGroupReferences
+              - ec2:DescribeSecurityGroupRules
+              - ec2:DescribeSecurityGroups
+              - ec2:DescribeStaleSecurityGroups
+              - ec2:DescribeSubnets
+              - ec2:DescribeTags
+              - ec2:DescribeVpcAttribute
+              - ec2:DescribeVpcClassicLink
+              - ec2:DescribeVpcClassicLinkDnsSupport
+              - ec2:DescribeVpcEndpointConnectionNotifications
+              - ec2:DescribeVpcEndpointConnections
+              - ec2:DescribeVpcEndpoints
+              - ec2:DescribeVpcEndpointServiceConfigurations
+              - ec2:DescribeVpcEndpointServicePermissions
+              - ec2:DescribeVpcEndpointServices
+              - ec2:DescribeVpcPeeringConnections
+              - ec2:DescribeVpcs
+              - ec2:DescribeVpnConnections
+              - ec2:DescribeVpnGateways
+              - ec2:DetachClassicLinkVpc
+              - ec2:DetachInternetGateway
+              - ec2:DetachNetworkInterface
+              - ec2:DetachVpnGateway
+              - ec2:DisableVgwRoutePropagation
+              - ec2:DisableVpcClassicLink
+              - ec2:DisableVpcClassicLinkDnsSupport
+              - ec2:DisassociateAddress
+              - ec2:DisassociateRouteTable
+              - ec2:DisassociateSubnetCidrBlock
+              - ec2:DisassociateVpcCidrBlock
+              - ec2:EnableVgwRoutePropagation
+              - ec2:EnableVpcClassicLink
+              - ec2:EnableVpcClassicLinkDnsSupport
+              - ec2:ModifyNetworkInterfaceAttribute
+              - ec2:ModifySecurityGroupRules
+              - ec2:ModifySubnetAttribute
+              - ec2:ModifyVpcAttribute
+              - ec2:ModifyVpcEndpoint
+              - ec2:ModifyVpcEndpointConnectionNotification
+              - ec2:ModifyVpcEndpointServiceConfiguration
+              - ec2:ModifyVpcEndpointServicePermissions
+              - ec2:ModifyVpcPeeringConnectionOptions
+              - ec2:ModifyVpcTenancy
+              - ec2:MoveAddressToVpc
+              - ec2:RejectVpcEndpointConnections
+              - ec2:RejectVpcPeeringConnection
+              - ec2:ReleaseAddress
+              - ec2:ReplaceNetworkAclAssociation
+              - ec2:ReplaceNetworkAclEntry
+              - ec2:ReplaceRoute
+              - ec2:ReplaceRouteTableAssociation
+              - ec2:ResetNetworkInterfaceAttribute
+              - ec2:RestoreAddressToClassic
+              - ec2:RevokeSecurityGroupEgress
+              - ec2:RevokeSecurityGroupIngress
+              - ec2:UnassignIpv6Addresses
+              - ec2:UnassignPrivateIpAddresses
+              - ec2:UpdateSecurityGroupRuleDescriptionsEgress
+              - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+            Resource: "*"
+            Effect: Allow
 
   ###########################################################################
   ###  Utility codebuild used to list the deployed artifacts versions
   ###########################################################################
   ListDeployedVersionsCodebuildProject:
-    Type: 'AWS::CodeBuild::Project'
+    Type: "AWS::CodeBuild::Project"
     Properties:
       Name: !Sub ${ProjectName}-ListDeployedVersionsCodebuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
+      Source:
         Type: NO_SOURCE
         BuildSpec: |
           version: 0.2
@@ -2049,7 +2033,7 @@ Resources:
         Type: S3
         EncryptionDisabled: true
         Location: !Ref PipelineArtifactBucket
-        Path: '/List_deployed_versions_codebuild_project/'
+        Path: "/List_deployed_versions_codebuild_project/"
         NamespaceType: BUILD_ID
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
@@ -2067,12 +2051,12 @@ Resources:
             Value: !Ref CdArtifactBucket
           - Name: DesiredCommitIdsPath
             Type: PLAINTEXT
-            Value: 'config/desired-commit-ids-env.sh'
+            Value: "config/desired-commit-ids-env.sh"
 
   ###########################################################################
   ###                          PARTIAL PIPELINES                          ###
   ###########################################################################
-  
+
   # INFRA AND AUTHFLEET
   #######################
   InfraAndAuthFleetDeployPipeline:
@@ -2080,7 +2064,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-infra-authfleet-update-pipeline'
+      Name: !Sub "${ProjectName}-infra-authfleet-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -2097,10 +2081,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -2112,7 +2096,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -2129,18 +2113,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # UpdateInfrastructure AND AuthFleet
             - Name: Update_Infrastructure
               ActionTypeId:
@@ -2152,17 +2136,17 @@ Resources:
                 ProjectName: !Ref UpdateInfraCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: InfraOutput
               RunOrder: 2
-            
+
   # FRONTEND
   #######################
   FrontEndDeployPipeline:
@@ -2170,7 +2154,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-frontend-update-pipeline'
+      Name: !Sub "${ProjectName}-frontend-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -2187,10 +2171,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -2202,7 +2186,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -2219,18 +2203,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update Frontend
             - Name: Update_Frontend
               ActionTypeId:
@@ -2242,17 +2226,16 @@ Resources:
                 ProjectName: !Ref UpdateFrontendCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: FrontEndOutput
               RunOrder: 2
-
 
   # MICROSERVICE PN-DELIVERY
   ############################
@@ -2261,7 +2244,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-delivery-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-delivery-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -2278,10 +2261,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -2293,7 +2276,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -2310,18 +2293,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-delivery
             - Name: Update_PnDelivery
               ActionTypeId:
@@ -2333,19 +2316,19 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-delivery", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_delivery", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-delivery", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_delivery", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDeliveryOutput
               RunOrder: 2
-            
+
   # POST-DEPLOY
   ############################
   InfrastructurePostDeployPipeline:
@@ -2353,7 +2336,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-infrastructure-post-deploy-update-pipeline'
+      Name: !Sub "${ProjectName}-infrastructure-post-deploy-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -2370,10 +2353,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -2385,7 +2368,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -2402,18 +2385,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update infrastructure-post-deploy
             - Name: Update_InfrastructurePostDeploy
               ActionTypeId:
@@ -2425,16 +2408,16 @@ Resources:
                 ProjectName: !Ref PostDeployScriptsCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PostDeployScriptsOutput
-              RunOrder: 2            
+              RunOrder: 2
 
   # MICROSERVICE PN-DELIVERY-PUSH
   ############################
@@ -2443,7 +2426,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-delivery-push-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-delivery-push-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -2460,10 +2443,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -2475,7 +2458,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -2492,18 +2475,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-delivery-push
             - Name: Update_PnDeliveryPush
               ActionTypeId:
@@ -2515,19 +2498,18 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-delivery-push", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_delivery_push", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-delivery-push", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_delivery_push", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDeliveryPushOutput
               RunOrder: 2
-            
 
   # MICROSERVICE PN-USER-ATTRIBUTES
   ############################
@@ -2536,7 +2518,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-user-attributes-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-user-attributes-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -2553,10 +2535,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -2568,7 +2550,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -2585,18 +2567,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-user-attributes
             - Name: Update_UserAttributes
               ActionTypeId:
@@ -2608,20 +2590,19 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-user-attributes", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"7", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_UserAttributes", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-user-attributes", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"7", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_UserAttributes", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnUserAttributesOutput
               RunOrder: 2
-            
-  
+
   # MICROSERVICE PN-MANDATE
   ############################
   PnMandatesDeployPipeline:
@@ -2629,7 +2610,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-mandate-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-mandate-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -2646,10 +2627,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -2661,7 +2642,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -2678,18 +2659,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-mandate
             - Name: Update_PnMandate
               ActionTypeId:
@@ -2701,19 +2682,19 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-mandate", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"4", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_mandate", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-mandate", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"4", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_mandate", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnMandateOutput
               RunOrder: 2
-  
+
   # MICROSERVICE PN-EXTERNAL-REGISTRIES
   ############################
   PnExternalRegistryDeployPipeline:
@@ -2721,7 +2702,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-external-registries-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-external-registries-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -2738,10 +2719,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -2753,7 +2734,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -2770,18 +2751,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-external-registries
             - Name: Update_ExternalRegistries
               ActionTypeId:
@@ -2793,19 +2774,18 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-external-registries", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"6", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_ExternalRegistry", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-external-registries", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"6", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_ExternalRegistry", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnExternalRegistriesOutput
               RunOrder: 3
-
 
   # MICROSERVICE PN-DOWNTIME_LOGS
   ############################
@@ -2814,7 +2794,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-downtime-logs-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-downtime-logs-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -2831,10 +2811,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -2846,7 +2826,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -2863,18 +2843,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-downtime-logs
             - Name: Update_DowntimeLogs
               ActionTypeId:
@@ -2886,19 +2866,18 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-downtime-logs", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"8", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_downtime_logs", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-downtime-logs", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"8", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_downtime_logs", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDowntimeLogsOutput
               RunOrder: 3
-
 
   # MICROSERVICE PN-RADD-FSU
   ############################
@@ -2907,7 +2886,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-radd-fsu-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-radd-fsu-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -2924,10 +2903,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -2939,7 +2918,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -2956,18 +2935,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-radd-fsu
             - Name: Update_RaddFsu
               ActionTypeId:
@@ -2979,19 +2958,18 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-radd-fsu", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"9", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_radd_fsu", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-radd-fsu", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"9", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_radd_fsu", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnRaddFsuOutput
               RunOrder: 3
-
 
   # MICROSERVICE PN-EXTERNAL-CHANNELS
   ############################
@@ -3000,7 +2978,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-external-channels-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-external-channels-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -3017,10 +2995,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -3032,7 +3010,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -3049,18 +3027,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-external-channels
             - Name: Update_PnExternalChannels
               ActionTypeId:
@@ -3072,20 +3050,18 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                   {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                   {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                   {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                   {"name":"MsName", "value":"pn-external-channels", "type":"PLAINTEXT"},
-                   {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
-                   {"name":"VarPrefix", "value":"pn_external_channels", "type":"PLAINTEXT"}
-                 ]'
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-external-channels", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_external_channels", "type":"PLAINTEXT"}
+                  ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnExternalChannelsOutput
               RunOrder: 3
-
-
 
   # MICROSERVICE PN-LOGSAVER-BE
   ############################
@@ -3094,7 +3070,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-logsaver-be-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-logsaver-be-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -3111,10 +3087,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -3126,7 +3102,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -3143,18 +3119,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-logsaver-be
             - Name: Update_LogsaverBe
               ActionTypeId:
@@ -3166,19 +3142,18 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnLogsaverBeOutput
               RunOrder: 3
-
 
   # MICROSERVICE PN-NATIONAL-REGISTRIES
   ############################
@@ -3187,7 +3162,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-national-registries-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-national-registries-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -3204,10 +3179,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -3219,7 +3194,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -3236,18 +3211,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-national-registries
             - Name: Update_NationalRegistries
               ActionTypeId:
@@ -3259,19 +3234,19 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-national-registries", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_national_registries", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-national-registries", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_national_registries", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnNationalRegistriesOutput
               RunOrder: 3
-  
+
   # MICROSERVICE PN-APIKEY-MANAGER
   ############################
   PnApikeyManagerDeployPipeline:
@@ -3279,7 +3254,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-apikey-manager-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-apikey-manager-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -3296,10 +3271,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -3311,7 +3286,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -3328,18 +3303,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-apikey-manager
             - Name: Update_ApikeyManager
               ActionTypeId:
@@ -3351,12 +3326,12 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-apikey-manager", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_apikey_manager", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-apikey-manager", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_apikey_manager", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -3371,7 +3346,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-pn-paper-channel-update-pipeline'
+      Name: !Sub "${ProjectName}-pn-paper-channel-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -3388,10 +3363,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -3403,7 +3378,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -3420,18 +3395,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-paper-channel
             - Name: Update_PnPaperChannel
               ActionTypeId:
@@ -3443,12 +3418,12 @@ Resources:
                 ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-paper-channel", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_paper_channel", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-paper-channel", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_paper_channel", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -3463,7 +3438,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
-      Name: !Sub '${ProjectName}-progression-sensor-update-pipeline'
+      Name: !Sub "${ProjectName}-progression-sensor-update-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -3480,10 +3455,10 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+                S3ObjectKey: "config/desired-commit-ids-env.sh"
               OutputArtifacts:
                 - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
+              Namespace: "DesiredCommitIdsNS"
               RunOrder: 1
             # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
@@ -3495,7 +3470,7 @@ Resources:
               Configuration:
                 PollForSourceChanges: false
                 S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
+                S3ObjectKey: "empty.zip"
               OutputArtifacts:
                 - Name: EmptyZip
               RunOrder: 1
@@ -3512,18 +3487,18 @@ Resources:
                 ProjectName: !Ref DownloadScriptsCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                  {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
             # Update pn-progression-sensor
             - Name: Update_PnProgressionSensor
               ActionTypeId:
@@ -3535,13 +3510,13 @@ Resources:
                 ProjectName: !Ref UpdateMultiLambdaServiceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-progression-sensor", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"0", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_progression_sensor", "type":"PLAINTEXT"}
+                  {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                  {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                  {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                  {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                  {"name":"MsName", "value":"pn-progression-sensor", "type":"PLAINTEXT"},
+                  {"name":"MsNumber", "value":"0", "type":"PLAINTEXT"},
+                  {"name":"VarPrefix", "value":"pn_progression_sensor", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -3552,7 +3527,7 @@ Resources:
   ###########################################################################
   ###  RUN E2E TESTS
   ###########################################################################
-  ScheduledRule: 
+  ScheduledRule:
     Condition: IsContinuosDeliveryCondition
     Type: AWS::Events::Rule
     Properties:
@@ -3560,26 +3535,25 @@ Resources:
       ScheduleExpression: "cron(0 7-19/2 ? * MON-FRI *)"
       State: "ENABLED"
       RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
-      Targets: 
+      Targets:
         - Id: "TestRunner"
           RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
-          Arn: 
-            Fn::GetAtt: 
+          Arn:
+            Fn::GetAtt:
               - "RunTestsCodebuildProject"
               - "Arn"
-          
-  
+
   ###########################################################################
   ###  Utility that run e2e tests
   ###########################################################################
   RunTestsCodebuildProject:
     Condition: IsContinuosDeliveryCondition
-    Type: 'AWS::CodeBuild::Project'
+    Type: "AWS::CodeBuild::Project"
     Properties:
       Name: !Sub ${ProjectName}-RunE2eTestsCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       ConcurrentBuildLimit: 2
-      Source: 
+      Source:
         Type: NO_SOURCE
         BuildSpec: |
           version: 0.2
@@ -3644,8 +3618,8 @@ Outputs:
     Value: !Ref CdArtifactBucket
 
   CdEventBusArn:
-    Value: 
+    Value:
       Fn::If:
         - IsContinuosDeliveryCondition
         - !GetAtt CdEventBus.Arn
-        - ''
+        - ""
