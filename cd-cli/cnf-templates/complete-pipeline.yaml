@@ -1230,22 +1230,14 @@ Resources:
             Action:
               - cloudformation:GetTemplateSummary
               - cloudformation:ListStacks
-            Resource: "*"
-          - Effect: Allow
-            Action:
               - cloudformation:CreateChangeSet
               - cloudformation:DescribeChangeSet
               - cloudformation:DescribeStacks
               - cloudformation:ExecuteChangeSet
             Resource: "*"
           - Effect: Allow
-            Action:
-              - cloudwatch:DeleteAlarms
-              - cloudwatch:DescribeAlarms
-            Resource: arn:aws:cloudwatch:eu-south-1:804103868123:alarm:*
-          - Effect: Allow
             Action: cloudwatch:PutDashboard
-            Resource: arn:aws:cloudwatch::804103868123:dashboard/*
+            Resource: !Sub arn:aws:cloudwatch::${AWS::AccountId}:dashboard/*
           - Effect: Allow
             Action:
               - dynamodb:Describe*
@@ -1253,19 +1245,19 @@ Resources:
               - dynamodb:UpdateTable
               - dynamodb:UpdateContinuousBackups
               - dynamodb:Create*
-            Resource: arn:aws:dynamodb:eu-south-1:804103868123:table/*
+            Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
           - Effect: Allow
             Action: elasticloadbalancing:ModifyRule
-            Resource: arn:aws:elasticloadbalancing:eu-south-1:804103868123:listener-rule/app/*
+            Resource: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener-rule/app/*
           - Effect: Allow
             Action: elasticloadbalancing:ModifyRule
-            Resource: arn:aws:elasticloadbalancing:eu-south-1:804103868123:listener-rule/net/*
+            Resource: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener-rule/net/*
           - Effect: Allow
             Action:
               - iam:DeleteRole
               - iam:DeleteRolePolicy
               - iam:GetRole
-            Resource: arn:aws:iam::804103868123:role/*
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*
           - Effect: Allow
             Action:
               - kms:Decrypt
@@ -1274,14 +1266,14 @@ Resources:
               - kms:GetKeyPolicy
               - kms:GetKeyRotationStatus
               - kms:ListResourceTags
-            Resource: arn:aws:kms:eu-south-1:804103868123:key/*
+            Resource: !Sub arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*
           - Effect: Allow
             Action:
               - lambda:GetFunction
               - lambda:GetFunctionCodeSigningConfig
               - lambda:RemovePermission
               - lambda:UpdateFunctionCode
-            Resource: arn:aws:lambda:eu-south-1:804103868123:function:*
+            Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*
           - Effect: Allow
             Action:
               - lambda:CreateFunction
@@ -1304,22 +1296,13 @@ Resources:
               - logs:DescribeLogGroups
               - logs:ListTagsLogGroup
               - logs:PutLogEvents
-            Resource: arn:aws:logs:eu-south-1:804103868123:log-group:*
+            Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
           - Effect: Allow
             Action: secretsmanager:GetSecretValue
-            Resource: arn:aws:secretsmanager:eu-south-1:804103868123:secret:*
+            Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*
           - Effect: Allow
             Action: ssm:GetParameters
-            Resource: arn:aws:ssm:eu-south-1:804103868123:parameter/*
-          - Effect: Allow
-            Resource:
-              - "*"
-            Action:
-              - codebuild:CreateReportGroup
-              - codebuild:CreateReport
-              - codebuild:UpdateReport
-              - codebuild:BatchPutTestCases
-              - codebuild:BatchPutCodeCoverages
+            Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*
           - Effect: Allow
             Action:
               - application-autoscaling:RegisterScalableTarget
@@ -1336,9 +1319,9 @@ Resources:
               - cloudfront:Get*
               - cloudfront:Update*
             Resource:
-              - arn:aws:cloudfront::804103868123:cache-policy/*
-              - arn:aws:cloudfront::804103868123:origin-request-policy/*
-              - arn:aws:cloudfront::804103868123:response-headers-policy/*
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:cache-policy/*
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:origin-request-policy/*
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:response-headers-policy/*
           - Effect: Allow
             Action:
               - cloudfront:List*
@@ -1358,12 +1341,7 @@ Resources:
               - ecs:CreateService
               - ecs:DeleteService
               - ecs:DescribeServices
-            Resource: arn:aws:ecs:*:804103868123:service/*/*
-          - Effect: Allow
-            Action:
-              - ecs:List*
-              - ecs:Get*
-            Resource: "*"
+            Resource: !Sub arn:aws:ecs:*:${AWS::AccountId}:service/*/*
           - Action:
               - ecs:DescribeServices
               - ecs:CreateTaskSet
@@ -1458,9 +1436,6 @@ Resources:
             Action:
               - s3:*Object
               - s3:GetObjectVersion
-              - s3:PutObject
-              - s3:GetObject
-              - s3:DeleteObject
               - s3:PutObjectAcl
             Resource: arn:aws:s3:::*/*
           - Sid: VisualEditor1
@@ -1479,8 +1454,7 @@ Resources:
               - s3:DeleteBucket
               - s3:GetBucketPolicy
             Resource: arn:aws:s3:::*
-          - Sid: VisualEditor2
-            Effect: Allow
+          - Effect: Allow
             Action: s3:ListAllMyBuckets
             Resource: "*"
 
@@ -1502,11 +1476,6 @@ Resources:
               - application-autoscaling:DescribeScalingPolicies
               - application-autoscaling:PutScalingPolicy
               - application-autoscaling:RegisterScalableTarget
-              - appmesh:DescribeVirtualGateway
-              - appmesh:DescribeVirtualNode
-              - appmesh:ListMeshes
-              - appmesh:ListVirtualGateways
-              - appmesh:ListVirtualNodes
               - autoscaling:CreateAutoScalingGroup
               - autoscaling:CreateLaunchConfiguration
               - autoscaling:DeleteAutoScalingGroup
@@ -1549,19 +1518,8 @@ Resources:
               - ec2:CancelSpotFleetRequests
               - ec2:CreateInternetGateway
               - ec2:CreateLaunchTemplate
-              - ec2:CreateRoute
-              - ec2:CreateRouteTable
-              - ec2:CreateSecurityGroup
-              - ec2:CreateSubnet
-              - ec2:CreateVpc
               - ec2:DeleteLaunchTemplate
-              - ec2:DeleteSubnet
-              - ec2:DeleteVpc
               - ec2:Describe*
-              - ec2:DetachInternetGateway
-              - ec2:DisassociateRouteTable
-              - ec2:ModifySubnetAttribute
-              - ec2:ModifyVpcAttribute
               - ec2:RequestSpotFleet
               - ec2:RunInstances
               - ecs:*
@@ -1609,10 +1567,6 @@ Resources:
               - servicediscovery:ListServices
               - servicediscovery:UpdateService
               - sns:ListTopics
-              - ec2:DescribeSubnets
-              - ec2:DescribeVpcs
-              - ecs:DeregisterTaskDefinition
-              - ecs:RegisterTaskDefinition
               - elasticloadbalancing:DescribeRules
               - secretsmanager:ListSecrets
             Resource:
@@ -1674,13 +1628,6 @@ Resources:
             Action:
               - elasticloadbalancing:AddTags
             Resource: "*"
-            Condition:
-              StringEquals:
-                elasticloadbalancing:CreateAction:
-                  - CreateTargetGroup
-                  - CreateRule
-                  - CreateListener
-                  - CreateLoadBalancer
 
   CodeBuildPolicyAPICloudfront:
     Type: AWS::IAM::ManagedPolicy
@@ -1744,6 +1691,7 @@ Resources:
               - apigateway:RemoveCertificateFromDomain
             Resource: "*"
 
+
   CodeBuildPolicyEventLogs:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -1760,17 +1708,17 @@ Resources:
               - cloudwatch:DeleteDashboards
               - cloudwatch:GetDashboard
             Resource:
-              - arn:aws:cloudwatch:*:804103868123:alarm:*
-              - arn:aws:cloudwatch::804103868123:dashboard/*
+              - !Sub arn:aws:cloudwatch:*:${AWS::AccountId}:alarm:*
+              - !Sub arn:aws:cloudwatch::${AWS::AccountId}:dashboard/*
           - Effect: Allow
             Action: cloudwatch:ListDashboards
             Resource: "*"
           - Effect: Allow
             Action: events:DescribeRule
-            Resource: arn:aws:events:*:804103868123:rule/*/*
+            Resource: !Sub arn:aws:events:*:${AWS::AccountId}:rule/*/*
           - Effect: Allow
             Action: events:DescribeRule
-            Resource: arn:aws:events:*:804103868123:rule/*
+            Resource: !Sub arn:aws:events:*:${AWS::AccountId}:rule/*
           - Effect: Allow
             Action:
               - logs:PutMetricFilter
@@ -1787,6 +1735,7 @@ Resources:
               - logs:PutLogEvents
             Resource: "*"
 
+
   CodeBuildPolicyIAM:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -1800,7 +1749,6 @@ Resources:
             Effect: Allow
             Action:
               - iam:CreatePolicy
-              - iam:PassRole
               - iam:DetachRolePolicy
               - iam:GetPolicy
               - iam:ListPolicyVersions
@@ -1811,8 +1759,8 @@ Resources:
               - iam:CreatePolicyVersion
               - iam:GetRolePolicy
             Resource:
-              - arn:aws:iam::804103868123:role/*
-              - arn:aws:iam::804103868123:policy/*
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/*
+              - !Sub arn:aws:iam::${AWS::AccountId}:policy/*
           - Sid: VisualEditor0
             Effect: Allow
             Action:
@@ -1823,14 +1771,16 @@ Resources:
               - kms:DeleteAlias
               - kms:UpdateAlias
             Resource:
-              - arn:aws:kms:*:804103868123:key/*
-              - arn:aws:kms:*:804103868123:alias/*
+              - !Sub arn:aws:kms:*:${AWS::AccountId}:key/*
+              - !Sub arn:aws:kms:*:${AWS::AccountId}:alias/*
           - Sid: VisualEditor1
             Effect: Allow
             Action:
               - kms:ListAliases
               - kms:CreateKey
             Resource: "*"
+
+
 
   CodeBuildNetworking:
     Type: AWS::IAM::ManagedPolicy
@@ -1841,159 +1791,160 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Action:
-              - ec2:AcceptVpcPeeringConnection
-              - ec2:AcceptVpcEndpointConnections
-              - ec2:AllocateAddress
-              - ec2:AssignIpv6Addresses
-              - ec2:AssignPrivateIpAddresses
-              - ec2:AssociateAddress
-              - ec2:AssociateDhcpOptions
-              - ec2:AssociateRouteTable
-              - ec2:AssociateSubnetCidrBlock
-              - ec2:AssociateVpcCidrBlock
-              - ec2:AttachClassicLinkVpc
-              - ec2:AttachInternetGateway
-              - ec2:AttachNetworkInterface
-              - ec2:AttachVpnGateway
-              - ec2:AuthorizeSecurityGroupEgress
-              - ec2:AuthorizeSecurityGroupIngress
-              - ec2:CreateCarrierGateway
-              - ec2:CreateCustomerGateway
-              - ec2:CreateDefaultSubnet
-              - ec2:CreateDefaultVpc
-              - ec2:CreateDhcpOptions
-              - ec2:CreateEgressOnlyInternetGateway
-              - ec2:CreateFlowLogs
-              - ec2:CreateInternetGateway
-              - ec2:CreateLocalGatewayRouteTableVpcAssociation
-              - ec2:CreateNatGateway
-              - ec2:CreateNetworkAcl
-              - ec2:CreateNetworkAclEntry
-              - ec2:CreateNetworkInterface
-              - ec2:CreateNetworkInterfacePermission
-              - ec2:CreateRoute
-              - ec2:CreateRouteTable
-              - ec2:CreateSecurityGroup
-              - ec2:CreateSubnet
-              - ec2:CreateTags
-              - ec2:CreateVpc
-              - ec2:CreateVpcEndpoint
-              - ec2:CreateVpcEndpointConnectionNotification
-              - ec2:CreateVpcEndpointServiceConfiguration
-              - ec2:CreateVpcPeeringConnection
-              - ec2:CreateVpnConnection
-              - ec2:CreateVpnConnectionRoute
-              - ec2:CreateVpnGateway
-              - ec2:DeleteCarrierGateway
-              - ec2:DeleteCustomerGateway
-              - ec2:DeleteDhcpOptions
-              - ec2:DeleteEgressOnlyInternetGateway
-              - ec2:DeleteFlowLogs
-              - ec2:DeleteInternetGateway
-              - ec2:DeleteLocalGatewayRouteTableVpcAssociation
-              - ec2:DeleteNatGateway
-              - ec2:DeleteNetworkAcl
-              - ec2:DeleteNetworkAclEntry
-              - ec2:DeleteNetworkInterface
-              - ec2:DeleteNetworkInterfacePermission
-              - ec2:DeleteRoute
-              - ec2:DeleteRouteTable
-              - ec2:DeleteSecurityGroup
-              - ec2:DeleteSubnet
-              - ec2:DeleteTags
-              - ec2:DeleteVpc
-              - ec2:DeleteVpcEndpoints
-              - ec2:DeleteVpcEndpointConnectionNotifications
-              - ec2:DeleteVpcEndpointServiceConfigurations
-              - ec2:DeleteVpcPeeringConnection
-              - ec2:DeleteVpnConnection
-              - ec2:DeleteVpnConnectionRoute
-              - ec2:DeleteVpnGateway
-              - ec2:DescribeAccountAttributes
-              - ec2:DescribeAddresses
-              - ec2:DescribeAvailabilityZones
-              - ec2:DescribeCarrierGateways
-              - ec2:DescribeClassicLinkInstances
-              - ec2:DescribeCustomerGateways
-              - ec2:DescribeDhcpOptions
-              - ec2:DescribeEgressOnlyInternetGateways
-              - ec2:DescribeFlowLogs
-              - ec2:DescribeInstances
-              - ec2:DescribeInternetGateways
-              - ec2:DescribeIpv6Pools
-              - ec2:DescribeLocalGatewayRouteTables
-              - ec2:DescribeLocalGatewayRouteTableVpcAssociations
-              - ec2:DescribeKeyPairs
-              - ec2:DescribeMovingAddresses
-              - ec2:DescribeNatGateways
-              - ec2:DescribeNetworkAcls
-              - ec2:DescribeNetworkInterfaceAttribute
-              - ec2:DescribeNetworkInterfacePermissions
-              - ec2:DescribeNetworkInterfaces
-              - ec2:DescribePrefixLists
-              - ec2:DescribeRouteTables
-              - ec2:DescribeSecurityGroupReferences
-              - ec2:DescribeSecurityGroupRules
-              - ec2:DescribeSecurityGroups
-              - ec2:DescribeStaleSecurityGroups
-              - ec2:DescribeSubnets
-              - ec2:DescribeTags
-              - ec2:DescribeVpcAttribute
-              - ec2:DescribeVpcClassicLink
-              - ec2:DescribeVpcClassicLinkDnsSupport
-              - ec2:DescribeVpcEndpointConnectionNotifications
-              - ec2:DescribeVpcEndpointConnections
-              - ec2:DescribeVpcEndpoints
-              - ec2:DescribeVpcEndpointServiceConfigurations
-              - ec2:DescribeVpcEndpointServicePermissions
-              - ec2:DescribeVpcEndpointServices
-              - ec2:DescribeVpcPeeringConnections
-              - ec2:DescribeVpcs
-              - ec2:DescribeVpnConnections
-              - ec2:DescribeVpnGateways
-              - ec2:DetachClassicLinkVpc
-              - ec2:DetachInternetGateway
-              - ec2:DetachNetworkInterface
-              - ec2:DetachVpnGateway
-              - ec2:DisableVgwRoutePropagation
-              - ec2:DisableVpcClassicLink
-              - ec2:DisableVpcClassicLinkDnsSupport
-              - ec2:DisassociateAddress
-              - ec2:DisassociateRouteTable
-              - ec2:DisassociateSubnetCidrBlock
-              - ec2:DisassociateVpcCidrBlock
-              - ec2:EnableVgwRoutePropagation
-              - ec2:EnableVpcClassicLink
-              - ec2:EnableVpcClassicLinkDnsSupport
-              - ec2:ModifyNetworkInterfaceAttribute
-              - ec2:ModifySecurityGroupRules
-              - ec2:ModifySubnetAttribute
-              - ec2:ModifyVpcAttribute
-              - ec2:ModifyVpcEndpoint
-              - ec2:ModifyVpcEndpointConnectionNotification
-              - ec2:ModifyVpcEndpointServiceConfiguration
-              - ec2:ModifyVpcEndpointServicePermissions
-              - ec2:ModifyVpcPeeringConnectionOptions
-              - ec2:ModifyVpcTenancy
-              - ec2:MoveAddressToVpc
-              - ec2:RejectVpcEndpointConnections
-              - ec2:RejectVpcPeeringConnection
-              - ec2:ReleaseAddress
-              - ec2:ReplaceNetworkAclAssociation
-              - ec2:ReplaceNetworkAclEntry
-              - ec2:ReplaceRoute
-              - ec2:ReplaceRouteTableAssociation
-              - ec2:ResetNetworkInterfaceAttribute
-              - ec2:RestoreAddressToClassic
-              - ec2:RevokeSecurityGroupEgress
-              - ec2:RevokeSecurityGroupIngress
-              - ec2:UnassignIpv6Addresses
-              - ec2:UnassignPrivateIpAddresses
-              - ec2:UpdateSecurityGroupRuleDescriptionsEgress
-              - ec2:UpdateSecurityGroupRuleDescriptionsIngress
-            Resource: "*"
-            Effect: Allow
+        - Action:
+          - ec2:AcceptVpcPeeringConnection
+          - ec2:AcceptVpcEndpointConnections
+          - ec2:AllocateAddress
+          - ec2:AssignIpv6Addresses
+          - ec2:AssignPrivateIpAddresses
+          - ec2:AssociateAddress
+          - ec2:AssociateDhcpOptions
+          - ec2:AssociateRouteTable
+          - ec2:AssociateSubnetCidrBlock
+          - ec2:AssociateVpcCidrBlock
+          - ec2:AttachClassicLinkVpc
+          - ec2:AttachInternetGateway
+          - ec2:AttachNetworkInterface
+          - ec2:AttachVpnGateway
+          - ec2:AuthorizeSecurityGroupEgress
+          - ec2:AuthorizeSecurityGroupIngress
+          - ec2:CreateCarrierGateway
+          - ec2:CreateCustomerGateway
+          - ec2:CreateDefaultSubnet
+          - ec2:CreateDefaultVpc
+          - ec2:CreateDhcpOptions
+          - ec2:CreateEgressOnlyInternetGateway
+          - ec2:CreateFlowLogs
+          - ec2:CreateInternetGateway
+          - ec2:CreateLocalGatewayRouteTableVpcAssociation
+          - ec2:CreateNatGateway
+          - ec2:CreateNetworkAcl
+          - ec2:CreateNetworkAclEntry
+          - ec2:CreateNetworkInterface
+          - ec2:CreateNetworkInterfacePermission
+          - ec2:CreateRoute
+          - ec2:CreateRouteTable
+          - ec2:CreateSecurityGroup
+          - ec2:CreateSubnet
+          - ec2:CreateTags
+          - ec2:CreateVpc
+          - ec2:CreateVpcEndpoint
+          - ec2:CreateVpcEndpointConnectionNotification
+          - ec2:CreateVpcEndpointServiceConfiguration
+          - ec2:CreateVpcPeeringConnection
+          - ec2:CreateVpnConnection
+          - ec2:CreateVpnConnectionRoute
+          - ec2:CreateVpnGateway
+          - ec2:DeleteCarrierGateway
+          - ec2:DeleteCustomerGateway
+          - ec2:DeleteDhcpOptions
+          - ec2:DeleteEgressOnlyInternetGateway
+          - ec2:DeleteFlowLogs
+          - ec2:DeleteInternetGateway
+          - ec2:DeleteLocalGatewayRouteTableVpcAssociation
+          - ec2:DeleteNatGateway
+          - ec2:DeleteNetworkAcl
+          - ec2:DeleteNetworkAclEntry
+          - ec2:DeleteNetworkInterface
+          - ec2:DeleteNetworkInterfacePermission
+          - ec2:DeleteRoute
+          - ec2:DeleteRouteTable
+          - ec2:DeleteSecurityGroup
+          - ec2:DeleteSubnet
+          - ec2:DeleteTags
+          - ec2:DeleteVpc
+          - ec2:DeleteVpcEndpoints
+          - ec2:DeleteVpcEndpointConnectionNotifications
+          - ec2:DeleteVpcEndpointServiceConfigurations
+          - ec2:DeleteVpcPeeringConnection
+          - ec2:DeleteVpnConnection
+          - ec2:DeleteVpnConnectionRoute
+          - ec2:DeleteVpnGateway
+          - ec2:DescribeAccountAttributes
+          - ec2:DescribeAddresses
+          - ec2:DescribeAvailabilityZones
+          - ec2:DescribeCarrierGateways
+          - ec2:DescribeClassicLinkInstances
+          - ec2:DescribeCustomerGateways
+          - ec2:DescribeDhcpOptions
+          - ec2:DescribeEgressOnlyInternetGateways
+          - ec2:DescribeFlowLogs
+          - ec2:DescribeInstances
+          - ec2:DescribeInternetGateways
+          - ec2:DescribeIpv6Pools
+          - ec2:DescribeLocalGatewayRouteTables
+          - ec2:DescribeLocalGatewayRouteTableVpcAssociations
+          - ec2:DescribeKeyPairs
+          - ec2:DescribeMovingAddresses
+          - ec2:DescribeNatGateways
+          - ec2:DescribeNetworkAcls
+          - ec2:DescribeNetworkInterfaceAttribute
+          - ec2:DescribeNetworkInterfacePermissions
+          - ec2:DescribeNetworkInterfaces
+          - ec2:DescribePrefixLists
+          - ec2:DescribeRouteTables
+          - ec2:DescribeSecurityGroupReferences
+          - ec2:DescribeSecurityGroupRules
+          - ec2:DescribeSecurityGroups
+          - ec2:DescribeStaleSecurityGroups
+          - ec2:DescribeSubnets
+          - ec2:DescribeTags
+          - ec2:DescribeVpcAttribute
+          - ec2:DescribeVpcClassicLink
+          - ec2:DescribeVpcClassicLinkDnsSupport
+          - ec2:DescribeVpcEndpointConnectionNotifications
+          - ec2:DescribeVpcEndpointConnections
+          - ec2:DescribeVpcEndpoints
+          - ec2:DescribeVpcEndpointServiceConfigurations
+          - ec2:DescribeVpcEndpointServicePermissions
+          - ec2:DescribeVpcEndpointServices
+          - ec2:DescribeVpcPeeringConnections
+          - ec2:DescribeVpcs
+          - ec2:DescribeVpnConnections
+          - ec2:DescribeVpnGateways
+          - ec2:DetachClassicLinkVpc
+          - ec2:DetachInternetGateway
+          - ec2:DetachNetworkInterface
+          - ec2:DetachVpnGateway
+          - ec2:DisableVgwRoutePropagation
+          - ec2:DisableVpcClassicLink
+          - ec2:DisableVpcClassicLinkDnsSupport
+          - ec2:DisassociateAddress
+          - ec2:DisassociateRouteTable
+          - ec2:DisassociateSubnetCidrBlock
+          - ec2:DisassociateVpcCidrBlock
+          - ec2:EnableVgwRoutePropagation
+          - ec2:EnableVpcClassicLink
+          - ec2:EnableVpcClassicLinkDnsSupport
+          - ec2:ModifyNetworkInterfaceAttribute
+          - ec2:ModifySecurityGroupRules
+          - ec2:ModifySubnetAttribute
+          - ec2:ModifyVpcAttribute
+          - ec2:ModifyVpcEndpoint
+          - ec2:ModifyVpcEndpointConnectionNotification
+          - ec2:ModifyVpcEndpointServiceConfiguration
+          - ec2:ModifyVpcEndpointServicePermissions
+          - ec2:ModifyVpcPeeringConnectionOptions
+          - ec2:ModifyVpcTenancy
+          - ec2:MoveAddressToVpc
+          - ec2:RejectVpcEndpointConnections
+          - ec2:RejectVpcPeeringConnection
+          - ec2:ReleaseAddress
+          - ec2:ReplaceNetworkAclAssociation
+          - ec2:ReplaceNetworkAclEntry
+          - ec2:ReplaceRoute
+          - ec2:ReplaceRouteTableAssociation
+          - ec2:ResetNetworkInterfaceAttribute
+          - ec2:RestoreAddressToClassic
+          - ec2:RevokeSecurityGroupEgress
+          - ec2:RevokeSecurityGroupIngress
+          - ec2:UnassignIpv6Addresses
+          - ec2:UnassignPrivateIpAddresses
+          - ec2:UpdateSecurityGroupRuleDescriptionsEgress
+          - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+          Resource: "*"
+          Effect: Allow
+
 
   ###########################################################################
   ###  Utility codebuild used to list the deployed artifacts versions
