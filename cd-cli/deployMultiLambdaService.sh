@@ -198,7 +198,7 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 
 unzip ${lambdasZip} -d ./${lambdasLocalPath}
 
-bucketBasePath="${repo_name}/main"
+bucketBasePath="${repo_name}/${pn_microsvc_commitId}"
 aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}/" \
       "s3://$bucketName/${bucketBasePath}/"

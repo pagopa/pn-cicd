@@ -617,7 +617,7 @@ Resources:
         CiArtifactBucket: !Ref 'CiArtifactBucket'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
       TimeoutInMinutes: 5
-  
+  # Progetto Auth Fleet con Multilambda
   PnAuthFleetLambdas:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -627,8 +627,7 @@ Resources:
         BaseDir: 'functions'
         CiArtifactBucket: !Ref 'CiArtifactBucket'
         NotificationSNSTopic: !Ref 'NotificationSNSTopic'
-      TimeoutInMinutes: 10
-
+      TimeoutInMinutes: 10      
 # Progetti Lambda
   PnApikeyAuthorizerLambda:
     Type: AWS::CloudFormation::Stack
