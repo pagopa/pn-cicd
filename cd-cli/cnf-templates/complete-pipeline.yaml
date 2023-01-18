@@ -24,6 +24,8 @@ Parameters:
 Conditions:
   IsHotfixCondition: !Equals [ !Ref EnvName, 'hotfix' ]
   IsDevCondition: !Equals [ !Ref EnvName, 'dev' ]
+  IsSvilCondition: !Equals [ !Ref EnvName, 'svil' ]
+  IsTestCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsSvilCondition ]
   IsContinuosDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
 
 Mappings: 
@@ -817,7 +819,7 @@ Resources:
 
             # Run test if the environment is dev
             - Fn::If:
-                - IsContinuosDeliveryCondition
+                - IsTestCondition
                 - Name: Run_e2e_Tests
                   ActionTypeId:
                     Category: Build
@@ -2810,7 +2812,7 @@ Resources:
   ###  Utility that run e2e tests
   ###########################################################################
   RunTestsCodebuildProject:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsTestCondition
     Type: 'AWS::CodeBuild::Project'
     Properties:
       Name: !Sub ${ProjectName}-RunE2eTestsCodeBuildProject
@@ -2871,7 +2873,7 @@ Resources:
 
   RunTestsCodebuildProjectLogGroup:
     Type: AWS::Logs::LogGroup
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsTestCondition
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsCodebuildProject}"
       RetentionInDays: 14
