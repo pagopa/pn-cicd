@@ -24,7 +24,9 @@ Parameters:
 Conditions:
   IsHotfixCondition: !Equals [ !Ref EnvName, 'hotfix' ]
   IsDevCondition: !Equals [ !Ref EnvName, 'dev' ]
-  IsContinuosDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
+  IsSvilCondition: !Equals [ !Ref EnvName, 'svil' ]
+  IsTestCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsSvilCondition ]
+  IsContinuousDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
 
 Mappings: 
   EventPatternMap: 
@@ -61,14 +63,14 @@ Resources:
   # - Receive Continuos Integration build events and activate the needed 
   #   Continuos Delivery pipeline
   CdEventBus:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::Events::EventBus
     Properties: 
       Name: 'CdEventBus'
   
   # Receive Events from CI system
   CdEventBusAccessPolicy: 
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::Events::EventBusPolicy
     Properties: 
       EventBusName: !Ref CdEventBus
@@ -85,7 +87,7 @@ Resources:
   ###########################################################################
   # EVENT BRIDGE RULE: transform events into CodeBuild Execution
   SendAllBuildEventsToCodeBuild:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::Events::Rule
     Properties: 
       Description: Save build events
@@ -135,7 +137,7 @@ Resources:
 
   # - Role and policy used to activate CodeBuild from EventBridge rule
   EventBusRunCodeBuildRole:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -162,7 +164,7 @@ Resources:
   ###########################################################################
   # - The codebuild project
   ChooseAndLaunchPipelineCodeBuild:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: 'AWS::CodeBuild::Project'
     Properties:
       Name: 'ChooseCdPipeline'
@@ -380,7 +382,7 @@ Resources:
 
   # CodeBuild Role used during the choose of right codepipeline
   ChooseAndLaunchPipelineCodeBuildRole:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -831,7 +833,7 @@ Resources:
 
             # Run test if the environment is dev
             - Fn::If:
-                - IsContinuosDeliveryCondition
+                - IsTestCondition
                 - Name: Run_e2e_Tests
                   ActionTypeId:
                     Category: Build
@@ -852,7 +854,7 @@ Resources:
             
             # List versions if the environment is dev
             - Fn::If:
-                - IsContinuosDeliveryCondition
+                - IsContinuousDeliveryCondition
                 - Name: List_Versions
                   ActionTypeId:
                     Category: Build
@@ -1338,7 +1340,7 @@ Resources:
   # INFRA AND AUTHFLEET
   #######################
   InfraAndAuthFleetDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1428,7 +1430,7 @@ Resources:
   # FRONTEND
   #######################
   FrontEndDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1519,7 +1521,7 @@ Resources:
   # MICROSERVICE PN-DELIVERY
   ############################
   PnDeliveryDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1611,7 +1613,7 @@ Resources:
   # POST-DEPLOY
   ############################
   InfrastructurePostDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1701,7 +1703,7 @@ Resources:
   # MICROSERVICE PN-DELIVERY-PUSH
   ############################
   PnDeliveryPushDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1794,7 +1796,7 @@ Resources:
   # MICROSERVICE PN-USER-ATTRIBUTES
   ############################
   PnUserAttributesDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1887,7 +1889,7 @@ Resources:
   # MICROSERVICE PN-MANDATE
   ############################
   PnMandatesDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -1979,7 +1981,7 @@ Resources:
   # MICROSERVICE PN-EXTERNAL-REGISTRIES
   ############################
   PnExternalRegistryDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2072,7 +2074,7 @@ Resources:
   # MICROSERVICE PN-DOWNTIME_LOGS
   ############################
   PnDowntimeLogsDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2165,7 +2167,7 @@ Resources:
   # MICROSERVICE PN-RADD-FSU
   ############################
   PnRaddFsuDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2258,7 +2260,7 @@ Resources:
   # MICROSERVICE PN-EXTERNAL-CHANNELS
   ############################
   PnExternalChannelsPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2352,7 +2354,7 @@ Resources:
   # MICROSERVICE PN-LOGSAVER-BE
   ############################
   PnLogSaverDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2445,7 +2447,7 @@ Resources:
   # MICROSERVICE PN-NATIONAL-REGISTRIES
   ############################
   PnNationalRegistriesDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2537,7 +2539,7 @@ Resources:
   # MICROSERVICE PN-APIKEY-MANAGER
   ############################
   PnApikeyManagerDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2629,7 +2631,7 @@ Resources:
   # MICROSERVICE PN-PAPER-CHANNEL
   ############################
   PnPaperChannelDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2721,7 +2723,7 @@ Resources:
   # MICROSERVICE PN-PROGRESSION-SENSOR
   ############################
   PnProgressionSensorDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
@@ -2815,7 +2817,7 @@ Resources:
   ###  RUN E2E TESTS
   ###########################################################################
   ScheduledRule: 
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::Events::Rule
     Properties:
       Description: "ScheduledRule"
@@ -2835,7 +2837,7 @@ Resources:
   ###  Utility that run e2e tests
   ###########################################################################
   RunTestsCodebuildProject:
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsTestCondition
     Type: 'AWS::CodeBuild::Project'
     Properties:
       Name: !Sub ${ProjectName}-RunE2eTestsCodeBuildProject
@@ -2896,7 +2898,7 @@ Resources:
 
   RunTestsCodebuildProjectLogGroup:
     Type: AWS::Logs::LogGroup
-    Condition: IsContinuosDeliveryCondition
+    Condition: IsTestCondition
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsCodebuildProject}"
       RetentionInDays: 14
@@ -2908,6 +2910,6 @@ Outputs:
   CdEventBusArn:
     Value: 
       Fn::If:
-        - IsContinuosDeliveryCondition
+        - IsContinuousDeliveryCondition
         - !GetAtt CdEventBus.Arn
         - ''
