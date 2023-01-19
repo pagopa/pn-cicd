@@ -292,6 +292,7 @@ Resources:
                 - |
                   if ( [ "$PROJECT" = "pn-kafka-bridge" ] ) then
                     sed -i -e "s|pn_kafka_bridge_commitId=.*|pn_kafka_bridge_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_kafka_bridge_imageUrl=.*|pn_kafka_bridge_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-kafka-bridge-update-pipeline"
                   fi
                 - 'cat desired-commit-ids-env.sh'
