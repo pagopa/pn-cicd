@@ -1355,6 +1355,7 @@ Resources:
               - lambda:CreateEventSourceMapping
               - lambda:DeleteEventSourceMapping
               - lambda:UntagResource
+              - lambda:Update*
             Resource: "*"
           - Effect: Allow
             Action:
@@ -2028,8 +2029,6 @@ Resources:
               - ec2:UpdateSecurityGroupRuleDescriptionsIngress
             Resource: "*"
             Effect: Allow
-
-
 
   ###########################################################################
   ###  Utility codebuild used to list the deployed artifacts versions
