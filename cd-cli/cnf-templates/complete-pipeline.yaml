@@ -1620,6 +1620,7 @@ Resources:
               - iam:ListAttachedRolePolicies
               - iam:ListInstanceProfiles
               - iam:ListRoles
+              - iam:PassRole
               - lambda:ListFunctions
               - logs:CreateLogGroup
               - logs:DescribeLogGroups
@@ -1858,8 +1859,7 @@ Resources:
             Resource:
               - !Sub arn:aws:kms:*:${AWS::AccountId}:key/*
               - !Sub arn:aws:kms:*:${AWS::AccountId}:alias/*
-          - Sid: VisualEditor1
-            Effect: Allow
+          - Effect: Allow
             Action:
               - kms:ListAliases
               - kms:CreateKey
