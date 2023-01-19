@@ -198,7 +198,7 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 
 unzip ${lambdasZip} -d ./${lambdasLocalPath}
 
-bucketBasePath="${repo_name}/main"
+bucketBasePath="${repo_name}/${pn_microsvc_commitId}"
 aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}/" \
       "s3://$bucketName/${bucketBasePath}/"
@@ -286,6 +286,7 @@ ParamFilePath=${repo_name}/scripts/aws/cfn/microservice-${env_type}-cfg.json
 EnanchedParamFilePath=${repo_name}-microservice-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
+     \"BucketBasePath=$bucketBasePath\",\
      \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
