@@ -388,7 +388,7 @@ Resources:
 
   # CodeBuild Role used during the choose of right codepipeline
   ChooseAndLaunchPipelineCodeBuildRole:
-    Condition: IsContinuousDeliveryCondition
+    # Condition: IsContinuousDeliveryCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -401,17 +401,15 @@ Resources:
                 - "codebuild.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-      Policies:
-        - PolicyName: ChooseAndLaunchPipelineCodeBuildRolePolicy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              -
-                Effect: Allow
-                Action:
-                  - "*"
-                Resource:
-                  - "*"
+      ManagedPolicyArns:
+        - !Ref CodeBuildPolicy
+        - !Ref CodeBuildPolicyR53
+        - !Ref CodeBuildPolicyS3
+        - !Ref CodeBuildPolicyECS
+        - !Ref CodeBuildPolicyAPICloudfront
+        - !Ref CodeBuildPolicyEventLogs
+        - !Ref CodeBuildPolicyIAM
+        - !Ref CodeBuildNetworking
       
   ###########################################################################
   ###             EFFECTIVE CONTINUOS INTEGRATIONS PIPELINES              ###
