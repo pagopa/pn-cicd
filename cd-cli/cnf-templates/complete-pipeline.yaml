@@ -301,23 +301,37 @@ Resources:
                 - 'echo ""'
                 - |
                   if ( [ "$PROJECT" = "pn-auth-fleet" ] ) then
-                    echo "Check pn-auth-fleet build end"
-                    
-                    apiKeyAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/apikeyAuthorizer.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "apiKeyAuth is build ${apiKeyAuth}"
+                    git clone https://github.com/pagopa/pn-auth-fleet.git
+                    ( cd pn-auth-fleet && git checkout $COMMIT_ID )
+                    existsFunctionsFolder=$(find ./pn-auth-fleet -name functions | wc -l)
+                    if ( [ $existsFunctionsFolder != "1" ] ) then
 
-                    ioAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/ioAuthorizer.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "ioAuth is build ${ioAuth}"
-                    
-                    jwtAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/jwtAuthorizer.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "jwtAuth is build ${jwtAuth}"
-                    
-                    tokenExchange=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/tokenExchange.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "tokenExchange is build ${tokenExchange}"
+                      echo "Check pn-auth-fleet build end"
+                      
+                      existsAuthorizerv2FunctionsFolder=$(find ./pn-auth-fleet -name "apikeyAuthorizerV2" | wc -l)
 
-                    if ( [ "${apiKeyAuth}" = "KO" -o "${ioAuth}" = "KO" -o "${jwtAuth}" = "KO" -o "${tokenExchange}" = "KO" ] ) then
-                      echo "##### WARNING pn-auth-fleet have not ended"
-                      export PIPELINE_NAME=""
+                      if ( [ $existsAuthorizerv2FunctionsFolder = "1" ] ) then
+                        apiKeyAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/apikeyAuthorizerV2.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                        echo "apiKeyAuth is build ${apiKeyAuth}"
+                      else
+                        apiKeyAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/apikeyAuthorizer.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                        echo "apiKeyAuth is build ${apiKeyAuth}"
+                      fi
+
+                      ioAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/ioAuthorizer.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                      echo "ioAuth is build ${ioAuth}"
+                      
+                      jwtAuth=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/jwtAuthorizer.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                      echo "jwtAuth is build ${jwtAuth}"
+                      
+                      tokenExchange=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-auth-fleet/commits/${COMMIT_ID}/tokenExchange.zip" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                      echo "tokenExchange is build ${tokenExchange}"
+
+                      if ( [ "${apiKeyAuth}" = "KO" -o "${ioAuth}" = "KO" -o "${jwtAuth}" = "KO" -o "${tokenExchange}" = "KO" ] ) then
+                        echo "##### WARNING pn-auth-fleet have not ended"
+                        export PIPELINE_NAME=""
+                      fi
+
                     fi
                   fi
                 - |
@@ -1013,7 +1027,18 @@ Resources:
                 - 'echo "###                 UPDATE AUTHFLEET                 ###"'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && ./deployAuthFleet.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - |
+                  git clone https://github.com/pagopa/pn-auth-fleet.git
+                  ( cd pn-auth-fleet && git checkout $pn_authfleet_commitId )
+                  existsFunctionsFolder=$(find ./pn-auth-fleet -name "functions" | wc -l)
+                  existsDeployMultiLambdaScript=$(find ./scripts/cd-cli -name "deployMultiLambdaService.sh" | wc -l)
+                  if ( [ $existsFunctionsFolder = "1" -a $existsDeployMultiLambdaScript = "1" ] ) then
+                    echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
+                    (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
+                  else
+                    echo "(cd scripts/cd-cli && ./deployAuthFleet.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
+                    (cd scripts/cd-cli && ./deployAuthFleet.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
+                  fi
           artifacts:
             files:
               - '**/*'
@@ -1176,7 +1201,7 @@ Resources:
                 - 'echo ""'
                 - |
                   existsDashboardOer=$(find ./scripts/cd-cli -name deployOerDashboard.sh | wc -l)
-                  if ( [ "$existsDashboardOer" = "1" ] ) then
+                  if ( [ $existsDashboardOer = "1" ] ) then
                     (cd scripts/cd-cli && ./deployOerDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
                   fi
                 - 'echo ""'
