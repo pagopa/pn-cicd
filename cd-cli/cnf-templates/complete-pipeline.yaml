@@ -779,28 +779,28 @@ Resources:
             #  - !Ref AWS::NoValue
 
             # Update pn-kafka-bridge
-            - Name: Update_PnKafkaBridge
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-                PrimarySource: DesiredCommitIdsAndScripts
-                EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-kafka-bridge", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_kafka_bridge", "type":"PLAINTEXT"}
-                  ]'
-              InputArtifacts:
-                - Name: DesiredCommitIdsAndScripts
-              OutputArtifacts:
-                - Name: PnApiKeyManagerOutput
-              RunOrder: 3
+#            - Name: Update_PnKafkaBridge
+#              ActionTypeId:
+#                Category: Build
+#                Owner: AWS
+#                Version: 1
+#                Provider: CodeBuild
+#              Configuration:
+#                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+#                PrimarySource: DesiredCommitIdsAndScripts
+#                EnvironmentVariables: !Sub '[
+#                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+#                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+#                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+#                    {"name":"MsName", "value":"pn-kafka-bridge", "type":"PLAINTEXT"},
+#                    {"name":"MsNumber", "value":"14", "type":"PLAINTEXT"},
+#                    {"name":"VarPrefix", "value":"pn_kafka_bridge", "type":"PLAINTEXT"}
+#                  ]'
+#              InputArtifacts:
+#                - Name: DesiredCommitIdsAndScripts
+#              OutputArtifacts:
+#                - Name: PnApiKeyManagerOutput
+#              RunOrder: 3
 
             # Update Frontend
             - Name: Update_Frontend
@@ -2900,7 +2900,7 @@ Resources:
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-kafka-bridge", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"14", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_kafka_bridge", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
