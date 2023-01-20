@@ -402,7 +402,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
       ManagedPolicyArns:
-        - !Ref CodeBuildPolicy
+        - !Ref CodeBuildManagedPolicy
         - !Ref CodeBuildPolicyR53
         - !Ref CodeBuildPolicyS3
         - !Ref CodeBuildPolicyECS
@@ -1283,7 +1283,7 @@ Resources:
             Action:
               - "sts:AssumeRole"
 
-  CodeBuildPolicy:
+  CodeBuildManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-General
