@@ -1888,7 +1888,6 @@ Resources:
               - iam:CreatePolicy
               - iam:DetachRolePolicy
               - iam:GetPolicy
-              - iam:ListPolicyVersions
               - iam:DeletePolicy
               - iam:CreateRole
               - iam:AttachRolePolicy
@@ -1898,8 +1897,15 @@ Resources:
             Resource:
               - !Sub arn:aws:iam::${AWS::AccountId}:role/*
               - !Sub arn:aws:iam::${AWS::AccountId}:policy/*
-          - Sid: VisualEditor0
-            Effect: Allow
+          - Effect: Allow
+            Action:
+              - iam:GetPolicyVersion
+              - iam:CreatePolicyVersion
+              - iam:DeletePolicyVersion
+              - iam:SetDefaultPolicyVersion
+              - iam:ListPolicyVersions
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:policy/*
+          - Effect: Allow
             Action:
               - kms:TagResource
               - kms:UntagResource
