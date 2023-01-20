@@ -1579,8 +1579,8 @@ Resources:
               - cloudformation:UpdateStack
               - cloudwatch:DeleteAlarms
               - cloudwatch:DescribeAlarms
-              - cloudwatch:GetMetricStatistics
-              - cloudwatch:PutMetricAlarm
+              - cloudwatch:Get*
+              - cloudwatch:Put*
               - codedeploy:BatchGetApplicationRevisions
               - codedeploy:BatchGetApplications
               - codedeploy:BatchGetDeploymentGroups
