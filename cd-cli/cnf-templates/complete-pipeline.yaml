@@ -1449,9 +1449,26 @@ Resources:
                   - ecs-tasks.amazonaws.com
           - Effect: Allow
             Action:
+              - sqs:DeleteMessage
+              - sqs:GetQueueUrl
+              - sqs:ChangeMessageVisibility
+              - sqs:UntagQueue
+              - sqs:ReceiveMessage
               - sqs:SendMessage
               - sqs:GetQueueAttributes
+              - sqs:ListQueueTags
+              - sqs:TagQueue
+              - sqs:RemovePermission
+              - sqs:ListDeadLetterSourceQueues
+              - sqs:AddPermission
+              - sqs:PurgeQueue
+              - sqs:DeleteQueue
+              - sqs:CreateQueue
+              - sqs:SetQueueAttributes
             Resource: !Sub arn:aws:sqs:*:${AWS::AccountId}:*
+          - Effect: Allow
+            Action: sqs:ListQueues
+            Resource: "*"          
 
   CodeBuildPolicyR53:
     Type: AWS::IAM::ManagedPolicy
