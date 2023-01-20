@@ -1342,7 +1342,9 @@ Resources:
             Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*
           - Effect: Allow
             Action:
-              - lambda:CreateFunction
+              - lambda:Create*
+              - lambda:Get*
+              - lambda:Delete*
               - lambda:TagResource
               - lambda:UpdateEventSourceMapping
               - lambda:AddPermission
