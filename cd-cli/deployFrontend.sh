@@ -260,6 +260,11 @@ function prepareOneCloudFront() {
 
 source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
 
+HAS_PORTALE_PG=""
+if ( [ -f $PORTALE_PA_CERTIFICATE_ARN ] ) then
+  HAS_PORTALE_PG="true"
+fi
+
 prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "portale-pa.${env_type}.pn.pagopa.it" \
     "$PORTALE_PA_CERTIFICATE_ARN" \
@@ -281,6 +286,18 @@ webappPfBucketName=${bucketName}
 webappPfTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPfTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
+if ( [ -f $HAS_PORTALE_PG ] ) then
+  prepareOneCloudFront webapp-pg-cdn-${env_type} \
+      "portale-pg.${env_type}.pn.pagopa.it" \
+      "$PORTALE_PG_CERTIFICATE_ARN" \
+      "$ZONE_ID" \
+      "$REACT_APP_URL_API" \
+      "${PORTALE_PG_ALTERNATE_DNS-}"
+  webappPgBucketName=${bucketName}
+  webappPgTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
+  webappPgTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
+fi
+
 prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "portale-login.${env_type}.pn.pagopa.it" \
     "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
@@ -290,8 +307,6 @@ prepareOneCloudFront webapp-pfl-cdn-${env_type} \
 webappPflBucketName=${bucketName}
 webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
-
-
 
 prepareOneCloudFront web-landing-cdn-${env_type} \
     "www.${env_type}.pn.pagopa.it" \
@@ -318,7 +333,11 @@ echo " === Too Many Errors Alarm Portale PFL = ${webappPflTooManyErrorsAlarmArn}
 echo " === Bucket Sito LAnding = ${landingBucketName}"
 echo " === Too Many Request Alarm Landing = ${landingTooManyRequestsAlarmArn}"
 echo " === Too Many Errors Alarm Landing = ${landingTooManyErrorsAlarmArn}"
-
+if ( [ -f $HAS_PORTALE_PG ] ) then
+  echo " === Bucket Portale PG = ${webappPgBucketName}"
+  echo " === Too Many Request Alarm Portale PG = ${webappPgTooManyRequestsAlarmArn}"
+  echo " === Too Many Errors Alarm Portale PG = ${webappPgTooManyErrorsAlarmArn}"
+fi
 
 if ( [ ! -z "$HAS_MONITORING" ]) then
 
@@ -336,7 +355,13 @@ if ( [ ! -z "$HAS_MONITORING" ]) then
   echo "====================================================================="
   
 
-
+  OptionalMonitoringParameters=""
+  if ( [ -f $HAS_PORTALE_PG ] ) then
+    OptionalMonitoringParameters=""
+    OptionalMonitoringParameters="${OptionalMonitoringParameters} PGTooManyErrorsAlarmArn=${webappPgTooManyErrorsAlarmArn}"
+    OptionalMonitoringParameters="${OptionalMonitoringParameters} PGTooManyRequestsAlarmArn=${webappPgTooManyRequestsAlarmArn}"    
+  if
+  
   echo ""
   echo "=== Create CDN monitoring dashboard"
   aws ${aws_command_base_args} \
@@ -354,8 +379,8 @@ if ( [ ! -z "$HAS_MONITORING" ]) then
         PFLoginTooManyErrorsAlarmArn="${webappPflTooManyErrorsAlarmArn}" \
         PFLoginTooManyRequestsAlarmArn="${webappPflTooManyRequestsAlarmArn}" \
         LandingTooManyErrorsAlarmArn="${landingTooManyErrorsAlarmArn}" \
-        LandingTooManyRequestsAlarmArn="${landingTooManyRequestsAlarmArn}"
-
+        LandingTooManyRequestsAlarmArn="${landingTooManyRequestsAlarmArn}" \
+        $OptionalMonitoringParameters
 fi
 
 echo ""
@@ -386,7 +411,7 @@ mkdir -p "pn-pa-webapp_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 cp "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/" \
+    s3 sync "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/" \
       --recursive
 
 
@@ -404,7 +429,7 @@ mkdir -p "pn-personafisica-webapp_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 cp "pn-personafisica-webapp_${env_type}" "s3://${webappPfBucketName}/" \
+    s3 sync "pn-personafisica-webapp_${env_type}" "s3://${webappPfBucketName}/" \
       --recursive
 
 
@@ -421,7 +446,7 @@ mkdir -p "pn-personafisica-login_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 cp "pn-personafisica-login_${env_type}" "s3://${webappPflBucketName}/" \
+    s3 sync "pn-personafisica-login_${env_type}" "s3://${webappPflBucketName}/" \
       --recursive
 
 
@@ -440,5 +465,22 @@ mkdir -p "pn-landing-webapp_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 cp "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" \
+    s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" \
+      --recursive
+
+
+echo ""
+echo "===                          PORTALE PG                           ==="
+echo "====================================================================="
+aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp_${env_type}.tar.gz" \
+      "pn-personagiuridica-webapp_${env_type}.tar.gz"
+
+mkdir -p "pn-personagiuridica-webapp_${env_type}"
+( cd "pn-personagiuridica-webapp_${env_type}" \
+     && tar xvzf "../pn-personagiuridica-webapp_${env_type}.tar.gz" \
+)
+
+aws ${aws_command_base_args} \
+    s3 sync "pn-personagiuridica-webapp_${env_type}" "s3://${webappPgBucketName}/" \
       --recursive
