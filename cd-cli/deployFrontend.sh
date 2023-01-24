@@ -260,8 +260,9 @@ function prepareOneCloudFront() {
 
 source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
 
+portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp_${env_type}.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_PG=""
-if ( [ -f $PORTALE_PA_CERTIFICATE_ARN ] ) then
+if ( [ $portalePgTarballPresent = "OK" ] ) then
   HAS_PORTALE_PG="true"
 fi
 
@@ -411,8 +412,7 @@ mkdir -p "pn-pa-webapp_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/" \
-      --recursive
+    s3 sync "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/"
 
 
 
@@ -429,8 +429,7 @@ mkdir -p "pn-personafisica-webapp_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-personafisica-webapp_${env_type}" "s3://${webappPfBucketName}/" \
-      --recursive
+    s3 sync "pn-personafisica-webapp_${env_type}" "s3://${webappPfBucketName}/"
 
 
 echo ""
@@ -446,8 +445,7 @@ mkdir -p "pn-personafisica-login_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-personafisica-login_${env_type}" "s3://${webappPflBucketName}/" \
-      --recursive
+    s3 sync "pn-personafisica-login_${env_type}" "s3://${webappPflBucketName}/"
 
 
 
@@ -465,22 +463,22 @@ mkdir -p "pn-landing-webapp_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" \
-      --recursive
+    s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/"
 
 
-echo ""
-echo "===                          PORTALE PG                           ==="
-echo "====================================================================="
-aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp_${env_type}.tar.gz" \
-      "pn-personagiuridica-webapp_${env_type}.tar.gz"
+if ( [ -f $HAS_PORTALE_PG ] ) then
+  echo ""
+  echo "===                          PORTALE PG                           ==="
+  echo "====================================================================="
+  aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp_${env_type}.tar.gz" \
+        "pn-personagiuridica-webapp_${env_type}.tar.gz"
 
-mkdir -p "pn-personagiuridica-webapp_${env_type}"
-( cd "pn-personagiuridica-webapp_${env_type}" \
-     && tar xvzf "../pn-personagiuridica-webapp_${env_type}.tar.gz" \
-)
+  mkdir -p "pn-personagiuridica-webapp_${env_type}"
+  ( cd "pn-personagiuridica-webapp_${env_type}" \
+      && tar xvzf "../pn-personagiuridica-webapp_${env_type}.tar.gz" \
+  )
 
-aws ${aws_command_base_args} \
-    s3 sync "pn-personagiuridica-webapp_${env_type}" "s3://${webappPgBucketName}/" \
-      --recursive
+  aws ${aws_command_base_args} \
+      s3 sync "pn-personagiuridica-webapp_${env_type}" "s3://${webappPgBucketName}/"
+fi
