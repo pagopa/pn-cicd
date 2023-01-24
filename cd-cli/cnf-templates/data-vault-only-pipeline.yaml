@@ -237,7 +237,7 @@ Resources:
 
   # CodeBuild Role used during the choose of right codepipeline
   ChooseAndLaunchPipelineCodeBuildRole:
-    Condition: IsContinuousDeliveryCondition
+    Condition: IsContinuosDeliveryCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
