@@ -1,109 +1,116 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CodeBuild for webapp project (node)
+Description: CodeBuild for maven docker project
 Parameters:
   GitHubProjectName:
-    Description: Name of pagopa project name
+    Description: Name of pagopa project name pattern = [A-Za-z0-9][A-Za-z0-9\-_]{1,122}
     Type: String
-    Default: pn-webapp
+  BaseDir:
+    Description: base directory of the lambdas = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
+    Type: String
   CiArtifactBucket:
     Description: Ci Artifact bucket name
     Type: String
-  CodeArtifactDomainName:
-    Description: Used for maven repository access
-    Type: String
-    Default: pn-develop-bootstrap-step-01-domain
-  CodeArtifactRepositoryName:
-    Description: Used for maven repository access
-    Type: String
-    Default: pn-develop-bootstrap-step-01-repo
   NotificationSNSTopic:
     Type: String
-    Default: 'none'
     Description: Topic for build and pipeline notification
 
 Resources:
-
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${GitHubProjectName}-CodeBuild"
+      Name: !Sub "${GitHubProjectName}-${BaseDir}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
-      Artifacts:
-        Type: NO_ARTIFACTS
+      BadgeEnabled: true
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:6.0
         EnvironmentVariables:
-          - Name: CODEARTIFACT_DOMAIN_NAME
-            Type: PLAINTEXT
-            Value: !Sub "${CodeArtifactDomainName}"
-          - Name: CODEARTIFACT_DOMAIN_FULL
-            Type: PLAINTEXT
-            Value:
-              Fn::Join:
-                - ''
-                - - !Sub "${CodeArtifactDomainName}"
-                  - !Sub '-${AWS::AccountId}.d.codeartifact.${AWS::Region}.${AWS::URLSuffix}'
-          - Name: CODEARTIFACT_REPO
-            Type: PLAINTEXT
-            Value: !Sub "${CodeArtifactRepositoryName}"
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
             Value: !Sub "${GitHubProjectName}"
+          - Name: FUNCTIONS_FOLDER_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${BaseDir}"
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
-            Value: develop
+            Value: main
+          - Name: CI_BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${CiArtifactBucket}"
       Source:
         Type: GITHUB
         Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
-        BuildSpec: !Sub |
+        BuildSpec: |
           version: 0.2
           env:
             shell: bash
+            secrets-manager:
+              SONAR_TOKEN: arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM:token
           phases:
-            install:
-              runtime-versions:
-                 nodejs: 14
             pre_build:
               on-failure: ABORT
-              commands: 
-                - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${!BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
-                - if $(echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/); then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///'); export PR_NUM, BRANCH_TARGET; fi;
+              commands:
+                - export CODEBUILD_GIT_MESSAGE="$(git log -1 --pretty=%B)"
+                - export CODEBUILD_GIT_AUTHOR="$(git log -1 --pretty=%an)"
+                - export CODEBUILD_GIT_AUTHOR_EMAIL="$(git log -1 --pretty=%ae)"
+                - export CODEBUILD_GIT_COMMIT="$(git log -1 --pretty=%H)"
+                - echo "CODEBUILD_WEBHOOK_HEAD_REF=$CODEBUILD_WEBHOOK_HEAD_REF"
+                - echo "CODEBUILD_WEBHOOK_BASE_REF=$CODEBUILD_WEBHOOK_BASE_REF"
+                - echo "CODEBUILD_SOURCE_VERSION=$CODEBUILD_SOURCE_VERSION"
+                - echo "GIT_DEFAULT_BRANCH=$GIT_DEFAULT_BRANCH"
+                - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
+                - if echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/ ; then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///'); export PR_NUM BRANCH_TARGET; fi;
                 - export CI_PROFILE="$CODEBUILD_CI"
             build:
               on-failure: ABORT
               commands:
+                - cd $FUNCTIONS_FOLDER_NAME
                 - echo Build started on `date`
-                - tar c * | gzip | aws s3 cp - "s3://${CiArtifactBucket}/${GitHubProjectName}/${!BRANCH_NAME}/${GitHubProjectName}.tar.gz"
-          artifacts:
-            files:
-              - '**/*'
-            base-directory: build 
-          cache:
-            paths:
-              - '/root/.m2/**/*'
-              - '/root/.sonar/**/*'
-              - '/root/.npm/**/*'
-              - 'build/**/*'
+                - |
+                  for i in */
+                  do
+                    echo "Bulding $i"
+                    cd $i
+                    npm ci
+                    npm run-script test-build
+                    cd ..
+                  done               
+            post_build:
+              on-failure: ABORT
+              commands:
+                - export COMMIT_ID=$(git rev-parse --verify HEAD)
+                - echo $COMMIT_ID > commitID.txt
+                - for i in *; do cp -p "${i}/function.zip" "${i}.zip"; done
+                - zip -u functions.zip commitID.txt *.zip
+                - aws s3 cp functions.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/functions.zip"
+                - aws s3 cp functions.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/commits/$COMMIT_ID/functions.zip"
+                - |
+                  if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.* ]]; then
+                    echo Generate build event
+                    EVENT_DETAIL="{ \"event_type\": \"BUILD_DONE\", \"project_branch\":\"${BRANCH_NAME}\",\"project_type\":\"LAMBDA_SET\", \"project\":\"${GITHUB_PRJ_NAME}\", \"commit_id\": \"${COMMIT_ID}\" }"
+                    echo $EVENT_DETAIL | jq -R -s '[{ "DetailType": "CiEvent","EventBusName": "CiEventBus", "Source":"Builder", "Detail": . }]' > ci_event.json
+                    cat ci_event.json
+                    aws events put-events --entries file://ci_event.json
+                  fi
+      Artifacts:
+        Type: NO_ARTIFACTS
       TimeoutInMinutes: 10
-      Cache:
-        Type: LOCAL
-        Modes: # You can specify one or more cache mode,
-          - LOCAL_CUSTOM_CACHE
-          - LOCAL_DOCKER_LAYER_CACHE
-          - LOCAL_SOURCE_CACHE
       Triggers:
         Webhook: true
         FilterGroups:
           - - Type: EVENT
               Pattern: PUSH, PULL_REQUEST_MERGED
-            - Type: HEAD_REF
-              Pattern: ^refs/heads/(main|develop)|release\/.*$
+            #- Type: HEAD_REF
+            #  Pattern: ^refs/heads/(main|develop|feature-*)$
+            #- Type: FILE_PATH
+            #  Pattern: !Sub "^${BaseDir}/.*"
           - - Type: EVENT
               Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
             - Type: BASE_REF
               Pattern: ^refs/heads/(main|develop)|release\/.*$
+            - Type: FILE_PATH
+              Pattern: !Sub "^${BaseDir}/.*"
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -153,33 +160,6 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                 Resource: "*"
-              - Sid: CodeArtifactGetAuthorizationTokenPolicy
-                Effect: Allow
-                Action:
-                  - codeartifact:GetAuthorizationToken
-                Resource: !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}'
-              - Sid: CodeArtifactRepository
-                Effect: Allow
-                Action:
-                  - codeartifact:ReadFromRepository
-                  - codeartifact:GetRepositoryEndpoint
-                  - codeartifact:ListPackages
-                Resource:
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}'
-              - Sid: CodeArtifactPackage
-                Effect: Allow
-                Action:
-                  - codeartifact:PublishPackageVersion
-                  - codeartifact:PutPackageMetadata
-                  - codeartifact:ReadFromRepository
-                  - codeartifact:DescribePackageVersion
-                  - 'codeartifact:List*'
-                  - 'codeartifact:Get*'
-                  - 'codeartifact:Read*'
-                Resource:
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:package/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}/*'
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}'
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}'
               - Sid: CiArtifactBucket
                 Effect: Allow
                 Action:
@@ -195,12 +175,18 @@ Resources:
                   - 's3:PutObject*'
                 Resource:
                   - !Sub 'arn:aws:s3:::${CiArtifactBucket}/*'
+              - Sid: SendBuildEvents
+                Effect: Allow
+                Action:
+                  - events:PutEvents
+                Resource:
+                  - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
     Properties:
       DetailType: FULL
-      Name: !Sub '${GitHubProjectName}-CI'
+      Name: !Sub '${GitHubProjectName}-${BaseDir}-CI'
       EventTypeIds:
         - codebuild-project-build-state-failed
       Resource: !Sub '${CodeBuildProject.Arn}'

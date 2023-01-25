@@ -41,7 +41,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:5.0
+        Image: aws/codebuild/standard:6.0
         EnvironmentVariables:
           - Name: RELEASE
             Type: PLAINTEXT
@@ -122,7 +122,7 @@ Resources:
           phases:
             install:
               runtime-versions:
-                 java: corretto11
+                 java: corretto17
               commands:
                  - git config --global user.email "pn-pagopa-github-bot@pagopa.it"
                  - git config --global user.name "pn-pagopa-github-bot"
@@ -156,6 +156,7 @@ Resources:
                     if [[ "$IS_PUBLIC_PROJECT" = "true" ]]; then
                       MAVEN_ADD_GOAL=org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
                     fi
+                  fi
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.* ]]; then
                     export MAVEN_OPTS="$MAVEN_OPTS -DaltDeploymentRepository=pn-codeartifact::default::$REPO_URL"
                   fi

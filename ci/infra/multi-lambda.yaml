@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Genera il repository maven e include gli stack di generazione dei CodeBuild project per 
+  effettuare il build di librerie, microservizi e webapp.
+
+Parameters:
+  PnCiCdTemplatesBucketName:
+    Type: String
+    Description: Bucket name where pipeline copied the current version of CI templates
+  NotificationSNSTopic:
+    Type: String
+    Default: 'none'
+    Description: Topic for build and pipeline notification
+  
+Resources:
+  MultiLambdaCiArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+  
+  # Progetti Progression Sensor
+  PnProgressionSensorLambdas:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml'
+      Parameters:
+        GitHubProjectName: 'pn-progression-sensor'
+        BaseDir: 'functions'
+        CiArtifactBucket: !Ref 'MultiLambdaCiArtifactBucket'
+        NotificationSNSTopic: !Ref 'NotificationSNSTopic'
+      TimeoutInMinutes: 5
+
+Outputs:
+  CiArtifactBucket:
+    Value: !Ref 'MultiLambdaCiArtifactBucket'

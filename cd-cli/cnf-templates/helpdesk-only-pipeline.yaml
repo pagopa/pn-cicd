@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Continuos Delivery pipeline for infrastructure deployment'
+Description: 'Continuos Delivery pipeline for helpdesk stack'
 Parameters:
   
   ProjectName:
@@ -191,22 +191,11 @@ Resources:
                     export PIPELINE_NAME=""
                   fi
                 - |
-                  if ( [ "$PROJECT" = "pn-infra" ] ) then
-                    sed -i -e "s|pn_infra_commitId=.*|pn_infra_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                  if ( [ "$PROJECT" = "pn-logextractor-be" ] ) then
+                    sed -i -e "s|pn_logextractor_be_commitId=.*|pn_logextractor_be_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_logextractor_be_imageUrl=.*|pn_logextractor_be_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-env-update-pipeline"
                   fi
-                - |
-                  if ( [ "$PROJECT" = "pn-data-vault" ] ) then
-                    sed -i -e "s|pn_data_vault_commitId=.*|pn_data_vault_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    sed -i -e "s|pn_data_vault_imageUrl=.*|pn_data_vault_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-env-update-pipeline"
-                  fi
-                - |
-                  if ( [ "$PROJECT" = "pn-logsaver-be" ] ) then
-                    sed -i -e "s|pn_logsaver_be_commitId=.*|pn_logsaver_be_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    sed -i -e "s|pn_logsaver_be_imageUrl=.*|pn_logsaver_be_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-env-update-pipeline"
-                  fi  
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
                 - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
@@ -377,53 +366,52 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
             
-            # Update pn-data-vault
-            - Name: Update_PnDataVault
+            # Update pn-logextractor-be
+            - Name: Update_PnLogextractorBe
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateLogextractorCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-logextractor-be", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"5", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_logextractor_be", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
-                - Name: PnDataVaultOutput
+                - Name: PnLogextractorBeOutput
               RunOrder: 3
             
-            # Update pn-logsaver-be
-            - Name: Update_LogsaverBe
+            # Update pn-helpdesk-fe
+            - Name: Update_PnHelpdeskFe
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateHelpdeskCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"99", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
+                    {"name":"MsName", "value":"pn-helpdesk-fe", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_helpdesk_fe", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
-                - Name: PnLogsaverBeOutput
-              RunOrder: 4
+                - Name: PnHelpdeskFeOutput
+              RunOrder: 3
 
              # Update logs and Usage Plans
             - Name: Infrastructure_Post_Deploy
@@ -446,29 +434,6 @@ Resources:
               OutputArtifacts:
                 - Name: PostDeployScriptsOutput
               RunOrder: 5
-
-            # List versions if the environment is dev
-            - Fn::If:
-                - IsContinuosDeliveryCondition
-                - Name: List_Versions
-                  ActionTypeId:
-                    Category: Build
-                    Owner: AWS
-                    Version: 1
-                    Provider: CodeBuild
-                  Configuration:
-                    ProjectName: !Ref ListDeployedVersionsCodebuildProject
-                    EnvironmentVariables: !Sub '[
-                        {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
-                        {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                        {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                        {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"}
-                      ]'
-                  InputArtifacts:
-                    - Name: EmptyZip
-                  RunOrder: 6
-                - !Ref AWS::NoValue
-
 
   # CODEBUILD used to download scripts
   ###################################################
@@ -529,12 +494,12 @@ Resources:
         Image: "aws/codebuild/standard:6.0"
 
 
-  # CODEBUILD used to update an ecs microservice
+  # CODEBUILD used to update logextractor microservice
   ###################################################
-  UpdateMicroserviceCodeBuildProject:
+  UpdateLogextractorCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProject
+      Name: !Sub ${ProjectName}-UpdateLogextractorCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source: 
         Type: CODEPIPELINE
@@ -566,8 +531,8 @@ Resources:
                 - 'echo "###       UPDATE MICROSERVICE $MsName    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployLogextractorBe.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployLogextractorBe.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
@@ -578,18 +543,27 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
   
-  # CODEBUILD used to update an external microservice (logsaver-be)
-  #################################################################
-  UpdateExternalMicroserviceCodeBuildProject:
+  # CODEBUILD used to update helpdesk fe microservice
+  ###################################################
+  UpdateHelpdeskCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${ProjectName}-UpdateExternalMicroserviceCodeBuildProject
+      Name: !Sub ${ProjectName}-UpdateHelpdeskCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source: 
         Type: CODEPIPELINE
         BuildSpec: |
           version: 0.2
           phases:
+            install:
+              runtime-versions:
+                nodejs: 16
+              commands:
+                #install yarn
+                - echo installing yarn
+                - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+                - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+                - apt install --no-install-recommends yarn
             pre_build:
               commands:
                 - 'echo "### SCRIPTS ###"'
@@ -603,7 +577,6 @@ Resources:
             build:
               commands:
                 - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
-                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
                 - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
                 - 'echo ""'
                 - 'echo ""'
@@ -615,8 +588,8 @@ Resources:
                 - 'echo "###       UPDATE MICROSERVICE $MsName    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployPnDataVaultExternalService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployPnDataVaultExternalService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployHelpdeskFe.sh -r $AwsRegion -e $EnvName -m $ms_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployHelpdeskFe.sh -r $AwsRegion -e $EnvName -m $ms_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
@@ -703,68 +676,6 @@ Resources:
             Resource:
               - "*"
 
-
-  ###########################################################################
-  ###  Utility codebuild used to list the deployed artifacts versions
-  ###########################################################################
-  ListDeployedVersionsCodebuildProject:
-    Type: 'AWS::CodeBuild::Project'
-    Properties:
-      Name: !Sub ${ProjectName}-ListDeployedVersionsCodebuildProject
-      ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
-        Type: NO_SOURCE
-        BuildSpec: |
-          version: 0.2
-          phases:
-            pre_build:
-              commands:
-                - echo "### NO PRE_BUILD"
-            build:
-              commands:
-                - 'echo "### CLONE SCRIPTS ###"'
-                - 'echo "#####################"'
-                - 'git clone https://github.com/pagopa/pn-cicd.git'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo "### EXECUTE READ ENV VERSIONS ###"'
-                - |
-                   ( cd pn-cicd/cd-cli && ./readEnv.sh -r ${REGION} -e ${ENV_NAME} \
-                        -s "pn-data-vault-microsvc-${ENV_NAME}" \
-                        -c "pn-confidential-ecs-cluster" \
-                        --no-fe \
-                   )
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo "### DOWNLOAD DESIRED COMMIT IDS ###"'
-                - 'aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh '
-                - 'cat desired-commit-ids-env.sh'               
-          artifacts:
-            files:
-              - 'desired-commit-ids-env.sh'
-      Artifacts:
-        Type: S3
-        EncryptionDisabled: true
-        Location: !Ref PipelineArtifactBucket
-        Path: '/List_deployed_versions_codebuild_project/'
-        NamespaceType: BUILD_ID
-      Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
-        Type: LINUX_CONTAINER
-        Image: "aws/codebuild/standard:6.0"
-        EnvironmentVariables:
-          - Name: REGION
-            Type: PLAINTEXT
-            Value: !Ref AWS::Region
-          - Name: ENV_NAME
-            Type: PLAINTEXT
-            Value: !Ref EnvName
-          - Name: DesiredCommitIdsBucketName
-            Type: PLAINTEXT
-            Value: !Ref CdArtifactBucket
-          - Name: DesiredCommitIdsPath
-            Type: PLAINTEXT
-            Value: 'config/desired-commit-ids-env.sh'
 
 Outputs:
   CdArtifactBucketName:

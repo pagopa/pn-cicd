@@ -40,8 +40,8 @@ Resources:
       Source:
         Type: GITHUB
         Location: !Sub "https://github.com/pagopa/${GitHubProjectName}"
-        BuildSpec: !Sub "${BaseDir}/sonar_buildspec.yaml"
-      TimeoutInMinutes: 15
+        BuildSpec: !Sub "./sonar_buildspec.yaml"
+      TimeoutInMinutes: 10
       Cache:
         Type: LOCAL
         Modes: # You can specify one or more cache mode,
@@ -58,9 +58,11 @@ Resources:
           # - Type: FILE_PATH
           #   Pattern: !Sub "^${BaseDir}/.*"
           - - Type: EVENT
-              Pattern: PUSH, PULL_REQUEST_MERGED, PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+              Pattern: PUSH, PULL_REQUEST_MERGED
+          - - Type: EVENT
+              Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
             - Type: BASE_REF
-              Pattern: ^refs/heads/(main|develop|pn_ga)|release\/.*$
+              Pattern: ^refs/heads/(main|develop)|release\/.*$
             - Type: FILE_PATH
               Pattern: !Sub "^${BaseDir}/.*"
 

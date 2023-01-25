@@ -29,6 +29,11 @@ Parameters:
     Type: String
     Default: 'none'
     Description: Topic for build and pipeline notification
+  ShouldCreateEcrParam:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'true'
+    Description: ECR creation is needed only the first time
 
   AllowedDeployAccount1:
     Type: Number
@@ -90,7 +95,12 @@ Parameters:
   AllowedDeployAccount20:
     Type: Number
     Description: Account number allowed to read the artifacts
-  
+
+Conditions:
+  CreateEcr:
+    Fn::Equals:
+      - Ref: ShouldCreateEcrParam
+      - 'true'
 Resources:
 
   CodeBuildProject:
@@ -104,7 +114,7 @@ Resources:
         PrivilegedMode: true
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:5.0
+        Image: aws/codebuild/standard:6.0
         EnvironmentVariables:
           - Name: IS_PUBLIC_PROJECT
             Type: PLAINTEXT
@@ -191,7 +201,7 @@ Resources:
           phases:
             install:
               runtime-versions:
-                 java: corretto11
+                 java: corretto17
             pre_build:
               on-failure: ABORT
               commands:
@@ -269,10 +279,6 @@ Resources:
               files:
                 - '**/*'
               base-directory: 'target/surefire-reports'
-            FailsafeReports:
-              files:
-                - '**/*'
-              base-directory: 'target/failsafe-reports'
           cache:
             paths:
               - '/root/.m2/**/*'
@@ -401,6 +407,7 @@ Resources:
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
+    Condition: CreateEcr
     Properties:
       DetailType: FULL
       Name: !Sub '${GitHubProjectName}-CI'
@@ -413,6 +420,8 @@ Resources:
 
   EcrRepository:
     Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       ImageScanningConfiguration:
         ScanOnPush: true

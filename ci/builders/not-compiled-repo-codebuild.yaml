@@ -28,7 +28,7 @@ Resources:
         PrivilegedMode: true
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:5.0
+        Image: aws/codebuild/standard:6.0
         EnvironmentVariables:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
@@ -55,7 +55,7 @@ Resources:
           phases:
             install:
               runtime-versions:
-                 java: corretto11
+                 java: corretto17
             pre_build:
               on-failure: ABORT
               commands:

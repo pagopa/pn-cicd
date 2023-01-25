@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: CodeBuild for webapp project (node)
 Parameters:
   GitHubProjectName:
@@ -24,11 +24,10 @@ Parameters:
     Default: pn-develop-bootstrap-step-01-repo
   NotificationSNSTopic:
     Type: String
-    Default: 'none'
+    Default: "none"
     Description: Topic for build and pipeline notification
 
 Resources:
-
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -42,7 +41,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_MEDIUM
-        Image: aws/codebuild/standard:5.0
+        Image: aws/codebuild/standard:6.0
         EnvironmentVariables:
           - Name: CODEARTIFACT_DOMAIN_NAME
             Type: PLAINTEXT
@@ -51,9 +50,9 @@ Resources:
             Type: PLAINTEXT
             Value:
               Fn::Join:
-                - ''
+                - ""
                 - - !Sub "${CodeArtifactDomainName}"
-                  - !Sub '-${AWS::AccountId}.d.codeartifact.${AWS::Region}.${AWS::URLSuffix}'
+                  - !Sub "-${AWS::AccountId}.d.codeartifact.${AWS::Region}.${AWS::URLSuffix}"
           - Name: CODEARTIFACT_REPO
             Type: PLAINTEXT
             Value: !Sub "${CodeArtifactRepositoryName}"
@@ -68,13 +67,13 @@ Resources:
             Value: main
           - Name: CI_ARTIFACT_BUCKET
             Type: PLAINTEXT
-            Value: !Sub "${CiArtifactBucket}" 
+            Value: !Sub "${CiArtifactBucket}"
           - Name: PACKAGE_NAME
             Type: PLAINTEXT
-            Value: !Sub "${PackageName}" 
+            Value: !Sub "${PackageName}"
       Source:
         Type: GITHUB
-        Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
+        Location: !Sub "https://github.com/pagopa/${GitHubProjectName}"
         BuildSpec: !Sub "${BaseDir}/buildspec.yaml"
       TimeoutInMinutes: 10
       Cache:
@@ -88,13 +87,11 @@ Resources:
         BuildType: BUILD_BATCH
         FilterGroups:
           - - Type: EVENT
-              Pattern: PUSH, PULL_REQUEST_MERGED
-            #- Type: HEAD_REF
-            #  Pattern: ^refs/heads/(main|develop)|release\/.*$
-            #- Type: FILE_PATH
-            #  Pattern: !Sub "^${BaseDir}/.*"
+              Pattern: PUSH
+            - Type: HEAD_REF
+              Pattern: ^refs/heads/(main|develop|pn_ga)|release\/.*$
           - - Type: EVENT
-              Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+              Pattern: PULL_REQUEST_MERGED
             - Type: BASE_REF
               Pattern: ^refs/heads/(main|develop)|release\/.*$
             - Type: FILE_PATH
@@ -104,9 +101,9 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
-          - Sid: ''
+          - Sid: ""
             Effect: Allow
             Principal:
               Service:
@@ -115,9 +112,9 @@ Resources:
       Policies:
         - PolicyName: CodeBuildPolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
-              - Sid: ''
+              - Sid: ""
                 Effect: Allow
                 Resource:
                   - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${GitHubProjectName}-${PackageName}-CodeBuild"
@@ -130,9 +127,9 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
-          - Sid: ''
+          - Sid: ""
             Effect: Allow
             Principal:
               Service:
@@ -141,7 +138,7 @@ Resources:
       Policies:
         - PolicyName: CodeBuildPolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Sid: CodeBuildReportGroup
                 Effect: Allow
@@ -152,7 +149,7 @@ Resources:
                   - codebuild:BatchPutTestCases
                   - codebuild:BatchPutCodeCoverages
                 Resource:
-                  - !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*'
+                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/*"
               - Sid: CloudWatchLogsPolicy
                 Effect: Allow
                 Action:
@@ -168,7 +165,7 @@ Resources:
                 Resource: "*"
                 Condition:
                   StringEquals:
-                    'sts:AWSServiceName': codeartifact.amazonaws.com
+                    "sts:AWSServiceName": codeartifact.amazonaws.com
               - Sid: GitHubSecret
                 Effect: Allow
                 Action:
@@ -178,7 +175,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - codeartifact:GetAuthorizationToken
-                Resource: !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}'
+                Resource: !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}"
               - Sid: CodeArtifactRepository
                 Effect: Allow
                 Action:
@@ -186,7 +183,7 @@ Resources:
                   - codeartifact:GetRepositoryEndpoint
                   - codeartifact:ListPackages
                 Resource:
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}'
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}"
               - Sid: CodeArtifactPackage
                 Effect: Allow
                 Action:
@@ -194,34 +191,34 @@ Resources:
                   - codeartifact:PutPackageMetadata
                   - codeartifact:ReadFromRepository
                   - codeartifact:DescribePackageVersion
-                  - 'codeartifact:List*'
-                  - 'codeartifact:Get*'
-                  - 'codeartifact:Read*'
+                  - "codeartifact:List*"
+                  - "codeartifact:Get*"
+                  - "codeartifact:Read*"
                 Resource:
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:package/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}/*'
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}'
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}'
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:package/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}/*"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}"
+                  - !Sub "arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}"
               - Sid: CiArtifactBucket
                 Effect: Allow
                 Action:
                   - s3:GetReplicationConfiguration
                   - s3:ListBucket
                 Resource:
-                  - !Sub 'arn:aws:s3:::${CiArtifactBucket}'
+                  - !Sub "arn:aws:s3:::${CiArtifactBucket}"
               - Sid: CiArtifactBucketObjects
                 Effect: Allow
                 Action:
                   - s3:GetObjectVersion
                   - s3:GetObjectVersionAcl
-                  - 's3:PutObject*'
+                  - "s3:PutObject*"
                 Resource:
-                  - !Sub 'arn:aws:s3:::${CiArtifactBucket}/*'
+                  - !Sub "arn:aws:s3:::${CiArtifactBucket}/*"
               - Sid: SendBuildEvents
                 Effect: Allow
                 Action:
                   - events:PutEvents
                 Resource:
-                  - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
+                  - !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus"
               - Sid: CodeBuildControlPolicy
                 Effect: Allow
                 Action:
@@ -233,10 +230,10 @@ Resources:
     Type: AWS::CodeStarNotifications::NotificationRule
     Properties:
       DetailType: FULL
-      Name: !Sub '${GitHubProjectName}-${PackageName}-CI'
+      Name: !Sub "${GitHubProjectName}-${PackageName}-CI"
       EventTypeIds:
         - codebuild-project-build-state-failed
-      Resource: !Sub '${CodeBuildProject.Arn}'
+      Resource: !Sub "${CodeBuildProject.Arn}"
       Targets:
-        - TargetAddress: !Ref 'NotificationSNSTopic'
+        - TargetAddress: !Ref "NotificationSNSTopic"
           TargetType: SNS

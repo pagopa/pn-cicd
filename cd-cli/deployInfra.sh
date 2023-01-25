@@ -212,9 +212,6 @@ echo ""
 echo "= Read Parameters file"
 cat ${ParamFilePath} 
 
-keepKeys=$( yq eval '.Parameters | keys' $TemplateFilePath | sed -e 's/#.*//' | sed -e '/^ *$/d' | sed -e 's/^. //g' | tr '\n' ',' | sed -e 's/,$//' )
-echo "Parameters required from stack: $keepKeys"
-
 echo ""
 echo "= Enanched parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
@@ -287,9 +284,6 @@ echo ""
 echo "= Read Parameters file"
 cat ${ParamFilePath} 
 
-keepKeys=$( yq eval '.Parameters | keys' $TemplateFilePath | sed -e 's/#.*//' | sed -e '/^ *$/d' | sed -e 's/^. //g' | tr '\n' ',' | sed -e 's/,$//' )
-echo "Parameters required from stack: $keepKeys"
-
 echo ""
 echo "= Enanched parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
@@ -308,7 +302,43 @@ aws ${aws_command_base_args} \
       --template-file pn-infra/runtime-infra/pn-ipc.yaml \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
+echo ""
+echo "=== Deploy PN-Monitoring FOR $env_type ACCOUNT"
+MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-monitoring.yaml 
 
+if [[ -f "$MONITORING_STACK_FILE" ]]; then
+    echo "$MONITORING_STACK_FILE exists, updating monitoring stack"
 
+    echo ""
+    echo "= Read Outputs from previous stack"
+    aws ${aws_command_base_args}  \
+        cloudformation describe-stacks \
+          --stack-name pn-ipc-$env_type \
+          --query "Stacks[0].Outputs" \
+          --output json \
+          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+          | tee ${PreviousOutputFilePath}
 
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath} 
+
+    echo ""
+    echo "= Enanched parameters file"
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+      > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name pn-monitoring-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM \
+          --template-file ${MONITORING_STACK_FILE} \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+
+else
+  echo "Monitoring file doesn't exist, stack update skipped"
+fi
 

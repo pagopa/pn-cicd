@@ -139,6 +139,32 @@ dump_params(){
   echo "Container image URL: ${ContainerImageUri}"
 }
 
+_clone_repository(){
+  
+  _DEPLOYKEY="deploykey/${microcvs_name}"
+  
+  echo " - try to download ssh deploykey $_DEPLOYKEY"
+  _AWSDEPLOYKEYEXIST=$(aws ${aws_command_base_args} \
+    secretsmanager list-secrets | \
+    jq --arg keyname $_DEPLOYKEY  -c '.SecretList[] | select( .Name == $keyname )' )
+  
+  _GITURI="https://github.com/pagopa/${microcvs_name}.git"
+
+  if ( [ -z "${_AWSDEPLOYKEYEXIST}" ] ); then    
+    echo " - sshkey $_DEPLOYKEY not found - git clone via HTTPS"
+  else
+    echo " - sshkey $_DEPLOYKEY found - git clone via SSH"
+    mkdir -p ~/.ssh
+    _AWSDEPLOYKEY=$(aws ${aws_command_base_args} \
+    secretsmanager get-secret-value --secret-id $_DEPLOYKEY --output json )
+    echo $_AWSDEPLOYKEY | jq '.SecretString' | cut -d "\"" -f 2 | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
+    chmod 400 ~/.ssh/id_rsa
+    _GITURI="git@github.com:pagopa/${microcvs_name}.git"
+  fi
+
+  git clone ${_GITURI}
+}
+
 
 # START SCRIPT
 
@@ -161,22 +187,6 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .
 fi
 
-
-echo "=== Download microservizio ${microcvs_name}" 
-if ( [ ! -e ${microcvs_name} ] ) then 
-  git clone "https://github.com/pagopa/${microcvs_name}.git"
-fi
-
-echo ""
-echo "=== Checkout ${microcvs_name} commitId=${pn_microsvc_commitid}"
-( cd ${microcvs_name} && git fetch && git checkout $pn_microsvc_commitid )
-echo " - copy custom config"
-if ( [ ! -z "${custom_config_dir}" ] ) then
-  cp -r $custom_config_dir/${microcvs_name} .
-fi
-
-
-
 echo ""
 echo "=== Base AWS command parameters"
 aws_command_base_args=""
@@ -187,6 +197,20 @@ if ( [ ! -z "${aws_region}" ] ) then
   aws_command_base_args="${aws_command_base_args} --region  $aws_region"
 fi
 echo ${aws_command_base_args}
+
+echo "=== Download microservizio ${microcvs_name}" 
+if ( [ ! -e ${microcvs_name} ] ) then 
+  _clone_repository
+fi
+
+echo ""
+echo "=== Checkout ${microcvs_name} commitId=${pn_microsvc_commitid}"
+( cd ${microcvs_name} && git fetch && git checkout $pn_microsvc_commitid )
+echo " - copy custom config"
+if ( [ ! -z "${custom_config_dir}" ] ) then
+  cp -r $custom_config_dir/${microcvs_name} .
+fi
+
 
 
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
@@ -203,6 +227,14 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
+echo ""
+echo "=== Upload microservice files to bucket"
+microserviceBucketName=$bucketName
+microserviceBucketBaseKey="projects/${microcvs_name}/${pn_microsvc_commitid}"
+microserviceBucketS3BaseUrl="s3://${microserviceBucketName}/${microserviceBucketBaseKey}"
+aws ${aws_command_base_args} \
+    s3 cp ${microcvs_name} $microserviceBucketS3BaseUrl \
+      --recursive --exclude ".git/*"
 
 echo ""
 echo ""
@@ -238,9 +270,6 @@ aws ${aws_command_base_args} \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${PreviousOutputFilePath}
-
-keepKeys=$( yq eval '.Parameters | keys' $TemplateFilePath | sed -e 's/#.*//' | sed -e '/^ *$/d' | sed -e 's/^. //g' | tr '\n' ',' | sed -e 's/,$//' )
-echo "Parameters required from stack: $keepKeys"
 
 echo ""
 echo "= Enanched parameters file"
@@ -291,6 +320,7 @@ EnanchedParamFilePath=${microcvs_name}-microservice-${env_type}-cfg-enanched.jso
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
      \"ContainerImageUri=${ContainerImageUri}\",\
+     \"MicroserviceBucketName=${microserviceBucketName}\",\"MicroserviceBucketBaseKey=${microserviceBucketBaseKey}\",\
      \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
@@ -324,10 +354,6 @@ aws ${aws_command_base_args} \
 echo ""
 echo "= Read Parameters file"
 cat ${ParamFilePath} 
-
-
-keepKeys=$( yq eval '.Parameters | keys' $TemplateFilePath | sed -e 's/#.*//' | sed -e '/^ *$/d' | sed -e 's/^. //g' | tr '\n' ',' | sed -e 's/,$//' )
-echo "Parameters required from stack: $keepKeys"
 
 echo ""
 echo "= Enanched parameters file"
