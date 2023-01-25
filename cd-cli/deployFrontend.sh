@@ -266,6 +266,12 @@ if ( [ $portalePgTarballPresent = "OK" ] ) then
   HAS_PORTALE_PG="true"
 fi
 
+portaleStatusTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp_${env_type}.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+HAS_PORTALE_STATUS=""
+if ( [ $portaleStatusTarballPresent = "OK" ] ) then
+  HAS_PORTALE_STATUS="true"
+fi
+
 prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "portale-pa.${env_type}.pn.pagopa.it" \
     "$PORTALE_PA_CERTIFICATE_ARN" \
@@ -297,6 +303,18 @@ if ( [ -f $HAS_PORTALE_PG ] ) then
   webappPgBucketName=${bucketName}
   webappPgTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
   webappPgTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
+fi
+
+if ( [ -f $HAS_PORTALE_STATUS ] ) then
+  prepareOneCloudFront webapp-status-cdn-${env_type} \
+      "status.${env_type}.pn.pagopa.it" \
+      "$PORTALE_STATUS_CERTIFICATE_ARN" \
+      "$ZONE_ID" \
+      "$REACT_APP_URL_API" \
+      "${PORTALE_STATUS_ALTERNATE_DNS-}"
+  webappStatusBucketName=${bucketName}
+  webappStatusTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
+  webappStatusTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 fi
 
 prepareOneCloudFront webapp-pfl-cdn-${env_type} \
@@ -339,6 +357,11 @@ if ( [ -f $HAS_PORTALE_PG ] ) then
   echo " === Too Many Request Alarm Portale PG = ${webappPgTooManyRequestsAlarmArn}"
   echo " === Too Many Errors Alarm Portale PG = ${webappPgTooManyErrorsAlarmArn}"
 fi
+if ( [ -f $HAS_PORTALE_STATUS ] ) then
+  echo " === Bucket Portale Status = ${webappStatusBucketName}"
+  echo " === Too Many Request Alarm Portale Status = ${webappStatusTooManyRequestsAlarmArn}"
+  echo " === Too Many Errors Alarm Portale Status = ${webappStatusTooManyErrorsAlarmArn}"
+fi
 
 if ( [ ! -z "$HAS_MONITORING" ]) then
 
@@ -358,9 +381,13 @@ if ( [ ! -z "$HAS_MONITORING" ]) then
 
   OptionalMonitoringParameters=""
   if ( [ -f $HAS_PORTALE_PG ] ) then
-    OptionalMonitoringParameters=""
     OptionalMonitoringParameters="${OptionalMonitoringParameters} PGTooManyErrorsAlarmArn=${webappPgTooManyErrorsAlarmArn}"
     OptionalMonitoringParameters="${OptionalMonitoringParameters} PGTooManyRequestsAlarmArn=${webappPgTooManyRequestsAlarmArn}"    
+  if
+
+  if ( [ -f $HAS_PORTALE_STATUS ] ) then
+    OptionalMonitoringParameters="${OptionalMonitoringParameters} StatusTooManyErrorsAlarmArn=${webappStatusTooManyErrorsAlarmArn}"
+    OptionalMonitoringParameters="${OptionalMonitoringParameters} StatusTooManyRequestsAlarmArn=${webappStatusTooManyRequestsAlarmArn}"    
   if
   
   echo ""
