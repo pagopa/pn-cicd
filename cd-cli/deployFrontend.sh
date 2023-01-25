@@ -383,12 +383,12 @@ if ( [ ! -z "$HAS_MONITORING" ]) then
   if ( [ ! -z $HAS_PORTALE_PG ] ) then
     OptionalMonitoringParameters="${OptionalMonitoringParameters} PGTooManyErrorsAlarmArn=${webappPgTooManyErrorsAlarmArn}"
     OptionalMonitoringParameters="${OptionalMonitoringParameters} PGTooManyRequestsAlarmArn=${webappPgTooManyRequestsAlarmArn}"    
-  if
+  fi
 
   if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
     OptionalMonitoringParameters="${OptionalMonitoringParameters} StatusTooManyErrorsAlarmArn=${webappStatusTooManyErrorsAlarmArn}"
     OptionalMonitoringParameters="${OptionalMonitoringParameters} StatusTooManyRequestsAlarmArn=${webappStatusTooManyRequestsAlarmArn}"    
-  if
+  fi
   
   echo ""
   echo "=== Create CDN monitoring dashboard"
