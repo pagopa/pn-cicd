@@ -293,7 +293,7 @@ webappPfBucketName=${bucketName}
 webappPfTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPfTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
-if ( [ -f $HAS_PORTALE_PG ] ) then
+if ( [ ! -z $HAS_PORTALE_PG ] ) then
   prepareOneCloudFront webapp-pg-cdn-${env_type} \
       "portale-pg.${env_type}.pn.pagopa.it" \
       "$PORTALE_PG_CERTIFICATE_ARN" \
@@ -305,7 +305,7 @@ if ( [ -f $HAS_PORTALE_PG ] ) then
   webappPgTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 fi
 
-if ( [ -f $HAS_PORTALE_STATUS ] ) then
+if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   prepareOneCloudFront webapp-status-cdn-${env_type} \
       "status.${env_type}.pn.pagopa.it" \
       "$PORTALE_STATUS_CERTIFICATE_ARN" \
@@ -352,12 +352,12 @@ echo " === Too Many Errors Alarm Portale PFL = ${webappPflTooManyErrorsAlarmArn}
 echo " === Bucket Sito LAnding = ${landingBucketName}"
 echo " === Too Many Request Alarm Landing = ${landingTooManyRequestsAlarmArn}"
 echo " === Too Many Errors Alarm Landing = ${landingTooManyErrorsAlarmArn}"
-if ( [ -f $HAS_PORTALE_PG ] ) then
+if ( [ ! -z $HAS_PORTALE_PG ] ) then
   echo " === Bucket Portale PG = ${webappPgBucketName}"
   echo " === Too Many Request Alarm Portale PG = ${webappPgTooManyRequestsAlarmArn}"
   echo " === Too Many Errors Alarm Portale PG = ${webappPgTooManyErrorsAlarmArn}"
 fi
-if ( [ -f $HAS_PORTALE_STATUS ] ) then
+if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   echo " === Bucket Portale Status = ${webappStatusBucketName}"
   echo " === Too Many Request Alarm Portale Status = ${webappStatusTooManyRequestsAlarmArn}"
   echo " === Too Many Errors Alarm Portale Status = ${webappStatusTooManyErrorsAlarmArn}"
@@ -380,12 +380,12 @@ if ( [ ! -z "$HAS_MONITORING" ]) then
   
 
   OptionalMonitoringParameters=""
-  if ( [ -f $HAS_PORTALE_PG ] ) then
+  if ( [ ! -z $HAS_PORTALE_PG ] ) then
     OptionalMonitoringParameters="${OptionalMonitoringParameters} PGTooManyErrorsAlarmArn=${webappPgTooManyErrorsAlarmArn}"
     OptionalMonitoringParameters="${OptionalMonitoringParameters} PGTooManyRequestsAlarmArn=${webappPgTooManyRequestsAlarmArn}"    
   if
 
-  if ( [ -f $HAS_PORTALE_STATUS ] ) then
+  if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
     OptionalMonitoringParameters="${OptionalMonitoringParameters} StatusTooManyErrorsAlarmArn=${webappStatusTooManyErrorsAlarmArn}"
     OptionalMonitoringParameters="${OptionalMonitoringParameters} StatusTooManyRequestsAlarmArn=${webappStatusTooManyRequestsAlarmArn}"    
   if
@@ -493,7 +493,7 @@ aws ${aws_command_base_args} \
     s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/"
 
 
-if ( [ -f $HAS_PORTALE_PG ] ) then
+if ( [ ! -z $HAS_PORTALE_PG ] ) then
   echo ""
   echo "===                          PORTALE PG                           ==="
   echo "====================================================================="
@@ -508,4 +508,21 @@ if ( [ -f $HAS_PORTALE_PG ] ) then
 
   aws ${aws_command_base_args} \
       s3 sync "pn-personagiuridica-webapp_${env_type}" "s3://${webappPgBucketName}/"
+fi
+
+if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
+  echo ""
+  echo "===                          PORTALE STATUS                           ==="
+  echo "====================================================================="
+  aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp_${env_type}.tar.gz" \
+        "pn-status-webapp_${env_type}.tar.gz"
+
+  mkdir -p "pn-status-webapp_${env_type}"
+  ( cd "pn-status-webapp_${env_type}" \
+      && tar xvzf "../pn-status-webapp_${env_type}.tar.gz" \
+  )
+
+  aws ${aws_command_base_args} \
+      s3 sync "pn-status-webapp_${env_type}" "s3://${webappPgBucketName}/"
 fi
