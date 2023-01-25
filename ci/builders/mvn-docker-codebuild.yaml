@@ -32,7 +32,7 @@ Parameters:
   ShouldCreateEcrParam:
     Type: String
     AllowedValues: ['true', 'false']
-    Default: 'true'
+    Default: 'false'
     Description: ECR creation is needed only the first time
 
   AllowedDeployAccount1:
@@ -407,7 +407,6 @@ Resources:
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
-    Condition: CreateEcr
     Properties:
       DetailType: FULL
       Name: !Sub '${GitHubProjectName}-CI'
@@ -418,317 +417,318 @@ Resources:
         - TargetAddress: !Ref 'NotificationSNSTopic'
           TargetType: SNS
 
-  # EcrRepository:
-  #   Type: AWS::ECR::Repository
-  #   DeletionPolicy: Retain
-  #   UpdateReplacePolicy: Retain
-  #   Properties:
-  #     ImageScanningConfiguration:
-  #       ScanOnPush: true
-  #     ImageTagMutability: MUTABLE
-  #     RepositoryName: !Sub '${GitHubProjectName}'
-  #     RepositoryPolicyText: !Sub '{
-  #         "Version": "2008-10-17",
-  #         "Statement": [
-  #           {
-  #             "Sid": "Allow cicd",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount1}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount2}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount3}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount4}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount5}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount6}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount7}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount8}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount9}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount10}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount11}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount12}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount13}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount14}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount15}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount16}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount17}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount18}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount19}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           },
-  #           {
-  #             "Sid": "Allow uat",
-  #             "Effect": "Allow",
-  #             "Principal": {
-  #               "AWS": "arn:aws:iam::${AllowedDeployAccount20}:root"
-  #             },
-  #             "Action": [
-  #               "ecr:BatchCheckLayerAvailability",
-  #               "ecr:BatchGetImage",
-  #               "ecr:DescribeImages",
-  #               "ecr:DescribeRepositories",
-  #               "ecr:GetDownloadUrlForLayer",
-  #               "ecr:ListImages"
-  #             ]
-  #           }
-  #         ]
-  #       }'
+  EcrRepository:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Condition: CreateEcr
+    Properties:
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      ImageTagMutability: MUTABLE
+      RepositoryName: !Sub '${GitHubProjectName}'
+      RepositoryPolicyText: !Sub '{
+          "Version": "2008-10-17",
+          "Statement": [
+            {
+              "Sid": "Allow cicd",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount1}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount2}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount3}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount4}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount5}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount6}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount7}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount8}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount9}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount10}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount11}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount12}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount13}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount14}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount15}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount16}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount17}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount18}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount19}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            },
+            {
+              "Sid": "Allow uat",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::${AllowedDeployAccount20}:root"
+              },
+              "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:ListImages"
+              ]
+            }
+          ]
+        }'
