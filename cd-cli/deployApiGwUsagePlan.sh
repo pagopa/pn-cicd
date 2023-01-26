@@ -142,7 +142,7 @@ function createUsagePlan() {
   fi
   USAGE_PLAN_ID=$(getUsagePlan $PLAN_NAME)
   for CURR_ID in $REST_APIS_IDS; do
-    sleep 5
+    sleep 20
     aws ${aws_command_base_args} apigateway update-usage-plan --usage-plan-id $USAGE_PLAN_ID \
         --patch-operations op=add,path="/apiStages",value="$CURR_ID:$STAGE" --no-cli-pager
   done
