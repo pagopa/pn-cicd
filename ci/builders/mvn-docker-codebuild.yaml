@@ -32,7 +32,7 @@ Parameters:
   ShouldCreateEcrParam:
     Type: String
     AllowedValues: ['true', 'false']
-    Default: 'true'
+    Default: 'false'
     Description: ECR creation is needed only the first time
 
   AllowedDeployAccount1:
@@ -407,7 +407,6 @@ Resources:
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
-    Condition: CreateEcr
     Properties:
       DetailType: FULL
       Name: !Sub '${GitHubProjectName}-CI'
@@ -422,6 +421,7 @@ Resources:
     Type: AWS::ECR::Repository
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
+    Condition: CreateEcr
     Properties:
       ImageScanningConfiguration:
         ScanOnPush: true
