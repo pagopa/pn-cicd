@@ -1305,14 +1305,6 @@ Resources:
             Action: cloudwatch:PutDashboard
             Resource: !Sub arn:aws:cloudwatch::${AWS::AccountId}:dashboard/*
           - Effect: Allow
-            Action:
-              - dynamodb:Describe*
-              - dynamodb:List*
-              - dynamodb:UpdateTable
-              - dynamodb:UpdateContinuousBackups
-              - dynamodb:Create*
-            Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
-          - Effect: Allow
             Action: elasticloadbalancing:ModifyRule
             Resource: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener-rule/app/*
           - Effect: Allow
@@ -1440,6 +1432,22 @@ Resources:
               - elasticloadbalancing:DescribeRules
               - elasticloadbalancing:ModifyTargetGroupAttributes
               - elasticloadbalancing:DeleteRule
+              - elasticloadbalancing:RegisterTargets
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "elasticloadbalancing:RegisterTargets"
+              - "elasticloadbalancing:CreateTargetGroup"
+              - "elasticloadbalancing:DeregisterTargets"
+              - "elasticloadbalancing:DeleteTargetGroup"
+              - "elasticloadbalancing:ModifyTargetGroupAttributes"
+              - "elasticloadbalancing:ModifyTargetGroup"
+            Resource: !Sub arn:aws:elasticloadbalancing:*:${AWS::AccountId}:targetgroup/*/*
+          - Effect: Allow
+            Action:
+              - "elasticloadbalancing:DescribeTargetGroupAttributes"
+              - "elasticloadbalancing:DescribeTargetHealth"
+              - "elasticloadbalancing:DescribeTargetGroups"
             Resource: "*"
           - Action:
               - iam:PassRole
@@ -1449,28 +1457,6 @@ Resources:
               StringLike:
                 iam:PassedToService:
                   - ecs-tasks.amazonaws.com
-          - Effect: Allow
-            Action:
-              - sqs:DeleteMessage
-              - sqs:GetQueueUrl
-              - sqs:ChangeMessageVisibility
-              - sqs:UntagQueue
-              - sqs:ReceiveMessage
-              - sqs:SendMessage
-              - sqs:GetQueueAttributes
-              - sqs:ListQueueTags
-              - sqs:TagQueue
-              - sqs:RemovePermission
-              - sqs:ListDeadLetterSourceQueues
-              - sqs:AddPermission
-              - sqs:PurgeQueue
-              - sqs:DeleteQueue
-              - sqs:CreateQueue
-              - sqs:SetQueueAttributes
-            Resource: !Sub arn:aws:sqs:*:${AWS::AccountId}:*
-          - Effect: Allow
-            Action: sqs:ListQueues
-            Resource: "*"          
 
   CodeBuildPolicyR53:
     Type: AWS::IAM::ManagedPolicy
@@ -1553,31 +1539,214 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Sid: VisualEditor0
-            Effect: Allow
+          - Effect: Allow
             Action:
               - s3:*Object
               - s3:GetObjectVersion
-              - s3:PutObjectAcl
+              - s3:PutObject*
             Resource: arn:aws:s3:::*/*
           - Sid: VisualEditor1
             Effect: Allow
             Action:
-              - s3:GetBucketPublicAccessBlock
-              - s3:GetBucketPolicyStatus
-              - s3:PutBucketPublicAccessBlock
-              - s3:PutBucketOwnershipControls
-              - s3:PutBucketPolicy
-              - s3:CreateBucket
-              - s3:ListBucket
-              - s3:GetBucketOwnershipControls
+              - s3:Get*
+              - s3:Put*
+              - s3:Create*
+              - s3:List*
               - s3:DeleteBucketPolicy
               - s3:GetBucketLocation
               - s3:DeleteBucket
-              - s3:GetBucketPolicy
             Resource: arn:aws:s3:::*
           - Effect: Allow
             Action: s3:ListAllMyBuckets
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "kinesis:StopStreamEncryption"
+              - "kinesis:DeregisterStreamConsumer"
+              - "kinesis:SubscribeToShard"
+              - "kinesis:DecreaseStreamRetentionPeriod"
+              - "kinesis:PutRecords"
+              - "kinesis:DescribeStreamConsumer"
+              - "kinesis:CreateStream"
+              - "kinesis:GetShardIterator"
+              - "kinesis:DescribeStream"
+              - "kinesis:RegisterStreamConsumer"
+              - "kinesis:ListTagsForStream"
+              - "kinesis:PutRecord"
+              - "kinesis:RemoveTagsFromStream"
+              - "kinesis:DeleteStream"
+              - "kinesis:DescribeStreamSummary"
+              - "kinesis:SplitShard"
+              - "kinesis:MergeShards"
+              - "kinesis:AddTagsToStream"
+              - "kinesis:IncreaseStreamRetentionPeriod"
+              - "kinesis:GetRecords"
+              - "kinesis:ListStreamConsumers"
+              - "kinesis:StartStreamEncryption"
+            Resource:
+              - !Sub arn:aws:kms:*:${AWS::AccountId}:key/*
+              - !Sub arn:aws:kinesis:*:${AWS::AccountId}:*/*/consumer/*:*
+              - !Sub arn:aws:kinesis:*:${AWS::AccountId}:stream/*
+          - Effect: Allow
+            Action:
+              - "kinesis:UpdateStreamMode"
+              - "kinesis:ListStreams"
+              - "kinesis:EnableEnhancedMonitoring"
+              - "kinesis:ListShards"
+              - "kinesis:UpdateShardCount"
+              - "kinesis:DescribeLimits"
+              - "kinesis:DisableEnhancedMonitoring"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - sqs:DeleteMessage
+              - sqs:GetQueueUrl
+              - sqs:ChangeMessageVisibility
+              - sqs:UntagQueue
+              - sqs:ReceiveMessage
+              - sqs:SendMessage
+              - sqs:GetQueueAttributes
+              - sqs:ListQueueTags
+              - sqs:TagQueue
+              - sqs:RemovePermission
+              - sqs:ListDeadLetterSourceQueues
+              - sqs:AddPermission
+              - sqs:PurgeQueue
+              - sqs:DeleteQueue
+              - sqs:CreateQueue
+              - sqs:SetQueueAttributes
+            Resource: !Sub arn:aws:sqs:*:${AWS::AccountId}:*
+          - Effect: Allow
+            Action: sqs:ListQueues
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "sns:TagResource"
+              - "sns:ListTagsForResource"
+              - "sns:PutDataProtectionPolicy"
+              - "sns:ListSubscriptionsByTopic"
+              - "sns:GetTopicAttributes"
+              - "sns:DeleteTopic"
+              - "sns:CreateTopic"
+              - "sns:SetTopicAttributes"
+              - "sns:UntagResource"
+              - "sns:AddPermission"
+              - "sns:GetDataProtectionPolicy"
+              - "sns:Publish"
+              - "sns:Subscribe"
+              - "sns:ConfirmSubscription"
+              - "sns:RemovePermission"
+            Resource: !Sub arn:aws:sns:*:${AWS::AccountId}:*
+          - Effect: Allow
+            Action:
+              - "sns:List*"
+              - "sns:Unsubscribe"
+              - "sns:Create*"
+              - "sns:OptInPhoneNumber"
+              - "sns:CheckIfPhoneNumberIsOptedOut"
+              - "sns:Set*"
+              - "sns:DeletePlatformApplication"
+              - "sns:DeleteSMSSandboxPhoneNumber"
+              - "sns:Get*"
+            Resource: "*"
+
+  CodeBuildPolicyData:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-Data
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:Describe*
+              - dynamodb:Scan
+              - dynamodb:UpdateContributorInsights
+              - dynamodb:Query
+              - dynamodb:UpdateGlobalTable
+              - dynamodb:UpdateGlobalTableSettings
+              - dynamodb:PartiQLSelect
+              - dynamodb:Get*
+              - dynamodb:RestoreTableFromBackup
+              - dynamodb:UpdateGlobalTableVersion
+              - dynamodb:CreateGlobalTable
+              - dynamodb:DeleteBackup
+            Resource:
+              - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/backup/*
+              - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/import/*
+              - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/index/*
+              - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/export/*
+              - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/stream/*
+              - !Sub arn:aws:dynamodb::${AWS::AccountId}:global-table/*
+          - Effect: Allow
+            Action:
+              - dynamodb:DeleteItem
+              - dynamodb:Describe*
+              - dynamodb:RestoreTableToPointInTime
+              - dynamodb:ListTagsOfResource
+              - dynamodb:CreateTableReplica
+              - dynamodb:UpdateContributorInsights
+              - dynamodb:UpdateGlobalTable
+              - dynamodb:CreateBackup
+              - dynamodb:DeleteTable
+              - dynamodb:UpdateTableReplicaAutoScaling
+              - dynamodb:UpdateContinuousBackups
+              - dynamodb:TagResource
+              - dynamodb:PartiQLSelect
+              - dynamodb:PartiQLInsert
+              - dynamodb:GetItem
+              - dynamodb:UpdateGlobalTableVersion
+              - dynamodb:CreateGlobalTable
+              - dynamodb:EnableKinesisStreamingDestination
+              - dynamodb:ImportTable
+              - dynamodb:BatchGetItem
+              - dynamodb:DisableKinesisStreamingDestination
+              - dynamodb:UpdateTimeToLive
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:UntagResource
+              - dynamodb:PutItem
+              - dynamodb:PartiQLUpdate
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:StartAwsBackupJob
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteTableReplica
+              - dynamodb:CreateTable
+              - dynamodb:UpdateGlobalTableSettings
+              - dynamodb:RestoreTableFromAwsBackup
+              - dynamodb:RestoreTableFromBackup
+              - dynamodb:ExportTableToPointInTime
+              - dynamodb:UpdateTable
+              - dynamodb:PartiQLDelete
+            Resource: !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*
+          - Effect: Allow
+            Action:
+              - dynamodb:List*
+              - dynamodb:DescribeReservedCapacityOfferings
+              - dynamodb:DescribeReservedCapacity
+              - dynamodb:PurchaseReservedCapacityOfferings
+              - dynamodb:DescribeLimits
+              - dynamodb:DescribeEndpoints
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - firehose:DescribeDeliveryStream
+              - firehose:DeleteDeliveryStream
+              - firehose:PutRecord
+              - firehose:StartDeliveryStreamEncryption
+              - firehose:CreateDeliveryStream
+              - firehose:PutRecordBatch
+              - firehose:StopDeliveryStreamEncryption
+              - firehose:ListTagsForDeliveryStream
+              - firehose:TagDeliveryStream
+              - firehose:UpdateDestination
+              - firehose:UntagDeliveryStream
+            Resource: !Sub arn:aws:firehose:*:${AWS::AccountId}:deliverystream/*
+          - Effect: Allow
+            Action: firehose:ListDeliveryStreams
             Resource: "*"
 
   CodeBuildPolicyECS:
@@ -1614,7 +1783,7 @@ Resources:
               - cloudwatch:Get*
               - cloudwatch:Put*
               - codedeploy:BatchGetApplicationRevisions
-              - codedeploy:BatchGetApplications8
+              - codedeploy:BatchGetApplications
               - codedeploy:BatchGetDeploymentGroups
               - codedeploy:BatchGetDeployments
               - codedeploy:ContinueDeployment
@@ -1693,6 +1862,9 @@ Resources:
               - sns:ListTopics
               - elasticloadbalancing:DescribeRules
               - secretsmanager:ListSecrets
+              - events:Put*
+              - events:List*
+              - events:Remove*
             Resource:
               - "*"
           - Effect: Allow
@@ -1751,6 +1923,15 @@ Resources:
           - Effect: Allow
             Action:
               - elasticloadbalancing:AddTags
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "events:DescribeEventBus"
+              - "events:CreateEventBus"
+              - "events:DeleteEventBus"
+            Resource: !Sub arn:aws:events:*:${AWS::AccountId}:event-bus/*
+          - Effect: Allow
+            Action: "events:ListEventBuses"
             Resource: "*"
 
   CodeBuildPolicyAPICloudfront:
@@ -1859,19 +2040,27 @@ Resources:
             Resource: !Sub arn:aws:events:*:${AWS::AccountId}:rule/*
           - Effect: Allow
             Action:
-              - logs:PutMetricFilter
-              - logs:CreateLogStream
-              - logs:DeleteMetricFilter
-              - logs:DeleteSubscriptionFilter
+              - logs:Create*
               - logs:DescribeLogStreams
               - logs:DescribeSubscriptionFilters
               - logs:TestMetricFilter
               - logs:DescribeMetricFilters
-              - logs:PutSubscriptionFilter
-              - logs:PutRetentionPolicy
               - logs:CreateLogGroup
-              - logs:PutLogEvents
+              - logs:Put*
+              - logs:Delete*
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - dynamodb:Describe*
+              - dynamodb:List*
+              - dynamodb:UpdateTable
+              - dynamodb:UpdateContinuousBackups
+              - dynamodb:Create*
+              - dynamodb:Delete*
+              - dynamodb:Enable*
+              - dynamodb:DescribeKinesisStreamingDestination
+              - dynamodb:DisableKinesisStreamingDestination
+            Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
 
   CodeBuildPolicyIAM:
     Type: AWS::IAM::ManagedPolicy
@@ -1907,19 +2096,52 @@ Resources:
             Resource: !Sub arn:aws:iam::${AWS::AccountId}:policy/*
           - Effect: Allow
             Action:
-              - kms:TagResource
-              - kms:UntagResource
-              - kms:PutKeyPolicy
-              - kms:CreateAlias
-              - kms:DeleteAlias
-              - kms:UpdateAlias
+              - "kms:EnableKey"
+              - "kms:Get*"
+              - "kms:ImportKeyMaterial"
+              - "kms:Decrypt"
+              - "kms:UntagResource"
+              - "kms:PutKeyPolicy"
+              - "kms:Generate*"
+              - "kms:Verify"
+              - "kms:List*"
+              - "kms:CancelKeyDeletion"
+              - "kms:ReplicateKey"
+              - "kms:SynchronizeMultiRegionKey"
+              - "kms:TagResource"
+              - "kms:UpdatePrimaryRegion"
+              - "kms:Encrypt"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:ReEncryptTo"
+              - "kms:DescribeKey"
+              - "kms:Sign"
+              - "kms:CreateGrant"
+              - "kms:EnableKeyRotation"
+              - "kms:UpdateKeyDescription"
+              - "kms:DeleteImportedKeyMaterial"
+              - "kms:DisableKey"
+              - "kms:ReEncryptFrom"
+              - "kms:RetireGrant"
+              - "kms:VerifyMac"
+              - "kms:UpdateAlias"
+              - "kms:RevokeGrant"
+              - "kms:CreateAlias"
+              - "kms:DeleteAlias"
             Resource:
               - !Sub arn:aws:kms:*:${AWS::AccountId}:key/*
               - !Sub arn:aws:kms:*:${AWS::AccountId}:alias/*
-          - Effect: Allow
+          - Sid: VisualEditor1
+            Effect: Allow
             Action:
-              - kms:ListAliases
-              - kms:CreateKey
+              - "kms:DescribeCustomKeyStores"
+              - "kms:List*"
+              - "kms:DeleteCustomKeyStore"
+              - "kms:GenerateRandom"
+              - "kms:UpdateCustomKeyStore"
+              - "kms:DisconnectCustomKeyStore"
+              - "kms:CreateKey"
+              - "kms:ConnectCustomKeyStore"
+              - "kms:CreateCustomKeyStore"
             Resource: "*"
 
   CodeBuildNetworking:
