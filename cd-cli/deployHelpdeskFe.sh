@@ -157,8 +157,11 @@ ApiDomain=$( aws ${profile_option} --region="eu-south-1" cloudformation describe
 
 cd $microcvs_name
 
+source scripts/aws/env-${environment}.sh
+
 sed -e "s/\${USER_POOL_ID}/${CognitoUserPoolId}/" \
     -e "s/\${WEB_CLIENT_ID}/${CognitoWebClientId}/" \
+    -e "s/\${WEB_API_DOMAIN}/${WEB_API_DOMAIN}/" \
     -e "s/\${API_DOMAIN}/${ApiDomain}/"  .env.template > .env.production 
 
 yarn install
