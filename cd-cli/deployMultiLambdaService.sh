@@ -286,7 +286,7 @@ ParamFilePath=${repo_name}/scripts/aws/cfn/microservice-${env_type}-cfg.json
 EnanchedParamFilePath=${repo_name}-microservice-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
-     \"BucketBasePath=$bucketBasePath\",\
+     \"LambdasBucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",\
      \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
