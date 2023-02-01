@@ -155,6 +155,10 @@ ApiDomain=$( aws ${profile_option} --region="eu-south-1" cloudformation describe
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"ApiDomain\") | .OutputValue" \
     )
 
+echo "CognitoUserPoolId: ${CognitoUserPoolId}"
+echo "CognitoWebClientId: ${CognitoWebClientId}"
+echo "ApiDomain: ${ApiDomain}"
+
 cd $microcvs_name
 
 source scripts/aws/env-${environment}.sh

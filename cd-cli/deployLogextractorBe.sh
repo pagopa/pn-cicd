@@ -194,8 +194,6 @@ DistributionDomainName=$( aws ${profile_option} --region="eu-south-1" cloudforma
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DistributionDomainName\") | .OutputValue" \
     )
 
-AllowedOrigin=$( echo $AllowedOrigin | sed -e "s/\${DOMAIN_NAME}/$DistributionDomainName/" )
-
 echo "CognitoUserPoolArn="${CognitoUserPoolArn}
 echo "OpenSearchEndpoint="${OpenSearchEndpoint}
 echo "ElasticacheEndpoint="${ElasticacheEndpoint}
