@@ -112,6 +112,7 @@ Resources:
 
       Source:
         Type: GITHUB
+        ReportBuildStatus: true
         Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
         BuildSpec: |
           version: 0.2
