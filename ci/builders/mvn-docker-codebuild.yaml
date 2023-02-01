@@ -191,6 +191,7 @@ Resources:
 
       Source:
         Type: GITHUB
+        ReportBuildStatus: true
         Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
         BuildSpec: |
           version: 0.2
@@ -319,6 +320,14 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
+              - Sid: CodeBuildGroup
+                Effect: Allow
+                Action:
+                  - codebuild:CreateWebhook
+                  - codebuild:UpdateWebhook
+                  - codebuild:DeleteWebhook
+                Resource:
+                  - Ref CodeBuildProject.Arn
               - Sid: CodeBuildReportGroup
                 Effect: Allow
                 Action:
