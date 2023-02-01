@@ -327,7 +327,7 @@ Resources:
                   - codebuild:UpdateWebhook
                   - codebuild:DeleteWebhook
                 Resource:
-                  - Ref CodeBuildProject.Arn
+                  - !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:*'
               - Sid: CodeBuildReportGroup
                 Effect: Allow
                 Action:
