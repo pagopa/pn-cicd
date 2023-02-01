@@ -229,6 +229,14 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
+              - Sid: CodeBuildGroup
+                Effect: Allow
+                Action:
+                  - codebuild:CreateWebhook
+                  - codebuild:UpdateWebhook
+                  - codebuild:DeleteWebhook
+                Resource:
+                  - !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:*'
               - Sid: CodeBuildReportGroup
                 Effect: Allow
                 Action:
