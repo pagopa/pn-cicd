@@ -232,11 +232,9 @@ Resources:
               - Sid: CodeBuildGroup
                 Effect: Allow
                 Action:
-                  - codebuild:CreateWebhook
-                  - codebuild:UpdateWebhook
-                  - codebuild:DeleteWebhook
+                  - codebuild:*
                 Resource:
-                  - !Sub 'arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:*'
+                  - '*'
               - Sid: CodeBuildReportGroup
                 Effect: Allow
                 Action:
