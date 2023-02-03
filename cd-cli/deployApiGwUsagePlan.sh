@@ -139,6 +139,11 @@ function createUsagePlan() {
       aws ${aws_command_base_args} cloudformation deploy \
         --template-file pn-infra/runtime-infra/fragments/api-gw-usageplans-B2B.yaml \
         --stack-name "STANDARD-B2B-api-usage-plan"
+  elif [[ ${PLAN_NAME} == "SELCPG" ]]
+  then
+      aws ${aws_command_base_args} cloudformation deploy \
+        --template-file pn-infra/runtime-infra/fragments/api-gw-usageplans-PNPG.yaml \
+        --stack-name "SELCPG-api-usage-plan"
   fi
   USAGE_PLAN_ID=$(getUsagePlan $PLAN_NAME)
   for CURR_ID in $REST_APIS_IDS; do
