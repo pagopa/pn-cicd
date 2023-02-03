@@ -758,7 +758,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-national-registries", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn-national-registries", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_national_registries", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -806,7 +806,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-paper-channel", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn-paper-channel", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_paper_channel", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
