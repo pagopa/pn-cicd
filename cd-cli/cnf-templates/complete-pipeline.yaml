@@ -742,6 +742,30 @@ Resources:
                 - Name: PnLogsaverBeOutput
               RunOrder: 3
 
+            # Update pn-national-registries
+            - Name: Update_NationalRegistries
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-national-registries", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn-national-registries", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnNationalRegistriesOutput
+              RunOrder: 3
+
             # Update pn-apikey-manager
             - Name: Update_ApiKeyManager
               ActionTypeId:
@@ -765,7 +789,6 @@ Resources:
               OutputArtifacts:
                 - Name: PnApiKeyManagerOutput
               RunOrder: 3
-
             # Update pn-paper-channel
             #- Fn::If:
             #  - IsDevCondition
