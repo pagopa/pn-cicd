@@ -38,6 +38,8 @@ parse_params() {
   env_type=""
   pn_infra_commitid=""
   bucketName=""
+  LambdasBucketName=""
+
 
   while :; do
     case "${1-}" in
@@ -71,6 +73,10 @@ parse_params() {
       bucketName="${2-}"
       shift
       ;;
+    -B | --lambda-bucket-name) 
+      LambdasBucketName="${2-}"
+      shift
+      ;;
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -84,6 +90,7 @@ parse_params() {
   [[ -z "${pn_infra_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
+  [[ -z "${LambdasBucketName-}" ]] && usage
   return 0
 }
 
@@ -148,6 +155,21 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
+
+echo " - Copy Lambdas zip"
+lambdasZip='functions.zip'
+lambdasLocalPath='functions'
+
+aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+      --bucket "$LambdasBucketName" --key "${repo_name}/commits/${pn_infra_commitid}/${lambdasZip}" \
+      "${lambdasZip}"
+
+unzip ${lambdasZip} -d ./${lambdasLocalPath}
+
+bucketBasePath="${repo_name}/${pn_infra_commitid}"
+aws ${aws_command_base_args} s3 cp --recursive \
+      "${lambdasLocalPath}/" \
+      "s3://$bucketName/${bucketBasePath}/"
 
 echo ""
 echo ""
@@ -261,7 +283,7 @@ PreviousOutputFilePath=pn-infra-${env_type}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-ipc.yaml
 ParamFilePath=pn-infra/runtime-infra/pn-ipc-${env_type}-cfg.json
 EnanchedParamFilePath=pn-ipc-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"

@@ -829,11 +829,12 @@ Resources:
   PnInfra:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/infra-codebuild.yaml"
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-infra"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        BaseDir: "runtime-infra/lambdas"
       TimeoutInMinutes: 5
   PnCiCd:
     Type: AWS::CloudFormation::Stack
