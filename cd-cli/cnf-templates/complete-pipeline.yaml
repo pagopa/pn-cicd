@@ -740,6 +740,30 @@ Resources:
                 - Name: PnLogsaverBeOutput
               RunOrder: 3
 
+            # Update pn-national-registries
+            - Name: Update_NationalRegistries
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-national-registries", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_national_registries", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnNationalRegistriesOutput
+              RunOrder: 3
+
             # Update pn-apikey-manager
             - Name: Update_ApiKeyManager
               ActionTypeId:
@@ -765,55 +789,52 @@ Resources:
               RunOrder: 3
 
             # Update pn-paper-channel
-            #- Fn::If:
-            #  - IsDevCondition
-            #  - Name: Update_PnPaperChannel
-            #    ActionTypeId:
-            #      Category: Build
-            #      Owner: AWS
-            #      Version: 1
-            #      Provider: CodeBuild
-            #    Configuration:
-            #      ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-            #      PrimarySource: DesiredCommitIdsAndScripts
-            #      EnvironmentVariables: !Sub '[
-            #          {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-            #          {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-            #          {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-            #          {"name":"MsName", "value":"pn-paper-channel", "type":"PLAINTEXT"},
-            #          {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
-            #          {"name":"VarPrefix", "value":"pn_paper_channel", "type":"PLAINTEXT"}
-            #        ]'
-            #    InputArtifacts:
-            #      - Name: DesiredCommitIdsAndScripts
-            #    OutputArtifacts:
-            #      - Name: PnPaperChannelOutput
-            #    RunOrder: 3
-            #  - !Ref AWS::NoValue
+            - Name: Update_PaperChannel
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-paper-channel", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_paper_channel", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnPaperChannelOutput
+              RunOrder: 3
 
             # Update pn-kafka-bridge
-#            - Name: Update_PnKafkaBridge
-#              ActionTypeId:
-#                Category: Build
-#                Owner: AWS
-#                Version: 1
-#                Provider: CodeBuild
-#              Configuration:
-#                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-#                PrimarySource: DesiredCommitIdsAndScripts
-#                EnvironmentVariables: !Sub '[
-#                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-#                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-#                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-#                    {"name":"MsName", "value":"pn-kafka-bridge", "type":"PLAINTEXT"},
-#                    {"name":"MsNumber", "value":"14", "type":"PLAINTEXT"},
-#                    {"name":"VarPrefix", "value":"pn_kafka_bridge", "type":"PLAINTEXT"}
-#                  ]'
-#              InputArtifacts:
-#                - Name: DesiredCommitIdsAndScripts
-#              OutputArtifacts:
-#                - Name: PnApiKeyManagerOutput
-#              RunOrder: 3
+            - Name: Update_KafkaBridge
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-kafka-bridge", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"14", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_kafka_bridge", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnKafkaBridgeOutput
+              RunOrder: 3
 
             # Update Frontend
             - Name: Update_Frontend
@@ -1189,6 +1210,7 @@ Resources:
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - '(cd scripts/cd-cli && ./deployApiGwUsagePlan.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion APP_IO_BE IO)'
+                - '(cd scripts/cd-cli && ./deployApiGwUsagePlan.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion SELCPG PNPG)'
                 - '(cd scripts/cd-cli && ./deployApiGwUsagePlan.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion pn_usageplan_small B2B)'
                 - '(cd scripts/cd-cli && ./deployApiGwUsagePlan.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion pn_usageplan_medium B2B)'
                 - '(cd scripts/cd-cli && ./deployApiGwUsagePlan.sh -w /tmp -i $pn_infra_commitId -r $AwsRegion pn_usageplan_large B2B)'
