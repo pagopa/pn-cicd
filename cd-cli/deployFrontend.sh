@@ -490,7 +490,7 @@ mkdir -p "pn-landing-webapp_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/"
+    s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" --delete
 
 
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
