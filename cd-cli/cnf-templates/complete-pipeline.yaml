@@ -1017,7 +1017,7 @@ Resources:
                 - 'echo "###                   UPDATE INFRA                   ###"'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && ./deployInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - '(cd scripts/cd-cli && ./deployInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'

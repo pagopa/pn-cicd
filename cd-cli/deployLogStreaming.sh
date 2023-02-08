@@ -157,22 +157,6 @@ aws ${aws_command_base_args} \
       --recursive --exclude ".git/*"
 
 
-
-echo " - Copy Opensearch delivery lambda"
-aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-infra/commits/${pn_infra_commitid}/runtime-infra/lambdas/opensearch-delivery.zip" \
-      "opensearch-delivery.zip"
-aws ${aws_command_base_args} s3 cp \
-      "opensearch-delivery.zip" \
-      "s3://$bucketName/pn-infra/opensearch-delivery.zip" 
-OpenSearchLambdaZipVersionId=$( aws ${aws_command_base_args} \
-    s3api head-object \
-      --bucket $bucketName \
-      --key "pn-infra/opensearch-delivery.zip" \
-      --query "VersionId" \
-      --output text )
-
-
 echo ""
 echo ""
 echo ""
@@ -187,9 +171,18 @@ logsExporterRoleArn=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks --stack-name pn-ipc-${env_type} \
       | jq -r '.Stacks[0].Outputs | .[] | select(.OutputKey=="LogsExporterRoleArn") | .OutputValue' )
 
+lambdasBucketName=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks --stack-name pn-ipc-${env_type} \
+      | jq -r '.Stacks[0].Outputs | .[] | select(.OutputKey=="LambdasBucketName") | .OutputValue' )
+
+lambdasBasePath=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks --stack-name pn-ipc-${env_type} \
+      | jq -r '.Stacks[0].Outputs | .[] | select(.OutputKey=="LambdasBasePath") | .OutputValue' )
 
 echo "LOGS Bucker: ${logsBucketName}"
 echo "LOGS Role Arn: ${logsExporterRoleArn}"
+echo "LambdasBucketName: ${lambdasBucketName}"
+echo "LambdasBasePath: ${lambdasBasePath}"
 
 
 echo "=== Prepare parameters for pn-logs-export.yaml deployment in $env_type ACCOUNT"
@@ -214,9 +207,8 @@ aws ${aws_command_base_args} \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | jq ".TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\"" \
-      | jq ".OpenSearchDeliveryLambdaS3Bucket= \"$bucketName\"" \
-      | jq ".OpenSearchDeliveryLambdaS3Key = \"pn-infra/opensearch-delivery.zip\"" \
-      | jq ".OpenSearchDeliveryLambdaS3ObjectVersion = \"$OpenSearchLambdaZipVersionId\"" \
+      | jq ".LambdasBucketName= \"$lambdasBucketName\"" \
+      | jq ".LambdasBasePath = \"$lambdasBasePath\"" \
       | jq ".ProjectName = \"$project_name\"" \
       | jq ".Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\"" \
       | tee ${PreviousOutputFilePath}
