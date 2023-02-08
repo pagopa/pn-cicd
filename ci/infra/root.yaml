@@ -646,6 +646,7 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-progression-sensor"
         BaseDir: "functions"
+        BaseDirEscaped: "functions"        
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 5
@@ -657,6 +658,7 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-auth-fleet"
         BaseDir: "functions"
+        BaseDirEscaped: "functions"        
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 10
@@ -835,6 +837,7 @@ Resources:
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         BaseDir: "runtime-infra/lambdas"
+        BaseDirEscaped: "runtime-infra-lambdas"        
       TimeoutInMinutes: 5
   PnCiCd:
     Type: AWS::CloudFormation::Stack
