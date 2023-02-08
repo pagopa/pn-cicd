@@ -172,6 +172,9 @@ aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}/" \
       "s3://$bucketName/${bucketBasePath}/"
 
+# delete functions folder
+rm -rf ${lambdasLocalPath} 
+
 echo ""
 echo ""
 echo ""
