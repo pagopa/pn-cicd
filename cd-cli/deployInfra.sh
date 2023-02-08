@@ -159,6 +159,7 @@ aws ${aws_command_base_args} \
 echo " - Copy Lambdas zip"
 lambdasZip='functions.zip'
 lambdasLocalPath='functions'
+repo_name='pn-infra'
 
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
       --bucket "$LambdasBucketName" --key "${repo_name}/commits/${pn_infra_commitid}/${lambdasZip}" \
