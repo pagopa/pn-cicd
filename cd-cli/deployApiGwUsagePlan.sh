@@ -139,13 +139,24 @@ function createUsagePlan() {
       aws ${aws_command_base_args} cloudformation deploy \
         --template-file pn-infra/runtime-infra/fragments/api-gw-usageplans-B2B.yaml \
         --stack-name "STANDARD-B2B-api-usage-plan"
+  elif [[ ${PLAN_NAME} == "SELCPG" ]]
+  then
+      if ( [ -f pn-infra/runtime-infra/fragments/api-gw-usageplans-PNPG.yaml ] ) then
+        aws ${aws_command_base_args} cloudformation deploy \
+          --template-file pn-infra/runtime-infra/fragments/api-gw-usageplans-PNPG.yaml \
+          --stack-name "SELCPG-api-usage-plan"
+      fi
   fi
-  USAGE_PLAN_ID=$(getUsagePlan $PLAN_NAME)
-  for CURR_ID in $REST_APIS_IDS; do
-    sleep 20
-    aws ${aws_command_base_args} apigateway update-usage-plan --usage-plan-id $USAGE_PLAN_ID \
-        --patch-operations op=add,path="/apiStages",value="$CURR_ID:$STAGE" --no-cli-pager
-  done
+
+  if ( [ $PLAN_NAME != 'SELCPG'] || ( [ $PLAN_NAME='SELCPG'] && [ -f pn-infra/runtime-infra/fragments/api-gw-usageplans-PNPG.yaml ] ) ) then
+    USAGE_PLAN_ID=$(getUsagePlan $PLAN_NAME)
+    for CURR_ID in $REST_APIS_IDS; do
+      sleep 20
+      aws ${aws_command_base_args} apigateway update-usage-plan --usage-plan-id $USAGE_PLAN_ID \
+          --patch-operations op=add,path="/apiStages",value="$CURR_ID:$STAGE" --no-cli-pager
+    done
+  fi
+  
   
 }
 

@@ -320,6 +320,7 @@ echo "=== Deploy PN-IPC FOR $env_type ACCOUNT"
 aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name pn-ipc-$env_type \
+      --s3-bucket $bucketName \
       --capabilities CAPABILITY_NAMED_IAM \
       --template-file pn-infra/runtime-infra/pn-ipc.yaml \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
