@@ -7,6 +7,9 @@ Parameters:
   BaseDir:
     Description: base directory of the lambdas = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
+  BaseDirEscaped:
+    Description: base directory of the lambdas = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
+    Type: String
   CiArtifactBucket:
     Description: Ci Artifact bucket name
     Type: String
@@ -18,7 +21,7 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${GitHubProjectName}-${BaseDir}-CodeBuild"
+      Name: !Sub "${GitHubProjectName}-${BaseDirEscaped}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       BadgeEnabled: true
       Environment:
@@ -186,7 +189,7 @@ Resources:
     Type: AWS::CodeStarNotifications::NotificationRule
     Properties:
       DetailType: FULL
-      Name: !Sub '${GitHubProjectName}-${BaseDir}-CI'
+      Name: !Sub '${GitHubProjectName}-${BaseDirEscaped}-CI'
       EventTypeIds:
         - codebuild-project-build-state-failed
       Resource: !Sub '${CodeBuildProject.Arn}'
