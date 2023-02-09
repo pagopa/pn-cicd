@@ -159,6 +159,7 @@ aws ${aws_command_base_args} \
 echo " - Copy Lambdas zip"
 lambdasZip='functions.zip'
 lambdasLocalPath='functions'
+repo_name='pn-infra'
 
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
       --bucket "$LambdasBucketName" --key "${repo_name}/commits/${pn_infra_commitid}/${lambdasZip}" \
@@ -170,6 +171,9 @@ bucketBasePath="${repo_name}/${pn_infra_commitid}"
 aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}/" \
       "s3://$bucketName/${bucketBasePath}/"
+
+# delete functions folder
+rm -rf ${lambdasLocalPath} 
 
 echo ""
 echo ""
@@ -283,7 +287,7 @@ PreviousOutputFilePath=pn-infra-${env_type}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-ipc.yaml
 ParamFilePath=pn-infra/runtime-infra/pn-ipc-${env_type}-cfg.json
 EnanchedParamFilePath=pn-ipc-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\",\"EnvironmentType=$env_type\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
@@ -357,7 +361,7 @@ if [[ -f "$MONITORING_STACK_FILE" ]]; then
     aws ${aws_command_base_args} \
         cloudformation deploy \
           --stack-name pn-monitoring-$env_type \
-          --capabilities CAPABILITY_NAMED_IAM \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${MONITORING_STACK_FILE} \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
