@@ -361,7 +361,7 @@ if [[ -f "$MONITORING_STACK_FILE" ]]; then
     aws ${aws_command_base_args} \
         cloudformation deploy \
           --stack-name pn-monitoring-$env_type \
-          --capabilities CAPABILITY_NAMED_IAM \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${MONITORING_STACK_FILE} \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
