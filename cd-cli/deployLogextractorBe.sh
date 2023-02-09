@@ -242,6 +242,24 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
     --capabilities "CAPABILITY_NAMED_IAM"
 
 
+OpenSearchClusterName=$( aws ${profile_option} --region="eu-central-1" cloudformation describe-stacks \
+      --stack-name "pn-logextractor-storage-${environment}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"OpenSearchClusterName\") | .OutputValue" \
+    )
+
+AlarmSNSTopicArn=$( aws ${profile_option} --region="eu-central-1" cloudformation describe-stacks \
+      --stack-name "pn-logextractor-storage-${environment}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AlarmSNSTopicArn\") | .OutputValue" \
+    )
+
+TemplateFilePath="$microcvs_name/scripts/aws/alarms.yaml"
+aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-file $TemplateFilePath \
+    --stack-name "pn-logextractor-alarms-${env_type}" \
+    --parameter-overrides "ProjectName=pn-helpdesk" \
+        "OpenSearchClusterName=${OpenSearchClusterName}" \
+        "AlarmSNSTopicArn=${AlarmSNSTopicArn}" \
+    --capabilities "CAPABILITY_NAMED_IAM"
+
 
 
 
