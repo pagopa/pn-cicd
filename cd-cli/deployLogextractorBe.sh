@@ -256,6 +256,7 @@ TemplateFilePath="$microcvs_name/scripts/aws/alarms.yaml"
 aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-file $TemplateFilePath \
     --stack-name "pn-logextractor-alarms-${env_type}" \
     --parameter-overrides "ProjectName=pn-helpdesk" \
+        "EnvType=${env_type}" \
         "OpenSearchClusterName=${OpenSearchClusterName}" \
         "AlarmSNSTopicArn=${AlarmSNSTopicArn}" \
     --capabilities "CAPABILITY_NAMED_IAM"
