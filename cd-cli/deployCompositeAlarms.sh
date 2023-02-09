@@ -168,12 +168,18 @@ DowntimeLogsCompositeAlarmQueueARN=$( aws ${aws_command_base_args} cloudformatio
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DowntimeLogsAggregateAlarmQueueARN\") | .OutputValue" \
     )
 
+AlarmSNSTopicArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name pn-ipc-${env_type} | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AlarmSNSTopicArn\") | .OutputValue" \
+    )
+
 aws ${aws_command_base_args} cloudformation deploy \
       --stack-name pn-aggregate-alarm-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file pn-infra/runtime-infra/pn-aggregate-alarms.yaml \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
+        AlarmSNSTopicArn="$AlarmSNSTopicArn" \
         ProjectName=${project_name} \
         DowntimeLogsCompositeAlarmQueueARN=${DowntimeLogsCompositeAlarmQueueARN} \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
