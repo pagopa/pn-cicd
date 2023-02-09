@@ -242,12 +242,12 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
     --capabilities "CAPABILITY_NAMED_IAM"
 
 
-OpenSearchClusterName=$( aws ${profile_option} --region="eu-central-1" cloudformation describe-stacks \
+OpenSearchClusterName=$( aws ${profile_option} --region="eu-south-1" cloudformation describe-stacks \
       --stack-name "pn-logextractor-storage-${env_type}" | jq -r \
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"OpenSearchClusterName\") | .OutputValue" \
     )
 
-AlarmSNSTopicArn=$( aws ${profile_option} --region="eu-central-1" cloudformation describe-stacks \
+AlarmSNSTopicArn=$( aws ${profile_option} --region="eu-south-1" cloudformation describe-stacks \
       --stack-name "pn-logextractor-storage-${env_type}" | jq -r \
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AlarmSNSTopicArn\") | .OutputValue" \
     )
