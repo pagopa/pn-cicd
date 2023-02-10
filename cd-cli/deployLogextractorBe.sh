@@ -189,6 +189,11 @@ AlbListenerArn=$( aws ${profile_option} --region="eu-south-1" cloudformation des
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AlbListenerArn\") | .OutputValue" \
     )
 
+AlbSecurityGroup=$( aws ${profile_option} --region="eu-south-1" cloudformation describe-stacks \
+      --stack-name "pn-logextractor-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AlbSecurityGroup\") | .OutputValue" \
+    )
+
 DistributionDomainName=$( aws ${profile_option} --region="eu-south-1" cloudformation describe-stacks \
       --stack-name "pn-logextractor-frontend-${env_type}" | jq -r \
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DistributionDomainName\") | .OutputValue" \
@@ -200,12 +205,14 @@ echo "ElasticacheEndpoint="${ElasticacheEndpoint}
 echo "ElasticacheSecurityGroup="${ElasticacheSecurityGroup}
 echo "AlbListenerArn="${AlbListenerArn}
 echo "AllowedOrigin="${AllowedOrigin}
+echo "AlbSecurityGroup="${AlbSecurityGroup}
 
-TemplateFilePath="$microcvs_name/ecs-service.yaml"
+TemplateFilePath="$microcvs_name/scripts/aws/ecs-service.yaml"
 aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-file $TemplateFilePath \
     --stack-name "pn-logextractor-service-${env_type}" \
     --parameter-overrides "AdditionalMicroserviceSecurityGroup=${ElasticacheSecurityGroup}" "MicroServiceUniqueName=pn-logextractor-be-${env_type}" \
         "ECSClusterName=pn-logextractor-${env_type}-ecs-cluster" "MappedPaths=/*" \
+        "AlbSecurityGroup=${AlbSecurityGroup}" \
         "ContainerImageURI=${ContainerImageUri}" \
         "CpuValue=1024" "MemoryAmount=4GB" "VpcId=${VpcId}" \
         "Subnets=${PrivateSubnetIds}" \
@@ -234,6 +241,26 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
         "ContainerSecret2=BASIC_AUTH_PASSWORD=${OpenSearchSecretArn}:password:AWSCURRENT:" \
     --capabilities "CAPABILITY_NAMED_IAM"
 
+
+OpenSearchClusterName=$( aws ${profile_option} --region="eu-south-1" cloudformation describe-stacks \
+      --stack-name "pn-logextractor-storage-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"OpenSearchClusterName\") | .OutputValue" \
+    )
+
+AlarmSNSTopicArn=$( aws ${profile_option} --region="eu-south-1" cloudformation describe-stacks \
+      --stack-name "pn-logextractor-topics-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AlarmSNSTopicArn\") | .OutputValue" \
+    )
+
+TemplateFilePath="$microcvs_name/scripts/aws/alarms.yaml"
+aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-file $TemplateFilePath \
+    --stack-name "pn-logextractor-alarms-${env_type}" \
+    --parameter-overrides "ProjectName=pn-helpdesk" \
+        "EnvType=${env_type}" \
+        "OpenSearchClusterName=${OpenSearchClusterName}" \
+        "AlarmSNSTopicArn=${AlarmSNSTopicArn}" \
+        "OpenSearchMasterNodeType=${OpenSearchMasterNodeType}" \
+    --capabilities "CAPABILITY_NAMED_IAM"
 
 
 
