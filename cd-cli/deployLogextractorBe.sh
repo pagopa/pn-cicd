@@ -248,7 +248,7 @@ OpenSearchClusterName=$( aws ${profile_option} --region="eu-south-1" cloudformat
     )
 
 AlarmSNSTopicArn=$( aws ${profile_option} --region="eu-south-1" cloudformation describe-stacks \
-      --stack-name "pn-logextractor-storage-${env_type}" | jq -r \
+      --stack-name "pn-logextractor-topics-${env_type}" | jq -r \
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AlarmSNSTopicArn\") | .OutputValue" \
     )
 
