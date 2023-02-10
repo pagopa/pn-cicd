@@ -259,6 +259,7 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
         "EnvType=${env_type}" \
         "OpenSearchClusterName=${OpenSearchClusterName}" \
         "AlarmSNSTopicArn=${AlarmSNSTopicArn}" \
+        "OpenSearchMasterNodeType=${OpenSearchMasterNodeType}" \
     --capabilities "CAPABILITY_NAMED_IAM"
 
 
