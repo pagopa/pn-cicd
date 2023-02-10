@@ -207,7 +207,7 @@ echo "AlbListenerArn="${AlbListenerArn}
 echo "AllowedOrigin="${AllowedOrigin}
 echo "AlbSecurityGroup="${AlbSecurityGroup}
 
-TemplateFilePath="$microcvs_name/ecs-service.yaml"
+TemplateFilePath="$microcvs_name/scripts/aws/ecs-service.yaml"
 aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-file $TemplateFilePath \
     --stack-name "pn-logextractor-service-${env_type}" \
     --parameter-overrides "AdditionalMicroserviceSecurityGroup=${ElasticacheSecurityGroup}" "MicroServiceUniqueName=pn-logextractor-be-${env_type}" \
