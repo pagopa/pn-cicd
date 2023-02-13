@@ -140,6 +140,11 @@ dump_params
 
 cd $work_dir
 
+echo "=== Download pn-infra" 
+if ( [ ! -e pn-infra ] ) then 
+  git clone https://github.com/pagopa/pn-infra.git
+fi
+
 echo "=== Download microservizio ${microcvs_name}" 
 if ( [ ! -e ${microcvs_name} ] ) then 
   git clone "https://github.com/pagopa/${microcvs_name}.git"
@@ -153,12 +158,23 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/${microcvs_name} .
 fi
 
-
 profile_option=""
 if ( [ ! -z "${aws_profile}" ] ) then
   profile_option="-- profile $aws_profile"
 fi
 echo "Profile option ${profile_option}"
+
+templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
+templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
+echo " - Bucket Name: ${bucketName}"
+echo " - Bucket Template S3 Url: ${templateBucketS3BaseUrl}"
+echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
+
+echo ""
+echo "=== Upload files to bucket"
+aws ${profile_option} \
+    s3 cp pn-infra $templateBucketS3BaseUrl \
+      --recursive --exclude ".git/*"
 
 source $microcvs_name/scripts/aws/environments/.env.infra.${env_type}
 source $microcvs_name/scripts/aws/environments/.env.backend.${env_type}
@@ -258,9 +274,10 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
     --parameter-overrides "ProjectName=pn-helpdesk" \
         "EnvType=${env_type}" \
         "OpenSearchClusterName=${OpenSearchClusterName}" \
+        "TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}" \
         "AlarmSNSTopicArn=${AlarmSNSTopicArn}" \
         "OpenSearchMasterNodeType=${OpenSearchMasterNodeType}" \
-    --capabilities "CAPABILITY_NAMED_IAM"
+    --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
 
 
 
