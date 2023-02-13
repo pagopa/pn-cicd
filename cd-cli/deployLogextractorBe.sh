@@ -277,7 +277,7 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
         "TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}" \
         "AlarmSNSTopicArn=${AlarmSNSTopicArn}" \
         "OpenSearchMasterNodeType=${OpenSearchMasterNodeType}" \
-    --capabilities "CAPABILITY_NAMED_IAM"
+    --capabilities "CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND"
 
 
 
