@@ -247,7 +247,9 @@ Resources:
               on-failure: ABORT
               commands:
                 - echo "Maven Build"
-                - ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image $MAVEN_ADD_GOAL
+                - CUSTOM_BUILDER_IMAGE=public.ecr.aws/c7u1m8f9/paketobuildpacks/builder:0.1.320-tiny
+                - CUSTOM_RUN_IMAGE=public.ecr.aws/c7u1m8f9/paketobuildpacks/run:1.3.108-tiny-cnb
+                - ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
             post_build:
               on-failure: ABORT
               commands:
