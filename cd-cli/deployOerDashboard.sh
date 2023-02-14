@@ -170,6 +170,12 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     ) 
     echo "ConfidentialInfoAccountId=${confidentialInfoAccountId}"
 
+    helpdeskAccountId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name "pn-ipc-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"HelpdeskAccountId\") | .OutputValue" \
+    ) 
+    echo "HelpdeskAccountId=${helpdeskAccountId}"
+
     openSearchArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
       --stack-name "pn-ipc-${env_type}" | jq -r \
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"OpenSearchArn\") | .OutputValue" \
@@ -195,6 +201,10 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     OptionalParameters=""
     if ( [ ! -z "$confidentialInfoAccountId" ] ) then
       OptionalParameters="${OptionalParameters} ConfidentialInfoAccountId=${confidentialInfoAccountId}"
+    fi
+
+    if ( [ ! -z "$helpdeskAccountId" ] ) then
+      OptionalParameters="${OptionalParameters} HelpdeskAccountId=${helpdeskAccountId}"
     fi
 
     if ( [ ! -z "$openSearchArn" ] ) then
