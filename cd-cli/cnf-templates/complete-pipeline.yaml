@@ -21,13 +21,30 @@ Parameters:
     Description: 'Bucket name containing lambda and frontend artifacts'
     Type: String
 
+  E2EVpcId:
+    Type: String
+    Default: ''
+    Description: 'VPC used to run E2E tests'
+
+  E2ESubnetsIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: 'subnets ids comma separated list. Where to run E2E tests'
+
+  E2ESecurityGroupId:
+    Type: String
+    Default: ''
+    Description: 'E2E Security Group ID'
+
 Conditions:
   IsHotfixCondition: !Equals [ !Ref EnvName, 'hotfix' ]
   IsDevCondition: !Equals [ !Ref EnvName, 'dev' ]
   IsSvilCondition: !Equals [ !Ref EnvName, 'svil' ]
   IsTestCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsSvilCondition ]
   IsContinuousDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
-
+  HasE2EVpcId: !Not [ !Equals [ !Ref E2EVpcId, '' ] ]
+  HasE2ESecurityGroupId: !Not [ !Equals [ !Ref E2ESecurityGroupId, '' ] ]
+  HasE2ESubnetsIds: !Not [!Equals [!Join ['', !Ref E2ESubnetsIds], '']]
+  HasE2EVPCConfig: !And [ !Condition HasE2EVpcId, !Condition HasE2ESecurityGroupId, !Condition HasE2ESubnetsIds ]
 Mappings: 
   EventPatternMap: 
     dev: 
@@ -4076,6 +4093,14 @@ Resources:
           - Name: ENV_NAME
             Type: PLAINTEXT
             Value: !Ref EnvName
+      VpcConfig:
+        Fn::If:
+          - HasE2EVPCConfig
+          - VpcId: !Ref E2EVpcId
+            Subnets: !Ref E2ESubnetsIds
+            SecurityGroupIds: 
+              - !Ref E2ESecurityGroupId
+          - !Ref AWS::NoValue
 
   RunTestsCodebuildProjectLogGroup:
     Type: AWS::Logs::LogGroup
