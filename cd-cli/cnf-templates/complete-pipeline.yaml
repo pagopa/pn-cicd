@@ -27,7 +27,7 @@ Parameters:
     Description: 'VPC used to run E2E tests'
 
   E2ESubnetsIds:
-    Type: List<AWS::EC2::Subnet::Id>
+    Type: CommaDelimitedList
     Description: 'subnets ids comma separated list. Where to run E2E tests'
 
   E2ESecurityGroupId:
