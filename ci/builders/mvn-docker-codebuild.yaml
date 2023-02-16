@@ -101,6 +101,12 @@ Conditions:
     Fn::Equals:
       - Ref: ShouldCreateEcrParam
       - 'true'
+  
+  NeedMediumBuildEnv:
+    Fn::Equals:
+      - Ref: GitHubProjectName
+      - 'pn-delivery-push'
+
 Resources:
 
   CodeBuildProject:
@@ -113,7 +119,11 @@ Resources:
       Environment:
         PrivilegedMode: true
         Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
+        ComputeType:
+          Fn::If:
+            - NeedMediumBuildEnv
+            - BUILD_GENERAL1_MEDIUM
+            - BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:6.0
         EnvironmentVariables:
           - Name: IS_PUBLIC_PROJECT
