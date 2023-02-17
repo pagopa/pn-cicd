@@ -853,6 +853,31 @@ Resources:
                 - Name: PnKafkaBridgeOutput
               RunOrder: 3
 
+            # Update pn-progression-sensor
+            - Name: Update_ProgressionSensor
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMultiLambdaServiceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-progression-sensor", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"0", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_progression_sensor", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnProgressionSensorOutput
+              RunOrder: 3
+
             # Update Frontend
             - Name: Update_Frontend
               ActionTypeId:
