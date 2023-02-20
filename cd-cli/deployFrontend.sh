@@ -169,6 +169,14 @@ if ( [ ! -z "${aws_region}" ] ) then
 fi
 echo ${aws_command_base_args}
 
+
+aws_log_base_args=""
+if ( [ ! -z "${aws_profile}" ] ) then
+  aws_log_base_args="${aws_log_base_args} --profile $aws_profile"
+fi
+aws_log_base_args="${aws_log_base_args} --region eu-central-1"
+
+
 echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
@@ -200,6 +208,20 @@ echo "====================================================================="
 echo "====================================================================="
 
 function prepareOneCloudFront() {
+
+  echo ""
+  echo "=== Create Logs Bucket ${CdnName}"
+  aws ${aws_log_base_args} \
+    cloudformation deploy \
+      --stack-name $CdnName-logging \
+      --template-file pn-frontend/aws-cdn-templates/one-logging.yaml
+
+  logBucketName=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name $CdnName-logging \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LogsBucketName\") | .OutputValue" )
+
   CdnName=$1
   WebDomain=$2
   WebCertificateArn=$3
@@ -231,6 +253,7 @@ function prepareOneCloudFront() {
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
         WebApiUrl="${WebApiUrl}" \
+        S3LogsBucket="${logBucketName}"
         $OptionalParameters
   
   bucketName=$( aws ${aws_command_base_args} \
@@ -439,7 +462,7 @@ mkdir -p "pn-pa-webapp_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/" --delete --exclude 'access_logs/'
+    s3 sync "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/" --delete 
 
 
 
@@ -456,7 +479,7 @@ mkdir -p "pn-personafisica-webapp_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-personafisica-webapp_${env_type}" "s3://${webappPfBucketName}/" --delete --exclude 'access_logs/'
+    s3 sync "pn-personafisica-webapp_${env_type}" "s3://${webappPfBucketName}/" --delete 
 
 
 echo ""
@@ -472,7 +495,7 @@ mkdir -p "pn-personafisica-login_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-personafisica-login_${env_type}" "s3://${webappPflBucketName}/" --delete --exclude 'access_logs/'
+    s3 sync "pn-personafisica-login_${env_type}" "s3://${webappPflBucketName}/" --delete 
 
 
 
@@ -490,7 +513,7 @@ mkdir -p "pn-landing-webapp_${env_type}"
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" --delete --exclude 'access_logs/'
+    s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" --delete 
 
 
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
@@ -507,7 +530,7 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
   )
 
   aws ${aws_command_base_args} \
-      s3 sync "pn-personagiuridica-webapp_${env_type}" "s3://${webappPgBucketName}/" --delete --exclude 'access_logs/'
+      s3 sync "pn-personagiuridica-webapp_${env_type}" "s3://${webappPgBucketName}/" --delete 
 fi
 
 if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
@@ -524,5 +547,5 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   )
 
   aws ${aws_command_base_args} \
-      s3 sync "pn-status-webapp_${env_type}" "s3://${webappPgBucketName}/" --delete --exclude 'access_logs/'
+      s3 sync "pn-status-webapp_${env_type}" "s3://${webappPgBucketName}/" --delete 
 fi
