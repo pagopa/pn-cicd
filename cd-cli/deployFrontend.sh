@@ -226,19 +226,22 @@ function prepareOneCloudFront() {
     OptionalParameters="${OptionalParameters} AlarmSNSTopicArn=${AlarmSNSTopicArn}"
   fi
 
-  echo ""
-  echo "=== Create Logs Bucket ${CdnName}"
-  aws ${aws_log_base_args} \
-    cloudformation deploy \
-      --stack-name $CdnName-logging \
-      --template-file pn-frontend/aws-cdn-templates/one-logging.yaml
+  if ( [ -f "pn-frontend/aws-cdn-templates/one-logging.yaml" ] ) then
+    echo ""
+    echo "=== Create Logs Bucket ${CdnName}"
+    aws ${aws_log_base_args} \
+      cloudformation deploy \
+        --stack-name $CdnName-logging \
+        --template-file pn-frontend/aws-cdn-templates/one-logging.yaml
 
-  logBucketName=$( aws ${aws_log_base_args} \
-    cloudformation describe-stacks \
-      --stack-name $CdnName-logging \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LogsBucketName\") | .OutputValue" )
+    logBucketName=$( aws ${aws_log_base_args} \
+      cloudformation describe-stacks \
+        --stack-name $CdnName-logging \
+        --output json \
+    | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LogsBucketName\") | .OutputValue" )
 
+    OptionalParameters="${OptionalParameters} S3LogsBucket=${logBucketName}"
+  fi
 
   echo ""
   echo "=== Create CDN ${CdnName} with domain ${WebDomain} in zone ${HostedZoneId}"
@@ -253,7 +256,6 @@ function prepareOneCloudFront() {
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
         WebApiUrl="${WebApiUrl}" \
-        S3LogsBucket="${logBucketName}" \
         $OptionalParameters
   
   bucketName=$( aws ${aws_command_base_args} \
