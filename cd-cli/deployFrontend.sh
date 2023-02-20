@@ -253,7 +253,7 @@ function prepareOneCloudFront() {
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
         WebApiUrl="${WebApiUrl}" \
-        S3LogsBucket="${logBucketName}"
+        S3LogsBucket="${logBucketName}" \
         $OptionalParameters
   
   bucketName=$( aws ${aws_command_base_args} \
