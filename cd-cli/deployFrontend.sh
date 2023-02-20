@@ -233,7 +233,7 @@ function prepareOneCloudFront() {
       --stack-name $CdnName-logging \
       --template-file pn-frontend/aws-cdn-templates/one-logging.yaml
 
-  logBucketName=$( aws ${aws_command_base_args} \
+  logBucketName=$( aws ${aws_log_base_args} \
     cloudformation describe-stacks \
       --stack-name $CdnName-logging \
       --output json \
