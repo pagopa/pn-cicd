@@ -1935,6 +1935,11 @@ Resources:
               - events:PutRule
               - events:PutTargets
               - events:RemoveTargets
+              - pipes:DeletePipe              
+              - pipes:CreatePipe 
+              - pipes:UpdatePipe               
+              - pipes:DescribePipe               
+              - pipes:ListPipes               
               - fsx:DescribeFileSystems
               - iam:ListAttachedRolePolicies
               - iam:ListInstanceProfiles
