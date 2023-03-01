@@ -179,12 +179,6 @@ aws ${profile_option} \
 source $microcvs_name/scripts/aws/environments/.env.infra.${env_type}
 source $microcvs_name/scripts/aws/environments/.env.backend.${env_type}
 
-
-CognitoUserPoolArn=$( aws ${profile_option} --region="eu-central-1" cloudformation describe-stacks \
-      --stack-name "pn-logextractor-support-${env_type}" | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"CognitoUserPoolArn\") | .OutputValue" \
-    )
-
 OpenSearchEndpoint=$( aws ${profile_option} --region="eu-south-1" cloudformation describe-stacks \
       --stack-name "pn-logextractor-storage-${env_type}" | jq -r \
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"OpenSearchEndpoint\") | .OutputValue" \
@@ -215,7 +209,6 @@ DistributionDomainName=$( aws ${profile_option} --region="eu-south-1" cloudforma
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DistributionDomainName\") | .OutputValue" \
     )
 
-echo "CognitoUserPoolArn="${CognitoUserPoolArn}
 echo "OpenSearchEndpoint="${OpenSearchEndpoint}
 echo "ElasticacheEndpoint="${ElasticacheEndpoint}
 echo "ElasticacheSecurityGroup="${ElasticacheSecurityGroup}
@@ -249,7 +242,6 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
         "ContainerEnvEntry13=SEARCH_FOLLOWUP_URL=https://${OpenSearchEndpoint}/_search/scroll" \
         "ContainerEnvEntry14=ELASTICACHE_HOSTNAME=${ElasticacheEndpoint}" \
         "ContainerEnvEntry15=ELASTICACHE_PORT=6379" \
-        "ContainerEnvEntry16=COGNITO_GET_USER_ENDPOINT=${CognitoGetUserEndpoint}" \
         "ContainerEnvEntry17=ALLOWED_ORIGIN=${AllowedOrigin}" \
         "ContainerEnvEntry18=DOWNTIME_EVENTS_URL=${PnCoreRootPath}/downtime-internal/v1/events" \
         "ContainerEnvEntry19=DOWNTIME_STATUS_URL=${PnCoreRootPath}/downtime/v1/status" \
