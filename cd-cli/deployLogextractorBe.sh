@@ -179,7 +179,6 @@ aws ${profile_option} \
 source $microcvs_name/scripts/aws/environments/.env.infra.${env_type}
 source $microcvs_name/scripts/aws/environments/.env.backend.${env_type}
 
-
 OpenSearchEndpoint=$( aws ${profile_option} --region="eu-south-1" cloudformation describe-stacks \
       --stack-name "pn-logextractor-storage-${env_type}" | jq -r \
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"OpenSearchEndpoint\") | .OutputValue" \
@@ -243,9 +242,9 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
         "ContainerEnvEntry13=SEARCH_FOLLOWUP_URL=https://${OpenSearchEndpoint}/_search/scroll" \
         "ContainerEnvEntry14=ELASTICACHE_HOSTNAME=${ElasticacheEndpoint}" \
         "ContainerEnvEntry15=ELASTICACHE_PORT=6379" \
-        "ContainerEnvEntry16=ALLOWED_ORIGIN=${AllowedOrigin}" \
-        "ContainerEnvEntry17=DOWNTIME_EVENTS_URL=${PnCoreRootPath}/downtime-internal/v1/events" \
-        "ContainerEnvEntry18=DOWNTIME_STATUS_URL=${PnCoreRootPath}/downtime/v1/status" \
+        "ContainerEnvEntry17=ALLOWED_ORIGIN=${AllowedOrigin}" \
+        "ContainerEnvEntry18=DOWNTIME_EVENTS_URL=${PnCoreRootPath}/downtime-internal/v1/events" \
+        "ContainerEnvEntry19=DOWNTIME_STATUS_URL=${PnCoreRootPath}/downtime/v1/status" \
         "ContainerSecret1=BASIC_AUTH_USERNAME=${OpenSearchSecretArn}:username:AWSCURRENT:" \
         "ContainerSecret2=BASIC_AUTH_PASSWORD=${OpenSearchSecretArn}:password:AWSCURRENT:" \
     --capabilities "CAPABILITY_NAMED_IAM"
