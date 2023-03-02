@@ -260,6 +260,11 @@ AlarmSNSTopicArn=$( aws ${profile_option} --region="eu-south-1" cloudformation d
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AlarmSNSTopicArn\") | .OutputValue" \
     )
 
+LogGroupName=$( aws ${profile_option} --region="eu-south-1" cloudformation describe-stacks \
+      --stack-name "pn-logextractor-service-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"LogGroupName\") | .OutputValue" \
+    )
+
 TemplateFilePath="$microcvs_name/scripts/aws/alarms.yaml"
 aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-file $TemplateFilePath \
     --stack-name "pn-logextractor-alarms-${env_type}" \
@@ -268,6 +273,7 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
         "OpenSearchClusterName=${OpenSearchClusterName}" \
         "TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}" \
         "AlarmSNSTopicArn=${AlarmSNSTopicArn}" \
+        "LogGroupName=${LogGroupName}" \
         "OpenSearchMasterNodeType=${OpenSearchMasterNodeType}" \
     --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
 
