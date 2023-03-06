@@ -103,7 +103,8 @@ Resources:
       PolicyDocument:
         Statement:
           - Action:
-              - s3:*
+              - s3:Get*
+              - s3:List*
             Effect: Allow
             Resource:
               - !Sub arn:aws:s3:::${CiArtifactBucket}

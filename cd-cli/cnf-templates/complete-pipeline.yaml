@@ -1207,7 +1207,7 @@ Resources:
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
-        Image: "aws/codebuild/standard:5.0"
+        Image: "aws/codebuild/standard:6.0"
 
   # CODEBUILD used for post microservices deployment scripts
   ###################################################
