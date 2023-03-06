@@ -1622,6 +1622,8 @@ Resources:
               - s3:*Object
               - s3:GetObjectVersion
               - s3:PutObject*
+              - "s3-object-lambda:Get*"
+              - "s3-object-lambda:List*"              
             Resource: arn:aws:s3:::*/*
           - Sid: VisualEditor1
             Effect: Allow
@@ -1633,6 +1635,8 @@ Resources:
               - s3:DeleteBucketPolicy
               - s3:GetBucketLocation
               - s3:DeleteBucket
+              - "s3-object-lambda:Get*"
+              - "s3-object-lambda:List*"              
             Resource: arn:aws:s3:::*
           - Effect: Allow
             Action: s3:ListAllMyBuckets
