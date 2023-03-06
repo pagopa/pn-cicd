@@ -826,6 +826,25 @@ Resources:
         PackageName: "pn-validator"
         BaseDir: "packages/pn-validator"
       TimeoutInMinutes: 5
+  # Web cypress pipeline
+  PnPaCypress:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-cypress-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-frontend"
+        PackageName: "pn-pa-webapp"
+        BaseDir: "packages/pn-pa-webapp"
+      TimeoutInMinutes: 5
+  PnPersonafisicaCypress:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-cypress-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-frontend"
+        PackageName: "pn-personafisica-webapp"
+        BaseDir: "packages/pn-personafisica-webapp"
+      TimeoutInMinutes: 5
 
   # Progetti template CFN
   PnInfra:
