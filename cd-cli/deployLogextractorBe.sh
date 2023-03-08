@@ -215,6 +215,8 @@ echo "ElasticacheSecurityGroup="${ElasticacheSecurityGroup}
 echo "AlbListenerArn="${AlbListenerArn}
 echo "AllowedOrigin="${AllowedOrigin}
 echo "AlbSecurityGroup="${AlbSecurityGroup}
+echo "SamlAssertionBucketKeyArn="${SamlAssertionBucketKeyArn}
+echo "SamlAssertionBucketArn="${SamlAssertionBucketArn}
 
 TemplateFilePath="$microcvs_name/scripts/aws/ecs-service.yaml"
 aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-file $TemplateFilePath \
@@ -227,6 +229,8 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
         "Subnets=${PrivateSubnetIds}" \
         "LoadBalancerListenerArn=${AlbListenerArn}" \
         "LoadbalancerRulePriority=11" \
+        "SamlAssertionBucketKeyArn=${SamlAssertionBucketKeyArn}" \
+        "SamlAssertionBucketArn=${SamlAssertionBucketArn}" \
         "ContainerEnvEntry1=ENSURE_RECIPIENT_BY_EXTERNAL_ID_URL=${PnDataVaultRootPath}/datavault-private/v1/recipients/external/%s" \
         "ContainerEnvEntry2=GET_RECIPIENT_DENOMINATION_BY_INTERNAL_ID_URL=${PnDataVaultRootPath}/datavault-private/v1/recipients/internal" \
         "ContainerEnvEntry3=GET_SENT_NOTIFICATION_URL=${PnCoreRootPath}/delivery-private/search" \
