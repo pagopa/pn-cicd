@@ -237,7 +237,6 @@ Resources:
 
   # CodeBuild Role used during the choose of right codepipeline
   ChooseAndLaunchPipelineCodeBuildRole:
-    Condition: IsContinuosDeliveryCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -250,6 +249,13 @@ Resources:
                 - "codebuild.amazonaws.com"
             Action:
               - "sts:AssumeRole"
+          - 
+            Effect: Allow
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"              
       ManagedPolicyArns:
         - !Ref CodeBuildManagedPolicy
         - !Ref CodeBuildPolicyR53
@@ -313,7 +319,7 @@ Resources:
   DeployPipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-env-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -796,6 +802,9 @@ Resources:
               - codebuild:CreateReportGroup
               - codebuild:CreateReport
               - codebuild:UpdateReport
+              - codebuild:StartBuild              
+              - codebuild:BatchGetBuilds
+              - codebuild:StopBuild     
               - codebuild:BatchPutTestCases
               - codebuild:BatchPutCodeCoverages
           - Effect: Allow
@@ -946,6 +955,8 @@ Resources:
               - s3:*Object
               - s3:GetObjectVersion
               - s3:PutObject*
+              - "s3-object-lambda:Get*"
+              - "s3-object-lambda:List*"               
             Resource: arn:aws:s3:::*/*
           - Sid: VisualEditor1
             Effect: Allow
@@ -957,6 +968,8 @@ Resources:
               - s3:DeleteBucketPolicy
               - s3:GetBucketLocation
               - s3:DeleteBucket
+              - "s3-object-lambda:Get*"
+              - "s3-object-lambda:List*"               
             Resource: arn:aws:s3:::*
           - Effect: Allow
             Action: s3:ListAllMyBuckets

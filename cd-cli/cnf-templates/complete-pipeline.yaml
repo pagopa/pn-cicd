@@ -405,7 +405,6 @@ Resources:
 
   # CodeBuild Role used during the choose of right codepipeline
   ChooseAndLaunchPipelineCodeBuildRole:
-    Condition: IsContinuousDeliveryCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -416,6 +415,13 @@ Resources:
             Principal:
               Service:
                 - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+          - 
+            Effect: Allow
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
             Action:
               - "sts:AssumeRole"
       ManagedPolicyArns:
@@ -446,42 +452,12 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
   
-  # - The role used by all the pipelines
-  PipelineRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: "Allow"
-            Action: "sts:AssumeRole"
-            Principal:
-              Service:
-                - codepipeline.amazonaws.com
-      Path: "/"
-      Policies:
-        - PolicyName: PipelinePolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-            - Effect: Allow
-              Action:
-                - "s3:Get*"
-                - "s3:List*"
-                - "s3-object-lambda:Get*"
-                - "s3-object-lambda:List*"
-                - "*"
-              Resource: 
-                - !Sub "arn:aws:s3:::${CdArtifactBucket}"
-                - !Sub "arn:aws:s3:::${CdArtifactBucket}/*"
-                - "*"
-  
   # PIPELINE DEFINITION
   #######################
   DeployPipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-env-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -1207,7 +1183,7 @@ Resources:
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
-        Image: "aws/codebuild/standard:5.0"
+        Image: "aws/codebuild/standard:6.0"
 
   # CODEBUILD used for post microservices deployment scripts
   ###################################################
@@ -1461,6 +1437,9 @@ Resources:
               - codebuild:CreateReportGroup
               - codebuild:CreateReport
               - codebuild:UpdateReport
+              - codebuild:StartBuild              
+              - codebuild:BatchGetBuilds
+              - codebuild:StopBuild               
               - codebuild:BatchPutTestCases
               - codebuild:BatchPutCodeCoverages
           - Effect: Allow
@@ -1643,6 +1622,8 @@ Resources:
               - s3:*Object
               - s3:GetObjectVersion
               - s3:PutObject*
+              - "s3-object-lambda:Get*"
+              - "s3-object-lambda:List*"              
             Resource: arn:aws:s3:::*/*
           - Sid: VisualEditor1
             Effect: Allow
@@ -1654,6 +1635,8 @@ Resources:
               - s3:DeleteBucketPolicy
               - s3:GetBucketLocation
               - s3:DeleteBucket
+              - "s3-object-lambda:Get*"
+              - "s3-object-lambda:List*"              
             Resource: arn:aws:s3:::*
           - Effect: Allow
             Action: s3:ListAllMyBuckets
@@ -2479,7 +2462,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-infra-authfleet-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -2569,7 +2552,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-frontend-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -2660,7 +2643,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-delivery-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -2752,7 +2735,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-infrastructure-post-deploy-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -2842,7 +2825,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-delivery-push-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -2935,7 +2918,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-user-attributes-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -3028,7 +3011,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-mandate-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -3120,7 +3103,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-external-registries-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -3213,7 +3196,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-downtime-logs-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -3306,7 +3289,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-radd-fsu-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -3399,7 +3382,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-external-channels-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -3493,7 +3476,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-logsaver-be-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -3586,7 +3569,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-national-registries-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -3678,7 +3661,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-apikey-manager-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -3770,7 +3753,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-pn-paper-channel-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -3862,7 +3845,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-progression-sensor-update-pipeline'
       ArtifactStore:
         Type: S3
@@ -3955,7 +3938,7 @@ Resources:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt PipelineRole.Arn
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
       Name: !Sub '${ProjectName}-kafka-bridge-update-pipeline'
       ArtifactStore:
         Type: S3
