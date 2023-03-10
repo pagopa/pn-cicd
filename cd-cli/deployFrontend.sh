@@ -39,6 +39,7 @@ parse_params() {
   pn_infra_commitid=""
   pn_frontend_commitid=""
   bucketName=""
+  distributionId=""
   tooManyErrorsAlarmArn=""
   tooManyRequestsAlarmArn=""
   LambdasBucketName=""
@@ -264,6 +265,12 @@ function prepareOneCloudFront() {
       --output json \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"WebAppBucketName\") | .OutputValue" )
 
+  distributionId=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name $CdnName \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"DistributionId\") | .OutputValue" )
+
   if ( [ ! -z "$HAS_MONITORING" ]) then
     tooManyRequestsAlarmArn=$( aws ${aws_command_base_args} \
       cloudformation describe-stacks \
@@ -305,6 +312,7 @@ prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "${PORTALE_PA_ALTERNATE_DNS-}"
 
 webappPaBucketName=${bucketName}
+webappPaDistributionId=${distributionId}
 webappPaTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPaTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
@@ -315,6 +323,7 @@ prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "$REACT_APP_URL_API" \
     "${PORTALE_PF_ALTERNATE_DNS-}"
 webappPfBucketName=${bucketName}
+webappPfDistributionId=${distributionId}
 webappPfTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPfTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
@@ -326,6 +335,7 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
       "$REACT_APP_URL_API" \
       "${PORTALE_PG_ALTERNATE_DNS-}"
   webappPgBucketName=${bucketName}
+  webappPgDistributionId=${distributionId}
   webappPgTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
   webappPgTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 fi
@@ -338,6 +348,7 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
       "$REACT_APP_URL_API" \
       "${PORTALE_STATUS_ALTERNATE_DNS-}"
   webappStatusBucketName=${bucketName}
+  webappStatusDistributionId=${distributionId}
   webappStatusTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
   webappStatusTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 fi
@@ -349,6 +360,7 @@ prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "$REACT_APP_URL_API" \
     "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
 webappPflBucketName=${bucketName}
+webappPflDistributionId=${distributionId}
 webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
@@ -359,33 +371,40 @@ prepareOneCloudFront web-landing-cdn-${env_type} \
     "$REACT_APP_URL_API" \
     "${LANDING_SITE_ALTERNATE_DNS-}"
 landingBucketName=${bucketName}
+landingDistributionId=${distributionId}
 landingTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 landingTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 
 
 echo ""
+echo " === Distribution ID Portale PA = ${webappPaDistributionId}"
 echo " === Bucket Portale PA = ${webappPaBucketName}"
 echo " === Too Many Request Alarm Portale PA = ${webappPaTooManyRequestsAlarmArn}"
 echo " === Too Many Errors Alarm Portale PA = ${webappPaTooManyErrorsAlarmArn}"
 echo " === Bucket Portale PF = ${webappPfBucketName}"
+echo " === Distribution ID Portale PF = ${webappPfDistributionId}"
 echo " === Too Many Request Alarm Portale PF = ${webappPfTooManyRequestsAlarmArn}"
 echo " === Too Many Errors Alarm Portale PF = ${webappPfTooManyErrorsAlarmArn}"
 echo " === Bucket Portale PF login = ${webappPflBucketName}"
+echo " === Distribution ID Portale PF login = ${webappPflDistributionId}"
 echo " === Too Many Request Alarm Portale PFL = ${webappPflTooManyRequestsAlarmArn}"
 echo " === Too Many Errors Alarm Portale PFL = ${webappPflTooManyErrorsAlarmArn}"
 echo " === Bucket Sito LAnding = ${landingBucketName}"
+echo " === Distribution ID Portale Landing = ${landingDistributionId}"
 echo " === Too Many Request Alarm Landing = ${landingTooManyRequestsAlarmArn}"
 echo " === Too Many Errors Alarm Landing = ${landingTooManyErrorsAlarmArn}"
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
   echo " === Bucket Portale PG = ${webappPgBucketName}"
   echo " === Too Many Request Alarm Portale PG = ${webappPgTooManyRequestsAlarmArn}"
   echo " === Too Many Errors Alarm Portale PG = ${webappPgTooManyErrorsAlarmArn}"
+  echo " === Distribution ID Portale PG login = ${webappPgDistributionId}"
 fi
 if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   echo " === Bucket Portale Status = ${webappStatusBucketName}"
   echo " === Too Many Request Alarm Portale Status = ${webappStatusTooManyRequestsAlarmArn}"
   echo " === Too Many Errors Alarm Portale Status = ${webappStatusTooManyErrorsAlarmArn}"
+  echo " === Distribution ID Portale status = ${webappStatusDistributionId}"
 fi
 
 if ( [ ! -z "$HAS_MONITORING" ]) then
@@ -466,6 +485,7 @@ mkdir -p "pn-pa-webapp_${env_type}"
 aws ${aws_command_base_args} \
     s3 sync "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/" --delete 
 
+aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPaDistributionId} --paths "/*"
 
 
 echo ""
@@ -483,6 +503,7 @@ mkdir -p "pn-personafisica-webapp_${env_type}"
 aws ${aws_command_base_args} \
     s3 sync "pn-personafisica-webapp_${env_type}" "s3://${webappPfBucketName}/" --delete 
 
+aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPfDistributionId} --paths "/*"
 
 echo ""
 echo "===                       PORTALE PF LOGIN                        ==="
@@ -499,7 +520,7 @@ mkdir -p "pn-personafisica-login_${env_type}"
 aws ${aws_command_base_args} \
     s3 sync "pn-personafisica-login_${env_type}" "s3://${webappPflBucketName}/" --delete 
 
-
+aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPflDistributionId} --paths "/*"
 
 
 echo ""
@@ -517,6 +538,7 @@ mkdir -p "pn-landing-webapp_${env_type}"
 aws ${aws_command_base_args} \
     s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" --delete 
 
+aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
 
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
   echo ""
@@ -533,6 +555,9 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
 
   aws ${aws_command_base_args} \
       s3 sync "pn-personagiuridica-webapp_${env_type}" "s3://${webappPgBucketName}/" --delete 
+
+  aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPgDistributionId} --paths "/*"
+
 fi
 
 if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
@@ -550,4 +575,7 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
 
   aws ${aws_command_base_args} \
       s3 sync "pn-status-webapp_${env_type}" "s3://${webappPgBucketName}/" --delete 
+
+  aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappStatusDistributionId} --paths "/*"
+
 fi
