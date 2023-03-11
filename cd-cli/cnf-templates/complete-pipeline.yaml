@@ -2051,6 +2051,7 @@ Resources:
               - cloudfront:UpdateDistribution
               - cloudfront:UpdateCloudFrontOriginAccessIdentity
               - cloudfront:GetDistributionConfig
+              - cloudfront:CreateInvalidation
               - waf:GetWebACL
               - cloudfront:UntagResource
               - cloudfront:GetCloudFrontOriginAccessIdentityConfig
