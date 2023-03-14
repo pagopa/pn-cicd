@@ -487,6 +487,7 @@ Resources:
                 - !Ref AWS::NoValue
 
   PnSsDeployPipeline:
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -576,6 +577,7 @@ Resources:
               RunOrder: 3
 
   PnStateMachineManagerDeployPipeline:
+    Condition: IsContinuousDeliveryCondition
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
