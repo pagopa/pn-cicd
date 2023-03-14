@@ -1374,6 +1374,7 @@ Resources:
               - application-autoscaling:DescribeScalingPolicies
               - application-autoscaling:PutScalingPolicy
               - application-autoscaling:RegisterScalableTarget
+              - application-autoscaling:DescribeScheduledActions              
               - autoscaling:CreateAutoScalingGroup
               - autoscaling:CreateLaunchConfiguration
               - autoscaling:DeleteAutoScalingGroup

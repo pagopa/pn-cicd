@@ -873,6 +873,15 @@ Resources:
         PackageName: "pn-personafisica-webapp"
         BaseDir: "packages/pn-personafisica-webapp"
       TimeoutInMinutes: 5
+  PnPersonagiuridicaSonar:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-frontend"
+        PackageName: "pn-personagiuridica-webapp"
+        BaseDir: "packages/pn-personagiuridica-webapp"
+      TimeoutInMinutes: 5
   PnPfLoginSonar:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -890,6 +899,15 @@ Resources:
         GitHubProjectName: "pn-frontend"
         PackageName: "pn-validator"
         BaseDir: "packages/pn-validator"
+      TimeoutInMinutes: 5
+  PnHelpdeskSonar:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-helpdesk-fe"
+        PackageName: "pn-helpdesk-fe"
+        BaseDir: "pn-helpdesk-fe"
       TimeoutInMinutes: 5
   # Web cypress pipeline
   PnPaCypress:
