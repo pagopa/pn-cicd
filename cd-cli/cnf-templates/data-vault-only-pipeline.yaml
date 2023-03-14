@@ -1132,6 +1132,38 @@ Resources:
             Condition:
               StringEquals:
                 iam:AWSServiceName: batch.amazonaws.com
+          - Effect: Allow
+            Action:
+              - codepipeline:TagResource
+              - codepipeline:ListPipelineExecutions
+              - codepipeline:StartPipelineExecution
+              - codepipeline:ListActionExecutions
+              - codepipeline:GetPipeline
+              - codepipeline:UntagResource
+              - codepipeline:ListTagsForResource
+              - codepipeline:GetPipelineState
+              - codepipeline:GetPipelineExecution
+            Resource: !Sub arn:aws:codepipeline:*:${AWS::AccountId}:*
+          - Effect: Allow
+            Action:
+              - codepipeline:EnableStageTransition
+              - codepipeline:TagResource
+              - codepipeline:ListWebhooks
+              - codepipeline:RetryStageExecution
+              - codepipeline:UntagResource
+              - codepipeline:ListTagsForResource
+              - codepipeline:DisableStageTransition
+            Resource:
+              - !Sub arn:aws:codepipeline:*:${AWS::AccountId}:webhook:*
+              - !Sub arn:aws:codepipeline:*:${AWS::AccountId}:*/*
+          - Effect: Allow
+            Action:
+              - codepipeline:ListPipelines
+              - codepipeline:GetThirdPartyJobDetails
+              - codepipeline:GetJobDetails
+              - codepipeline:GetActionType
+              - codepipeline:ListActionTypes
+            Resource: "*"
 
   CodeBuildPolicyS3:
     Type: AWS::IAM::ManagedPolicy
@@ -1444,6 +1476,11 @@ Resources:
               - events:PutRule
               - events:PutTargets
               - events:RemoveTargets
+              - pipes:DeletePipe              
+              - pipes:CreatePipe 
+              - pipes:UpdatePipe               
+              - pipes:DescribePipe               
+              - pipes:ListPipes               
               - fsx:DescribeFileSystems
               - iam:ListAttachedRolePolicies
               - iam:ListInstanceProfiles
@@ -1572,6 +1609,7 @@ Resources:
               - cloudfront:UpdateDistribution
               - cloudfront:UpdateCloudFrontOriginAccessIdentity
               - cloudfront:GetDistributionConfig
+              - cloudfront:CreateInvalidation
               - waf:GetWebACL
               - cloudfront:UntagResource
               - cloudfront:GetCloudFrontOriginAccessIdentityConfig
