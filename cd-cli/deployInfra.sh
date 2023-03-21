@@ -195,6 +195,68 @@ aws ${aws_command_base_args}  \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
 
+echo ""
+echo ""
+echo ""
+echo "======================================================================="
+echo "======================================================================="
+echo "===                                                                 ==="
+echo "===                       PN-INFRA-STORAGE DEPLOYMENT               ==="
+echo "===                                                                 ==="
+echo "======================================================================="
+echo "======================================================================="
+echo ""
+echo ""
+echo ""
+echo "=== Prepare parameters for pn-infra-storage.yaml deployment in $env_type ACCOUNT"
+PreviousOutputFilePath=once4account-${env_type}-out.json
+TemplateFilePath=pn-infra/runtime-infra/pn-infra-storage.yaml
+ParamFilePath=pn-infra/runtime-infra/pn-infra-storage-${env_type}-cfg.json
+EnanchedParamFilePath=pn-infra-storage-${env_type}-cfg-enanched.json
+PipelineParams="\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+
+echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
+echo " - TemplateFilePath: ${TemplateFilePath}"
+echo " - ParamFilePath: ${ParamFilePath}"
+echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
+echo " - PipelineParams: ${PipelineParams}"
+
+
+echo ""
+echo "= Read Outputs from previous stack"
+aws ${aws_command_base_args}  \
+    cloudformation describe-stacks \
+      --stack-name once-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | tee ${PreviousOutputFilePath}
+
+echo ""
+echo "= Read Parameters file"
+cat ${ParamFilePath} 
+
+echo ""
+echo "= Enanched parameters file"
+jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnanchedParamFilePath}
+echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+cat ${EnanchedParamFilePath}
+
+
+echo ""
+echo "=== Deploy PN-INFRA-STORAGE FOR $env_type ACCOUNT"
+aws ${aws_command_base_args} \
+    cloudformation deploy \
+      --stack-name pn-infra-storage-$env_type \
+      --capabilities CAPABILITY_NAMED_IAM \
+      --template-file pn-infra/runtime-infra/pn-infra-storage.yaml \
+      --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+        
+
+
+
 
 
 echo ""
@@ -211,7 +273,7 @@ echo ""
 echo ""
 echo ""
 echo "=== Prepare parameters for pn-infra.yaml deployment in $env_type ACCOUNT"
-PreviousOutputFilePath=once4account-${env_type}-out.json
+PreviousOutputFilePath=pn-infra-storage-${env_type}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-infra.yaml
 ParamFilePath=pn-infra/runtime-infra/pn-infra-${env_type}-cfg.json
 EnanchedParamFilePath=pn-infra-${env_type}-cfg-enanched.json
@@ -228,7 +290,7 @@ echo ""
 echo "= Read Outputs from previous stack"
 aws ${aws_command_base_args}  \
     cloudformation describe-stacks \
-      --stack-name once-$env_type \
+      --stack-name pn-infra-storage-$env_type \
       --query "Stacks[0].Outputs" \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
