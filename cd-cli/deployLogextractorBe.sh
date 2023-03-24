@@ -217,6 +217,7 @@ echo "AllowedOrigin="${AllowedOrigin}
 echo "AlbSecurityGroup="${AlbSecurityGroup}
 echo "SamlAssertionBucketKeyArn="${SamlAssertionBucketKeyArn}
 echo "SamlAssertionBucketArn="${SamlAssertionBucketArn}
+echo "SamlAssertionDownloadUrl="${SamlAssertionDownloadUrl}
 
 TemplateFilePath="$microcvs_name/scripts/aws/ecs-service.yaml"
 aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-file $TemplateFilePath \
@@ -249,6 +250,7 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
         "ContainerEnvEntry17=ALLOWED_ORIGIN=${AllowedOrigin}" \
         "ContainerEnvEntry18=DOWNTIME_EVENTS_URL=${PnCoreRootPath}/downtime-internal/v1/events" \
         "ContainerEnvEntry19=DOWNTIME_STATUS_URL=${PnCoreRootPath}/downtime/v1/status" \
+        "ContainerEnvEntry20=S3_DOWNLOAD_URL=${SamlAssertionDownloadUrl}" \
         "ContainerSecret1=BASIC_AUTH_USERNAME=${OpenSearchSecretArn}:username:AWSCURRENT:" \
         "ContainerSecret2=BASIC_AUTH_PASSWORD=${OpenSearchSecretArn}:password:AWSCURRENT:" \
     --capabilities "CAPABILITY_NAMED_IAM"
