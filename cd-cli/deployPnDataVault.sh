@@ -214,6 +214,74 @@ aws ${aws_command_base_args}  \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
+
+STORAGE_STACK_FILE=${microcvs_name}/scripts/aws/cfn/pn-infra-storage.yaml 
+
+INFRA_INPUT_STACK=once-${env_type} 
+if [[ -f "$STORAGE_STACK_FILE" ]]; then
+  echo ""
+  echo ""
+  echo ""
+  echo "======================================================================="
+  echo "======================================================================="
+  echo "===                                                                 ==="
+  echo "===                       PN-INFRA-STORAGE DEPLOYMENT               ==="
+  echo "===                                                                 ==="
+  echo "======================================================================="
+  echo "======================================================================="
+  echo ""
+  echo ""
+  echo ""
+  echo "=== Prepare parameters for pn-infra-storage.yaml deployment in $env_type ACCOUNT"
+  PreviousOutputFilePath=once4account-${env_type}-out.json
+  TemplateFilePath=${microcvs_name}/scripts/aws/cfn/pn-infra-storage.yaml
+  ParamFilePath=${microcvs_name}/scripts/aws/cfn/pn-infra-storage-${env_type}-cfg.json
+  EnanchedParamFilePath=pn-infra-storage-${env_type}-cfg-enanched.json
+  PipelineParams="\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+
+  echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
+  echo " - TemplateFilePath: ${TemplateFilePath}"
+  echo " - ParamFilePath: ${ParamFilePath}"
+  echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
+  echo " - PipelineParams: ${PipelineParams}"
+
+
+  echo ""
+  echo "= Read Outputs from previous stack"
+  aws ${aws_command_base_args}  \
+      cloudformation describe-stacks \
+        --stack-name once-$env_type \
+        --query "Stacks[0].Outputs" \
+        --output json \
+        | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+        | tee ${PreviousOutputFilePath}
+
+  echo ""
+  echo "= Read Parameters file"
+  cat ${ParamFilePath} 
+
+  echo ""
+  echo "= Enanched parameters file"
+  jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+    > ${EnanchedParamFilePath}
+  echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+  cat ${EnanchedParamFilePath}
+
+
+  echo ""
+  echo "=== Deploy PN-INFRA-STORAGE FOR $env_type ACCOUNT"
+  aws ${aws_command_base_args} \
+      cloudformation deploy \
+        --stack-name pn-infra-storage-$env_type \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --template-file pn-infra/runtime-infra/pn-infra-storage.yaml \
+        --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+  
+  INFRA_INPUT_STACK=pn-infra-storage-${env_type}
+fi
+
+
 echo ""
 echo ""
 echo ""
@@ -228,7 +296,7 @@ echo "======================================================================="
 echo ""
 echo "= Read Outputs from previous stack"
 
-PreviousOutputFilePath=once-$env_type-out.json
+PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 ParamFilePath=${microcvs_name}/scripts/aws/cfn/infra-${env_type}-cfg.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra.yml
 EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
@@ -236,7 +304,7 @@ PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectN
 
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
-      --stack-name once-$env_type \
+      --stack-name ${INFRA_INPUT_STACK} \
       --query "Stacks[0].Outputs" \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
