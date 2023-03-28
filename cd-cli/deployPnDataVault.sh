@@ -225,18 +225,18 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   echo "======================================================================="
   echo "======================================================================="
   echo "===                                                                 ==="
-  echo "===                       PN-INFRA-STORAGE DEPLOYMENT               ==="
+  echo "===                       INFRA-STORAGE DEPLOYMENT               ==="
   echo "===                                                                 ==="
   echo "======================================================================="
   echo "======================================================================="
   echo ""
   echo ""
   echo ""
-  echo "=== Prepare parameters for pn-infra-storage.yaml deployment in $env_type ACCOUNT"
+  echo "=== Prepare parameters for infra-storage.yaml deployment in $env_type ACCOUNT"
   PreviousOutputFilePath=once4account-${env_type}-out.json
-  TemplateFilePath=${microcvs_name}/scripts/aws/cfn/pn-infra-storage.yaml
-  ParamFilePath=${microcvs_name}/scripts/aws/cfn/pn-infra-storage-${env_type}-cfg.json
-  EnanchedParamFilePath=pn-infra-storage-${env_type}-cfg-enanched.json
+  TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra-storage.yaml
+  ParamFilePath=${microcvs_name}/scripts/aws/cfn/infra-storage-${env_type}-cfg.json
+  EnanchedParamFilePath=infra-storage-${env_type}-cfg-enanched.json
   PipelineParams="\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
   echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
@@ -270,15 +270,15 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
 
 
   echo ""
-  echo "=== Deploy PN-INFRA-STORAGE FOR $env_type ACCOUNT"
+  echo "=== Deploy INFRA-STORAGE FOR $env_type ACCOUNT"
   aws ${aws_command_base_args} \
       cloudformation deploy \
-        --stack-name pn-infra-storage-$env_type \
+        --stack-name infra-storage-$env_type \
         --capabilities CAPABILITY_NAMED_IAM \
-        --template-file pn-infra/runtime-infra/pn-infra-storage.yaml \
+        --template-file ${microcvs_name}/scripts/aws/cfn/infra-storage.yaml \
         --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
   
-  INFRA_INPUT_STACK=pn-infra-storage-${env_type}
+  INFRA_INPUT_STACK=infra-storage-${env_type}
 fi
 
 
