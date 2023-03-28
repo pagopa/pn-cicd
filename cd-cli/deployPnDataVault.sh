@@ -215,7 +215,7 @@ aws ${aws_command_base_args}  \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
 
-STORAGE_STACK_FILE=${microcvs_name}/scripts/aws/cfn/pn-infra-storage.yaml 
+STORAGE_STACK_FILE=${microcvs_name}/scripts/aws/cfn/infra-storage.yaml 
 
 INFRA_INPUT_STACK=once-${env_type} 
 if [[ -f "$STORAGE_STACK_FILE" ]]; then
