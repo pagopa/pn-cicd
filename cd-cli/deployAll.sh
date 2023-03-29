@@ -156,13 +156,13 @@ source "${desired_commit_id_dir}/${env_type}/desired-commit-ids-env.sh"
 ./deployEcsService.sh $aws_profile_param \
       -n pn-external-registries -N 6 \
       -r $aws_region -e $env_type -i $pn_infra_commitId \
-      -m $pn_ExternalRegistry_commitId -I $pn_ExternalRegistry_imageUrl \
+      -m $pn_external_registries_commitId -I $pn_external_registries_imageUrl \
       -b $bucketName -w $work_dir -c $custom_config_dir 
 
 ./deployEcsService.sh $aws_profile_param \
       -n pn-user-attributes -N 7 \
       -r $aws_region -e $env_type -i $pn_infra_commitId \
-      -m $pn_UserAttributes_commitId -I $pn_UserAttributes_imageUrl \
+      -m $pn_user_attributes_commitId -I $pn_user_attributes_imageUrl \
       -b $bucketName -w $work_dir -c $custom_config_dir 
 
 

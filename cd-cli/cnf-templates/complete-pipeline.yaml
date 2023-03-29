@@ -249,14 +249,14 @@ Resources:
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-user-attributes" ] ) then
-                    sed -i -e "s|pn_UserAttributes_commitId=.*|pn_UserAttributes_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    sed -i -e "s|pn_UserAttributes_imageUrl=.*|pn_UserAttributes_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_user_attributes_commitId=.*|pn_user_attributes_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_user_attributes_imageUrl=.*|pn_user_attributes_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-pn-user-attributes-update-pipeline"
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-external-registries" ] ) then
-                    sed -i -e "s|pn_ExternalRegistry_commitId=.*|pn_ExternalRegistry_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    sed -i -e "s|pn_ExternalRegistry_imageUrl=.*|pn_ExternalRegistry_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_external_registries_commitId=.*|pn_external_registries_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_external_registries_imageUrl=.*|pn_external_registries_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-pn-external-registries-update-pipeline"
                   fi
                 - |
@@ -629,7 +629,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-external-registries", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"6", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_ExternalRegistry", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_external_registries", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -653,7 +653,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-user-attributes", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"7", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_UserAttributes", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_user_attributes", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -2998,7 +2998,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-user-attributes", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"7", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_UserAttributes", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_user_attributes", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -3183,7 +3183,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-external-registries", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"6", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_ExternalRegistry", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_external_registries", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts

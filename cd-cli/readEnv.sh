@@ -131,11 +131,11 @@ for stack in $( echo $stacks ) ; do
   normalizedVersions=$( echo "${version}" | tr "," "\n" \
        | sed -e 's/^pn-delivery=/pn_delivery_commitId=/' \
        | sed -e 's/^pn-delivery-push=/pn_delivery_push_commitId=/' \
-       | sed -e 's/^pn-user-attributes=/pn_UserAttributes_commitId=/' \
+       | sed -e 's/^pn-user-attributes=/pn_user_attributes_commitId=/' \
        | sed -e 's/^pn-mandate=/pn_mandate_commitId=/' \
        | sed -e 's/^pn-data-vault=/pn_data_vault_commitId=/' \
        | sed -e 's/^pn_data_vault_sep_imageUrl=/pn_data_vault_imageUrl=/' \
-       | sed -e 's/^pn-external-registries=/pn_ExternalRegistry_commitId=/' \
+       | sed -e 's/^pn-external-registries=/pn_external_registries_commitId=/' \
     )
   echo ${normalizedVersions} | tr " " "\n"
 
