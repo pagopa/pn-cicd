@@ -360,6 +360,7 @@ echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " - PipelineParams: ${PipelineParams}"
 
 
+ParamFilePath=pn-infra/runtime-infra/pn-event-bridge-${env_type}-cfg.json
 echo ""
 echo "= Read Outputs from previous stack"
 aws ${aws_command_base_args} \
@@ -392,6 +393,40 @@ aws ${aws_command_base_args} \
       --capabilities CAPABILITY_NAMED_IAM \
       --template-file pn-infra/runtime-infra/pn-ipc.yaml \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+
+
+echo ""
+echo "=== Deploy PN-EVENT-BRIDGE FOR $env_type ACCOUNT"
+
+  echo ""
+  echo "= Read Outputs from previous stack"
+  aws ${aws_command_base_args}  \
+      cloudformation describe-stacks \
+        --stack-name pn-ipc-$env_type \
+        --query "Stacks[0].Outputs" \
+        --output json \
+        | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+        | tee ${PreviousOutputFilePath}
+
+  echo ""
+  echo "= Read Parameters file"
+  cat ${ParamFilePath} 
+
+  echo ""
+  echo "= Enanched parameters file"
+  jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+    > ${EnanchedParamFilePath}
+  echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+  cat ${EnanchedParamFilePath}
+
+  aws ${aws_command_base_args} \
+      cloudformation deploy \
+        --stack-name pn-event-bridge-$env_type \
+        --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+        --template-file pn-infra/runtime-infra/pn-event-bridge.yaml  \
+        --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+
 
 echo ""
 echo "=== Deploy PN-Monitoring FOR $env_type ACCOUNT"
@@ -432,4 +467,3 @@ if [[ -f "$MONITORING_STACK_FILE" ]]; then
 else
   echo "Monitoring file doesn't exist, stack update skipped"
 fi
-

@@ -154,8 +154,8 @@ aws ${aws_command_base_args} \
 echo ""
 echo ""
 echo ""
-echo "###    READ EXPORTS FROM PN-IPC AND PN-LOGS-EXPORT     ###"
-echo "##########################################################"
+echo "###    READ EXPORTS FROM PN-EVENT-BRIDGE AND PN-LOGS-EXPORT     ###"
+echo "###################################################################"
 
 PreviousOutputFilePath=previous-output-${env_type}.json
 PreviousLogsOutputFilePath=previous-logs-output-${env_type}.json
@@ -166,7 +166,7 @@ EnanchedParamFilePath="pn-infra-dashboard-${env_type}-enhanced.json"
 
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
+      --stack-name pn-event-bridge-$env_type \
       --query "Stacks[0].Outputs" \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
