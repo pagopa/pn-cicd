@@ -1,3 +1,4 @@
+echo "[!] Bootstraping..."
 #!/usr/bin/env bash -e
 
 if ( [ $# -ne 2 ] ) then
