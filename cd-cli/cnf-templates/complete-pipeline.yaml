@@ -1031,6 +1031,20 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
+                - |
+                  if ( [ ! -z "$pn_infra_core_commitId"  ] ) then
+                    echo "########################################################"
+                    echo "###                   UPDATE NETWORKING              ###"
+                    echo "########################################################"
+                    echo ""
+                    (cd scripts/cd-cli && ./deployNetworking.sh -r $AwsRegion -e $EnvName -i $pn_infra_core_commitId -a core -w /tmp -c $custom_config_dir )
+                  fi
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
                 - 'echo "########################################################"'
                 - 'echo "###                   UPDATE INFRA                   ###"'
                 - 'echo "########################################################"'

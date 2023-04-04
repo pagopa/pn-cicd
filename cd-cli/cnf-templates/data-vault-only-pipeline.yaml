@@ -758,11 +758,25 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
+                - |
+                  if ( [ ! -z "$pn_infra_confinfo_commitId"  ] ) then
+                    echo "########################################################"
+                    echo "###                   UPDATE NETWORKING              ###"
+                    echo "########################################################"
+                    echo ""
+                    (cd scripts/cd-cli && ./deployNetworking.sh -r $AwsRegion -e $EnvName -i $pn_infra_confinfo_commitId -a confinfo -w /tmp -c $custom_config_dir )
+                  fi
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
                 - 'echo "########################################################"'
                 - 'echo "###       UPDATE MICROSERVICE $MsName    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
+                - 'echo "./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
                 - '(cd scripts/cd-cli && ./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
