@@ -777,7 +777,7 @@ Resources:
                 - 'echo "########################################################"'
                 - 'echo ""'
                 - 'echo "./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+                - '# (cd scripts/cd-cli && ./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
