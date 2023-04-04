@@ -232,6 +232,7 @@ function prepareOneCloudFront() {
     echo "=== Create Logs Bucket ${CdnName}"
     aws ${aws_log_base_args} \
       cloudformation deploy \
+        --no-fail-on-empty-changeset \
         --stack-name $CdnName-logging \
         --template-file pn-frontend/aws-cdn-templates/one-logging.yaml
 
