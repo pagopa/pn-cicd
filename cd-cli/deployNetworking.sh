@@ -118,7 +118,7 @@ curl -Ls https://github.com/reegnz/terraform-tfenv-package/releases/download/v3.
 
 ## Tfenv checksum
 echo "=== Tfenv checksum " 
-calculatedChecksum=$(sha256sum -a 256 ${terraform_deb_file_path})
+calculatedChecksum=($(sha256sum ${terraform_deb_file_path}))
 expectedChecksum=4f0e8b02d2787b1d3c0662a650f1603367144e1cd7caf345201e737117645f0f
 
 if ([ $expectedChecksum != $calculatedChecksum ]) then
