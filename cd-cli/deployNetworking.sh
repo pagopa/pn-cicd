@@ -121,6 +121,8 @@ echo "=== Tfenv checksum "
 calculatedChecksum=($(sha256sum ${terraform_deb_file_path}))
 expectedChecksum=4f0e8b02d2787b1d3c0662a650f1603367144e1cd7caf345201e737117645f0f
 
+echo "Checksum ${calculatedChecksum}"
+
 if ([ $expectedChecksum != $calculatedChecksum ]) then
     echo "Checksum mismatch"
     exit 1
@@ -128,11 +130,12 @@ fi
 
 echo "=== Tfenv install " 
 sudo apt install -y ./${terraform_deb_file_path}
+sudo usermod -aG tfenv ${USER}
 
 ## Repository switch according to account type
 echo "=== Repository switch according to account type " 
 infra_repo="pn-infra-core"
-if ([ $account_type = "confinfo"]) then
+if ( [ $account_type = "confinfo"] ) then
     infra_repo="pn-infra-confinfo"
 fi
 
