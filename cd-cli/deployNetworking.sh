@@ -129,8 +129,7 @@ if ([ $expectedChecksum != $calculatedChecksum ]) then
 fi
 
 echo "=== Tfenv install " 
-sudo apt install -y ./${terraform_deb_file_path}
-sudo usermod -aG tfenv ${USER}
+apt install -y ./${terraform_deb_file_path}
 
 ## Repository switch according to account type
 echo "=== Repository switch according to account type " 
