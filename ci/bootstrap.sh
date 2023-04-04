@@ -1,5 +1,9 @@
 #!/usr/bin/env bash -e
 
+echo "ciao ciao"
+
+exit 0
+
 if ( [ $# -ne 2 ] ) then
   echo "Usage: $0 <cicd-profile> <aws-region>"
   echo "<cicd-profile>: AWS connection profile for cicd account"
