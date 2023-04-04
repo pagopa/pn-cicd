@@ -134,8 +134,8 @@ apt install -y ./${terraform_deb_file_path}
 ## Repository switch according to account type
 echo "=== Repository switch according to account type " 
 infra_repo="pn-infra-core"
-if ( [ $account_type = "confinfo"] ) then
-    infra_repo="pn-infra-confinfo"
+if ( [ $account_type = "confinfo" ] ) then
+  infra_repo="pn-infra-confinfo"
 fi
 
 echo "=== Download ${infra_repo}" 
