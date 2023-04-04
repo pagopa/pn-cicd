@@ -90,12 +90,12 @@ Resources:
               Pattern: PUSH
             - Type: HEAD_REF
               Pattern: ^refs/heads/(main|develop|hotfix)|release\/.*$
-          - - Type: EVENT
-              Pattern: PULL_REQUEST_MERGED
-            - Type: BASE_REF
-              Pattern: ^refs/heads/(main|develop|hotfix)|release\/.*$
-            - Type: FILE_PATH
-              Pattern: !Sub "^${BaseDir}/.*"
+          # - - Type: EVENT
+          #     Pattern: PULL_REQUEST_MERGED
+          #   - Type: BASE_REF
+          #     Pattern: ^refs/heads/(main|develop|hotfix)|release\/.*$
+          #   - Type: FILE_PATH
+          #     Pattern: !Sub "^${BaseDir}/.*"
 
   BuildBatchServiceRole:
     Type: AWS::IAM::Role
