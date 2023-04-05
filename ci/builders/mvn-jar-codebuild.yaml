@@ -220,7 +220,7 @@ Resources:
           - - Type: EVENT
               Pattern: PUSH, PULL_REQUEST_MERGED
             - Type: HEAD_REF
-              Pattern: ^refs/heads/(main|develop)|(feature|hotfix|bug|release)\/.*$
+              Pattern: ^refs/heads/(main|develop)|(feature|hotfix|bug|release)\/.+$
           # - - Type: EVENT
           #     Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
           #   - Type: BASE_REF
