@@ -152,7 +152,7 @@ echo "=== Checkout ${infra_repo} commitId=${pn_infra_commitid}"
 
 
 ## Apply tf
-(cd ${infra_repo}/src/main && ./terraform.sh init ${env_type} && ./terraform.sh apply ${env_type})
+(cd ${infra_repo}/src/main && ./terraform.sh init ${env_type} && ./terraform.sh apply ${env_type} --auto-approve)
 
 ## Outout tf
 (cd ${infra_repo}/src/main && terraform output --json ) | jq 'to_entries[] | { (.key): .value.value}' | jq -s 'reduce .[] as $item ({}; . *= $item )'
