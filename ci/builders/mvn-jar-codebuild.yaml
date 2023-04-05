@@ -140,6 +140,20 @@ Resources:
                 - export MAVEN_CONFIG="--settings maven-settings.xml --no-transfer-progress"
                 - export TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=911845998067.dkr.ecr.eu-central-1.amazonaws.com/
                 - |
+                  export PR_NUM=$(curl -L \
+                    -H "Accept: application/vnd.github+json" \
+                    -H "X-GitHub-Api-Version: 2022-11-28" \
+                    "https://api.github.com/repos/pagopa/${GITHUB_PRJ_NAME}/pulls?head=pagopa:${BRANCH_NAME}" | jq -r '.[] | .number ')
+                    echo "PR_NUM=${PR_NUM}"
+                - |
+                  if ( [ ! -z "${PR_NUM}" ] ) then
+                    export BRANCH_TARGET=$(curl -L \
+                      -H "Accept: application/vnd.github+json" \
+                      -H "X-GitHub-Api-Version: 2022-11-28" \
+                      "https://api.github.com/repos/pagopa/${GITHUB_PRJ_NAME}/pulls/${PR_NUM}" | jq '.base.ref')
+                    echo "BRANCH_TARGET=${BRANCH_TARGET}"
+                  fi
+                - |
                   if [ "x$RELEASE" != "x" ]; then
                     echo "Prepare relase $RELEASE"
                     mvn --batch-mode -Dtag="v${RELEASE}" -DreleaseVersion="${RELEASE}" release:prepare

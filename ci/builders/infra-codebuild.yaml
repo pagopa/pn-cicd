@@ -63,6 +63,20 @@ Resources:
                 - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
                 - if echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/ ; then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///'); export PR_NUM BRANCH_TARGET; fi;
                 - export CI_PROFILE="$CODEBUILD_CI"
+                - |
+                  export PR_NUM=$(curl -L \
+                    -H "Accept: application/vnd.github+json" \
+                    -H "X-GitHub-Api-Version: 2022-11-28" \
+                    "https://api.github.com/repos/pagopa/${GITHUB_PRJ_NAME}/pulls?head=pagopa:${BRANCH_NAME}" | jq -r '.[] | .number ')
+                    echo "PR_NUM=${PR_NUM}"
+                - |
+                  if ( [ ! -z "${PR_NUM}" ] ) then
+                    export BRANCH_TARGET=$(curl -L \
+                      -H "Accept: application/vnd.github+json" \
+                      -H "X-GitHub-Api-Version: 2022-11-28" \
+                      "https://api.github.com/repos/pagopa/${GITHUB_PRJ_NAME}/pulls/${PR_NUM}" | jq '.base.ref')
+                    echo "BRANCH_TARGET=${BRANCH_TARGET}"
+                  fi
             build:
               on-failure: ABORT
               commands:
