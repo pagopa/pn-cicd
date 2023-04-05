@@ -113,13 +113,14 @@ cd $work_dir
 
 ## Download tfenv
 echo "=== Download tfenv " 
-terraform_deb_file_path=terraform-tfenv_3.0.0-1_all.deb
-curl -Ls https://github.com/reegnz/terraform-tfenv-package/releases/download/v3.0.0-1/terraform-tfenv_3.0.0-1_all.deb -o ${terraform_deb_file_path}
+terraform_tarball_path="terraform-tfenv_3.0.0.tar.gz"
+terraform_local_folder="tfenv-3.0.0"
+curl -Ls https://github.com/tfutils/tfenv/archive/refs/tags/v3.0.0.tar.gz -o ${terraform_tarball_path}
 
 ## Tfenv checksum
 echo "=== Tfenv checksum " 
-calculatedChecksum=($(sha256sum ${terraform_deb_file_path}))
-expectedChecksum=4f0e8b02d2787b1d3c0662a650f1603367144e1cd7caf345201e737117645f0f
+calculatedChecksum=($(sha256sum ${terraform_tarball_path}))
+expectedChecksum=463132e45a211fa3faf85e62fdfaa9bb746343ff1954ccbad91cae743df3b648
 
 echo "Checksum ${calculatedChecksum}"
 
@@ -129,7 +130,9 @@ if ([ $expectedChecksum != $calculatedChecksum ]) then
 fi
 
 echo "=== Tfenv install " 
-apt install -y ./${terraform_deb_file_path}
+tar -xzf ${terraform_tarball_path}
+mv ${terraform_local_folder} /usr/local/tfenv
+export PATH="/usr/local/tfenv/bin:$PATH" 
 
 ## Repository switch according to account type
 echo "=== Repository switch according to account type " 
@@ -151,7 +154,11 @@ echo "=== Checkout ${infra_repo} commitId=${pn_infra_commitid}"
 ## Apply tf
 (cd ${infra_repo}/src/main && ./terraform.sh init ${env_type} && ./terraform.sh apply ${env_type})
 
+## Outout tf
+(cd ${infra_repo}/src/main && terraform output --json ) | jq 'to_entries[] | { (.key): .value.value}' | jq -s 'reduce .[] as $item ({}; . *= $item )'
+
 echo " - copy custom config"
 if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .
 fi
+
