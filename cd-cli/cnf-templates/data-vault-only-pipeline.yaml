@@ -1050,6 +1050,7 @@ Resources:
               - elasticloadbalancing:ModifyTargetGroupAttributes
               - elasticloadbalancing:DeleteRule
               - elasticloadbalancing:RegisterTargets
+              - elasticloadbalancing:DescribeLoadBalancerAttributes
             Resource: "*"
           - Effect: Allow
             Action:
