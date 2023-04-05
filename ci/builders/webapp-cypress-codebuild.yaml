@@ -43,7 +43,7 @@ Resources:
       Source:
         Type: GITHUB
         Location: !Sub "https://github.com/pagopa/${GitHubProjectName}"
-        BuildSpec: !Sub "./cypress_buildspec.yaml"
+        BuildSpec: "./cypress_buildspec.yaml"
       TimeoutInMinutes: 10
       Cache:
         Type: LOCAL
