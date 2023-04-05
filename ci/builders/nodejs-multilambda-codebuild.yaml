@@ -118,8 +118,8 @@ Resources:
         FilterGroups:
           - - Type: EVENT
               Pattern: PUSH, PULL_REQUEST_MERGED
-            #- Type: HEAD_REF
-            #  Pattern: ^refs/heads/(main|develop|feature-*)$
+            - Type: HEAD_REF
+              Pattern: ^refs/heads/(main|develop)|(feature|hotfix|bug|release)\/.*$
             #- Type: FILE_PATH
             #  Pattern: !Sub "^${BaseDir}/.*"
           # - - Type: EVENT
