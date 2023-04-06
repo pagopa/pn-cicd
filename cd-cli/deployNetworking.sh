@@ -160,8 +160,8 @@ echo "=== Checkout ${infra_repo} commitId=${pn_infra_commitid}"
 
 terraformOutputPath=terraform-${env_type}-cfg.json
 
-## Outout tf
-(cd ${infra_repo}/src/main && terraform output --json ) | jq 'to_entries[] | { (.key | sub("${terraform_output_prefix}" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | jq -s 'reduce .[] as $item ({}; . *= $item )' | jq -s '{ Parameters: .[0] }' | tee $terraformOutputPath
+## Output tf
+(cd ${infra_repo}/src/main && terraform output --json ) | jq 'to_entries[] | { (.key | sub("'${terraform_output_prefix}'" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | jq -s 'reduce .[] as $item ({}; . *= $item )' | jq -s '{ Parameters: .[0] }' | tee $terraformOutputPath
 
 echo ""
 echo "= Read Terraform Output file"
