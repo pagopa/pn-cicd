@@ -2022,6 +2022,8 @@ Resources:
                   - ecs.application-autoscaling.amazonaws.com
                   - spot.amazonaws.com
                   - spotfleet.amazonaws.com
+                  - codebuild.amazonaws.com
+                  - codepipeline.amazonaws.com
           - Effect: Allow
             Action:
               - elasticloadbalancing:AddTags
