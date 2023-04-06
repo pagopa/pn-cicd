@@ -137,8 +137,12 @@ export PATH="/usr/local/tfenv/bin:$PATH"
 ## Repository switch according to account type
 echo "=== Repository switch according to account type " 
 infra_repo="pn-infra-core"
+terraform_output_prefix="Core_"
+ms_name="pn-infra"
 if ( [ $account_type = "confinfo" ] ) then
   infra_repo="pn-infra-confinfo"
+  terraform_output_prefix="ConfInfo_"  
+  ms_name="pn-data-vault"
 fi
 
 echo "=== Download ${infra_repo}" 
@@ -154,11 +158,16 @@ echo "=== Checkout ${infra_repo} commitId=${pn_infra_commitid}"
 ## Apply tf
 (cd ${infra_repo}/src/main && ./terraform.sh init ${env_type} && ./terraform.sh apply ${env_type} --auto-approve)
 
+terraformOutputPath=terraform-${env_type}-cfg.json
+
 ## Outout tf
-(cd ${infra_repo}/src/main && terraform output --json ) | jq 'to_entries[] | { (.key): .value.value}' | jq -s 'reduce .[] as $item ({}; . *= $item )'
+(cd ${infra_repo}/src/main && terraform output --json ${env_type} ) | jq 'to_entries[] | { (.key | sub("${terraform_output_prefix}" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | jq -s 'reduce .[] as $item ({}; . *= $item )' | jq -s '{ Parameters: .[0] }' | tee $terraformOutputPath
+
+echo ""
+echo "= Read Terraform Output file"
+cat ${terraformOutputPath} 
 
 echo " - copy custom config"
-if ( [ ! -z "${custom_config_dir}" ] ) then
-  cp -r $custom_config_dir/pn-infra .
-fi
+mkdir -p $custom_config_dir/${infra_repo}
+cp -p ${terraformOutputPath} $custom_config_dir/${infra_repo}/
 

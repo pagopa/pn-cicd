@@ -130,6 +130,11 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .
 fi
 
+echo " - copy pn-infra-core config"
+if ( [ ! -z "${custom_config_dir}" ] ) then
+  cp -r $custom_config_dir/pn-infra-core .
+fi
+
 echo ""
 echo "=== Base AWS command parameters"
 aws_command_base_args=""
@@ -260,6 +265,20 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   INFRA_INPUT_STACK=pn-infra-storage-${env_type}
 fi
 
+## Merge pn_infra_core output into EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
+TERRAFORM_PARAMS_FILEPATH=pn-infra-core/terraform-${env_type}-cfg.json
+ParamFilePath=pn-infra/runtime-infra/pn-infra-${env_type}-cfg.json # infra cfg file, it is the target of merge from pn_infra_confinfo
+TmpFilePath=terraform-merge-${env_type}-cfg.json
+
+if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+  echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH}"
+
+  echo ""
+  echo "= Enanched Terraform parameters file"
+  jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
+  cat ${TmpFilePath}
+  mv ${TmpFilePath} ${ParamFilePath}
+fi
 
 echo ""
 echo ""
@@ -277,7 +296,6 @@ echo ""
 echo "=== Prepare parameters for pn-infra.yaml deployment in $env_type ACCOUNT"
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-infra.yaml
-ParamFilePath=pn-infra/runtime-infra/pn-infra-${env_type}-cfg.json
 EnanchedParamFilePath=pn-infra-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
