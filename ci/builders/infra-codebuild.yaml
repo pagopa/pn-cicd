@@ -165,11 +165,6 @@ Resources:
                 Condition:
                   StringEquals:
                     'sts:AWSServiceName': codeartifact.amazonaws.com
-              - Sid: GitHubSecret
-                Effect: Allow
-                Action:
-                  - secretsmanager:GetSecretValue
-                Resource: "*"
               - Sid: CiArtifactBucket
                 Effect: Allow
                 Action:
