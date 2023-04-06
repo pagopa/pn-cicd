@@ -110,7 +110,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - secretsmanager:GetSecretValue
-                Resource: "arn:aws:secretsmanager:eu-central-1:911845998067:secret:cypress-McfeXF:*"
+                Resource: "arn:aws:secretsmanager:eu-central-1:911845998067:secret:cypress-McfeXF"
               - Sid: SendBuildEvents
                 Effect: Allow
                 Action:
