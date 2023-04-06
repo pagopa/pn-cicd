@@ -147,7 +147,7 @@ Resources:
                 Effect: Allow
                 Action:
                   - secretsmanager:GetSecretValue
-                Resource: "arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM:token"
+                Resource: "arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM:*"
               
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
