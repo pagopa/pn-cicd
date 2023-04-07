@@ -44,7 +44,7 @@ Resources:
         Type: GITHUB
         Location: !Sub "https://github.com/pagopa/${GitHubProjectName}"
         BuildSpec: "./cypress_buildspec.yaml"
-      TimeoutInMinutes: 10
+      TimeoutInMinutes: 20
       Cache:
         Type: LOCAL
         Modes: # You can specify one or more cache mode,
