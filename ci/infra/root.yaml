@@ -920,6 +920,48 @@ Resources:
         AllowedDeployAccount29: !Ref AllowedDeployAccount29
         AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
+  PnPlatformUsageEstimatesCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-platform-usage-estimates"
+        GitHubDefaultBranch: "develop"
+        DisableIntegrationTest: "false"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        AllowedDeployAccount1: !Ref AllowedDeployAccount1
+        AllowedDeployAccount2: !Ref AllowedDeployAccount2
+        AllowedDeployAccount3: !Ref AllowedDeployAccount3
+        AllowedDeployAccount4: !Ref AllowedDeployAccount4
+        AllowedDeployAccount5: !Ref AllowedDeployAccount5
+        AllowedDeployAccount6: !Ref AllowedDeployAccount6
+        AllowedDeployAccount7: !Ref AllowedDeployAccount7
+        AllowedDeployAccount8: !Ref AllowedDeployAccount8
+        AllowedDeployAccount9: !Ref AllowedDeployAccount9
+        AllowedDeployAccount10: !Ref AllowedDeployAccount10
+        AllowedDeployAccount11: !Ref AllowedDeployAccount11
+        AllowedDeployAccount12: !Ref AllowedDeployAccount12
+        AllowedDeployAccount13: !Ref AllowedDeployAccount13
+        AllowedDeployAccount14: !Ref AllowedDeployAccount14
+        AllowedDeployAccount15: !Ref AllowedDeployAccount15
+        AllowedDeployAccount16: !Ref AllowedDeployAccount16
+        AllowedDeployAccount17: !Ref AllowedDeployAccount17
+        AllowedDeployAccount18: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
+      TimeoutInMinutes: 5
 
   PnKafkaBridgeCI:
     Type: AWS::CloudFormation::Stack
