@@ -175,11 +175,11 @@ Resources:
                 Condition:
                   StringEquals:
                     'sts:AWSServiceName': codeartifact.amazonaws.com
-              - Sid: GitHubSecret
+              - Sid: SonarCloudTokenSecret
                 Effect: Allow
                 Action:
                   - secretsmanager:GetSecretValue
-                Resource: "*"
+                Resource: "arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM"
               - Sid: CiArtifactBucket
                 Effect: Allow
                 Action:
