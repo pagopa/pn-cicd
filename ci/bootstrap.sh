@@ -34,43 +34,43 @@ aws --profile $CiCdAccountProfile --region $AWSRegion cloudformation deploy \
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides \
       NotificationSNSTopic=$sns_topic_arn \
-      Ada1=558518206506 \
-      Ada2=498209326947 \
-      Ada3=946373734005 \
+      AllowedDeployAccount1=558518206506 \
+      AllowedDeployAccount2=498209326947 \
+      AllowedDeployAccount3=946373734005 \
       \
-      Ada4=748275689270 \
-      Ada5=153517439884 \
-      Ada6=648024184569 \
+      AllowedDeployAccount4=748275689270 \
+      AllowedDeployAccount5=153517439884 \
+      AllowedDeployAccount6=648024184569 \
       \
-      Ada7=615714398925 \
-      Ada8=648535372866 \
-      Ada9=205069730074 \
+      AllowedDeployAccount7=615714398925 \
+      AllowedDeployAccount8=648535372866 \
+      AllowedDeployAccount9=205069730074 \
       \
-      Ada10=734487133479 \
-      Ada11=603228414473 \
-      Ada12=354805605941 \
+      AllowedDeployAccount10=734487133479 \
+      AllowedDeployAccount11=603228414473 \
+      AllowedDeployAccount12=354805605941 \
       \
-      Ada13=804103868123 \
-      Ada14=063295570123 \
-      Ada15=118759374619 \
+      AllowedDeployAccount13=804103868123 \
+      AllowedDeployAccount14=063295570123 \
+      AllowedDeployAccount15=118759374619 \
       \
-      Ada16=911845998067 \
-      Ada17=911845998067 \
-      Ada18=911845998067 \
+      AllowedDeployAccount16=911845998067 \
+      AllowedDeployAccount17=911845998067 \
+      AllowedDeployAccount18=911845998067 \
       \
-      Ada19=830192246553 \
-      Ada20=089813480515 \
-      Ada21=644374009812 \
-      Ada22=956319218727 \
-      Ada23=510769970275 \
-      Ada24=350578575906 \
+      AllowedDeployAccount19=830192246553 \
+      AllowedDeployAccount20=089813480515 \
+      AllowedDeployAccount21=644374009812 \
+      AllowedDeployAccount22=956319218727 \
+      AllowedDeployAccount23=510769970275 \
+      AllowedDeployAccount24=350578575906 \
       \
-      Ada25=911845998067 \
-      Ada26=911845998067 \
-      Ada27=911845998067 \
-      Ada28=911845998067 \
-      Ada29=911845998067 \
-      Ada30=911845998067
+      AllowedDeployAccount25=911845998067 \
+      AllowedDeployAccount26=911845998067 \
+      AllowedDeployAccount27=911845998067 \
+      AllowedDeployAccount28=911845998067 \
+      AllowedDeployAccount29=911845998067 \
+      AllowedDeployAccount30=911845998067
 
 
 
