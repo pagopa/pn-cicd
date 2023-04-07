@@ -949,8 +949,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
 
   PnKafkaBridgeCI:
