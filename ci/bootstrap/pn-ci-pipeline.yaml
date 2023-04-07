@@ -68,6 +68,42 @@ Parameters:
   AllowedDeployAccount18:
     Type: Number
     Description: Account number allowed to read the artifacts
+  AllowedDeployAccount19:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount20:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount21:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount22:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount23:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount24:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount25:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount26:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount27:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount28:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount29:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount30:
+    Type: Number
+    Description: Account number allowed to read the artifacts
 
 
 Resources:
@@ -162,7 +198,19 @@ Resources:
                     "AllowedDeployAccount15": "${AllowedDeployAccount15}",
                     "AllowedDeployAccount16": "${AllowedDeployAccount16}",
                     "AllowedDeployAccount17": "${AllowedDeployAccount17}",
-                    "AllowedDeployAccount18": "${AllowedDeployAccount18}"
+                    "AllowedDeployAccount18": "${AllowedDeployAccount18}",
+                    "AllowedDeployAccount19": "${AllowedDeployAccount19}",
+                    "AllowedDeployAccount20": "${AllowedDeployAccount20}",
+                    "AllowedDeployAccount21": "${AllowedDeployAccount21}",
+                    "AllowedDeployAccount22": "${AllowedDeployAccount22}",
+                    "AllowedDeployAccount23": "${AllowedDeployAccount23}",
+                    "AllowedDeployAccount24": "${AllowedDeployAccount24}",
+                    "AllowedDeployAccount25": "${AllowedDeployAccount25}",
+                    "AllowedDeployAccount26": "${AllowedDeployAccount26}",
+                    "AllowedDeployAccount27": "${AllowedDeployAccount27}",
+                    "AllowedDeployAccount28": "${AllowedDeployAccount28}",
+                    "AllowedDeployAccount29": "${AllowedDeployAccount29}",
+                    "AllowedDeployAccount30": "${AllowedDeployAccount30}"
                   }'
               OutputArtifacts: [ ]
               RunOrder: 2

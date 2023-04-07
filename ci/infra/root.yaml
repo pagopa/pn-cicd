@@ -72,6 +72,42 @@ Parameters:
   AllowedDeployAccount18:
     Type: Number
     Description: Account number allowed to read the artifacts
+  AllowedDeployAccount19:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount20:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount21:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount22:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount23:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount24:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount25:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount26:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount27:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount28:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount29:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount30:
+    Type: Number
+    Description: Account number allowed to read the artifacts
 
 Resources:
   CodeArtifactStack:
@@ -129,6 +165,18 @@ Resources:
                 - !Sub arn:aws:iam::${AllowedDeployAccount16}:root
                 - !Sub arn:aws:iam::${AllowedDeployAccount17}:root
                 - !Sub arn:aws:iam::${AllowedDeployAccount18}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount19}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount20}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount21}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount22}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount23}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount24}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount25}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount26}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount27}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount28}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount29}:root
+                - !Sub arn:aws:iam::${AllowedDeployAccount30}:root
 
   # Progetti CI jar
   ParentPomCI:
@@ -194,8 +242,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnDeliveryPushCI:
     Type: AWS::CloudFormation::Stack
@@ -226,8 +284,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 20
   PnExternalChannelsCI:
     Type: AWS::CloudFormation::Stack
@@ -257,8 +325,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnDataVaultCI:
     Type: AWS::CloudFormation::Stack
@@ -289,8 +367,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnNationalRegistriesCI:
     Type: AWS::CloudFormation::Stack
@@ -320,8 +408,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnExternalRegistriesCI:
     Type: AWS::CloudFormation::Stack
@@ -352,8 +450,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnMandateCI:
     Type: AWS::CloudFormation::Stack
@@ -384,8 +492,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnUserAttributesCI:
     Type: AWS::CloudFormation::Stack
@@ -416,8 +534,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnDowntimeLogsCI:
     Type: AWS::CloudFormation::Stack
@@ -447,8 +575,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnRaddFsuCI:
     Type: AWS::CloudFormation::Stack
@@ -478,8 +616,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnLogExtractorBeCI:
     Type: AWS::CloudFormation::Stack
@@ -509,8 +657,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnLogsaverBeCI:
     Type: AWS::CloudFormation::Stack
@@ -540,8 +698,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnApikeyManagerCI:
     Type: AWS::CloudFormation::Stack
@@ -571,8 +739,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnPaperChannelCI:
     Type: AWS::CloudFormation::Stack
@@ -603,8 +781,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnSSCI:
     Type: AWS::CloudFormation::Stack
@@ -635,8 +823,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnStateMachineManagerCI:
     Type: AWS::CloudFormation::Stack
@@ -667,8 +865,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnECCI:
     Type: AWS::CloudFormation::Stack
@@ -699,8 +907,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 5
   PnPlatformUsageEstimatesCI:
     Type: AWS::CloudFormation::Stack
@@ -764,8 +982,18 @@ Resources:
         AllowedDeployAccount16: !Ref AllowedDeployAccount16
         AllowedDeployAccount17: !Ref AllowedDeployAccount17
         AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount19: !Ref AllowedDeployAccount19
+        AllowedDeployAccount20: !Ref AllowedDeployAccount20
+        AllowedDeployAccount21: !Ref AllowedDeployAccount21
+        AllowedDeployAccount22: !Ref AllowedDeployAccount22
+        AllowedDeployAccount23: !Ref AllowedDeployAccount23
+        AllowedDeployAccount24: !Ref AllowedDeployAccount24
+        AllowedDeployAccount25: !Ref AllowedDeployAccount25
+        AllowedDeployAccount26: !Ref AllowedDeployAccount26
+        AllowedDeployAccount27: !Ref AllowedDeployAccount27
+        AllowedDeployAccount28: !Ref AllowedDeployAccount28
+        AllowedDeployAccount29: !Ref AllowedDeployAccount29
+        AllowedDeployAccount30: !Ref AllowedDeployAccount30
       TimeoutInMinutes: 20
   # Progetti Progression Sensor
   PnProgressionSensorLambdas:
