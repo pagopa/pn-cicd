@@ -167,7 +167,7 @@ EnanchedParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-enhanced-cf
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ .[0] }" \
+jq -c "." \
    ${ParamFilePath} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
