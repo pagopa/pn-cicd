@@ -313,6 +313,12 @@ Resources:
                     export PIPELINE_NAME="pn-kafka-bridge-update-pipeline"
                   fi
                 - |
+                  if ( [ "$PROJECT" = "pn-radd-bff" ] ) then
+                    sed -i -e "s|pn_radd_bff_commitId=.*|pn_radd_bff__commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_radd_bff_imageUrl=.*|pn_radd_bff__imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-radd-bff-update-pipeline"
+                  fi          
+                - |
                   if ( [ "$PROJECT" = "pn-platform-usage-estimates" ] ) then
                     sed -i -e "s|pn_platform_usage_estimates_commitId=.*|pn_platform_usage_estimates_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_platform_usage_estimates_imageUrl=.*|pn_platform_usage_estimates_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
@@ -833,6 +839,30 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnKafkaBridgeOutput
+              RunOrder: 3
+
+            # Update pn-kafka-bridge
+            - Name: Update_PnRaddBff
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-radd-bff", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"15", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_radd_bff", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnRaddBffOutput
               RunOrder: 3
 
             # Update pn-progression-sensor
