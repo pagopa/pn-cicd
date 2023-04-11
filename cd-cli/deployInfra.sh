@@ -407,7 +407,7 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
     ".Stacks[0].Outputs | .[] | select(.OutputKey==\"CognitoUserPoolId\") | .OutputValue" \
   )
 
-  $OptionalParams=",\"CognitoUserPoolArn\=$cognitoUserPoolArn\",\"CognitoClientId=$cognitoWebClientId\",\"HelpdeskAccountId=$helpdeskAccountId\""
+  $OptionalParams=",\"CognitoUserPoolArn=$cognitoUserPoolArn\",\"CognitoClientId=$cognitoWebClientId\",\"HelpdeskAccountId=$helpdeskAccountId\""
 
 fi
 
