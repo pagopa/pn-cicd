@@ -291,7 +291,26 @@ function prepareOneCloudFront() {
 }
 
 
-source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
+# read output from pn-ipc
+IpcOutputFilePath="pn-ipc-${env_type}.json"
+EnvFilePath="pn-ipc-env-${env_type}.sh"
+echo ""
+echo "= Read Outputs from previous stack"
+aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | tee ${IpcOutputFilePath}
+
+jq -r '. | to_entries|map("\(.key)=\(.value|tostring)")|.[]' ${IpcOutputFilePath} | tee ${EnvFilePath}
+source ${EnvFilePath}
+
+ENV_FILE_PATH="pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
+if ( [ -f $ENV_FILE_PATH ] )
+  source $ENV_FILE_PATH
+fi
 
 portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp_${env_type}.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_PG=""

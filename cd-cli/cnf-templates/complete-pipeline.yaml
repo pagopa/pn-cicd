@@ -1368,6 +1368,10 @@ Resources:
             Action: elasticloadbalancing:ModifyRule
             Resource: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener-rule/net/*
           - Effect: Allow
+            Action: 
+              - chatbot:CreateSlackChannelConfiguration
+            Resource: '*'
+          - Effect: Allow
             Action:
               - iam:DeleteRole
               - iam:DeleteRolePolicy
@@ -2025,6 +2029,9 @@ Resources:
                   - spotfleet.amazonaws.com
                   - codebuild.amazonaws.com
                   - codepipeline.amazonaws.com
+          - Effect: Allow
+            Action: iam:CreateServiceLinkedRole
+            Resource: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/management.chatbot.amazonaws.com/AWSServiceRoleForAWSChatbot"
           - Effect: Allow
             Action:
               - elasticloadbalancing:AddTags
