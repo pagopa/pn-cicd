@@ -1515,6 +1515,23 @@ Resources:
               - "elasticloadbalancing:DescribeTargetHealth"
               - "elasticloadbalancing:DescribeTargetGroups"
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - "cognito-idp:AddCustomAttributes"
+              - "cognito-idp:CreateUserPool"
+              - "cognito-idp:CreateUserPoolClient"              
+              - "cognito-idp:CreateUserPoolDomain"
+              - "cognito-idp:DeleteUserPool"
+              - "cognito-idp:DeleteUserPoolClient"
+              - "cognito-idp:DescribeUserPool"
+              - "cognito-idp:DescribeUserPoolClient"
+              - "cognito-idp:ListUserPoolClients"
+              - "cognito-idp:ListUserPools"
+              - "cognito-idp:TagResource"
+              - "cognito-idp:UntagResource"
+              - "cognito-idp:UpdateUserPool"
+              - "cognito-idp:UpdateUserPoolClient"                            
+            Resource: "*"
           - Action:
               - iam:PassRole
             Effect: Allow
