@@ -150,9 +150,9 @@ aws ${aws_command_base_args} \
       --recursive --exclude ".git/*"
 
 ## zip and upload lambda
-(cd cognito/post-auth-trigger && npm ci && zip -r function.zip .)
+(cd pn-infra/runtime-infra/cognito/post-auth-trigger && npm ci && zip -r function.zip .)
 LambdaPath=${pn_infra_commitid}/cognito/post-auth-trigger.zip
-aws s3 cp ${aws_command_base_args} cognito/post-auth-trigger/function.zip s3://${bucketName}/${LambdaPath}
+aws s3 cp ${aws_command_base_args} pn-infra/runtime-infra/cognito/post-auth-trigger/function.zip s3://${bucketName}/${LambdaPath}
 
 echo ""
 echo ""
