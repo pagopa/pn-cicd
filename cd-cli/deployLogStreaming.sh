@@ -131,6 +131,11 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .
 fi
 
+echo " - copy pn-infra-core config"
+if ( [ ! -z "${custom_config_dir}" ] ) then
+  cp -r $custom_config_dir/pn-infra-core .
+fi
+
 echo ""
 echo "=== Base AWS command parameters"
 aws_command_base_args=""
@@ -186,8 +191,23 @@ echo "LambdasBasePath: ${lambdasBasePath}"
 
 
 echo "=== Prepare parameters for pn-logs-export.yaml deployment in $env_type ACCOUNT"
-TemplateFilePath="pn-infra/runtime-infra/pn-logs-export.yaml"
+
+TERRAFORM_PARAMS_FILEPATH=pn-infra-core/terraform-${env_type}-cfg.json
+TmpFilePath=terraform-merge-${env_type}-cfg.json
 ParamFilePath="pn-infra/runtime-infra/pn-logs-export-${env_type}-cfg.json"
+
+if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+  echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} into pn-logs-export"
+
+  echo ""
+  echo "= Enanched Terraform parameters file for pn-logs-export"
+  jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
+  cat ${TmpFilePath}
+  mv ${TmpFilePath} ${ParamFilePath}
+fi
+
+
+TemplateFilePath="pn-infra/runtime-infra/pn-logs-export.yaml"
 EnanchedParamFilePath="pn-logs-export-${env_type}-cfg-enhanced.json"
 
 

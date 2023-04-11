@@ -180,6 +180,9 @@ aws ${aws_command_base_args} s3 cp --recursive \
 # delete functions folder
 rm -rf ${lambdasLocalPath} 
 
+TERRAFORM_PARAMS_FILEPATH=pn-infra-core/terraform-${env_type}-cfg.json
+TmpFilePath=terraform-merge-${env_type}-cfg.json
+
 echo ""
 echo ""
 echo ""
@@ -217,9 +220,21 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   echo ""
   echo ""
   echo "=== Prepare parameters for pn-infra-storage.yaml deployment in $env_type ACCOUNT"
+
+
+  ParamFilePath=pn-infra/runtime-infra/pn-infra-storage-${env_type}-cfg.json
+  if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+    echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} into pn-infra-storage"
+
+    echo ""
+    echo "= Enanched Terraform parameters file for pn-infra-storage"
+    jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
+    cat ${TmpFilePath}
+    mv ${TmpFilePath} ${ParamFilePath}
+  fi
+
   PreviousOutputFilePath=once4account-${env_type}-out.json
   TemplateFilePath=pn-infra/runtime-infra/pn-infra-storage.yaml
-  ParamFilePath=pn-infra/runtime-infra/pn-infra-storage-${env_type}-cfg.json
   EnanchedParamFilePath=pn-infra-storage-${env_type}-cfg-enanched.json
   PipelineParams="\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
@@ -265,21 +280,6 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   INFRA_INPUT_STACK=pn-infra-storage-${env_type}
 fi
 
-## Merge pn_infra_core output into EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
-TERRAFORM_PARAMS_FILEPATH=pn-infra-core/terraform-${env_type}-cfg.json
-ParamFilePath=pn-infra/runtime-infra/pn-infra-${env_type}-cfg.json # infra cfg file, it is the target of merge from pn_infra_confinfo
-TmpFilePath=terraform-merge-${env_type}-cfg.json
-
-if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
-  echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH}"
-
-  echo ""
-  echo "= Enanched Terraform parameters file"
-  jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
-  cat ${TmpFilePath}
-  mv ${TmpFilePath} ${ParamFilePath}
-fi
-
 echo ""
 echo ""
 echo ""
@@ -294,6 +294,19 @@ echo ""
 echo ""
 echo ""
 echo "=== Prepare parameters for pn-infra.yaml deployment in $env_type ACCOUNT"
+
+## Merge pn_infra_core output into EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
+ParamFilePath=pn-infra/runtime-infra/pn-infra-${env_type}-cfg.json # infra cfg file, it is the target of merge from pn_infra_confinfo
+if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+  echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} into pn-infra"
+
+  echo ""
+  echo "= Enanched Terraform parameters file for pn-infra"
+  jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
+  cat ${TmpFilePath}
+  mv ${TmpFilePath} ${ParamFilePath}
+fi
+
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-infra.yaml
 EnanchedParamFilePath=pn-infra-${env_type}-cfg-enanched.json
@@ -363,11 +376,21 @@ echo ""
 echo ""
 echo ""
 
+ParamFilePath=pn-infra/runtime-infra/pn-ipc-${env_type}-cfg.json
+if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+  echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} into pn-ipc"
+
+  echo ""
+  echo "= Enanched Terraform parameters file for pn-ipc"
+  jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
+  cat ${TmpFilePath}
+  mv ${TmpFilePath} ${ParamFilePath}
+fi
+
 echo ""
 echo "=== Prepare parameters for pn-ipc.yaml deployment in $env_type ACCOUNT"
 PreviousOutputFilePath=pn-infra-${env_type}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-ipc.yaml
-ParamFilePath=pn-infra/runtime-infra/pn-ipc-${env_type}-cfg.json
 EnanchedParamFilePath=pn-ipc-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\",\"EnvironmentType=$env_type\""
 
