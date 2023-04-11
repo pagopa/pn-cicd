@@ -1493,6 +1493,7 @@ Resources:
               - elasticloadbalancing:ModifyTargetGroupAttributes
               - elasticloadbalancing:DeleteRule
               - elasticloadbalancing:RegisterTargets
+              - elasticloadbalancing:DescribeLoadBalancerAttributes
             Resource: "*"
           - Effect: Allow
             Action:
@@ -2065,6 +2066,8 @@ Resources:
               - cloudfront:UpdateFunction
               - cloudfront:GetCloudFrontOriginAccessIdentity
               - acm:ListCertificates
+              - acm:DescribeCertificate
+              - acm:ListTagsForCertificate
               - cloudfront:UpdateDistribution
               - cloudfront:UpdateCloudFrontOriginAccessIdentity
               - cloudfront:GetDistributionConfig
