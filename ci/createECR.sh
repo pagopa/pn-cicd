@@ -48,5 +48,17 @@ else
         AllowedDeployAccount17=830192246553 \
         AllowedDeployAccount18=956319218727 \
         AllowedDeployAccount19=644374009812 \
-        AllowedDeployAccount20=510769970275
+        AllowedDeployAccount20=510769970275 \
+        AllowedDeployAccount20=089813480515 \
+        AllowedDeployAccount21=644374009812 \
+        AllowedDeployAccount22=956319218727 \
+        AllowedDeployAccount23=510769970275 \
+        AllowedDeployAccount24=350578575906 \
+        AllowedDeployAccount25=911845998067 \
+        AllowedDeployAccount26=911845998067 \
+        AllowedDeployAccount27=911845998067 \
+        AllowedDeployAccount28=911845998067 \
+        AllowedDeployAccount29=911845998067 \
+        AllowedDeployAccount30=911845998067
+
 fi

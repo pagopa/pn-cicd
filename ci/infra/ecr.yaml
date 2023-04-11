@@ -66,6 +66,36 @@ Parameters:
   AllowedDeployAccount20:
     Type: Number
     Description: Account number allowed to read the artifacts
+  AllowedDeployAccount21:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount22:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount23:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount24:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount25:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount26:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount27:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount28:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount29:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount30:
+    Type: Number
+    Description: Account number allowed to read the artifacts
 Resources:
   EcrRepository:
     Type: AWS::ECR::Repository
