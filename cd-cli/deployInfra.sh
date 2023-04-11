@@ -377,6 +377,7 @@ echo ""
 echo ""
 
 ParamFilePath=pn-infra/runtime-infra/pn-ipc-${env_type}-cfg.json
+OptionalParams=""
 if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} into pn-ipc"
 
@@ -385,6 +386,29 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
   cat ${TmpFilePath}
   mv ${TmpFilePath} ${ParamFilePath}
+
+  helpdeskAccountId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name "pn-cognito-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"HelpdeskAccountId\") | .OutputValue" \
+    ) 
+
+  cognitoUserPoolArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+        --stack-name "pn-cognito-${env_type}" | jq -r \
+        ".Stacks[0].Outputs | .[] | select(.OutputKey==\"CognitoUserPoolArn\") | .OutputValue" \
+      ) 
+
+  cognitoWebClientId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-cognito-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"CognitoWebClientId\") | .OutputValue" \
+  )
+
+  cognitoUserPoolId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-cognito-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"CognitoUserPoolId\") | .OutputValue" \
+  )
+
+  $OptionalParams=",\"CognitoUserPoolArn\=$cognitoUserPoolArn\",\"CognitoClientId=$cognitoWebClientId\",\"HelpdeskAccountId=$helpdeskAccountId\""
+
 fi
 
 echo ""
@@ -392,7 +416,8 @@ echo "=== Prepare parameters for pn-ipc.yaml deployment in $env_type ACCOUNT"
 PreviousOutputFilePath=pn-infra-${env_type}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-ipc.yaml
 EnanchedParamFilePath=pn-ipc-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\",\"EnvironmentType=$env_type\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\",\"EnvironmentType=$env_type\"${OptionalParams}"
+
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
