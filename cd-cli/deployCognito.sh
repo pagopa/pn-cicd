@@ -151,7 +151,7 @@ aws ${aws_command_base_args} \
 
 ## zip and upload lambda
 (cd pn-infra/runtime-infra/cognito/post-auth-trigger && npm ci && zip -r function.zip .)
-lambdaPath=${pn_infra_commitid}/cognito/post-auth-trigger.zip
+lambdaPath=pn-infra-cognito/${pn_infra_commitid}/cognito/post-auth-trigger.zip
 aws s3 cp ${aws_command_base_args} pn-infra/runtime-infra/cognito/post-auth-trigger/function.zip s3://${bucketName}/${lambdaPath}
 
 echo ""

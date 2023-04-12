@@ -197,7 +197,7 @@ openSearchClusterEndpoint=""
 TERRAFORM_PARAMS_FILEPATH=pn-infra-core/terraform-${env_type}-cfg.json
 TmpFilePath=terraform-merge-${env_type}-cfg.json
 ParamFilePath="pn-infra/runtime-infra/pn-logs-export-${env_type}-cfg.json"
-
+OpensearchParamFilePath="opensearch-output-${env_type}.json"
 PreviousOutputFilePath="previous-output-${env_type}.json"
 if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} into pn-logs-export"

@@ -154,7 +154,7 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
 fi
 
 echo " - copy pn-infra-confinfo config"
-if ( [ ! -z "${custom_config_dir}" ] ) then
+if ( [ -d "${custom_config_dir}/pn-infra-confinfo" ] ) then
   cp -r $custom_config_dir/pn-infra-confinfo .
 fi
 
