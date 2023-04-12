@@ -177,7 +177,7 @@ fi
 
 
 TemplateFilePath="pn-infra/runtime-infra/pn-opensearch.yaml"
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 EnanchedParamFilePath="pn-infra/runtime-infra/pn-opensearch-${env_type}-enhanced-cfg.json"
 
 echo ""
