@@ -407,7 +407,12 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
     ".Stacks[0].Outputs | .[] | select(.OutputKey==\"CognitoUserPoolId\") | .OutputValue" \
   )
 
-  OptionalParams=",\"CognitoUserPoolArn=$cognitoUserPoolArn\",\"CognitoClientId=$cognitoWebClientId\",\"HelpdeskAccountId=$helpdeskAccountId\""
+  openSearchArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-opensearch-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DomainArn\") | .OutputValue" \
+  )
+
+  OptionalParams=",\"CognitoUserPoolArn=$cognitoUserPoolArn\",\"CognitoClientId=$cognitoWebClientId\",\"HelpdeskAccountId=$helpdeskAccountId\",\"OpenSearchArn=$openSearchArn\""
 
 fi
 

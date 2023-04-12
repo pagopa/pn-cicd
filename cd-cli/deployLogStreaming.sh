@@ -192,10 +192,13 @@ echo "LambdasBasePath: ${lambdasBasePath}"
 
 echo "=== Prepare parameters for pn-logs-export.yaml deployment in $env_type ACCOUNT"
 
+openSearchClusterEndpoint=""
+
 TERRAFORM_PARAMS_FILEPATH=pn-infra-core/terraform-${env_type}-cfg.json
 TmpFilePath=terraform-merge-${env_type}-cfg.json
 ParamFilePath="pn-infra/runtime-infra/pn-logs-export-${env_type}-cfg.json"
 
+PreviousOutputFilePath="previous-output-${env_type}.json"
 if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} into pn-logs-export"
 
@@ -204,14 +207,22 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
   cat ${TmpFilePath}
   mv ${TmpFilePath} ${ParamFilePath}
+
+  aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-opensearch-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | tee ${OpensearchParamFilePath}
+else
+  echo '{}' > $OpensearchParamFilePath
 fi
 
 
 TemplateFilePath="pn-infra/runtime-infra/pn-logs-export.yaml"
 EnanchedParamFilePath="pn-logs-export-${env_type}-cfg-enhanced.json"
 
-
-PreviousOutputFilePath="previous-output-${env_type}.json"
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
@@ -235,7 +246,7 @@ aws ${aws_command_base_args} \
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+jq -s "{ \"Parameters\": .[0] } * .[1] * { \"Parameters\": .[2] }" ${PreviousOutputFilePath} ${ParamFilePath} ${OpensearchParamFilePath} \
    > ${EnanchedParamFilePath}
 cat ${EnanchedParamFilePath}
 
