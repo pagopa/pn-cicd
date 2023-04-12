@@ -1535,16 +1535,7 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
-              - "es:CreateDomain"
-              - "es:DeleteDomain"
-              - "es:DescribeDomain"
-              - "es:DescribeDomainConfig"
-              - "es:DescribeDomains"
-              - "es:ListDomainNames"
-              - "es:UpgradeDomain"
-              - "es:UpdateDomainConfig"
-              - "es:RemoveTags"
-              - "es:AddTags" 
+              - "es:*"
             Resource: "*"            
           - Action:
               - iam:PassRole
@@ -2056,11 +2047,11 @@ Resources:
                 iam:AWSServiceName:
                   - autoscaling.amazonaws.com
                   - ecs.amazonaws.com
+                  - opensearchservice.amazonaws.com
+                  - kinesisreplication.dynamodb.amazonaws.com      
                   - ecs.application-autoscaling.amazonaws.com
                   - spot.amazonaws.com
                   - spotfleet.amazonaws.com
-                  - codebuild.amazonaws.com
-                  - codepipeline.amazonaws.com
           - Effect: Allow
             Action: iam:CreateServiceLinkedRole
             Resource: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/management.chatbot.amazonaws.com/AWSServiceRoleForAWSChatbot"

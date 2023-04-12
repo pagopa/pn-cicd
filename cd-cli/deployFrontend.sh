@@ -296,21 +296,101 @@ IpcOutputFilePath="pn-ipc-${env_type}.json"
 EnvFilePath="pn-ipc-env-${env_type}.sh"
 echo ""
 echo "= Read Outputs from previous stack"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${IpcOutputFilePath}
 
-jq -r '. | to_entries|map("\(.key)=\(.value|tostring)")|.[]' ${IpcOutputFilePath} | tee ${EnvFilePath}
-source ${EnvFilePath}
+ZONE_ID=""
+PORTALE_PA_CERTIFICATE_ARN=""
+PORTALE_PF_CERTIFICATE_ARN=""
+PORTALE_PF_LOGIN_CERTIFICATE_ARN=""
+LANDING_CERTIFICATE_ARN=""
+PORTALE_PG_CERTIFICATE_ARN=""
+PORTALE_STATUS_CERTIFICATE_ARN=""
+REACT_APP_URL_API=""
 
 ENV_FILE_PATH="pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
 if ( [ -f $ENV_FILE_PATH ] )
   source $ENV_FILE_PATH
 fi
+
+ZoneId=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"CdnZoneId\") | .OutputValue" )
+
+if ( [ $ZoneId != '-' ] ) then
+  ZONE_ID=$ZoneId
+fi
+
+PortalePaCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePaCertificateArn\") | .OutputValue" )
+
+if ( [ $PortalePaCertificateArn != '-' ] ) then
+  PORTALE_PA_CERTIFICATE_ARN=$PortalePaCertificateArn
+fi
+
+PortalePfCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfCertificateArn\") | .OutputValue" )
+
+if ( [ $PortalePfCertificateArn != '-' ] ) then
+  PORTALE_PF_CERTIFICATE_ARN=$PortalePfCertificateArn
+fi
+
+PortalePfLoginCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginCertificateArn\") | .OutputValue" )  
+
+if ( [ $PortalePfLoginCertificateArn != '-' ] ) then
+  PORTALE_PF_LOGIN_CERTIFICATE_ARN=$PortalePfLoginCertificateArn
+fi
+
+LandingCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingCertificateArn\") | .OutputValue" ) 
+
+if ( [ $LandingCertificateArn != '-' ] ) then
+  LANDING_CERTIFICATE_ARN=$LandingCertificateArn
+fi
+
+PortalePgCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePgCertificateArn\") | .OutputValue" ) 
+
+if ( [ $PortalePgCertificateArn != '-' ] ) then
+  PORTALE_PG_CERTIFICATE_ARN=$PortalePgCertificateArn
+fi
+
+PortaleStatusCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortaleStatusCertificateArn\") | .OutputValue" ) 
+
+if ( [ $PortaleStatusCertificateArn != '-' ] ) then
+  PORTALE_STATUS_CERTIFICATE_ARN=$PortaleStatusCertificateArn
+fi
+
+ReactAppUrlApi=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ReactAppUrlApi\") | .OutputValue" ) 
+
+if ( [ $ReactAppUrlApi != '-' ] ) then
+  REACT_APP_URL_API=$ReactAppUrlApi
+fi
+
 
 portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp_${env_type}.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_PG=""

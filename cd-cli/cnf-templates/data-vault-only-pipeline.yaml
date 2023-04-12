@@ -1577,11 +1577,10 @@ Resources:
                 iam:AWSServiceName:
                   - autoscaling.amazonaws.com
                   - ecs.amazonaws.com
+                  - kinesisreplication.dynamodb.amazonaws.com      
                   - ecs.application-autoscaling.amazonaws.com
                   - spot.amazonaws.com
                   - spotfleet.amazonaws.com
-                  - codebuild.amazonaws.com
-                  - codepipeline.amazonaws.com
           - Effect: Allow
             Action:
               - elasticloadbalancing:AddTags
