@@ -386,8 +386,19 @@ Resources:
                     paColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-pa-webapp_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
                     echo "paColl is build ${paColl}"
                     
+                    pgSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personagiuridica-webapp_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pgSvil is build ${pgSvil}"
 
-                    if ( [ "${pfSvil}" = "KO" -o "${pfColl}" = "KO" -o "${pflSvil}" = "KO" -o "${pflColl}" = "KO" -o "${paSvil}" = "KO" -o "${paColl}" = "KO" ] ) then
+                    pgColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personagiuridica-webapp_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pgColl is build ${pgColl}"
+
+                    landingSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-landing-webapp_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "landingSvil is build ${landingSvil}"
+
+                    landingColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-landing-webapp_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "landingColl is build ${landingColl}"
+
+                    if ( [ "${pfSvil}" = "KO" -o "${pfColl}" = "KO" -o "${pflSvil}" = "KO" -o "${pflColl}" = "KO" -o "${paSvil}" = "KO" -o "${paColl}" = "KO" -o "${pgSvil}" = "KO" -o "${pgColl}" = "KO" -o "${landingSvil}" = "KO" -o "${landingColl}" = "KO" ] ) then
                       echo "##### WARNING pn-frontend have not ended"
                       export PIPELINE_NAME=""
                     fi
