@@ -298,6 +298,14 @@ PORTALE_PF_LOGIN_CERTIFICATE_ARN=""
 LANDING_CERTIFICATE_ARN=""
 PORTALE_PG_CERTIFICATE_ARN=""
 PORTALE_STATUS_CERTIFICATE_ARN=""
+
+PORTALE_PA_DOMAIN="portale-pa.${env_type}.pn.pagopa.it"
+PORTALE_PF_DOMAIN="portale.${env_type}.pn.pagopa.it"
+PORTALE_PF_LOGIN_DOMAIN="portale-login.${env_type}.pn.pagopa.it"
+LANDING_DOMAIN="www.${env_type}.pn.pagopa.it"
+PORTALE_PG_DOMAIN="portale-pg.${env_type}.pn.pagopa.it"
+PORTALE_STATUS_DOMAIN="status.${env_type}.pn.pagopa.it"
+
 REACT_APP_URL_API=""
 
 ENV_FILE_PATH="pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
@@ -317,9 +325,10 @@ ZoneId=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"CdnZoneId\") | .OutputValue" )
 
 if ( [ $ZoneId != '-' ] ) then
-  export ZONE_ID=$ZoneId
+  ZONE_ID=$ZoneId
 fi
 
+# CERTIFICATES
 PortalePaCertificateArn=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
       --stack-name pn-ipc-$env_type \
@@ -327,7 +336,7 @@ PortalePaCertificateArn=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePaCertificateArn\") | .OutputValue" )
 
 if ( [ $PortalePaCertificateArn != '-' ] ) then
-  export PORTALE_PA_CERTIFICATE_ARN=$PortalePaCertificateArn
+  PORTALE_PA_CERTIFICATE_ARN=$PortalePaCertificateArn
 fi
 
 PortalePfCertificateArn=$( aws ${aws_command_base_args} \
@@ -337,7 +346,7 @@ PortalePfCertificateArn=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfCertificateArn\") | .OutputValue" )
 
 if ( [ $PortalePfCertificateArn != '-' ] ) then
-  export PORTALE_PF_CERTIFICATE_ARN=$PortalePfCertificateArn
+  PORTALE_PF_CERTIFICATE_ARN=$PortalePfCertificateArn
 fi
 
 PortalePfLoginCertificateArn=$( aws ${aws_command_base_args} \
@@ -347,7 +356,7 @@ PortalePfLoginCertificateArn=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginCertificateArn\") | .OutputValue" )  
 
 if ( [ $PortalePfLoginCertificateArn != '-' ] ) then
-  export PORTALE_PF_LOGIN_CERTIFICATE_ARN=$PortalePfLoginCertificateArn
+  PORTALE_PF_LOGIN_CERTIFICATE_ARN=$PortalePfLoginCertificateArn
 fi
 
 LandingCertificateArn=$( aws ${aws_command_base_args} \
@@ -357,7 +366,7 @@ LandingCertificateArn=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingCertificateArn\") | .OutputValue" ) 
 
 if ( [ $LandingCertificateArn != '-' ] ) then
-  export LANDING_CERTIFICATE_ARN=$LandingCertificateArn
+  LANDING_CERTIFICATE_ARN=$LandingCertificateArn
 fi
 
 PortalePgCertificateArn=$( aws ${aws_command_base_args} \
@@ -367,7 +376,7 @@ PortalePgCertificateArn=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePgCertificateArn\") | .OutputValue" ) 
 
 if ( [ $PortalePgCertificateArn != '-' ] ) then
-  export PORTALE_PG_CERTIFICATE_ARN=$PortalePgCertificateArn
+  PORTALE_PG_CERTIFICATE_ARN=$PortalePgCertificateArn
 fi
 
 PortaleStatusCertificateArn=$( aws ${aws_command_base_args} \
@@ -377,7 +386,69 @@ PortaleStatusCertificateArn=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortaleStatusCertificateArn\") | .OutputValue" ) 
 
 if ( [ $PortaleStatusCertificateArn != '-' ] ) then
-  export PORTALE_STATUS_CERTIFICATE_ARN=$PortaleStatusCertificateArn
+  PORTALE_STATUS_CERTIFICATE_ARN=$PortaleStatusCertificateArn
+fi
+
+# DOMAIN
+
+PortalePaDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePaDomain\") | .OutputValue" )
+
+if ( [ $PortalePaDomain != '-' ] ) then
+  PORTALE_PA_DOMAIN=$PortalePaDomain
+fi
+
+PortalePfDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfDomain\") | .OutputValue" )
+
+if ( [ $PortalePfDomain != '-' ] ) then
+  PORTALE_PF_DOMAIN=$PortalePfDomain
+fi
+
+PortalePfLoginDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginDomain\") | .OutputValue" )  
+
+if ( [ $PortalePfLoginDomain != '-' ] ) then
+  export PORTALE_PF_LOGIN_DOMAIN=$PortalePfLoginDomain
+fi
+
+LandingDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" ) 
+
+if ( [ $LandingDomain != '-' ] ) then
+  export LANDING_DOMAIN=$LandingDomain
+fi
+
+PortalePgDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePgDomain\") | .OutputValue" ) 
+
+if ( [ $PortalePgDomain != '-' ] ) then
+  export PORTALE_PG_DOMAIN=$PortalePgDomain
+fi
+
+PortaleStatusDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortaleStatusDomain\") | .OutputValue" ) 
+
+if ( [ $PortaleStatusDomain != '-' ] ) then
+  export PORTALE_STATUS_DOMAIN=$PortaleStatusDomain
 fi
 
 ReactAppUrlApi=$( aws ${aws_command_base_args} \
@@ -403,7 +474,7 @@ if ( [ $portaleStatusTarballPresent = "OK" ] ) then
 fi
 
 prepareOneCloudFront webapp-pa-cdn-${env_type} \
-    "portale-pa.${env_type}.pn.pagopa.it" \
+    "$PORTALE_PA_DOMAIN" \
     "$PORTALE_PA_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
@@ -415,7 +486,7 @@ webappPaTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPaTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 prepareOneCloudFront webapp-pf-cdn-${env_type} \
-    "portale.${env_type}.pn.pagopa.it" \
+    "$PORTALE_PF_DOMAIN" \
     "$PORTALE_PF_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
@@ -427,7 +498,7 @@ webappPfTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
   prepareOneCloudFront webapp-pg-cdn-${env_type} \
-      "portale-pg.${env_type}.pn.pagopa.it" \
+      "$PORTALE_PG_DOMAIN" \
       "$PORTALE_PG_CERTIFICATE_ARN" \
       "$ZONE_ID" \
       "$REACT_APP_URL_API" \
@@ -440,7 +511,7 @@ fi
 
 if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   prepareOneCloudFront webapp-status-cdn-${env_type} \
-      "status.${env_type}.pn.pagopa.it" \
+      "$PORTALE_STATUS_DOMAIN" \
       "$PORTALE_STATUS_CERTIFICATE_ARN" \
       "$ZONE_ID" \
       "$REACT_APP_URL_API" \
@@ -452,7 +523,7 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
 fi
 
 prepareOneCloudFront webapp-pfl-cdn-${env_type} \
-    "portale-login.${env_type}.pn.pagopa.it" \
+    "$PORTALE_PF_LOGIN_DOMAIN" \
     "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
@@ -463,7 +534,7 @@ webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 prepareOneCloudFront web-landing-cdn-${env_type} \
-    "www.${env_type}.pn.pagopa.it" \
+    "$LANDING_DOMAIN" \
     "$LANDING_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
