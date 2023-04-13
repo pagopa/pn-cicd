@@ -307,7 +307,7 @@ PORTALE_STATUS_CERTIFICATE_ARN=""
 REACT_APP_URL_API=""
 
 ENV_FILE_PATH="pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
-if ( [ -f $ENV_FILE_PATH ] )
+if ( [ -f $ENV_FILE_PATH ] ) then
   source $ENV_FILE_PATH
 fi
 
