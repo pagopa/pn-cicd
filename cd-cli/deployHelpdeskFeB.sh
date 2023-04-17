@@ -166,24 +166,6 @@ function prepareOneCloudFront() {
   
   OptionalParameters="AlarmSNSTopicArn=${AlarmSNSTopicArn}"
 
-  if ( [ -f "pn-frontend/aws-cdn-templates/one-logging.yaml" ] ) then
-    echo ""
-    echo "=== Create Logs Bucket ${CdnName}"
-    aws ${aws_log_base_args} \
-      cloudformation deploy \
-        --no-fail-on-empty-changeset \
-        --stack-name $CdnName-logging \
-        --template-file pn-frontend/aws-cdn-templates/one-logging.yaml
-
-    logBucketName=$( aws ${aws_log_base_args} \
-      cloudformation describe-stacks \
-        --stack-name $CdnName-logging \
-        --output json \
-    | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LogsBucketName\") | .OutputValue" )
-
-    OptionalParameters="${OptionalParameters} S3LogsBucket=${logBucketName}"
-  fi
-
   echo ""
   echo "=== Create CDN ${CdnName} with domain ${WebDomain} in zone ${HostedZoneId}"
   echo "     CertificateARN=${WebCertificateArn}"
