@@ -273,7 +273,7 @@ ReactAppUrlApi=$( aws ${aws_command_base_args} \
       --output json \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ReactAppUrlApi\") | .OutputValue" ) 
 
-ReactAppUrlApi="${ReactAppUrlApi} https://cognito-idp.eu-south-1.amazonaws.com"
+ReactAppUrlApi="${ReactAppUrlApi} https://${BoApiDnsName} https://cognito-idp.eu-south-1.amazonaws.com"
 
 cd ..
 prepareOneCloudFront webapp-helpdesk-cdn-${env_type} \
