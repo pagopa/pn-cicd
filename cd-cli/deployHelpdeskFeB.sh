@@ -287,8 +287,6 @@ sed -e "s/\${USER_POOL_ID}/${CognitoUserPoolId}/" \
 yarn install
 yarn build
 
-cd build
-
 ReactAppUrlApi=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
       --stack-name pn-ipc-$env_type \
@@ -306,6 +304,8 @@ webappHelpdeskBucketName=${bucketName}
 webappHelpdeskBDistributionId=${distributionId}
 webappHelpdeskBTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappHelpdeskBTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
+
+cd build
 
 aws s3 sync ${profile_option} . s3://${bucketName} --delete
 
