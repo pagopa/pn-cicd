@@ -1372,6 +1372,11 @@ Resources:
                 - 'echo ""'
                 - 'echo "./deployFrontend.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_frontend_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir"'
                 - '(cd scripts/cd-cli && ./deployFrontend.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_frontend_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - |
+                  if ( [ ! -z "$pn_helpdesk_fe_commitId"  ] ) then
+                    'echo "./deployHelpdeskFeB.sh -v -r $AwsRegion -e $EnvName -m $pn_helpdesk_fe_commitId -f $pn_frontend_commitId -w /tmp -c $custom_config_dir"'
+                    '(cd scripts/cd-cli && ./deployHelpdeskFeB.sh -v -r $AwsRegion -e $EnvName -m $pn_helpdesk_fe_commitId -f $pn_frontend_commitId -f $pn_frontend_commitId -w /tmp -c $custom_config_dir )'
+                  fi
           artifacts:
             files:
               - '**/*'
