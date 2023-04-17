@@ -287,7 +287,7 @@ webappHelpdeskBDistributionId=${distributionId}
 
 cd $microcvs_name/build
 
-aws s3 sync ${profile_option} . s3://${webappHelpdeskBucketName} --delete
+aws s3 sync ${aws_command_base_args} . s3://${webappHelpdeskBucketName} --delete
 
 aws cloudfront create-invalidation ${aws_command_base_args} --distribution-id ${webappHelpdeskBDistributionId} --paths "/*"
 
