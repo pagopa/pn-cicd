@@ -40,6 +40,7 @@ parse_params() {
   pn_microsvc_commitid=""
   pn_frontend_commitid=""
   bucketName=""
+  distributionId=""
   microcvs_name="pn-helpdesk-fe"
 
   while :; do
@@ -283,28 +284,12 @@ prepareOneCloudFront webapp-helpdesk-cdn-${env_type} \
 
 webappHelpdeskBucketName=${bucketName}
 webappHelpdeskBDistributionId=${distributionId}
-webappHelpdeskBTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
-webappHelpdeskBTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 cd $microcvs_name/build
 
-aws s3 sync ${profile_option} . s3://${bucketName} --delete
+aws s3 sync ${profile_option} . s3://${webappHelpdeskBucketName} --delete
 
-DistributionId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name "pn-logextractor-frontend-${environment}" | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DistributionId\") | .OutputValue" \
-    )
-
-DistributionDomainName=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name "pn-logextractor-frontend-${environment}" | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DistributionDomainName\") | .OutputValue" \
-    )
-
-aws cloudfront create-invalidation ${aws_command_base_args} --distribution-id ${DistributionId} --paths "/*"
-
-echo "Deployed to "${DistributionDomainName}
-
-
+aws cloudfront create-invalidation ${aws_command_base_args} --distribution-id ${webappHelpdeskBDistributionId} --paths "/*"
 
 
 
