@@ -282,7 +282,7 @@ source scripts/aws/env-${environment}.sh
 sed -e "s/\${USER_POOL_ID}/${CognitoUserPoolId}/" \
     -e "s/\${WEB_CLIENT_ID}/${CognitoWebClientId}/" \
     -e "s/\${WEB_API_DOMAIN}/${WebApiDnsName}/" \
-    -e "s/\${API_DOMAIN}/${BoApiDnsName}/"  .env.template > .env.production 
+    -e "s/\${API_DOMAIN}/${BoApiDnsName}/"  .env.template.b > .env.production 
 
 yarn install
 yarn build
