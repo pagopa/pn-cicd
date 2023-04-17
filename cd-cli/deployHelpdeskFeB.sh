@@ -164,10 +164,7 @@ function prepareOneCloudFront() {
   HostedZoneId=$4
   WebApiUrl=$5
   
-  OptionalParameters=""
-  if ( [ ! -z "$HAS_MONITORING" ]) then
-    OptionalParameters="${OptionalParameters} AlarmSNSTopicArn=${AlarmSNSTopicArn}"
-  fi
+  OptionalParameters="AlarmSNSTopicArn=${AlarmSNSTopicArn}"
 
   if ( [ -f "pn-frontend/aws-cdn-templates/one-logging.yaml" ] ) then
     echo ""
@@ -294,6 +291,8 @@ ReactAppUrlApi=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ReactAppUrlApi\") | .OutputValue" ) 
 
 ReactAppUrlApi="${ReactAppUrlApi} https://cognito-idp.eu-south-1.amazonaws.com"
+
+cd ..
 prepareOneCloudFront webapp-helpdesk-cdn-${env_type} \
     "$PortaleHelpdeskDomain" \
     "$PortaleHelpdeskCertificateArn" \
@@ -305,7 +304,7 @@ webappHelpdeskBDistributionId=${distributionId}
 webappHelpdeskBTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappHelpdeskBTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
-cd build
+cd $microcvs_name/build
 
 aws s3 sync ${profile_option} . s3://${bucketName} --delete
 
