@@ -72,7 +72,7 @@ Resources:
               on-failure: ABORT
               commands:
                 - |
-                  if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.*$ ]]; then
+                  if [[ "$BRANCH_NAME" =~ ^(main|develop)|(release|hotfix)\/.*$ ]]; then
                     echo Generate build event
                     EVENT_DETAIL="{ \"event_type\": \"BUILD_DONE\", \"project_branch\":\"${BRANCH_NAME}\",\"project_type\":\"TEMPLATES\", \"project\":\"${GITHUB_PRJ_NAME}\", \"commit_id\": \"${COMMIT_ID}\" }"
                     echo $EVENT_DETAIL | jq -R -s '[{ "DetailType": "CiEvent","EventBusName": "CiEventBus", "Source":"Builder", "Detail": . }]' > ci_event.json
