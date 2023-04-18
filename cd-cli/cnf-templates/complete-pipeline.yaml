@@ -365,30 +365,6 @@ Resources:
                     fi
                   fi
                 - |
-                  if ( [ "$PIPELINE_NAME" = "pn-frontend-update-pipeline" ] ) then
-                    echo "Check pn-frontend build end"
-                    
-                    pf=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "pf is build ${pf}"
-
-                    pfl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-login.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "pfl is build ${pfl}"
-
-                    pa=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-pa-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "pa is build ${pa}"
-
-                    pg=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "pg is build ${pg}"
-
-                    landing=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-landing-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "landing is build ${landing}"
-
-                    if ( [ "${pf}" = "KO" -o "${pfl}" = "KO" -o "${pa}" = "KO" -o "${pg}" = "KO" -o "${landing}" = "KO" ] ) then
-                      echo "##### WARNING pn-frontend have not ended"
-                      export PIPELINE_NAME=""
-                    fi
-                  fi
-                - |
                   if ( [ "$PIPELINE_NAME" != "" ] ) then
                     echo "Launch pipeline ${PIPELINE_NAME}"
                     aws codepipeline  start-pipeline-execution --name ${PIPELINE_NAME}
