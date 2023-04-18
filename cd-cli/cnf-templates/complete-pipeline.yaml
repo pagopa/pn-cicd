@@ -368,37 +368,22 @@ Resources:
                   if ( [ "$PIPELINE_NAME" = "pn-frontend-update-pipeline" ] ) then
                     echo "Check pn-frontend build end"
                     
-                    pfSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-webapp_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "pfSvil is build ${pfSvil}"
+                    pf=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pf is build ${pf}"
 
-                    pfColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-webapp_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "pfColl is build ${pfColl}"
+                    pfl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-login.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pfl is build ${pfl}"
 
-                    pflSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-login_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "pflSvil is build ${pflSvil}"
+                    pa=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-pa-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pa is build ${pa}"
 
-                    pflColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-login_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "pflColl is build ${pflColl}"
+                    pg=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "pg is build ${pg}"
 
-                    paSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-pa-webapp_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "paSvil is build ${paSvil}"
+                    landing=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-landing-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+                    echo "landing is build ${landing}"
 
-                    paColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-pa-webapp_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "paColl is build ${paColl}"
-                    
-                    pgSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personagiuridica-webapp_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "pgSvil is build ${pgSvil}"
-
-                    pgColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personagiuridica-webapp_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "pgColl is build ${pgColl}"
-
-                    landingSvil=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-landing-webapp_svil.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "landingSvil is build ${landingSvil}"
-
-                    landingColl=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-landing-webapp_coll.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "landingColl is build ${landingColl}"
-
-                    if ( [ "${pfSvil}" = "KO" -o "${pfColl}" = "KO" -o "${pflSvil}" = "KO" -o "${pflColl}" = "KO" -o "${paSvil}" = "KO" -o "${paColl}" = "KO" -o "${pgSvil}" = "KO" -o "${pgColl}" = "KO" -o "${landingSvil}" = "KO" -o "${landingColl}" = "KO" ] ) then
+                    if ( [ "${pf}" = "KO" -o "${pfl}" = "KO" -o "${pa}" = "KO" -o "${pg}" = "KO" -o "${landing}" = "KO" ] ) then
                       echo "##### WARNING pn-frontend have not ended"
                       export PIPELINE_NAME=""
                     fi
