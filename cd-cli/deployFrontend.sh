@@ -298,13 +298,13 @@ function prepareOneCloudFront() {
 
 source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
 
-portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp_${env_type}.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_PG=""
 if ( [ $portalePgTarballPresent = "OK" ] ) then
   HAS_PORTALE_PG="true"
 fi
 
-portaleStatusTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp_${env_type}.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+portaleStatusTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_STATUS=""
 if ( [ $portaleStatusTarballPresent = "OK" ] ) then
   HAS_PORTALE_STATUS="true"
@@ -539,16 +539,17 @@ echo ""
 echo "===                          SITO LANDING                         ==="
 echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-landing-webapp_${env_type}.tar.gz" \
-      "pn-landing-webapp_${env_type}.tar.gz"
+      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-landing-webapp.tar.gz" \
+      "pn-landing-webapp.tar.gz"
 
-mkdir -p "pn-landing-webapp_${env_type}"
-( cd "pn-landing-webapp_${env_type}" \
-     && tar xvzf "../pn-landing-webapp_${env_type}.tar.gz" \
+mkdir -p "pn-landing-webapp"
+( cd "pn-landing-webapp" \
+     && tar xvzf "../pn-landing-webapp.tar.gz" \
+     # landing site has a different config management - we use env variables but they are the same for each env
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" --delete 
+    s3 sync "pn-landing-webapp" "s3://${landingBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
 
