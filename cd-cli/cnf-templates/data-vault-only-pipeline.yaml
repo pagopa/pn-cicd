@@ -180,6 +180,11 @@ Resources:
                 - 'echo "COMMIT_ID=$COMMIT_ID"'
                 - 'echo "IMAGE_URL=$IMAGE_URL"'
                 - 'echo ""'
+                |
+                if ( [ ! -z "$IMAGE_URL" ]) then
+                  IMAGE_URL=$(sed "s/eu-central-1/eu-south-1/g" <<< $IMAGE_URL)
+                  echo "REPLACE IMAGE URL = $IMAGE_URL"
+                fi
                 - 'echo "Retrieve commit configuration file"'
                 - 'aws s3 cp s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh desired-commit-ids-env.sh'
                 - 'cat desired-commit-ids-env.sh'
