@@ -542,10 +542,10 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
       --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-landing-webapp.tar.gz" \
       "pn-landing-webapp.tar.gz"
 
+# landing site has a different config management - we use env variables but they are the same for each env
 mkdir -p "pn-landing-webapp"
 ( cd "pn-landing-webapp" \
      && tar xvzf "../pn-landing-webapp.tar.gz" \
-     # landing site has a different config management - we use env variables but they are the same for each env
 )
 
 aws ${aws_command_base_args} \
