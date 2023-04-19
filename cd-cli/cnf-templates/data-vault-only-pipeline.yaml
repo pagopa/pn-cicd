@@ -180,6 +180,11 @@ Resources:
                 - 'echo "COMMIT_ID=$COMMIT_ID"'
                 - 'echo "IMAGE_URL=$IMAGE_URL"'
                 - 'echo ""'
+                |
+                if ( [ ! -z "$IMAGE_URL" ]) then
+                  IMAGE_URL=$(sed "s/eu-central-1/eu-south-1/g" <<< $IMAGE_URL)
+                  echo "REPLACE IMAGE URL = $IMAGE_URL"
+                fi
                 - 'echo "Retrieve commit configuration file"'
                 - 'aws s3 cp s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh desired-commit-ids-env.sh'
                 - 'cat desired-commit-ids-env.sh'
@@ -949,11 +954,25 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
+                - |
+                  if ( [ ! -z "$pn_infra_confinfo_commitId"  ] ) then
+                    echo "########################################################"
+                    echo "###                   UPDATE NETWORKING              ###"
+                    echo "########################################################"
+                    echo ""
+                    (cd scripts/cd-cli && ./deployNetworking.sh -r $AwsRegion -e $EnvName -i $pn_infra_confinfo_commitId -a confinfo -w /tmp -c $custom_config_dir )
+                  fi
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
                 - 'echo "########################################################"'
                 - 'echo "###       UPDATE MICROSERVICE $MsName    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
+                - 'echo "./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
                 - '(cd scripts/cd-cli && ./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
@@ -1227,6 +1246,7 @@ Resources:
               - elasticloadbalancing:ModifyTargetGroupAttributes
               - elasticloadbalancing:DeleteRule
               - elasticloadbalancing:RegisterTargets
+              - elasticloadbalancing:DescribeLoadBalancerAttributes
             Resource: "*"
           - Effect: Allow
             Action:
@@ -1753,6 +1773,7 @@ Resources:
                 iam:AWSServiceName:
                   - autoscaling.amazonaws.com
                   - ecs.amazonaws.com
+                  - kinesisreplication.dynamodb.amazonaws.com      
                   - ecs.application-autoscaling.amazonaws.com
                   - spot.amazonaws.com
                   - spotfleet.amazonaws.com

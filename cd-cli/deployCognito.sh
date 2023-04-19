@@ -124,12 +124,6 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .
 fi
 
-echo " - copy pn-infra-core config"
-if ( [ -d "${custom_config_dir}/pn-infra-core" ] ) then
-  cp -r $custom_config_dir/pn-infra-core .
-fi
-
-
 echo ""
 echo "=== Base AWS command parameters"
 aws_command_base_args=""
@@ -155,76 +149,33 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
+## zip and upload lambda
+(cd pn-infra/runtime-infra/cognito/post-auth-trigger && npm ci && zip -r function.zip .)
+lambdaPath=pn-infra-cognito/${pn_infra_commitid}/cognito/post-auth-trigger.zip
+aws s3 cp ${aws_command_base_args} pn-infra/runtime-infra/cognito/post-auth-trigger/function.zip s3://${bucketName}/${lambdaPath}
 
-
 echo ""
 echo ""
 echo ""
-echo "###    READ EXPORTS FROM PN-EVENT-BRIDGE AND PN-LOGS-EXPORT     ###"
+echo "###    PN-COGNITO     ###"
 echo "###################################################################"
 
-PreviousOutputFilePath=previous-output-${env_type}.json
-PreviousLogsOutputFilePath=previous-logs-output-${env_type}.json
-PreviousMonitoringOutputFilePath=previous-monitoring-output-${env_type}.json
-TemplateFilePath="pn-infra/runtime-infra/pn-infra-dashboard.yaml"
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
-EnanchedParamFilePath="pn-infra-dashboard-${env_type}-enhanced.json"
-
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-event-bridge-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${PreviousOutputFilePath}
-
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-logs-export-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${PreviousLogsOutputFilePath}
-
-# Monitoring stack #
-MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-monitoring.yaml 
-if [[ -f "$MONITORING_STACK_FILE" ]]; then
-
-  aws ${aws_command_base_args} \
-      cloudformation describe-stacks \
-        --stack-name pn-monitoring-$env_type \
-        --query "Stacks[0].Outputs" \
-        --output json \
-        | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-        | tee ${PreviousMonitoringOutputFilePath}
-else
-  echo '{ }' | tee ${PreviousMonitoringOutputFilePath}
-fi
-
-# Monitoring stack #
-AdditionalParams=""
-TERRAFORM_PARAMS_FILEPATH=pn-infra-core/terraform-${env_type}-cfg.json
-if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
-  echo ""
-  OpenSearchClusterName=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name "pn-opensearch-${env_type}" | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"ClusterName\") | .OutputValue" \
-    )
-
-  AdditionalParams=", \"OpenSearchClusterName=${OpenSearchClusterName}\""
-fi
+TemplateFilePath="pn-infra/runtime-infra/pn-cognito.yaml"
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\""
+ParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-cfg.json"
+EnanchedParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-enhanced-cfg.json"
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * { \"Parameters\": .[2] }" \
-   ${PreviousOutputFilePath} ${PreviousLogsOutputFilePath} ${PreviousMonitoringOutputFilePath} \
+jq -c "." \
+   ${ParamFilePath} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
-echo "${PipelineParams} ${AdditionalParams}]" >> ${EnanchedParamFilePath}
+echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
 cat ${EnanchedParamFilePath}
 
 aws ${aws_command_base_args} cloudformation deploy \
-      --stack-name pn-infra-dashboard-${env_type} \
+      --stack-name pn-cognito-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file "$TemplateFilePath" \
       --parameter-overrides file://$(realpath $EnanchedParamFilePath)
