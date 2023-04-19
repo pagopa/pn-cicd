@@ -203,6 +203,11 @@ Resources:
                 - 'echo "PROJECT_BRANCH=$PROJECT_BRANCH"'
                 - 'echo "COMMIT_ID=$COMMIT_ID"'
                 - 'echo "IMAGE_URL=$IMAGE_URL"'
+                - |
+                  if ( [ ! -z "$IMAGE_URL" ]) then
+                    IMAGE_URL=$(sed "s/eu-central-1/eu-south-1/g" <<< $IMAGE_URL)
+                    echo "REPLACE IMAGE URL = $IMAGE_URL"
+                  fi
                 - 'echo ""'
                 - 'echo "Retrieve commit configuration file"'
                 - 'aws s3 cp s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh desired-commit-ids-env.sh'
@@ -324,6 +329,12 @@ Resources:
                     sed -i -e "s|pn_platform_usage_estimates_imageUrl=.*|pn_platform_usage_estimates_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-platform-usage-estimates-update-pipeline"
                   fi
+                - |
+                  if ( [ "$PROJECT" = "pn-logextractor-be" ] ) then
+                    sed -i -e "s|pn_logextractor_be_commitId=.*|pn_logextractor_be_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_logextractor_be_imageUrl=.*|pn_logextractor_be_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-logextractor-be-update-pipeline"
+                  fi                  
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
                 - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
@@ -1078,6 +1089,23 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
+                - |
+                  if ( [ ! -z "$pn_infra_core_commitId"  ] ) then
+                    echo "########################################################"
+                    echo "###                   UPDATE NETWORKING              ###"
+                    echo "########################################################"
+                    echo ""
+                    (cd scripts/cd-cli && ./deployNetworking.sh -r $AwsRegion -e $EnvName -i $pn_infra_core_commitId -a core -w /tmp -c $custom_config_dir )
+                    (cd scripts/cd-cli && ./deployCognito.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
+                    (cd scripts/cd-cli && ./deployOpensearch.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
+                    (cd scripts/cd-cli && ./deployCache.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
+                  fi
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
                 - 'echo "########################################################"'
                 - 'echo "###                   UPDATE INFRA                   ###"'
                 - 'echo "########################################################"'
@@ -1311,6 +1339,62 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
   
+   # CODEBUILD used to update helpdesk fe microservice
+  ###################################################
+  UpdateHelpdeskCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateHelpdeskCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                nodejs: 16
+              commands:
+                #install yarn
+                - echo installing yarn
+                - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+                - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+                - apt install --no-install-recommends yarn
+            pre_build:
+              commands:
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo "./deployHelpdeskFeB.sh -v -r $AwsRegion -e $EnvName -m $pn_helpdesk_fe_commitId -f $pn_frontend_commitId -w /tmp -c $custom_config_dir"'
+                - '(cd scripts/cd-cli && ./deployHelpdeskFeB.sh -v -r $AwsRegion -e $EnvName -m $pn_helpdesk_fe_commitId -f $pn_frontend_commitId -w /tmp -c $custom_config_dir )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:6.0"
+
 
   # CODEBUILD used to update frontend
   ###################################################
@@ -1400,6 +1484,10 @@ Resources:
           - Effect: Allow
             Action: elasticloadbalancing:ModifyRule
             Resource: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener-rule/net/*
+          - Effect: Allow
+            Action: 
+              - chatbot:CreateSlackChannelConfiguration
+            Resource: '*'
           - Effect: Allow
             Action:
               - iam:DeleteRole
@@ -1526,6 +1614,7 @@ Resources:
               - elasticloadbalancing:ModifyTargetGroupAttributes
               - elasticloadbalancing:DeleteRule
               - elasticloadbalancing:RegisterTargets
+              - elasticloadbalancing:DescribeLoadBalancerAttributes
             Resource: "*"
           - Effect: Allow
             Action:
@@ -1542,6 +1631,27 @@ Resources:
               - "elasticloadbalancing:DescribeTargetHealth"
               - "elasticloadbalancing:DescribeTargetGroups"
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - "cognito-idp:AddCustomAttributes"
+              - "cognito-idp:CreateUserPool"
+              - "cognito-idp:CreateUserPoolClient"              
+              - "cognito-idp:CreateUserPoolDomain"
+              - "cognito-idp:DeleteUserPool"
+              - "cognito-idp:DeleteUserPoolClient"
+              - "cognito-idp:DescribeUserPool"
+              - "cognito-idp:DescribeUserPoolClient"
+              - "cognito-idp:ListUserPoolClients"
+              - "cognito-idp:ListUserPools"
+              - "cognito-idp:TagResource"
+              - "cognito-idp:UntagResource"
+              - "cognito-idp:UpdateUserPool"
+              - "cognito-idp:UpdateUserPoolClient"                            
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "es:*"
+            Resource: "*"            
           - Action:
               - iam:PassRole
             Effect: Allow
@@ -1877,6 +1987,10 @@ Resources:
           - Effect: Allow
             Action: firehose:ListDeliveryStreams
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - elasticache:*
+            Resource: '*'
 
   CodeBuildPolicyECS:
     Type: AWS::IAM::ManagedPolicy
@@ -2052,9 +2166,15 @@ Resources:
                 iam:AWSServiceName:
                   - autoscaling.amazonaws.com
                   - ecs.amazonaws.com
+                  - elasticache.amazonaws.com
+                  - opensearchservice.amazonaws.com
+                  - kinesisreplication.dynamodb.amazonaws.com      
                   - ecs.application-autoscaling.amazonaws.com
                   - spot.amazonaws.com
                   - spotfleet.amazonaws.com
+          - Effect: Allow
+            Action: iam:CreateServiceLinkedRole
+            Resource: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/management.chatbot.amazonaws.com/AWSServiceRoleForAWSChatbot"
           - Effect: Allow
             Action:
               - elasticloadbalancing:AddTags
@@ -2096,6 +2216,8 @@ Resources:
               - cloudfront:UpdateFunction
               - cloudfront:GetCloudFrontOriginAccessIdentity
               - acm:ListCertificates
+              - acm:DescribeCertificate
+              - acm:ListTagsForCertificate
               - cloudfront:UpdateDistribution
               - cloudfront:UpdateCloudFrontOriginAccessIdentity
               - cloudfront:GetDistributionConfig
@@ -3888,6 +4010,98 @@ Resources:
                 - Name: PnPaperChannelOutput
               RunOrder: 3
 
+  # MICROSERVICE PN-LOGEXTRACTOR-BE
+  ############################
+  PnLogextractorBeDeployPipeline:
+    Condition: IsContinuousDeliveryCondition
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-logextractor-be-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-paper-channel
+            - Name: Update_PnLogextractorBe
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-logextractor-be", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"17", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_logextractor_be", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnPaperChannelOutput
+              RunOrder: 3
+
   # MICROSERVICE PN-PROGRESSION-SENSOR
   ############################
   PnProgressionSensorDeployPipeline:
@@ -4256,6 +4470,97 @@ Resources:
               OutputArtifacts:
                 - Name: PnPlatformUsageEstimatesOutput
               RunOrder: 3
+
+  # HELPDESK FRONTEND
+  #######################
+  HelpdeskFeDeployPipeline:
+    Condition: IsContinuousDeliveryCondition
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-helpdesk-fe-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update Frontend
+            - Name: Update_Frontend
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateHelpdeskCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: FrontEndOutput
+              RunOrder: 2
+
 
   ###########################################################################
   ###  RUN E2E TESTS
