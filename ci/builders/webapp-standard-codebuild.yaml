@@ -33,9 +33,9 @@ Resources:
     Properties:
       Name: !Sub "${GitHubProjectName}-${PackageName}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
-      BuildBatchConfig:
-        ServiceRole: !GetAtt BuildBatchServiceRole.Arn
-        TimeoutInMins: 15
+      # BuildBatchConfig:
+      #   ServiceRole: !GetAtt BuildBatchServiceRole.Arn
+      #   TimeoutInMins: 15
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -74,7 +74,7 @@ Resources:
       Source:
         Type: GITHUB
         Location: !Sub "https://github.com/pagopa/${GitHubProjectName}"
-        BuildSpec: !Sub "${BaseDir}/buildspec.yaml"
+        BuildSpec: !Sub "./cra_buildspec.yaml"
       TimeoutInMinutes: 15
       Cache:
         Type: LOCAL
@@ -84,7 +84,7 @@ Resources:
           - LOCAL_SOURCE_CACHE
       Triggers:
         Webhook: true
-        BuildType: BUILD_BATCH
+        # BuildType: BUILD_BATCH
         FilterGroups:
           - - Type: EVENT
               Pattern: PUSH
@@ -97,31 +97,31 @@ Resources:
           #   - Type: FILE_PATH
           #     Pattern: !Sub "^${BaseDir}/.*"
 
-  BuildBatchServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Sid: ""
-            Effect: Allow
-            Principal:
-              Service:
-                - codebuild.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: CodeBuildPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: ""
-                Effect: Allow
-                Resource:
-                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${GitHubProjectName}-${PackageName}-CodeBuild"
-                Action:
-                  - codebuild:StartBuild
-                  - codebuild:StopBuild
-                  - codebuild:RetryBuild
+  # BuildBatchServiceRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Sid: ""
+  #           Effect: Allow
+  #           Principal:
+  #             Service:
+  #               - codebuild.amazonaws.com
+  #           Action: sts:AssumeRole
+  #     Policies:
+  #       - PolicyName: CodeBuildPolicy
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Sid: ""
+  #               Effect: Allow
+  #               Resource:
+  #                 - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${GitHubProjectName}-${PackageName}-CodeBuild"
+  #               Action:
+  #                 - codebuild:StartBuild
+  #                 - codebuild:StopBuild
+  #                 - codebuild:RetryBuild
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role

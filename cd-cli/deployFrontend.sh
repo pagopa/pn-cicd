@@ -118,6 +118,11 @@ dump_params(){
   echo "Ci Bucket Name:    ${LambdasBucketName}"
 }
 
+# replace config files in build artifact
+replace_config() {
+  cp ./conf/env/config.$1.json ./conf/config.json
+}
+
 
 # START SCRIPT
 
@@ -461,13 +466,13 @@ if ( [ $ReactAppUrlApi != '-' ] ) then
   export REACT_APP_URL_API=$ReactAppUrlApi
 fi
 
-portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp_${env_type}.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_PG=""
 if ( [ $portalePgTarballPresent = "OK" ] ) then
   HAS_PORTALE_PG="true"
 fi
 
-portaleStatusTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp_${env_type}.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+portaleStatusTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_STATUS=""
 if ( [ $portaleStatusTarballPresent = "OK" ] ) then
   HAS_PORTALE_STATUS="true"
@@ -643,16 +648,17 @@ echo ""
 echo "===                          PORTALE PA                           ==="
 echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-pa-webapp_${env_type}.tar.gz" \
-      "pn-pa-webapp_${env_type}.tar.gz"
+      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-pa-webapp.tar.gz" \
+      "pn-pa-webapp.tar.gz"
 
-mkdir -p "pn-pa-webapp_${env_type}"
-( cd "pn-pa-webapp_${env_type}" \
-     && tar xvzf "../pn-pa-webapp_${env_type}.tar.gz" \
+mkdir -p "pn-pa-webapp"
+( cd "pn-pa-webapp" \
+     && tar xvzf "../pn-pa-webapp.tar.gz" \
+     && replace_config ${env_type} \
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/" --delete 
+    s3 sync "pn-pa-webapp" "s3://${webappPaBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPaDistributionId} --paths "/*"
 
@@ -661,16 +667,17 @@ echo ""
 echo "===                          PORTALE PF                           ==="
 echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personafisica-webapp_${env_type}.tar.gz" \
-      "pn-personafisica-webapp_${env_type}.tar.gz"
+      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personafisica-webapp.tar.gz" \
+      "pn-personafisica-webapp.tar.gz"
 
-mkdir -p "pn-personafisica-webapp_${env_type}"
-( cd "pn-personafisica-webapp_${env_type}" \
-     && tar xvzf "../pn-personafisica-webapp_${env_type}.tar.gz" \
+mkdir -p "pn-personafisica-webapp"
+( cd "pn-personafisica-webapp" \
+     && tar xvzf "../pn-personafisica-webapp.tar.gz" \
+     && replace_config ${env_type} \
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-personafisica-webapp_${env_type}" "s3://${webappPfBucketName}/" --delete 
+    s3 sync "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPfDistributionId} --paths "/*"
 
@@ -678,16 +685,17 @@ echo ""
 echo "===                       PORTALE PF LOGIN                        ==="
 echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personafisica-login_${env_type}.tar.gz" \
-      "pn-personafisica-login_${env_type}.tar.gz"
+      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personafisica-login.tar.gz" \
+      "pn-personafisica-login.tar.gz"
 
-mkdir -p "pn-personafisica-login_${env_type}"
-( cd "pn-personafisica-login_${env_type}" \
-     && tar xvzf "../pn-personafisica-login_${env_type}.tar.gz" \
+mkdir -p "pn-personafisica-login"
+( cd "pn-personafisica-login" \
+     && tar xvzf "../pn-personafisica-login.tar.gz" \
+     && replace_config ${env_type} \
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-personafisica-login_${env_type}" "s3://${webappPflBucketName}/" --delete 
+    s3 sync "pn-personafisica-login" "s3://${webappPflBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPflDistributionId} --paths "/*"
 
@@ -696,16 +704,17 @@ echo ""
 echo "===                          SITO LANDING                         ==="
 echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-landing-webapp_${env_type}.tar.gz" \
-      "pn-landing-webapp_${env_type}.tar.gz"
+      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-landing-webapp.tar.gz" \
+      "pn-landing-webapp.tar.gz"
 
-mkdir -p "pn-landing-webapp_${env_type}"
-( cd "pn-landing-webapp_${env_type}" \
-     && tar xvzf "../pn-landing-webapp_${env_type}.tar.gz" \
+# landing site has a different config management - we use env variables but they are the same for each env
+mkdir -p "pn-landing-webapp"
+( cd "pn-landing-webapp" \
+     && tar xvzf "../pn-landing-webapp.tar.gz" \
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" --delete 
+    s3 sync "pn-landing-webapp" "s3://${landingBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
 
@@ -714,16 +723,17 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
   echo "===                          PORTALE PG                           ==="
   echo "====================================================================="
   aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp_${env_type}.tar.gz" \
-        "pn-personagiuridica-webapp_${env_type}.tar.gz"
+        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp.tar.gz" \
+        "pn-personagiuridica-webapp.tar.gz"
 
-  mkdir -p "pn-personagiuridica-webapp_${env_type}"
-  ( cd "pn-personagiuridica-webapp_${env_type}" \
-      && tar xvzf "../pn-personagiuridica-webapp_${env_type}.tar.gz" \
+  mkdir -p "pn-personagiuridica-webapp"
+  ( cd "pn-personagiuridica-webapp" \
+      && tar xvzf "../pn-personagiuridica-webapp.tar.gz" \
+      && replace_config ${env_type} \
   )
 
   aws ${aws_command_base_args} \
-      s3 sync "pn-personagiuridica-webapp_${env_type}" "s3://${webappPgBucketName}/" --delete 
+      s3 sync "pn-personagiuridica-webapp" "s3://${webappPgBucketName}/" --delete 
 
   aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPgDistributionId} --paths "/*"
 
@@ -734,16 +744,17 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   echo "===                          PORTALE STATUS                           ==="
   echo "====================================================================="
   aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp_${env_type}.tar.gz" \
-        "pn-status-webapp_${env_type}.tar.gz"
+        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp.tar.gz" \
+        "pn-status-webapp.tar.gz"
 
-  mkdir -p "pn-status-webapp_${env_type}"
-  ( cd "pn-status-webapp_${env_type}" \
-      && tar xvzf "../pn-status-webapp_${env_type}.tar.gz" \
+  mkdir -p "pn-status-webapp"
+  ( cd "pn-status-webapp" \
+      && tar xvzf "../pn-status-webapp.tar.gz" \
+      && replace_config ${env_type} \
   )
 
   aws ${aws_command_base_args} \
-      s3 sync "pn-status-webapp_${env_type}" "s3://${webappPgBucketName}/" --delete 
+      s3 sync "pn-status-webapp" "s3://${webappPgBucketName}/" --delete 
 
   aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappStatusDistributionId} --paths "/*"
 
