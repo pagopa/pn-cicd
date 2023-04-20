@@ -182,7 +182,7 @@ Resources:
                 - 'echo ""'
                 |
                 if ( [ ! -z "$IMAGE_URL" ]) then
-                  IMAGE_URL=$(sed "s/eu-central-1/eu-south-1/g" <<< $IMAGE_URL)
+                  IMAGE_URL=$(echo $IMAGE_URL | sed "s/eu-central-1/eu-south-1/g")
                   echo "REPLACE IMAGE URL = $IMAGE_URL"
                 fi
                 - 'echo "Retrieve commit configuration file"'
@@ -1499,6 +1499,10 @@ Resources:
               - "sns:DeleteSMSSandboxPhoneNumber"
               - "sns:Get*"
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - "cloudtrail:*"
+            Resource: !Sub arn:aws:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/pn-ss-presigned-url-usage
 
   CodeBuildPolicyData:
     Type: AWS::IAM::ManagedPolicy
