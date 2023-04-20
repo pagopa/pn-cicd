@@ -463,7 +463,7 @@ ReactAppUrlApi=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ReactAppUrlApi\") | .OutputValue" ) 
 
 echo "ReactAppUrlApi ${ReactAppUrlApi}"
-if ( [ $ReactAppUrlApi != '-' ] ) then
+if ( [ "$ReactAppUrlApi" != '-' ] ) then
   REACT_APP_URL_API=$ReactAppUrlApi
 fi
 
