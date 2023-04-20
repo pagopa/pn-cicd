@@ -153,6 +153,10 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .
 fi
 
+echo " - copy pn-infra-confinfo config"
+if ( [ -d "${custom_config_dir}/pn-infra-confinfo" ] ) then
+  cp -r $custom_config_dir/pn-infra-confinfo .
+fi
 
 echo "=== Download microservizio ${microcvs_name}" 
 if ( [ ! -e ${microcvs_name} ] ) then 
@@ -217,6 +221,10 @@ aws ${aws_command_base_args}  \
 
 STORAGE_STACK_FILE=${microcvs_name}/scripts/aws/cfn/infra-storage.yaml 
 
+TERRAFORM_PARAMS_FILEPATH=pn-infra-confinfo/terraform-${env_type}-cfg.json
+TmpFilePath=terraform-merge-${env_type}-cfg.json
+
+
 INFRA_INPUT_STACK=once-${env_type} 
 if [[ -f "$STORAGE_STACK_FILE" ]]; then
   echo ""
@@ -233,11 +241,24 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   echo ""
   echo ""
   echo "=== Prepare parameters for infra-storage.yaml deployment in $env_type ACCOUNT"
+
+  ## Merge pn_infra_confinfo output into EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
+  ParamFilePath=${microcvs_name}/scripts/aws/cfn/infra-storage-${env_type}-cfg.json
+
+  if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+    echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH}"
+
+    echo ""
+    echo "= Enanched Terraform parameters file for infra-storage"
+    jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
+    cat ${TmpFilePath}
+    mv ${TmpFilePath} ${ParamFilePath}
+  fi
+
   PreviousOutputFilePath=once4account-${env_type}-out.json
   TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra-storage.yaml
-  ParamFilePath=${microcvs_name}/scripts/aws/cfn/infra-storage-${env_type}-cfg.json
   EnanchedParamFilePath=infra-storage-${env_type}-cfg-enanched.json
-  PipelineParams="\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+  PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
   echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
   echo " - TemplateFilePath: ${TemplateFilePath}"
@@ -281,6 +302,18 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   INFRA_INPUT_STACK=infra-storage-${env_type}
 fi
 
+## Merge pn_infra_confinfo output into EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
+ParamFilePath=${microcvs_name}/scripts/aws/cfn/infra-${env_type}-cfg.json # infra cfg file, it is the target of merge from pn_infra_confinfo
+
+if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+  echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH}"
+
+  echo ""
+  echo "= Enanched Terraform parameters file"
+  jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
+  cat ${TmpFilePath}
+  mv ${TmpFilePath} ${ParamFilePath}
+fi
 
 echo ""
 echo ""
@@ -297,7 +330,6 @@ echo ""
 echo "= Read Outputs from previous stack"
 
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
-ParamFilePath=${microcvs_name}/scripts/aws/cfn/infra-${env_type}-cfg.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra.yml
 EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""

@@ -118,7 +118,6 @@ dump_params(){
   echo "Ci Bucket Name:    ${LambdasBucketName}"
 }
 
-
 # START SCRIPT
 
 parse_params "$@"
@@ -176,6 +175,84 @@ if ( [ ! -z "${aws_profile}" ] ) then
   aws_log_base_args="${aws_log_base_args} --profile $aws_profile"
 fi
 aws_log_base_args="${aws_log_base_args} --region eu-central-1"
+
+
+WebApiDnsName=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"WebApiDnsName\") | .OutputValue" )
+API_BASE_URL=""
+if ( [ $WebApiDnsName != '-' ] ) then
+  API_BASE_URL="https://${WebApiDnsName}/"
+fi
+
+HubLoginDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"HubLoginDomain\") | .OutputValue" )
+URL_API_LOGIN=""
+if ( [ $HubLoginDomain != '-' ] ) then
+  URL_API_LOGIN="https://${HubLoginDomain}"
+fi
+
+PortalePfDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfDomain\") | .OutputValue" )
+PF_URL=""
+if ( [ $PortalePfDomain != '-' ] ) then
+  PF_URL="https://${PortalePfDomain}"
+fi
+
+PortalePfLoginDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginDomain\") | .OutputValue" )
+URL_FE_LOGIN=""
+if ( [ $PortalePfLoginDomain != '-' ] ) then
+  URL_FE_LOGIN="https://${PortalePfLoginDomain}/"
+fi
+
+LandingDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" )
+LANDING_SITE_URL=""
+if ( [ $LandingDomain != '-' ] ) then
+  LANDING_SITE_URL="https://${LandingDomain}"
+fi
+
+# replace config files in build artifact
+replace_config() {
+#  cp ./conf/env/config.$1.json ./conf/config.json
+
+  LocalFilePath=/tmp/$2.json
+  echo '{}' > $LocalFilePath
+  if ( [ "$HubLoginDomain" != "-" ] ) then
+    LocalFilePath=/tmp/$2-filled-pg.json
+    jq -r '.' /tmp/$2.json \
+      | jq ".API_BASE_URL=\"$API_BASE_URL\"" \
+      | jq ".URL_API_LOGIN=\"$URL_API_LOGIN\"" \
+      | jq ".PF_URL=\"$PF_URL\"" \
+      | jq ".LANDING_SITE_URL=\"$LANDING_SITE_URL\"" \
+      | tee $LocalFilePath
+  
+    if ( [ $2 != 'pn-personagiuridica-webapp' ] ) then
+      LocalFilePath=/tmp/$2-filled.json
+      jq -r '.' /tmp/$2-filled-pg.json \
+        | jq ".URL_FE_LOGIN=\"$URL_FE_LOGIN\"" \
+        | tee $LocalFilePath
+    fi
+  fi
+
+  jq -s ".[0] * .[1]" ./conf/env/config.$1.json ${LocalFilePath} > ./conf/config.json
+}
+
 
 
 echo ""
@@ -291,22 +368,193 @@ function prepareOneCloudFront() {
 }
 
 
-source "pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
+ZONE_ID=""
+PORTALE_PA_CERTIFICATE_ARN=""
+PORTALE_PF_CERTIFICATE_ARN=""
+PORTALE_PF_LOGIN_CERTIFICATE_ARN=""
+LANDING_CERTIFICATE_ARN=""
+PORTALE_PG_CERTIFICATE_ARN=""
+PORTALE_STATUS_CERTIFICATE_ARN=""
 
-portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp_${env_type}.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+PORTALE_PA_DOMAIN="portale-pa.${env_type}.pn.pagopa.it"
+PORTALE_PF_DOMAIN="portale.${env_type}.pn.pagopa.it"
+PORTALE_PF_LOGIN_DOMAIN="portale-login.${env_type}.pn.pagopa.it"
+LANDING_DOMAIN="www.${env_type}.pn.pagopa.it"
+PORTALE_PG_DOMAIN="portale-pg.${env_type}.pn.pagopa.it"
+PORTALE_STATUS_DOMAIN="status.${env_type}.pn.pagopa.it"
+
+REACT_APP_URL_API=""
+
+ENV_FILE_PATH="pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
+if ( [ -f $ENV_FILE_PATH ] ) then
+  source $ENV_FILE_PATH
+fi
+
+# read output from pn-ipc
+echo ""
+echo "= Read Outputs from pn-ipc stack"
+
+
+ZoneId=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"CdnZoneId\") | .OutputValue" )
+
+if ( [ $ZoneId != '-' ] ) then
+  ZONE_ID=$ZoneId
+fi
+
+# CERTIFICATES
+PortalePaCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePaCertificateArn\") | .OutputValue" )
+
+if ( [ $PortalePaCertificateArn != '-' ] ) then
+  PORTALE_PA_CERTIFICATE_ARN=$PortalePaCertificateArn
+fi
+
+PortalePfCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfCertificateArn\") | .OutputValue" )
+
+if ( [ $PortalePfCertificateArn != '-' ] ) then
+  PORTALE_PF_CERTIFICATE_ARN=$PortalePfCertificateArn
+fi
+
+PortalePfLoginCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginCertificateArn\") | .OutputValue" )  
+
+if ( [ $PortalePfLoginCertificateArn != '-' ] ) then
+  PORTALE_PF_LOGIN_CERTIFICATE_ARN=$PortalePfLoginCertificateArn
+fi
+
+LandingCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingCertificateArn\") | .OutputValue" ) 
+
+if ( [ $LandingCertificateArn != '-' ] ) then
+  LANDING_CERTIFICATE_ARN=$LandingCertificateArn
+fi
+
+PortalePgCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePgCertificateArn\") | .OutputValue" ) 
+
+if ( [ $PortalePgCertificateArn != '-' ] ) then
+  PORTALE_PG_CERTIFICATE_ARN=$PortalePgCertificateArn
+fi
+
+PortaleStatusCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortaleStatusCertificateArn\") | .OutputValue" ) 
+
+if ( [ $PortaleStatusCertificateArn != '-' ] ) then
+  PORTALE_STATUS_CERTIFICATE_ARN=$PortaleStatusCertificateArn
+fi
+
+# DOMAIN
+
+PortalePaDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePaDomain\") | .OutputValue" )
+
+if ( [ $PortalePaDomain != '-' ] ) then
+  PORTALE_PA_DOMAIN=$PortalePaDomain
+fi
+
+PortalePfDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfDomain\") | .OutputValue" )
+
+if ( [ $PortalePfDomain != '-' ] ) then
+  PORTALE_PF_DOMAIN=$PortalePfDomain
+fi
+
+PortalePfLoginDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginDomain\") | .OutputValue" )  
+
+if ( [ $PortalePfLoginDomain != '-' ] ) then
+  PORTALE_PF_LOGIN_DOMAIN=$PortalePfLoginDomain
+fi
+
+LandingDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" ) 
+
+if ( [ $LandingDomain != '-' ] ) then
+  LANDING_DOMAIN=$LandingDomain
+fi
+
+PortalePgDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePgDomain\") | .OutputValue" ) 
+
+if ( [ $PortalePgDomain != '-' ] ) then
+  PORTALE_PG_DOMAIN=$PortalePgDomain
+fi
+
+PortaleStatusDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortaleStatusDomain\") | .OutputValue" ) 
+
+if ( [ $PortaleStatusDomain != '-' ] ) then
+  PORTALE_STATUS_DOMAIN=$PortaleStatusDomain
+fi
+
+ReactAppUrlApi=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ReactAppUrlApi\") | .OutputValue" ) 
+
+echo "ReactAppUrlApi ${ReactAppUrlApi}"
+if ( [ "$ReactAppUrlApi" != '-' ] ) then
+  REACT_APP_URL_API=$ReactAppUrlApi
+fi
+
+echo "REACT_APP_URL_API ${REACT_APP_URL_API}"
+
+portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_PG=""
 if ( [ $portalePgTarballPresent = "OK" ] ) then
   HAS_PORTALE_PG="true"
 fi
 
-portaleStatusTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp_${env_type}.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+portaleStatusTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_STATUS=""
 if ( [ $portaleStatusTarballPresent = "OK" ] ) then
   HAS_PORTALE_STATUS="true"
 fi
 
 prepareOneCloudFront webapp-pa-cdn-${env_type} \
-    "portale-pa.${env_type}.pn.pagopa.it" \
+    "$PORTALE_PA_DOMAIN" \
     "$PORTALE_PA_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
@@ -318,7 +566,7 @@ webappPaTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPaTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 prepareOneCloudFront webapp-pf-cdn-${env_type} \
-    "portale.${env_type}.pn.pagopa.it" \
+    "$PORTALE_PF_DOMAIN" \
     "$PORTALE_PF_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
@@ -330,7 +578,7 @@ webappPfTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
   prepareOneCloudFront webapp-pg-cdn-${env_type} \
-      "portale-pg.${env_type}.pn.pagopa.it" \
+      "$PORTALE_PG_DOMAIN" \
       "$PORTALE_PG_CERTIFICATE_ARN" \
       "$ZONE_ID" \
       "$REACT_APP_URL_API" \
@@ -343,7 +591,7 @@ fi
 
 if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   prepareOneCloudFront webapp-status-cdn-${env_type} \
-      "status.${env_type}.pn.pagopa.it" \
+      "$PORTALE_STATUS_DOMAIN" \
       "$PORTALE_STATUS_CERTIFICATE_ARN" \
       "$ZONE_ID" \
       "$REACT_APP_URL_API" \
@@ -355,7 +603,7 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
 fi
 
 prepareOneCloudFront webapp-pfl-cdn-${env_type} \
-    "portale-login.${env_type}.pn.pagopa.it" \
+    "$PORTALE_PF_LOGIN_DOMAIN" \
     "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
@@ -366,7 +614,7 @@ webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 prepareOneCloudFront web-landing-cdn-${env_type} \
-    "www.${env_type}.pn.pagopa.it" \
+    "$LANDING_DOMAIN" \
     "$LANDING_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
@@ -475,16 +723,17 @@ echo ""
 echo "===                          PORTALE PA                           ==="
 echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-pa-webapp_${env_type}.tar.gz" \
-      "pn-pa-webapp_${env_type}.tar.gz"
+      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-pa-webapp.tar.gz" \
+      "pn-pa-webapp.tar.gz"
 
-mkdir -p "pn-pa-webapp_${env_type}"
-( cd "pn-pa-webapp_${env_type}" \
-     && tar xvzf "../pn-pa-webapp_${env_type}.tar.gz" \
+mkdir -p "pn-pa-webapp"
+( cd "pn-pa-webapp" \
+     && tar xvzf "../pn-pa-webapp.tar.gz" \
+     && replace_config ${env_type} "pn-pa-webapp" \
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-pa-webapp_${env_type}" "s3://${webappPaBucketName}/" --delete 
+    s3 sync "pn-pa-webapp" "s3://${webappPaBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPaDistributionId} --paths "/*"
 
@@ -493,16 +742,17 @@ echo ""
 echo "===                          PORTALE PF                           ==="
 echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personafisica-webapp_${env_type}.tar.gz" \
-      "pn-personafisica-webapp_${env_type}.tar.gz"
+      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personafisica-webapp.tar.gz" \
+      "pn-personafisica-webapp.tar.gz"
 
-mkdir -p "pn-personafisica-webapp_${env_type}"
-( cd "pn-personafisica-webapp_${env_type}" \
-     && tar xvzf "../pn-personafisica-webapp_${env_type}.tar.gz" \
+mkdir -p "pn-personafisica-webapp"
+( cd "pn-personafisica-webapp" \
+     && tar xvzf "../pn-personafisica-webapp.tar.gz" \
+     && replace_config ${env_type} "pn-personafisica-webapp" \
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-personafisica-webapp_${env_type}" "s3://${webappPfBucketName}/" --delete 
+    s3 sync "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPfDistributionId} --paths "/*"
 
@@ -510,16 +760,17 @@ echo ""
 echo "===                       PORTALE PF LOGIN                        ==="
 echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personafisica-login_${env_type}.tar.gz" \
-      "pn-personafisica-login_${env_type}.tar.gz"
+      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personafisica-login.tar.gz" \
+      "pn-personafisica-login.tar.gz"
 
-mkdir -p "pn-personafisica-login_${env_type}"
-( cd "pn-personafisica-login_${env_type}" \
-     && tar xvzf "../pn-personafisica-login_${env_type}.tar.gz" \
+mkdir -p "pn-personafisica-login"
+( cd "pn-personafisica-login" \
+     && tar xvzf "../pn-personafisica-login.tar.gz" \
+     && replace_config ${env_type} "pn-personafisica-login" \
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-personafisica-login_${env_type}" "s3://${webappPflBucketName}/" --delete 
+    s3 sync "pn-personafisica-login" "s3://${webappPflBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPflDistributionId} --paths "/*"
 
@@ -528,16 +779,17 @@ echo ""
 echo "===                          SITO LANDING                         ==="
 echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-landing-webapp_${env_type}.tar.gz" \
-      "pn-landing-webapp_${env_type}.tar.gz"
+      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-landing-webapp.tar.gz" \
+      "pn-landing-webapp.tar.gz"
 
-mkdir -p "pn-landing-webapp_${env_type}"
-( cd "pn-landing-webapp_${env_type}" \
-     && tar xvzf "../pn-landing-webapp_${env_type}.tar.gz" \
+# landing site has a different config management - we use env variables but they are the same for each env
+mkdir -p "pn-landing-webapp"
+( cd "pn-landing-webapp" \
+     && tar xvzf "../pn-landing-webapp.tar.gz" \
 )
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-landing-webapp_${env_type}" "s3://${landingBucketName}/" --delete 
+    s3 sync "pn-landing-webapp" "s3://${landingBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
 
@@ -546,16 +798,17 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
   echo "===                          PORTALE PG                           ==="
   echo "====================================================================="
   aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp_${env_type}.tar.gz" \
-        "pn-personagiuridica-webapp_${env_type}.tar.gz"
+        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp.tar.gz" \
+        "pn-personagiuridica-webapp.tar.gz"
 
-  mkdir -p "pn-personagiuridica-webapp_${env_type}"
-  ( cd "pn-personagiuridica-webapp_${env_type}" \
-      && tar xvzf "../pn-personagiuridica-webapp_${env_type}.tar.gz" \
+  mkdir -p "pn-personagiuridica-webapp"
+  ( cd "pn-personagiuridica-webapp" \
+      && tar xvzf "../pn-personagiuridica-webapp.tar.gz" \
+      && replace_config ${env_type} "pn-personagiuridica-webapp" \
   )
 
   aws ${aws_command_base_args} \
-      s3 sync "pn-personagiuridica-webapp_${env_type}" "s3://${webappPgBucketName}/" --delete 
+      s3 sync "pn-personagiuridica-webapp" "s3://${webappPgBucketName}/" --delete 
 
   aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPgDistributionId} --paths "/*"
 
@@ -566,16 +819,17 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   echo "===                          PORTALE STATUS                           ==="
   echo "====================================================================="
   aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp_${env_type}.tar.gz" \
-        "pn-status-webapp_${env_type}.tar.gz"
+        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-status-webapp.tar.gz" \
+        "pn-status-webapp.tar.gz"
 
-  mkdir -p "pn-status-webapp_${env_type}"
-  ( cd "pn-status-webapp_${env_type}" \
-      && tar xvzf "../pn-status-webapp_${env_type}.tar.gz" \
+  mkdir -p "pn-status-webapp"
+  ( cd "pn-status-webapp" \
+      && tar xvzf "../pn-status-webapp.tar.gz" \
+      && replace_config ${env_type} "pn-status-webapp" \
   )
 
   aws ${aws_command_base_args} \
-      s3 sync "pn-status-webapp_${env_type}" "s3://${webappPgBucketName}/" --delete 
+      s3 sync "pn-status-webapp" "s3://${webappPgBucketName}/" --delete 
 
   aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappStatusDistributionId} --paths "/*"
 

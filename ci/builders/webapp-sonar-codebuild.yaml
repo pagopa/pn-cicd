@@ -52,7 +52,7 @@ Resources:
         Webhook: true
         FilterGroups:
           - - Type: EVENT
-              Pattern: PUSH, PULL_REQUEST_MERGED
+              Pattern: PUSH
             - Type: FILE_PATH
               Pattern: !Sub "^${BaseDir}/.*"
           # - - Type: EVENT
