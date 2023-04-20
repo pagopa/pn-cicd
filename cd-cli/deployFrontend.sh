@@ -233,7 +233,7 @@ replace_config() {
 
   LocalFilePath=/tmp/$2.json
   echo '{}' > $LocalFilePath
-  if ( [ -f "$API_BASE_URL" && -f "$URL_API_LOGIN" && -f "$PF_URL" && -f "$URL_FE_LOGIN" && -f "$LANDING_SITE_URL" ] ) then
+  if ( [ -n "$API_BASE_URL" && -n "$URL_API_LOGIN" && -n "$PF_URL" && -n "$URL_FE_LOGIN" && -n "$LANDING_SITE_URL" ] ) then
     LocalFilePath=/tmp/$2-filled-pg.json
     jq -r '.' /tmp/$2.json \
       | jq ".API_BASE_URL=\"$API_BASE_URL\"" \
