@@ -231,9 +231,10 @@ fi
 replace_config() {
 #  cp ./conf/env/config.$1.json ./conf/config.json
 
-  echo '{}' > /tmp/$2.json
-  LocalFilePath=/tmp/$2-filled-pg.json
-  if ( [ -f "$API_BASE_URL" && -f "$URL_API_LOGIN" && -f "$PF_URL" && -f "$URL_FE_LOGIN" && -f "$LANDING_SITE_URL" ] )
+  LocalFilePath=/tmp/$2.json
+  echo '{}' > $LocalFilePath
+  if ( [ -f "$API_BASE_URL" && -f "$URL_API_LOGIN" && -f "$PF_URL" && -f "$URL_FE_LOGIN" && -f "$LANDING_SITE_URL" ] ) then
+    LocalFilePath=/tmp/$2-filled-pg.json
     jq -r '.' /tmp/$2.json \
       | jq ".API_BASE_URL=\"$API_BASE_URL\"" \
       | jq ".URL_API_LOGIN=\"$URL_API_LOGIN\"" \
