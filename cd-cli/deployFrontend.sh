@@ -423,7 +423,7 @@ PortalePfLoginDomain=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginDomain\") | .OutputValue" )  
 
 if ( [ $PortalePfLoginDomain != '-' ] ) then
-  export PORTALE_PF_LOGIN_DOMAIN=$PortalePfLoginDomain
+  PORTALE_PF_LOGIN_DOMAIN=$PortalePfLoginDomain
 fi
 
 LandingDomain=$( aws ${aws_command_base_args} \
@@ -433,7 +433,7 @@ LandingDomain=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" ) 
 
 if ( [ $LandingDomain != '-' ] ) then
-  export LANDING_DOMAIN=$LandingDomain
+  LANDING_DOMAIN=$LandingDomain
 fi
 
 PortalePgDomain=$( aws ${aws_command_base_args} \
@@ -443,7 +443,7 @@ PortalePgDomain=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePgDomain\") | .OutputValue" ) 
 
 if ( [ $PortalePgDomain != '-' ] ) then
-  export PORTALE_PG_DOMAIN=$PortalePgDomain
+  PORTALE_PG_DOMAIN=$PortalePgDomain
 fi
 
 PortaleStatusDomain=$( aws ${aws_command_base_args} \
@@ -453,7 +453,7 @@ PortaleStatusDomain=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortaleStatusDomain\") | .OutputValue" ) 
 
 if ( [ $PortaleStatusDomain != '-' ] ) then
-  export PORTALE_STATUS_DOMAIN=$PortaleStatusDomain
+  PORTALE_STATUS_DOMAIN=$PortaleStatusDomain
 fi
 
 ReactAppUrlApi=$( aws ${aws_command_base_args} \
@@ -462,9 +462,12 @@ ReactAppUrlApi=$( aws ${aws_command_base_args} \
       --output json \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ReactAppUrlApi\") | .OutputValue" ) 
 
+echo "ReactAppUrlApi ${ReactAppUrlApi}"
 if ( [ $ReactAppUrlApi != '-' ] ) then
-  export REACT_APP_URL_API=$ReactAppUrlApi
+  REACT_APP_URL_API=$ReactAppUrlApi
 fi
+
+echo "REACT_APP_URL_API ${REACT_APP_URL_API}"
 
 portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_PG=""
