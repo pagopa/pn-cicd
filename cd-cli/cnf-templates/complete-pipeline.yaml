@@ -847,30 +847,6 @@ Resources:
                 - Name: PnKafkaBridgeOutput
               RunOrder: 3
 
-            # Update pn-radd-bff
-            - Name: Update_PnRaddBff
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-                PrimarySource: DesiredCommitIdsAndScripts
-                EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-radd-bff", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"15", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_radd_bff", "type":"PLAINTEXT"}
-                  ]'
-              InputArtifacts:
-                - Name: DesiredCommitIdsAndScripts
-              OutputArtifacts:
-                - Name: PnRaddBffOutput
-              RunOrder: 3
-
             # Update pn-progression-sensor
             - Name: Update_ProgressionSensor
               ActionTypeId:
