@@ -241,13 +241,13 @@ replace_config() {
       | jq ".PF_URL=\"$PF_URL\"" \
       | jq ".LANDING_SITE_URL=\"$LANDING_SITE_URL\"" \
       | tee $LocalFilePath
-  fi
-
-  if ( [ $2 != 'pn-personagiuridica-webapp' ] ) then
-    LocalFilePath=/tmp/$2-filled.json
-    jq -r '.' /tmp/$2-filled-pg.json \
-      | jq ".URL_FE_LOGIN=\"$URL_FE_LOGIN\"" \
-      | tee $LocalFilePath
+  
+    if ( [ $2 != 'pn-personagiuridica-webapp' ] ) then
+      LocalFilePath=/tmp/$2-filled.json
+      jq -r '.' /tmp/$2-filled-pg.json \
+        | jq ".URL_FE_LOGIN=\"$URL_FE_LOGIN\"" \
+        | tee $LocalFilePath
+    fi
   fi
 
   jq -s ".[0] * .[1]" ./conf/env/config.$1.json ${LocalFilePath} > ./conf/config.json
