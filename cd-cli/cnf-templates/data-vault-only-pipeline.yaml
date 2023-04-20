@@ -180,6 +180,11 @@ Resources:
                 - 'echo "COMMIT_ID=$COMMIT_ID"'
                 - 'echo "IMAGE_URL=$IMAGE_URL"'
                 - 'echo ""'
+                - |
+                  if ( [ ! -z "$IMAGE_URL" ]) then
+                    IMAGE_URL=$(echo $IMAGE_URL | sed "s/eu-central-1/eu-south-1/g")
+                    echo "REPLACE IMAGE URL = $IMAGE_URL"
+                  fi
                 - 'echo "Retrieve commit configuration file"'
                 - 'aws s3 cp s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh desired-commit-ids-env.sh'
                 - 'cat desired-commit-ids-env.sh'
@@ -224,6 +229,12 @@ Resources:
                     sed -i -e "s|pn_ec_commitId=.*|pn_ec_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_ec_imageUrl=.*|pn_ec_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-ec-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-address-manager" ] ) then
+                    sed -i -e "s|pn_address_manager_commitId=.*|pn_address_manager_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_address_manager_imageUrl=.*|pn_address_manager_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-address-manager-update-pipeline"
                   fi
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
@@ -761,6 +772,96 @@ Resources:
                 - Name: PnECOutput
               RunOrder: 3
 
+  PnAddressManagerDeployPipeline:
+    Condition: IsContinuosDeliveryCondition
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-address-manager-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-address-manager
+            - Name: Update_PnAddressManager
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-address-manager", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_address_manager", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnAddressManagerOutput
+              RunOrder: 3
+
   # CODEBUILD used to download scripts
   ###################################################
   DownloadScriptsCodebuildProject:
@@ -853,11 +954,25 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
+                - |
+                  if ( [ ! -z "$pn_infra_confinfo_commitId"  ] ) then
+                    echo "########################################################"
+                    echo "###                   UPDATE NETWORKING              ###"
+                    echo "########################################################"
+                    echo ""
+                    (cd scripts/cd-cli && ./deployNetworking.sh -r $AwsRegion -e $EnvName -i $pn_infra_confinfo_commitId -a confinfo -w /tmp -c $custom_config_dir )
+                  fi
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
                 - 'echo "########################################################"'
                 - 'echo "###       UPDATE MICROSERVICE $MsName    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployEcsService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
+                - 'echo "./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
                 - '(cd scripts/cd-cli && ./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
@@ -1131,6 +1246,7 @@ Resources:
               - elasticloadbalancing:ModifyTargetGroupAttributes
               - elasticloadbalancing:DeleteRule
               - elasticloadbalancing:RegisterTargets
+              - elasticloadbalancing:DescribeLoadBalancerAttributes
             Resource: "*"
           - Effect: Allow
             Action:
@@ -1383,6 +1499,10 @@ Resources:
               - "sns:DeleteSMSSandboxPhoneNumber"
               - "sns:Get*"
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - "cloudtrail:*"
+            Resource: !Sub arn:aws:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/pn-ss-presigned-url-usage
 
   CodeBuildPolicyData:
     Type: AWS::IAM::ManagedPolicy
@@ -1657,6 +1777,7 @@ Resources:
                 iam:AWSServiceName:
                   - autoscaling.amazonaws.com
                   - ecs.amazonaws.com
+                  - kinesisreplication.dynamodb.amazonaws.com      
                   - ecs.application-autoscaling.amazonaws.com
                   - spot.amazonaws.com
                   - spotfleet.amazonaws.com
