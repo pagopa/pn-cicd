@@ -118,12 +118,6 @@ dump_params(){
   echo "Ci Bucket Name:    ${LambdasBucketName}"
 }
 
-# replace config files in build artifact
-replace_config() {
-  cp ./conf/env/config.$1.json ./conf/config.json
-}
-
-
 # START SCRIPT
 
 parse_params "$@"
@@ -181,6 +175,84 @@ if ( [ ! -z "${aws_profile}" ] ) then
   aws_log_base_args="${aws_log_base_args} --profile $aws_profile"
 fi
 aws_log_base_args="${aws_log_base_args} --region eu-central-1"
+
+
+WebApiDnsName=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"WebApiDnsName\") | .OutputValue" )
+API_BASE_URL=""
+if ( [ $WebApiDnsName != '-' ] ) then
+  API_BASE_URL="https://${WebApiDnsName}/"
+fi
+
+HubLoginDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"HubLoginDomain\") | .OutputValue" )
+URL_API_LOGIN=""
+if ( [ $HubLoginDomain != '-' ] ) then
+  URL_API_LOGIN="https://${HubLoginDomain}"
+fi
+
+PortalePfDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfDomain\") | .OutputValue" )
+PF_URL=""
+if ( [ $PortalePfDomain != '-' ] ) then
+  PF_URL="https://${PortalePfDomain}"
+fi
+
+PortalePfLoginDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginDomain\") | .OutputValue" )
+URL_FE_LOGIN=""
+if ( [ $PortalePfLoginDomain != '-' ] ) then
+  URL_FE_LOGIN="https://${PortalePfLoginDomain}/"
+fi
+
+LandingDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" )
+LANDING_SITE_URL=""
+if ( [ $LandingDomain != '-' ] ) then
+  LANDING_SITE_URL="https://${LandingDomain}"
+fi
+
+# replace config files in build artifact
+replace_config() {
+#  cp ./conf/env/config.$1.json ./conf/config.json
+
+  LocalFilePath=/tmp/$2.json
+  echo '{}' > $LocalFilePath
+  if ( [ "$HubLoginDomain" != "-" ] ) then
+    LocalFilePath=/tmp/$2-filled-pg.json
+    jq -r '.' /tmp/$2.json \
+      | jq ".API_BASE_URL=\"$API_BASE_URL\"" \
+      | jq ".URL_API_LOGIN=\"$URL_API_LOGIN\"" \
+      | jq ".PF_URL=\"$PF_URL\"" \
+      | jq ".LANDING_SITE_URL=\"$LANDING_SITE_URL\"" \
+      | tee $LocalFilePath
+  fi
+
+  if ( [ $2 != 'pn-personagiuridica-webapp' ] ) then
+    LocalFilePath=/tmp/$2-filled.json
+    jq -r '.' /tmp/$2-filled-pg.json \
+      | jq ".URL_FE_LOGIN=\"$URL_FE_LOGIN\"" \
+      | tee $LocalFilePath
+  fi
+
+  jq -s ".[0] * .[1]" ./conf/env/config.$1.json ${LocalFilePath} > ./conf/config.json
+}
+
 
 
 echo ""
@@ -423,7 +495,7 @@ PortalePfLoginDomain=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginDomain\") | .OutputValue" )  
 
 if ( [ $PortalePfLoginDomain != '-' ] ) then
-  export PORTALE_PF_LOGIN_DOMAIN=$PortalePfLoginDomain
+  PORTALE_PF_LOGIN_DOMAIN=$PortalePfLoginDomain
 fi
 
 LandingDomain=$( aws ${aws_command_base_args} \
@@ -433,7 +505,7 @@ LandingDomain=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" ) 
 
 if ( [ $LandingDomain != '-' ] ) then
-  export LANDING_DOMAIN=$LandingDomain
+  LANDING_DOMAIN=$LandingDomain
 fi
 
 PortalePgDomain=$( aws ${aws_command_base_args} \
@@ -443,7 +515,7 @@ PortalePgDomain=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePgDomain\") | .OutputValue" ) 
 
 if ( [ $PortalePgDomain != '-' ] ) then
-  export PORTALE_PG_DOMAIN=$PortalePgDomain
+  PORTALE_PG_DOMAIN=$PortalePgDomain
 fi
 
 PortaleStatusDomain=$( aws ${aws_command_base_args} \
@@ -453,7 +525,7 @@ PortaleStatusDomain=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortaleStatusDomain\") | .OutputValue" ) 
 
 if ( [ $PortaleStatusDomain != '-' ] ) then
-  export PORTALE_STATUS_DOMAIN=$PortaleStatusDomain
+  PORTALE_STATUS_DOMAIN=$PortaleStatusDomain
 fi
 
 ReactAppUrlApi=$( aws ${aws_command_base_args} \
@@ -462,9 +534,12 @@ ReactAppUrlApi=$( aws ${aws_command_base_args} \
       --output json \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ReactAppUrlApi\") | .OutputValue" ) 
 
-if ( [ $ReactAppUrlApi != '-' ] ) then
-  export REACT_APP_URL_API=$ReactAppUrlApi
+echo "ReactAppUrlApi ${ReactAppUrlApi}"
+if ( [ "$ReactAppUrlApi" != '-' ] ) then
+  REACT_APP_URL_API=$ReactAppUrlApi
 fi
+
+echo "REACT_APP_URL_API ${REACT_APP_URL_API}"
 
 portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_PG=""
@@ -654,7 +729,7 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 mkdir -p "pn-pa-webapp"
 ( cd "pn-pa-webapp" \
      && tar xvzf "../pn-pa-webapp.tar.gz" \
-     && replace_config ${env_type} \
+     && replace_config ${env_type} "pn-pa-webapp" \
 )
 
 aws ${aws_command_base_args} \
@@ -673,7 +748,7 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 mkdir -p "pn-personafisica-webapp"
 ( cd "pn-personafisica-webapp" \
      && tar xvzf "../pn-personafisica-webapp.tar.gz" \
-     && replace_config ${env_type} \
+     && replace_config ${env_type} "pn-personafisica-webapp" \
 )
 
 aws ${aws_command_base_args} \
@@ -691,7 +766,7 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 mkdir -p "pn-personafisica-login"
 ( cd "pn-personafisica-login" \
      && tar xvzf "../pn-personafisica-login.tar.gz" \
-     && replace_config ${env_type} \
+     && replace_config ${env_type} "pn-personafisica-login" \
 )
 
 aws ${aws_command_base_args} \
@@ -729,7 +804,7 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
   mkdir -p "pn-personagiuridica-webapp"
   ( cd "pn-personagiuridica-webapp" \
       && tar xvzf "../pn-personagiuridica-webapp.tar.gz" \
-      && replace_config ${env_type} \
+      && replace_config ${env_type} "pn-personagiuridica-webapp" \
   )
 
   aws ${aws_command_base_args} \
@@ -750,7 +825,7 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   mkdir -p "pn-status-webapp"
   ( cd "pn-status-webapp" \
       && tar xvzf "../pn-status-webapp.tar.gz" \
-      && replace_config ${env_type} \
+      && replace_config ${env_type} "pn-status-webapp" \
   )
 
   aws ${aws_command_base_args} \
