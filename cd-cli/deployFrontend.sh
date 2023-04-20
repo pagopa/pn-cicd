@@ -120,7 +120,7 @@ dump_params(){
 
 # replace config files in build artifact
 replace_config() {
-  cp ./build/conf/env/config.$1.json ./build/conf/config.json
+  cp ./conf/env/config.$1.json ./conf/config.json
 }
 
 
@@ -486,7 +486,6 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 mkdir -p "pn-pa-webapp"
 ( cd "pn-pa-webapp" \
      && tar xvzf "../pn-pa-webapp.tar.gz" \
-     && cd "pn-pa-webapp" \
      && replace_config ${env_type} \
 )
 
@@ -506,7 +505,6 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 mkdir -p "pn-personafisica-webapp"
 ( cd "pn-personafisica-webapp" \
      && tar xvzf "../pn-personafisica-webapp.tar.gz" \
-     && cd "pn-personafisica-webapp" \
      && replace_config ${env_type} \
 )
 
@@ -525,7 +523,6 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 mkdir -p "pn-personafisica-login"
 ( cd "pn-personafisica-login" \
      && tar xvzf "../pn-personafisica-login.tar.gz" \
-     && cd "pn-personafisica-login" \
      && replace_config ${env_type} \
 )
 
@@ -564,7 +561,6 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
   mkdir -p "pn-personagiuridica-webapp"
   ( cd "pn-personagiuridica-webapp" \
       && tar xvzf "../pn-personagiuridica-webapp.tar.gz" \
-      && cd "pn-personagiuridica-webapp" \
       && replace_config ${env_type} \
   )
 
@@ -586,7 +582,6 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   mkdir -p "pn-status-webapp"
   ( cd "pn-status-webapp" \
       && tar xvzf "../pn-status-webapp.tar.gz" \
-      && cd "pn-status-webapp" \
       && replace_config ${env_type} \
   )
 
