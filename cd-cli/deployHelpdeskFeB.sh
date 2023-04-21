@@ -173,7 +173,7 @@ function prepareOneCloudFront() {
   aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name $CdnName \
-      --template-file pn-frontend/aws-cdn-templates/one-cdn.yaml \
+      --template-file pn-helpdesk-fe/scripts/aws/one-cdn.yaml \
       --parameter-overrides \
         Name="${CdnName}" \
         WebDomain="${WebDomain}" \
