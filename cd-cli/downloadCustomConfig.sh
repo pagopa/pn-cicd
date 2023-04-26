@@ -149,26 +149,30 @@ fi
 PN_CONFIGURATION_TAG_param=""
 SUB1=tag
 
+
 if ( [ ! -z "${PN_CONFIGURATION_TAG}"  ] ) ; then
+  echo PN_CONFIGURATION_TAG is present. 
   PN_CONFIGURATION_TAG_param=""
   SUB1=tag
-  echo PN_CONFIGURATION_TAG is present. 
-  touch desiredCommitIds.sh
-  #List Components form PN-CONFIGURATION:
-  for PN_CONFIGURATION_TAG_param in $(curl -s https://raw.githubusercontent.com/pagopa/pn-configuration/$PN_CONFIGURATION_TAG/repository-list.json  |  jq 'keys_unsorted'  | grep -E "Id|Url" | sed -E 's/"//g' | sed -E 's/,//g' | sed -E 's/ //g');do
-  #List of CommitsIds (tag or branch):
-  PN_COMMIT=$(echo "$( curl -s https://raw.githubusercontent.com/pagopa/pn-configuration/$PN_CONFIGURATION_TAG/repository-list.json | jq -r '.'\"$PN_CONFIGURATION_TAG_param\"'' )") ;
+  SUB2=amazonaws
+  
+  #cloning git repository and change directory:
+  git clone https://github.com/pagopa/pn-configuration.git
+  cd pn-configuration/
+   
+  #Take list of all components in json file: 
+  for PN_CONFIGURATION_TAG_param in $( cat repository-list.json |  jq 'keys_unsorted'  | grep -E "Id|Url" | sed -E 's/"//g' | sed -E 's/,//g' | sed -E 's/ //g' ); do
+  #Take for all components tag, branch, ImageUrl ecc...
+  PN_COMMIT=$(echo "$( cat repository-list.json | jq -r '.'\"$PN_CONFIGURATION_TAG_param\"'' )"); 
 
-  #ONLY FOR TEST,
-  #for PN_CONFIGURATION_TAG_param in $(cat example.json |  jq 'keys_unsorted'  | grep -E "Id|Url" | sed -E 's/"//g' | sed -E 's/,//g' | sed -E 's/ //g'); do
-  #PN_COMMIT=$(echo "$( cat example.json | jq -r '.'\"$PN_CONFIGURATION_TAG_param\"'' )"); 
-  #END TEST
-
-  #ImageURL and Commit
-  LineNum=$(echo $PN_COMMIT | wc -c)
-  if [ 40 -le "$LineNum" ] ; then
-  echo "CommitID or ImageUrl is present $PN_CONFIGURATION_TAG_param";
-  echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT" >> desiredCommitIds.sh
+  #AWS ECR Image:
+  if grep -q "$SUB2" <<< "$PN_COMMIT"; then
+  echo "IMAGE is present."
+  REPOIMAGE=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_imageUrl//g' | sed -E 's/_/-/g');
+  TAGIMAGE=$(echo $PN_COMMIT | cut -d "@" -f 2);
+  SHAIMAGE=$(aws ecr describe-images --repository-name $REPOIMAGE --region eu-central-1 --image-ids imageTag="$TAGIMAGE" | jq -r .imageDetails | jq -r '.[0]' | jq -r '.imageDigest')
+  PN_COMMIT_ID=$(echo $PN_COMMIT | sed -E "s|$TAGIMAGE|$SHAIMAGE|g" )
+  echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
 
   #TAG:
   elif grep -q "$SUB1" <<< "$PN_COMMIT"; then
@@ -181,21 +185,34 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}"  ] ) ; then
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
   https://api.github.com/repos/pagopa/$REPO/tags | jq '.[] | select(.name=='\"$TAG\"') ' |  jq -r '.commit.sha' )") ;
-  echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desiredCommitIds.sh
+  echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
+  
+  #CommitID (nothing to do):
+  elif  [ $(echo  $PN_COMMIT | wc -c) -eq 41 ] ; then
+  echo "CommitID is present $PN_CONFIGURATION_TAG_param";
+  echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT" >> desired-commit-ids-env.sh
 
   #BRANCH
   else
-   echo "BRANCH is present for $PN_CONFIGURATION_TAG_param";
+  echo "BRANCH is present for $PN_CONFIGURATION_TAG_param";
   #declare variable for repo:
   REPO=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_commitId//g' | sed -E 's/_/-/g')
   PN_COMMIT_ID=$(echo "$( curl -L -s \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
   https://api.github.com/repos/pagopa/$REPO/branches/$PN_COMMIT |  jq -r '.commit.sha' )") ;
-  echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desiredCommitIds.sh
+  echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
   fi
   done
   echo export completed
   else
   echo "nothing to do"
 fi
+
+
+cd ../..
+  mkdir -p custom-config
+  cp -r * custom-config/
+
+  chmod a+x ./desired-commit-ids-env.sh
+   . ./desired-commit-ids-env.sh
