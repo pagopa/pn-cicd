@@ -158,7 +158,7 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}"  ] ) ; then
   
   #cloning git repository and change directory:
   git clone https://github.com/pagopa/pn-configuration.git
-  cd pn-configuration/
+  cd pn-configuration/$env_type
    
   #Take list of all components in json file: 
   for PN_CONFIGURATION_TAG_param in $( cat repository-list.json |  jq 'keys_unsorted'  | grep -E "Id|Url" | sed -E 's/"//g' | sed -E 's/,//g' | sed -E 's/ //g' ); do
