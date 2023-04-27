@@ -1822,6 +1822,13 @@ Resources:
               - cloudfront:UpdateFunction
               - cloudfront:GetCloudFrontOriginAccessIdentity
               - acm:ListCertificates
+              - acm:AddTagsToCertificate
+              - acm:DescribeCertificate	
+              - acm:GetCertificate
+              - acm:ListTagsForCertificate
+              - acm:RequestCertificate
+              - acm:DeleteCertificate	
+              - acm:RemoveTagsFromCertificate
               - cloudfront:UpdateDistribution
               - cloudfront:UpdateCloudFrontOriginAccessIdentity
               - cloudfront:GetDistributionConfig
