@@ -1309,6 +1309,19 @@ Resources:
         PackageName: "pn-helpdesk-fe"
         BaseDir: "pn-helpdesk-fe"
       TimeoutInMinutes: 5
+  PnRaddWebapp:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-radd-fe"
+        PackageName: ""
+        BaseDir: "pn-radd-fe"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
   # Web cypress pipeline
   PnPaCypress:
     Type: AWS::CloudFormation::Stack
