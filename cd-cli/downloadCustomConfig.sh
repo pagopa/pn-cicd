@@ -157,15 +157,13 @@ else
   touch custom-config/empty.txt
 fi
 
-PN_CONFIGURATION_TAG_param=""
-SUB1=tag
-
 
 if ( [ ! -z "${PN_CONFIGURATION_TAG}" && ! -z "${cicd_account_id}" ] ) ; then
   echo PN_CONFIGURATION_TAG is present. 
   PN_CONFIGURATION_TAG_param=""
   SUB1=tag
   SUB2=amazonaws
+  SUB3=sha
   
   #cloning git repository and change directory:
   git clone https://github.com/pagopa/pn-configuration.git
@@ -178,16 +176,24 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" && ! -z "${cicd_account_id}" ] ) ; then
 
     #AWS ECR Image:
     if grep -q "$SUB2" <<< "$PN_COMMIT"; then
-      echo "IMAGE is present."
+      echo "IMAGE is present. Searching for SHA or Image Tag"
+
+      if  grep -q "$SUB3" <<< "$PN_COMMIT"; then
+      echo "IMAGE SHA is present, copy to script:"
+      echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT" >> desired-commit-ids-env.sh
+
+      else
+      echo "IMAGE SHA is not present, retrive data from AWS ECR:"
       REPOIMAGE=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_imageUrl//g' | sed -E 's/_/-/g');
       TAGIMAGE=$(echo $PN_COMMIT | cut -d "@" -f 2);
       SHAIMAGE=$(aws ${aws_cicd_command_base_args} ecr describe-images --repository-name $REPOIMAGE --region eu-central-1 --image-ids imageTag="$TAGIMAGE" --registry-id="$cicd_account_id" | jq -r .imageDetails | jq -r '.[0]' | jq -r '.imageDigest')
       PN_COMMIT_ID=$(echo $PN_COMMIT | sed -E "s|$TAGIMAGE|$SHAIMAGE|g" )
       echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
+      fi
 
     #TAG:
     elif grep -q "$SUB1" <<< "$PN_COMMIT"; then
-      echo "TAG is present for $PN_CONFIGURATION_TAG_param";
+      echo "TAG is present for $PN_CONFIGURATION_TAG_param , go to GitHub";
       #take only tag es: v1.0.0:
       TAG=$(echo $PN_COMMIT | cut -d "/" -f 2)
       #declare variable for repo:
@@ -200,12 +206,12 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" && ! -z "${cicd_account_id}" ] ) ; then
     
     #CommitID (nothing to do):
     elif  [ $(echo  $PN_COMMIT | wc -c) -eq 41 ] ; then
-      echo "CommitID is present $PN_CONFIGURATION_TAG_param";
+      echo "CommitID is present $PN_CONFIGURATION_TAG_param , copy to script: ";
       echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT" >> desired-commit-ids-env.sh
 
     #BRANCH
     else
-      echo "BRANCH is present for $PN_CONFIGURATION_TAG_param";
+      echo "BRANCH is present for $PN_CONFIGURATION_TAG_param , got to GitHub:";
       #declare variable for repo:
       REPO=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_commitId//g' | sed -E 's/_/-/g')
       PN_COMMIT_ID=$(echo "$( curl -L -s \
@@ -227,5 +233,3 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" && ! -z "${cicd_account_id}" ] ) ; then
 else
   echo "nothing to do"
 fi
-
-
