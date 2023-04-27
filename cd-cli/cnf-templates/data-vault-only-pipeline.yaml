@@ -25,6 +25,10 @@ Conditions:
   IsHotfixCondition: !Equals [ !Ref EnvName, 'hotfix' ]
   IsDevCondition: !Equals [ !Ref EnvName, 'dev' ]
   IsContinuosDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
+  IsTestEnv: !Equals [ !Ref EnvName, 'test' ]
+  IsUatEnv: !Equals [ !Ref EnvName, 'uat' ]
+  IsProdEnv: !Equals [ !Ref EnvName, 'prod' ]
+  IsNewConfiguration: !Or [ !Condition IsTestEnv, !Condition IsUatEnv, !Condition IsProdEnv ]
 
 Mappings: 
   EventPatternMap: 
@@ -883,25 +887,42 @@ Resources:
                 - 'echo "###################"'
                 - env
                 - 'echo ""'
-                - 'echo "### DOWNLOAD DESIRED COMMIT IDS ###"'
-                - 'aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}'
-                - 'cat desired-commit-ids-env.sh'
-                - 'echo ""'
-                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
-                - '. ./desired-commit-ids-env.sh'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo "### UPDATED ENVIRONMENT ###"'
-                - 'echo "###########################"'
-                - env
-                - 'echo ""'
-                - 'echo "### CLONE SCRIPTS ###"'
-                - 'echo "#####################"'
-                - 'git clone https://github.com/pagopa/pn-cicd.git'
-                - '( cd pn-cicd && git checkout $cd_scripts_commitId )'
-                - '( ./pn-cicd/cd-cli/downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) )'
-                - '( cp -r custom-config/* pn-cicd/cd-cli/custom-config )'
-                - 'ls -r pn-cicd'
+                - | 
+                  if ( [ ! -z "$PnConfigurationEnabled" ] ) then
+                    echo "### CLONE CICD SCRIPTS ###"
+                    echo ""
+                    git clone https://github.com/pagopa/pn-cicd.git
+                    echo ""
+                    echo "### Execute Download Custom Config ###"
+                    ( ./pn-cicd/cd-cli/downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c main -i $CiAccountId )
+                    . ./desired-commit-ids-env.sh
+                    echo ""
+                    echo ""
+                    echo "### UPDATED ENVIRONMENT ###"
+                    env
+                    echo ""
+                    ls -r pn-cicd
+                  else
+                    echo "### DOWNLOAD DESIRED COMMIT IDS ###"
+                    aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}
+                    cat desired-commit-ids-env.sh
+                    echo ""
+                    echo "### SOURCE DESIRED COMMIT IDS ###"
+                    . ./desired-commit-ids-env.sh
+                    echo ""
+                    echo ""
+                    echo "### UPDATED ENVIRONMENT ###"
+                    echo "###########################"
+                    env
+                    echo ""
+                    echo "### CLONE SCRIPTS ###"
+                    echo "#####################"
+                    git clone https://github.com/pagopa/pn-cicd.git
+                    ( cd pn-cicd && git checkout $cd_scripts_commitId )
+                    ( ./pn-cicd/cd-cli/downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) )
+                    ( cp -r custom-config/* pn-cicd/cd-cli/custom-config )
+                    ls -r pn-cicd
+                  fi
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "### PREPARE ARTIFACT ###"'
@@ -919,6 +940,13 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
+        EnvironmentVariables:
+          - Name: PnConfigurationEnabled
+            Type: PLAINTEXT
+            Value: !If [ IsNewConfiguration, 'main', '' ]
+          - Name: CiAccountId
+            Type: PLAINTEXT
+            Value: !Ref CiAccountId
 
 
   # CODEBUILD used to update an ecs microservice

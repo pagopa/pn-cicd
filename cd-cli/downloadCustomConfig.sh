@@ -158,7 +158,7 @@ else
 fi
 
 
-if ( [ ! -z "${PN_CONFIGURATION_TAG}" && ! -z "${cicd_account_id}" ] ) ; then
+if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
   echo PN_CONFIGURATION_TAG is present. 
   PN_CONFIGURATION_TAG_param=""
   SUB1=tag
@@ -166,13 +166,13 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" && ! -z "${cicd_account_id}" ] ) ; then
   SUB3=sha
   
   #cloning git repository and change directory:
-  git clone https://github.com/pagopa/pn-configuration.git
-  cd pn-configuration/$env_type
+  #git clone https://github.com/pagopa/pn-configuration.git
+  #cd pn-configuration/$env_type
    
   #Take list of all components in json file: 
-  for PN_CONFIGURATION_TAG_param in $( cat repository-list.json |  jq 'keys_unsorted'  | grep -E "Id|Url" | sed -E 's/"//g' | sed -E 's/,//g' | sed -E 's/ //g' ); do
+  for PN_CONFIGURATION_TAG_param in $( cat pn-configuration/$env_type/repository-list.json |  jq 'keys_unsorted'  | grep -E "Id|Url" | sed -E 's/"//g' | sed -E 's/,//g' | sed -E 's/ //g' ); do
     #Take for all components tag, branch, ImageUrl ecc...
-    PN_COMMIT=$(echo "$( cat repository-list.json | jq -r '.'\"$PN_CONFIGURATION_TAG_param\"'' )"); 
+    PN_COMMIT=$(echo "$( cat pn-configuration/$env_type/repository-list.json | jq -r '.'\"$PN_CONFIGURATION_TAG_param\"'' )"); 
 
     #AWS ECR Image:
     if grep -q "$SUB2" <<< "$PN_COMMIT"; then
@@ -186,7 +186,7 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" && ! -z "${cicd_account_id}" ] ) ; then
       echo "IMAGE SHA is not present, retrive data from AWS ECR:"
       REPOIMAGE=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_imageUrl//g' | sed -E 's/_/-/g');
       TAGIMAGE=$(echo $PN_COMMIT | cut -d "@" -f 2);
-      SHAIMAGE=$(aws ${aws_cicd_command_base_args} ecr describe-images --repository-name $REPOIMAGE --region eu-central-1 --image-ids imageTag="$TAGIMAGE" --registry-id="$cicd_account_id" | jq -r .imageDetails | jq -r '.[0]' | jq -r '.imageDigest')
+      SHAIMAGE=$(aws ${aws_cicd_command_base_args} ecr describe-images --repository-name $REPOIMAGE --image-ids imageTag="$TAGIMAGE" --registry-id="$cicd_account_id" | jq -r .imageDetails | jq -r '.[0]' | jq -r '.imageDigest')
       PN_COMMIT_ID=$(echo $PN_COMMIT | sed -E "s|$TAGIMAGE|$SHAIMAGE|g" )
       echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
       fi
@@ -223,7 +223,7 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" && ! -z "${cicd_account_id}" ] ) ; then
   done
   echo export completed
 
-  cd ../..
+#  cd ../..
   mkdir -p custom-config
   cp -r pn-configuration/${env_type}/* custom-config/
 
