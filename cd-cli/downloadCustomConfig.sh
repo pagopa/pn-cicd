@@ -158,6 +158,33 @@ else
 fi
 
 
+_clone_repository(){
+  
+  _DEPLOYKEY="deploykey/pn-configuration"
+  
+  echo " - try to download ssh deploykey $_DEPLOYKEY"
+  _AWSDEPLOYKEYEXIST=$(aws ${aws_command_base_args} \
+    secretsmanager list-secrets | \
+    jq --arg keyname $_DEPLOYKEY  -c '.SecretList[] | select( .Name == $keyname )' )
+  
+  _GITURI="https://github.com/pagopa/pn-configuration.git"
+
+  if ( [ -z "${_AWSDEPLOYKEYEXIST}" ] ); then    
+    echo " - sshkey $_DEPLOYKEY not found - git clone via HTTPS"
+  else
+    echo " - sshkey $_DEPLOYKEY found - git clone via SSH"
+    mkdir -p ~/.ssh
+    curl -L https://api.github.com/meta | jq -r '.ssh_keys | .[]' | sed -e 's/^/github.com /' > ~/.ssh/known_hosts
+    _AWSDEPLOYKEY=$(aws ${aws_command_base_args} \
+    secretsmanager get-secret-value --secret-id $_DEPLOYKEY --output json )
+    echo $_AWSDEPLOYKEY | jq '.SecretString' | cut -d "\"" -f 2 | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
+    chmod 400 ~/.ssh/id_rsa
+    _GITURI="git@github.com:pagopa/pn-configuration.git"
+  fi
+
+  git clone ${_GITURI}
+}
+
 if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
   echo PN_CONFIGURATION_TAG is present. 
   PN_CONFIGURATION_TAG_param=""
@@ -166,9 +193,8 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
   SUB3=sha
   
   #cloning git repository and change directory:
-  #git clone https://github.com/pagopa/pn-configuration.git
-  #cd pn-configuration/$env_type
-   
+  _clone_repository
+  
   #Take list of all components in json file: 
   for PN_CONFIGURATION_TAG_param in $( cat pn-configuration/$env_type/repository-list.json |  jq 'keys_unsorted'  | grep -E "Id|Url" | sed -E 's/"//g' | sed -E 's/,//g' | sed -E 's/ //g' ); do
     #Take for all components tag, branch, ImageUrl ecc...
@@ -223,7 +249,6 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
   done
   echo export completed
 
-#  cd ../..
   mkdir -p custom-config
   cp -r pn-configuration/${env_type}/* custom-config/
 
