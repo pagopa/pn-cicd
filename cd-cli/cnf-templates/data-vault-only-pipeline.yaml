@@ -1247,6 +1247,8 @@ Resources:
               - elasticloadbalancing:DeleteRule
               - elasticloadbalancing:RegisterTargets
               - elasticloadbalancing:DescribeLoadBalancerAttributes
+              - elasticloadbalancing:ModifyLoadBalancerAttributes
+              - elasticloadbalancing:SetIpAddressType
             Resource: "*"
           - Effect: Allow
             Action:
