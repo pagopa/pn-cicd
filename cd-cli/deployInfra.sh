@@ -183,6 +183,12 @@ rm -rf ${lambdasLocalPath}
 TERRAFORM_PARAMS_FILEPATH=pn-infra-core/terraform-${env_type}-cfg.json
 TmpFilePath=terraform-merge-${env_type}-cfg.json
 
+ConfidentialInfoAccountId=""
+if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+  ConfidentialInfoAccountId=$(cat $TERRAFORM_PARAMS_FILEPATH | jq -r '.Parameters.ConfidentialInfoAccountId')
+  echo "ConfidentialInfoAccountId  ${ConfidentialInfoAccountId}"
+fi
+
 echo ""
 echo ""
 echo ""
@@ -200,6 +206,7 @@ aws ${aws_command_base_args}  \
       --template-file pn-infra/runtime-infra/once4account/${env_type}.yaml \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
+        ConfidentialInfoAccountId="$ConfidentialInfoAccountId" \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
 STORAGE_STACK_FILE=pn-infra/runtime-infra/pn-infra-storage.yaml 

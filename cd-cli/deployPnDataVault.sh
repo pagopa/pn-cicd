@@ -199,6 +199,15 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
+TERRAFORM_PARAMS_FILEPATH=pn-infra-confinfo/terraform-${env_type}-cfg.json
+TmpFilePath=terraform-merge-${env_type}-cfg.json
+
+PnCoreAwsAccountId=""
+if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+  PnCoreAwsAccountId=$(cat $TERRAFORM_PARAMS_FILEPATH | jq -r '.Parameters.PnCoreAwsAccountId')
+  echo "PnCoreAwsAccountId  ${PnCoreAwsAccountId}"
+fi
+
 echo ""
 echo ""
 echo ""
@@ -216,14 +225,11 @@ aws ${aws_command_base_args}  \
       --template-file ${microcvs_name}/scripts/aws/cfn/once4account/${env_type}.yaml \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
+        PnCoreAwsAccountId="$PnCoreAwsAccountId" \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
 
 STORAGE_STACK_FILE=${microcvs_name}/scripts/aws/cfn/infra-storage.yaml 
-
-TERRAFORM_PARAMS_FILEPATH=pn-infra-confinfo/terraform-${env_type}-cfg.json
-TmpFilePath=terraform-merge-${env_type}-cfg.json
-
 
 INFRA_INPUT_STACK=once-${env_type} 
 if [[ -f "$STORAGE_STACK_FILE" ]]; then
