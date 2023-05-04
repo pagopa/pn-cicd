@@ -1014,9 +1014,9 @@ Resources:
                     echo ""
                   else
                     ( ./pn-cicd/cd-cli/downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) )
-                    ( cp -r custom-config/* pn-cicd/cd-cli/custom-config )
                   fi
-                  ls -r pn-cicd
+                  ( cp -r custom-config/* pn-cicd/cd-cli/custom-config )                  
+                  ls -l pn-cicd/cd-cli/custom-config
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "### PREPARE ARTIFACT ###"'
