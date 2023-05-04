@@ -49,6 +49,7 @@ Conditions:
   IsUatEnv: !Equals [ !Ref EnvName, 'uat' ]
   IsProdEnv: !Equals [ !Ref EnvName, 'prod' ]
   IsNewConfiguration: !Or [ !Condition IsTestEnv, !Condition IsUatEnv, !Condition IsProdEnv ]
+  RequiresSingleProjects: !Or [ !Condition IsContinuousDeliveryCondition, !Condition IsNewConfiguration ]
 
 Mappings: 
   EventPatternMap: 
