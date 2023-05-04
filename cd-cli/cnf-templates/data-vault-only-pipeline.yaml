@@ -887,22 +887,22 @@ Resources:
                 - 'echo "###################"'
                 - env
                 - 'echo ""'
-                echo "### DOWNLOAD DESIRED COMMIT IDS ###"
-                aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}
-                cat desired-commit-ids-env.sh
-                echo ""
-                echo "### SOURCE DESIRED COMMIT IDS ###"
-                . ./desired-commit-ids-env.sh
-                echo ""
-                echo "### UPDATED ENVIRONMENT ###"
-                echo "###########################"
-                env
-                echo ""
-                echo "### CLONE CICD SCRIPTS ###"
-                echo ""
-                git clone https://github.com/pagopa/pn-cicd.git
-                ( cd pn-cicd && git checkout $cd_scripts_commitId )                
                 - | 
+                  echo "### DOWNLOAD DESIRED COMMIT IDS ###"
+                  aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}
+                  cat desired-commit-ids-env.sh
+                  echo ""
+                  echo "### SOURCE DESIRED COMMIT IDS ###"
+                  . ./desired-commit-ids-env.sh
+                  echo ""
+                  echo "### UPDATED ENVIRONMENT ###"
+                  echo "###########################"
+                  env
+                  echo ""
+                  echo "### CLONE CICD SCRIPTS ###"
+                  echo ""
+                  git clone https://github.com/pagopa/pn-cicd.git
+                  ( cd pn-cicd && git checkout $cd_scripts_commitId )                
                   if ( [ ! -z "$PnConfigurationEnabled" ] ) then
                     echo ""
                     echo "### Execute Download Custom Config ###"
