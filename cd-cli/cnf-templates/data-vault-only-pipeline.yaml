@@ -29,6 +29,7 @@ Conditions:
   IsUatEnv: !Equals [ !Ref EnvName, 'uat' ]
   IsProdEnv: !Equals [ !Ref EnvName, 'prod' ]
   IsNewConfiguration: !Or [ !Condition IsTestEnv, !Condition IsUatEnv, !Condition IsProdEnv ]
+  RequiresSingleProjects: !Or [ !Condition IsContinuosDeliveryCondition, !Condition IsNewConfiguration ]
 
 Mappings: 
   EventPatternMap: 
@@ -507,7 +508,7 @@ Resources:
                 - !Ref AWS::NoValue
 
   PnSsDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -597,7 +598,7 @@ Resources:
               RunOrder: 3
 
   PnStateMachineManagerDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -687,7 +688,7 @@ Resources:
               RunOrder: 3
 
   PnECDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -777,7 +778,7 @@ Resources:
               RunOrder: 3
 
   PnAddressManagerDeployPipeline:
-    Condition: IsContinuosDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
