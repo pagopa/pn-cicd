@@ -222,7 +222,7 @@ aws ${aws_command_base_args}  \
     cloudformation deploy \
       --stack-name once-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \
-      --template-file ${microcvs_name}/scripts/aws/cfn/once4account/dev.yaml \
+      --template-file ${microcvs_name}/scripts/aws/cfn/once4account.yaml \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
         PnCoreAwsAccountId="$PnCoreAwsAccountId" \
