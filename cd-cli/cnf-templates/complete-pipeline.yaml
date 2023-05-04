@@ -2619,7 +2619,7 @@ Resources:
   # INFRA AND AUTHFLEET
   #######################
   InfraAndAuthFleetDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -2709,7 +2709,7 @@ Resources:
   # FRONTEND
   #######################
   FrontEndDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -2800,7 +2800,7 @@ Resources:
   # MICROSERVICE PN-DELIVERY
   ############################
   PnDeliveryDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -2892,7 +2892,7 @@ Resources:
   # POST-DEPLOY
   ############################
   InfrastructurePostDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -2982,7 +2982,7 @@ Resources:
   # MICROSERVICE PN-DELIVERY-PUSH
   ############################
   PnDeliveryPushDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3075,7 +3075,7 @@ Resources:
   # MICROSERVICE PN-USER-ATTRIBUTES
   ############################
   PnUserAttributesDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3168,7 +3168,7 @@ Resources:
   # MICROSERVICE PN-MANDATE
   ############################
   PnMandatesDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3260,7 +3260,7 @@ Resources:
   # MICROSERVICE PN-EXTERNAL-REGISTRIES
   ############################
   PnExternalRegistryDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3353,7 +3353,7 @@ Resources:
   # MICROSERVICE PN-DOWNTIME_LOGS
   ############################
   PnDowntimeLogsDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3446,7 +3446,7 @@ Resources:
   # MICROSERVICE PN-RADD-FSU
   ############################
   PnRaddFsuDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3539,7 +3539,7 @@ Resources:
   # MICROSERVICE PN-EXTERNAL-CHANNELS
   ############################
   PnExternalChannelsPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3633,7 +3633,7 @@ Resources:
   # MICROSERVICE PN-LOGSAVER-BE
   ############################
   PnLogSaverDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3726,7 +3726,7 @@ Resources:
   # MICROSERVICE PN-NATIONAL-REGISTRIES
   ############################
   PnNationalRegistriesDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3818,7 +3818,7 @@ Resources:
   # MICROSERVICE PN-APIKEY-MANAGER
   ############################
   PnApikeyManagerDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3910,7 +3910,7 @@ Resources:
   # MICROSERVICE PN-PAPER-CHANNEL
   ############################
   PnPaperChannelDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -4002,7 +4002,7 @@ Resources:
   # MICROSERVICE PN-LOGEXTRACTOR-BE
   ############################
   PnLogextractorBeDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -4094,7 +4094,7 @@ Resources:
   # MICROSERVICE PN-PROGRESSION-SENSOR
   ############################
   PnProgressionSensorDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -4187,7 +4187,7 @@ Resources:
   # MICROSERVICE PN-KAFKA-BRIDGE
   ############################
   PnKafkaBridgeDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -4279,7 +4279,7 @@ Resources:
   # MICROSERVICE PN-RADD-BFF
   ############################
   PnRaddBffDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -4371,7 +4371,7 @@ Resources:
   # MICROSERVICE PN-PLATFORM-USAGE-ESTIMATES
   ############################
   PnPlatformUsageEstimatesDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -4463,7 +4463,7 @@ Resources:
   # HELPDESK FRONTEND
   #######################
   HelpdeskFeDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
