@@ -211,7 +211,31 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"ClusterName\") | .OutputValue" \
     )
 
+  RedisCurrentConnectionsAlarmArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name "pn-cache-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"RedisCurrentConnectionsAlarmArn\") | .OutputValue" \
+    )
+
+  RedisMemoryUtilizationAlarm=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name "pn-cache-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"RedisMemoryUtilizationAlarm\") | .OutputValue" \
+    )
+
+  RedisCPUUtilizationAlarm=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name "pn-cache-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"RedisCPUUtilizationAlarm\") | .OutputValue" \
+    )
+
+  RedisEngineCPUAlarm=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name "pn-cache-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"RedisEngineCPUAlarm\") | .OutputValue" \
+    )
+
   AdditionalParams=", \"OpenSearchClusterName=${OpenSearchClusterName}\""
+  AdditionalParams="${AdditionalParams}, \"RedisCurrentConnectionsAlarmArn=${RedisCurrentConnectionsAlarmArn}\""
+  AdditionalParams="${AdditionalParams}, \"RedisMemoryUtilizationAlarm=${RedisMemoryUtilizationAlarm}\""
+  AdditionalParams="${AdditionalParams}, \"RedisCPUUtilizationAlarm=${RedisCPUUtilizationAlarm}\""
+  AdditionalParams="${AdditionalParams}, \"RedisEngineCPUAlarm=${RedisEngineCPUAlarm}\""
 fi
 
 echo ""
