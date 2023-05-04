@@ -1145,6 +1145,10 @@ Resources:
             Resource: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener-rule/net/*
           - Effect: Allow
             Action:
+              - ecr:DescribeImages
+            Resource: "*"
+          - Effect: Allow
+            Action:
               - iam:DeleteRole
               - iam:DeleteRolePolicy
               - iam:GetRole
