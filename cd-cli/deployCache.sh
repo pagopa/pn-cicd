@@ -154,6 +154,12 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
+AlarmSNSTopicName=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name once-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"AlarmSNSTopicName\") | .OutputValue" )
+
 echo ""
 echo ""
 echo ""
@@ -177,7 +183,7 @@ fi
 
 
 TemplateFilePath="pn-infra/runtime-infra/pn-cache.yaml"
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"AlarmSNSTopicName=$AlarmSNSTopicName\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 EnanchedParamFilePath="pn-infra/runtime-infra/pn-cache-${env_type}-enhanced-cfg.json"
 
 echo ""
