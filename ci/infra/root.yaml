@@ -1329,7 +1329,7 @@ Resources:
         BaseDir: "packages/pn-personafisica-webapp"
       TimeoutInMinutes: 5
 
-  # Progetti template CFN
+  # Progetti Infrastrutturali
   PnInfra:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -1341,6 +1341,25 @@ Resources:
         BaseDir: "runtime-infra/lambdas"
         BaseDirEscaped: "runtime-infra-lambdas"        
       TimeoutInMinutes: 5
+  PnInfraCore:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/not-compiled-repo-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-infra-core"
+        GitHubDefaultBranch: "develop"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
+  PnInfraConfInfo:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/not-compiled-repo-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-infra-confinfo"
+        GitHubDefaultBranch: "develop"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
+
   PnCiCd:
     Type: AWS::CloudFormation::Stack
     Properties:
