@@ -257,7 +257,7 @@ echo "WebApiDnsName: ${WebApiDnsName}"
 
 cd $microcvs_name
 
-if ( [ -f scripts/aws/env-${environment}.sh ] )
+if ( [ -f "scripts/aws/env-${environment}.sh" ] ) then
   source scripts/aws/env-${environment}.sh
 fi
 
