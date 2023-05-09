@@ -13,7 +13,7 @@ Resources:
         detail:
           project: [ { "anything-but": [ "pn-infra-core", "pn-infra-confinfo" ] } ]
       Name: reRouteToNewOldEnvs
-      State: ENABLED
+      State: DISABLED
       Targets:
         # Disattivo hotfix
         #- Id: Id1b845a56-fc19-40ab-a435-9cfaaf2c657c
