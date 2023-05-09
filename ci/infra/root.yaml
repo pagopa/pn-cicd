@@ -1112,6 +1112,7 @@ Resources:
         GitHubProjectName: "pn-progression-sensor"
         BaseDir: "functions"
         BaseDirEscaped: "functions"        
+        GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 5
@@ -1123,61 +1124,11 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-auth-fleet"
         BaseDir: "functions"
+        GitHubDefaultBranch: "develop"
         BaseDirEscaped: "functions"        
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 10
-  # Progetti Lambda
-  PnApikeyAuthorizerLambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-auth-fleet"
-        BaseDir: "apikeyAuthorizer"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
-  PnApiKeyAuthorizerV2Lambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-auth-fleet"
-        BaseDir: "apikeyAuthorizerV2"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
-  PnIoAuthorizerLambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-auth-fleet"
-        BaseDir: "ioAuthorizer"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
-  PnJwtAuthorizerLambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-auth-fleet"
-        BaseDir: "jwtAuthorizer"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
-  PnTokenExchangeLambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-auth-fleet"
-        BaseDir: "tokenExchange"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
 
   # Progetti WebApp
   PnPaWebapp:
@@ -1329,18 +1280,38 @@ Resources:
         BaseDir: "packages/pn-personafisica-webapp"
       TimeoutInMinutes: 5
 
-  # Progetti template CFN
+  # Progetti Infrastrutturali
   PnInfra:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-infra"
+        GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         BaseDir: "runtime-infra/lambdas"
         BaseDirEscaped: "runtime-infra-lambdas"        
       TimeoutInMinutes: 5
+  PnInfraCore:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/not-compiled-repo-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-infra-core"
+        GitHubDefaultBranch: "develop"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
+  PnInfraConfInfo:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/not-compiled-repo-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-infra-confinfo"
+        GitHubDefaultBranch: "develop"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
+
   PnCiCd:
     Type: AWS::CloudFormation::Stack
     Properties:

@@ -4,6 +4,10 @@ Parameters:
   GitHubProjectName:
     Description: Name of pagopa project name pattern = [A-Za-z0-9][A-Za-z0-9\-_]{1,122}
     Type: String
+  GitHubDefaultBranch:
+    Description: Name of the dafult github branch
+    Type: String
+    Default: main    
   BaseDir:
     Description: base directory of the lambdas = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
@@ -37,7 +41,7 @@ Resources:
             Value: !Sub "${BaseDir}"
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
-            Value: main
+            Value: !Sub "${GitHubDefaultBranch}"
           - Name: CI_BUCKET_NAME
             Type: PLAINTEXT
             Value: !Sub "${CiArtifactBucket}"
