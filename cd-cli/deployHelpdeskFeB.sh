@@ -257,7 +257,9 @@ echo "WebApiDnsName: ${WebApiDnsName}"
 
 cd $microcvs_name
 
-source scripts/aws/env-${environment}.sh
+if ( [ -f scripts/aws/env-${environment}.sh ] )
+  source scripts/aws/env-${environment}.sh
+fi
 
 sed -e "s/\${USER_POOL_ID}/${CognitoUserPoolId}/" \
     -e "s/\${WEB_CLIENT_ID}/${CognitoWebClientId}/" \
