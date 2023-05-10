@@ -346,6 +346,11 @@ Resources:
                     sed -i -e "s|pn_logextractor_be_imageUrl=.*|pn_logextractor_be_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-logextractor-be-update-pipeline"
                   fi                  
+                - |
+                  if ( [ "$PROJECT" = "pn-helpdesk-fe" ] ) then
+                    sed -i -e "s|pn_helpdesk_fe_commitId=.*|pn_helpdesk_fe_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-helpdesk-fe-update-pipeline"
+                  fi                  
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
                 - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
