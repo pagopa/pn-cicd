@@ -45,6 +45,12 @@ Conditions:
   HasE2ESecurityGroupId: !Not [ !Equals [ !Ref E2ESecurityGroupId, '' ] ]
   HasE2ESubnetsIds: !Not [!Equals [!Join ['', !Ref E2ESubnetsIds], '']]
   HasE2EVPCConfig: !And [ !Condition HasE2EVpcId, !Condition HasE2ESecurityGroupId, !Condition HasE2ESubnetsIds ]
+  IsTestEnv: !Equals [ !Ref EnvName, 'test' ]
+  IsUatEnv: !Equals [ !Ref EnvName, 'uat' ]
+  IsProdEnv: !Equals [ !Ref EnvName, 'prod' ]
+  IsNewConfiguration: !Or [ !Condition IsTestEnv, !Condition IsUatEnv, !Condition IsProdEnv ]
+  RequiresSingleProjects: !Or [ !Condition IsContinuousDeliveryCondition, !Condition IsNewConfiguration ]
+
 Mappings: 
   EventPatternMap: 
     dev: 
@@ -339,6 +345,11 @@ Resources:
                     sed -i -e "s|pn_logextractor_be_commitId=.*|pn_logextractor_be_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_logextractor_be_imageUrl=.*|pn_logextractor_be_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-logextractor-be-update-pipeline"
+                  fi                  
+                - |
+                  if ( [ "$PROJECT" = "pn-helpdesk-fe" ] ) then
+                    sed -i -e "s|pn_helpdesk_fe_commitId=.*|pn_helpdesk_fe_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-helpdesk-fe-update-pipeline"
                   fi                  
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
@@ -986,25 +997,37 @@ Resources:
                 - 'echo "###################"'
                 - env
                 - 'echo ""'
-                - 'echo "### DOWNLOAD DESIRED COMMIT IDS ###"'
-                - 'aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}'
-                - 'cat desired-commit-ids-env.sh'
-                - 'echo ""'
-                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
-                - '. ./desired-commit-ids-env.sh'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo "### UPDATED ENVIRONMENT ###"'
-                - 'echo "###########################"'
-                - env
-                - 'echo ""'
-                - 'echo "### CLONE SCRIPTS ###"'
-                - 'echo "#####################"'
-                - 'git clone https://github.com/pagopa/pn-cicd.git'
-                - '( cd pn-cicd && git checkout $cd_scripts_commitId )'
-                - '( ./pn-cicd/cd-cli/downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) )'
-                - '( cp -r custom-config/* pn-cicd/cd-cli/custom-config )'
-                - 'ls -r pn-cicd'
+                - | 
+                  aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}
+                  cat desired-commit-ids-env.sh
+                  echo "### DOWNLOAD DESIRED COMMIT IDS ###"
+                  echo ""
+                  echo "### SOURCE DESIRED COMMIT IDS ###"
+                  . ./desired-commit-ids-env.sh  
+                  echo ""
+                  echo ""
+                  echo "### UPDATED ENVIRONMENT ###"
+                  echo "###########################"
+                  env
+                  echo "### CLONE CICD SCRIPTS ###"
+                  echo ""
+                  git clone https://github.com/pagopa/pn-cicd.git
+                  ( cd pn-cicd && git checkout $cd_scripts_commitId )
+                  echo ""
+                  if ( [ ! -z "$PnConfigurationEnabled" ] ) then
+                    echo "### Execute Download Custom Config ###"
+                    ( ./pn-cicd/cd-cli/downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c main -i $CiAccountId )
+                    . ./desired-commit-ids-env.sh
+                    echo ""
+                    echo ""
+                    echo "### UPDATED ENVIRONMENT AFTER CUSTOM CONFIG ###"
+                    env
+                    echo ""
+                  else
+                    ( ./pn-cicd/cd-cli/downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) )
+                  fi
+                  ( cp -r custom-config/* pn-cicd/cd-cli/custom-config )                  
+                  ls -l pn-cicd/cd-cli/custom-config
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "### PREPARE ARTIFACT ###"'
@@ -1022,6 +1045,13 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
+        EnvironmentVariables:
+          - Name: PnConfigurationEnabled
+            Type: PLAINTEXT
+            Value: !If [ IsNewConfiguration, 'main', '' ]
+          - Name: CiAccountId
+            Type: PLAINTEXT
+            Value: !Ref CiAccountId
         
   # CODEBUILD used to update infrastructure and authFleet
   ###################################################
@@ -1449,6 +1479,10 @@ Resources:
           - Effect: Allow
             Action: elasticloadbalancing:ModifyRule
             Resource: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener-rule/net/*
+          - Effect: Allow
+            Action:
+              - ecr:DescribeImages          
+            Resource: "*"    
           - Effect: Allow
             Action: 
               - chatbot:CreateSlackChannelConfiguration
@@ -2595,7 +2629,7 @@ Resources:
   # INFRA AND AUTHFLEET
   #######################
   InfraAndAuthFleetDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -2685,7 +2719,7 @@ Resources:
   # FRONTEND
   #######################
   FrontEndDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -2776,7 +2810,7 @@ Resources:
   # MICROSERVICE PN-DELIVERY
   ############################
   PnDeliveryDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -2868,7 +2902,7 @@ Resources:
   # POST-DEPLOY
   ############################
   InfrastructurePostDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -2958,7 +2992,7 @@ Resources:
   # MICROSERVICE PN-DELIVERY-PUSH
   ############################
   PnDeliveryPushDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3051,7 +3085,7 @@ Resources:
   # MICROSERVICE PN-USER-ATTRIBUTES
   ############################
   PnUserAttributesDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3144,7 +3178,7 @@ Resources:
   # MICROSERVICE PN-MANDATE
   ############################
   PnMandatesDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3236,7 +3270,7 @@ Resources:
   # MICROSERVICE PN-EXTERNAL-REGISTRIES
   ############################
   PnExternalRegistryDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3329,7 +3363,7 @@ Resources:
   # MICROSERVICE PN-DOWNTIME_LOGS
   ############################
   PnDowntimeLogsDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3422,7 +3456,7 @@ Resources:
   # MICROSERVICE PN-RADD-FSU
   ############################
   PnRaddFsuDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3515,7 +3549,7 @@ Resources:
   # MICROSERVICE PN-EXTERNAL-CHANNELS
   ############################
   PnExternalChannelsPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3609,7 +3643,7 @@ Resources:
   # MICROSERVICE PN-LOGSAVER-BE
   ############################
   PnLogSaverDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3702,7 +3736,7 @@ Resources:
   # MICROSERVICE PN-NATIONAL-REGISTRIES
   ############################
   PnNationalRegistriesDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3794,7 +3828,7 @@ Resources:
   # MICROSERVICE PN-APIKEY-MANAGER
   ############################
   PnApikeyManagerDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3886,7 +3920,7 @@ Resources:
   # MICROSERVICE PN-PAPER-CHANNEL
   ############################
   PnPaperChannelDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -3978,7 +4012,7 @@ Resources:
   # MICROSERVICE PN-LOGEXTRACTOR-BE
   ############################
   PnLogextractorBeDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -4070,7 +4104,7 @@ Resources:
   # MICROSERVICE PN-PROGRESSION-SENSOR
   ############################
   PnProgressionSensorDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -4163,7 +4197,7 @@ Resources:
   # MICROSERVICE PN-KAFKA-BRIDGE
   ############################
   PnKafkaBridgeDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -4255,7 +4289,7 @@ Resources:
   # MICROSERVICE PN-RADD-BFF
   ############################
   PnRaddBffDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -4347,7 +4381,7 @@ Resources:
   # MICROSERVICE PN-PLATFORM-USAGE-ESTIMATES
   ############################
   PnPlatformUsageEstimatesDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -4439,7 +4473,7 @@ Resources:
   # HELPDESK FRONTEND
   #######################
   HelpdeskFeDeployPipeline:
-    Condition: IsContinuousDeliveryCondition
+    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn

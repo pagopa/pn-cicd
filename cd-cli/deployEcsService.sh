@@ -358,8 +358,8 @@ cat ${ParamFilePath}
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * .[1] * { \"Parameters\": .[2] }" \
-   ${PreviousOutputFilePath} ${ParamFilePath} ${InfraIpcOutputFilePath} \
+jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * .[2]" \
+   ${InfraIpcOutputFilePath} ${PreviousOutputFilePath} ${ParamFilePath} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
