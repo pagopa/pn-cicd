@@ -181,6 +181,7 @@ Resources:
                 Resource: 
                   - !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
                   - !GetAtt RunTestsCodebuildProject.Arn
+                  - !GetAtt RunTestsFeCodebuildProject.Arn
 
 
   ###           CodeBuild: CHOOSE AND EXECUTE THE C.D. PIPELINE           ###
@@ -4659,6 +4660,68 @@ Resources:
     Condition: IsTestCondition
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsCodebuildProject}"
+      RetentionInDays: 14
+
+  ###########################################################################
+  ###  Utility that run e2e FE tests
+  ###########################################################################
+  RunTestsFeCodebuildProject:
+      Condition: IsTestCondition
+      Type: 'AWS::CodeBuild::Project'
+      Properties:
+        Name: !Sub ${ProjectName}-RunE2eTestsCodeBuildProject
+        ServiceRole: !GetAtt CodeBuildRole.Arn
+        ConcurrentBuildLimit: 2
+        TimeoutInMinutes: 120
+        Source: 
+          Type: NO_SOURCE
+          BuildSpec: |
+            version: 0.2
+            phases:
+              pre_build:
+                commands:
+                  - echo "### NO PRE_BUILD"
+              build:
+                commands:
+                        echo "### CLONE E2E TEST REPOSITORY ###"
+                        echo "#####################"
+                        git clone https://github.com/pagopa/pn-frontend-e2e.git pn-frontend-e2e
+                        ( cd pn-frontend-e2e && ./mvnw clean test -Dcucumber.filter.tags=@firstCommitRun -Dbrowser=chrome -Dheadless=false )
+            reports:
+              reportGroup: #Cucumber reports from json plugin
+                files:
+                  - 'pn-frontend-e2e/target/cucumber-reports/report.json'
+                file-format: CUCUMBERJSON #Type of the report, defaults to JUNITXML
+            cache:
+              paths:
+                - '/root/.m2/**/*'
+        Artifacts:
+          Type: NO_ARTIFACTS
+        Environment:
+          ComputeType: BUILD_GENERAL1_SMALL
+          Type: LINUX_CONTAINER
+          Image: "aws/codebuild/standard:6.0"
+          EnvironmentVariables:
+            - Name: REGION
+              Type: PLAINTEXT
+              Value: !Ref AWS::Region
+            - Name: ENV_NAME
+              Type: PLAINTEXT
+              Value: !Ref EnvName
+        VpcConfig:
+          Fn::If:
+            - HasE2EVPCConfig
+            - VpcId: !Ref E2EVpcId
+              Subnets: !Ref E2ESubnetsIds
+              SecurityGroupIds: 
+                - !Ref E2ESecurityGroupId
+            - !Ref AWS::NoValue
+
+  RunTestsFeCodebuildProjectLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: IsTestCondition
+    Properties:
+      LogGroupName: !Sub "/aws/codebuild/${RunTestsFeCodebuildProject}"
       RetentionInDays: 14
 
 Outputs:
