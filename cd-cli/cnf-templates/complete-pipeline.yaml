@@ -954,6 +954,26 @@ Resources:
                   RunOrder: 5
                 - !Ref AWS::NoValue
             
+            - Fn::If:
+                - IsTestCondition
+                - Name: Run_e2e_fe_Tests
+                  ActionTypeId:
+                    Category: Build
+                    Owner: AWS
+                    Version: 1
+                    Provider: CodeBuild
+                  Configuration:
+                    ProjectName: !Ref RunTestsFeCodebuildProject
+                    EnvironmentVariables: !Sub '[
+                        {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
+                        {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                        {"name":"TEST_SUITE", "value":"e2eFeTest", "type":"PLAINTEXT"}
+                      ]'
+                  InputArtifacts:
+                    - Name: EmptyZip
+                  RunOrder: 5
+                - !Ref AWS::NoValue
+            
             # List versions if the environment is dev
             - Fn::If:
                 - IsContinuousDeliveryCondition
@@ -4580,6 +4600,22 @@ Resources:
             Fn::GetAtt: 
               - "RunTestsCodebuildProject"
               - "Arn"
+  
+  ScheduledRule: 
+    Condition: IsContinuousDeliveryCondition
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "ScheduledRule"
+      ScheduleExpression: "cron(0 7-19/2 ? * MON-FRI *)"
+      State: "ENABLED"
+      RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
+      Targets: 
+        - Id: "TestRunner"
+          RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
+          Arn: 
+            Fn::GetAtt: 
+              - "RunTestsFeCodebuildProject"
+              - "Arn"
           
   
   ###########################################################################
@@ -4686,7 +4722,7 @@ Resources:
                         echo "### CLONE E2E TEST REPOSITORY ###"
                         echo "#####################"
                         git clone https://github.com/pagopa/pn-frontend-e2e.git pn-frontend-e2e
-                        ( cd pn-frontend-e2e && ./mvnw clean test -Dcucumber.filter.tags=@firstCommitRun -Dbrowser=chrome -Dheadless=false )
+                        ( cd pn-frontend-e2e && ./mvnw clean test -Dcucumber.filter.tags=@TestSuite -Dbrowser=chrome -Dheadless=true )
             reports:
               reportGroup: #Cucumber reports from json plugin
                 files:
