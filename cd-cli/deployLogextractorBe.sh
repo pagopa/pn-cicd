@@ -217,8 +217,8 @@ echo "AllowedOrigin="${AllowedOrigin}
 echo "AlbSecurityGroup="${AlbSecurityGroup}
 echo "SamlAssertionBucketKeyArn="${SamlAssertionBucketKeyArn}
 echo "SamlAssertionBucketArn="${SamlAssertionBucketArn}
-echo "SamlAssertionDownloadUrl="${SamlAssertionDownloadUrl}
-
+echo "SamlAssertionBucketName="${SamlAssertionBucketName}
+echo "DownloadFileUrl="${DownloadFileUrl}
 TemplateFilePath="$microcvs_name/scripts/aws/ecs-service.yaml"
 aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-file $TemplateFilePath \
     --stack-name "pn-logextractor-service-${env_type}" \
@@ -239,7 +239,7 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
         "ContainerEnvEntry5=GET_SENT_NOTIFICATION_HISTORY_URL=${PnCoreRootPath}/delivery-push-private/%s/history" \
         "ContainerEnvEntry6=GET_ENCODED_IPA_CODE_URL=${PnCoreRootPath}/ext-registry/pa/v1/activated-on-pn" \
         "ContainerEnvEntry7=GET_PUBLIC_AUTHORITY_NAME_URL=${PnCoreRootPath}/ext-registry-private/pa/v1/activated-on-pn/%s" \
-        "ContainerEnvEntry8=DOWNLOAD_FILE_URL=https://%s/%s/safe-storage/v1/files/%s" \
+        "ContainerEnvEntry8=DOWNLOAD_FILE_URL=${DownloadFileUrl}" \
         "ContainerEnvEntry9=SAFESTORAGE_ENDPOINT=${SafeStorageEndpoint}" \
         "ContainerEnvEntry10=SAFESTORAGE_STAGE=${SafeStorageStage}" \
         "ContainerEnvEntry11=SAFESTORAGE_CXID=${SafeStorageCxId}" \
@@ -250,7 +250,7 @@ aws cloudformation deploy ${profile_option} --region "eu-south-1" --template-fil
         "ContainerEnvEntry17=ALLOWED_ORIGIN=${AllowedOrigin}" \
         "ContainerEnvEntry18=DOWNTIME_EVENTS_URL=${PnCoreRootPath}/downtime-internal/v1/events" \
         "ContainerEnvEntry19=DOWNTIME_STATUS_URL=${PnCoreRootPath}/downtime/v1/status" \
-        "ContainerEnvEntry20=S3_DOWNLOAD_URL=${SamlAssertionDownloadUrl}" \
+        "ContainerEnvEntry20=S3_BUCKET_NAME=${SamlAssertionBucketName}" \
         "ContainerSecret1=BASIC_AUTH_USERNAME=${OpenSearchSecretArn}:username:AWSCURRENT:" \
         "ContainerSecret2=BASIC_AUTH_PASSWORD=${OpenSearchSecretArn}:password:AWSCURRENT:" \
     --capabilities "CAPABILITY_NAMED_IAM"

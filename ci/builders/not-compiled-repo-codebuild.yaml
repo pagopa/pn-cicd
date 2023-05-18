@@ -72,7 +72,7 @@ Resources:
               on-failure: ABORT
               commands:
                 - |
-                  if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.*$ ]]; then
+                  if [[ "$BRANCH_NAME" =~ ^(main|develop)|(release|hotfix)\/.*$ ]]; then
                     echo Generate build event
                     EVENT_DETAIL="{ \"event_type\": \"BUILD_DONE\", \"project_branch\":\"${BRANCH_NAME}\",\"project_type\":\"TEMPLATES\", \"project\":\"${GITHUB_PRJ_NAME}\", \"commit_id\": \"${COMMIT_ID}\" }"
                     echo $EVENT_DETAIL | jq -R -s '[{ "DetailType": "CiEvent","EventBusName": "CiEventBus", "Source":"Builder", "Detail": . }]' > ci_event.json
@@ -96,11 +96,11 @@ Resources:
           - - Type: EVENT
               Pattern: PUSH, PULL_REQUEST_MERGED
             - Type: HEAD_REF
-              Pattern: ^refs/heads/(main|develop)|release\/.*$
-          - - Type: EVENT
-              Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
-            - Type: BASE_REF
-              Pattern: ^refs/heads/(main|develop)|release\/.*$
+              Pattern: ^refs/heads/(main|develop)|(feature|hotfix|bug|release)\/.+$
+          # - - Type: EVENT
+          #     Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+          #   - Type: BASE_REF
+          #     Pattern: ^refs/heads/(main|develop)|release\/.*$
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -143,11 +143,11 @@ Resources:
                   - logs:PutLogEvents
                 Resource:
                   - "*"
-              - Sid: GitHubSecret
+              - Sid: SonarCloudTokenSecret
                 Effect: Allow
                 Action:
                   - secretsmanager:GetSecretValue
-                Resource: "*"
+                Resource: "arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM"
               
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule

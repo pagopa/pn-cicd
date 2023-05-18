@@ -130,6 +130,11 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .
 fi
 
+echo " - copy pn-infra-core config"
+if ( [ -d "${custom_config_dir}/pn-infra-core" ] ) then
+  cp -r $custom_config_dir/pn-infra-core .
+fi
+
 echo ""
 echo "=== Base AWS command parameters"
 aws_command_base_args=""
@@ -175,6 +180,15 @@ aws ${aws_command_base_args} s3 cp --recursive \
 # delete functions folder
 rm -rf ${lambdasLocalPath} 
 
+TERRAFORM_PARAMS_FILEPATH=pn-infra-core/terraform-${env_type}-cfg.json
+TmpFilePath=terraform-merge-${env_type}-cfg.json
+
+ConfidentialInfoAccountId=""
+if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+  ConfidentialInfoAccountId=$(cat $TERRAFORM_PARAMS_FILEPATH | jq -r '.Parameters.ConfidentialInfoAccountId')
+  echo "ConfidentialInfoAccountId  ${ConfidentialInfoAccountId}"
+fi
+
 echo ""
 echo ""
 echo ""
@@ -192,6 +206,7 @@ aws ${aws_command_base_args}  \
       --template-file pn-infra/runtime-infra/once4account/${env_type}.yaml \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
+        ConfidentialInfoAccountId="$ConfidentialInfoAccountId" \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
 STORAGE_STACK_FILE=pn-infra/runtime-infra/pn-infra-storage.yaml 
@@ -212,11 +227,23 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   echo ""
   echo ""
   echo "=== Prepare parameters for pn-infra-storage.yaml deployment in $env_type ACCOUNT"
+
+
+  ParamFilePath=pn-infra/runtime-infra/pn-infra-storage-${env_type}-cfg.json
+  if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+    echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} into pn-infra-storage"
+
+    echo ""
+    echo "= Enanched Terraform parameters file for pn-infra-storage"
+    jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
+    cat ${TmpFilePath}
+    mv ${TmpFilePath} ${ParamFilePath}
+  fi
+
   PreviousOutputFilePath=once4account-${env_type}-out.json
   TemplateFilePath=pn-infra/runtime-infra/pn-infra-storage.yaml
-  ParamFilePath=pn-infra/runtime-infra/pn-infra-storage-${env_type}-cfg.json
   EnanchedParamFilePath=pn-infra-storage-${env_type}-cfg-enanched.json
-  PipelineParams="\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+  PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
   echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
   echo " - TemplateFilePath: ${TemplateFilePath}"
@@ -260,7 +287,6 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   INFRA_INPUT_STACK=pn-infra-storage-${env_type}
 fi
 
-
 echo ""
 echo ""
 echo ""
@@ -275,9 +301,21 @@ echo ""
 echo ""
 echo ""
 echo "=== Prepare parameters for pn-infra.yaml deployment in $env_type ACCOUNT"
+
+## Merge pn_infra_core output into EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
+ParamFilePath=pn-infra/runtime-infra/pn-infra-${env_type}-cfg.json # infra cfg file, it is the target of merge from pn_infra_confinfo
+if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+  echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} into pn-infra"
+
+  echo ""
+  echo "= Enanched Terraform parameters file for pn-infra"
+  jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
+  cat ${TmpFilePath}
+  mv ${TmpFilePath} ${ParamFilePath}
+fi
+
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-infra.yaml
-ParamFilePath=pn-infra/runtime-infra/pn-infra-${env_type}-cfg.json
 EnanchedParamFilePath=pn-infra-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
@@ -345,13 +383,68 @@ echo ""
 echo ""
 echo ""
 
+ParamFilePath=pn-infra/runtime-infra/pn-ipc-${env_type}-cfg.json
+OptionalParams=""
+if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+  echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} into pn-ipc"
+
+  echo ""
+  echo "= Enanched Terraform parameters file for pn-ipc"
+  jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
+  cat ${TmpFilePath}
+  mv ${TmpFilePath} ${ParamFilePath}
+
+  helpdeskAccountId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name "pn-cognito-${env_type}" | jq -r \
+      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"HelpdeskAccountId\") | .OutputValue" \
+    ) 
+
+  cognitoUserPoolArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+        --stack-name "pn-cognito-${env_type}" | jq -r \
+        ".Stacks[0].Outputs | .[] | select(.OutputKey==\"CognitoUserPoolArn\") | .OutputValue" \
+      ) 
+
+  cognitoWebClientId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-cognito-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"CognitoWebClientId\") | .OutputValue" \
+  )
+
+  cognitoUserPoolId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-cognito-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"CognitoUserPoolId\") | .OutputValue" \
+  )
+
+  openSearchArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-opensearch-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DomainArn\") | .OutputValue" \
+  )
+
+  openSearchEndpoint=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-opensearch-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DomainEndpoint\") | .OutputValue" \
+  )
+
+  elasticacheEndpoint=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-cache-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"RedisEndpoint\") | .OutputValue" \
+  )
+
+  elasticacheSecurityGroupId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-cache-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AllowedSecurityGroupId\") | .OutputValue" \
+  )
+
+  OptionalParams=",\"CognitoUserPoolArn=$cognitoUserPoolArn\",\"CognitoClientId=$cognitoWebClientId\",\"HelpdeskAccountId=$helpdeskAccountId\",\"OpenSearchArn=$openSearchArn\",\"OpenSearchEndpoint=$openSearchEndpoint\",\"ElasticacheEndpoint=$elasticacheEndpoint\",\"ElasticacheSecurityGroup=$elasticacheSecurityGroupId\""
+
+fi
+
 echo ""
 echo "=== Prepare parameters for pn-ipc.yaml deployment in $env_type ACCOUNT"
 PreviousOutputFilePath=pn-infra-${env_type}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-ipc.yaml
-ParamFilePath=pn-infra/runtime-infra/pn-ipc-${env_type}-cfg.json
 EnanchedParamFilePath=pn-ipc-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\",\"EnvironmentType=$env_type\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\",\"EnvironmentType=$env_type\"${OptionalParams}"
+
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
@@ -393,6 +486,41 @@ aws ${aws_command_base_args} \
       --template-file pn-infra/runtime-infra/pn-ipc.yaml \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
+
+echo ""
+echo "=== Deploy PN-EVENT-BRIDGE FOR $env_type ACCOUNT"
+
+ParamFilePath=pn-infra/runtime-infra/pn-event-bridge-${env_type}-cfg.json
+echo ""
+echo "= Read Outputs from previous stack"
+aws ${aws_command_base_args}  \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | tee ${PreviousOutputFilePath}
+
+echo ""
+echo "= Read Parameters file"
+cat ${ParamFilePath} 
+
+echo ""
+echo "= Enanched parameters file"
+jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+  | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+  > ${EnanchedParamFilePath}
+echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+cat ${EnanchedParamFilePath}
+
+aws ${aws_command_base_args} \
+    cloudformation deploy \
+      --stack-name pn-event-bridge-$env_type \
+      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+      --template-file pn-infra/runtime-infra/pn-event-bridge.yaml  \
+      --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+
+
 echo ""
 echo "=== Deploy PN-Monitoring FOR $env_type ACCOUNT"
 MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-monitoring.yaml 
@@ -432,4 +560,3 @@ if [[ -f "$MONITORING_STACK_FILE" ]]; then
 else
   echo "Monitoring file doesn't exist, stack update skipped"
 fi
-

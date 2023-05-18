@@ -95,6 +95,36 @@ Parameters:
   AllowedDeployAccount20:
     Type: Number
     Description: Account number allowed to read the artifacts
+  AllowedDeployAccount21:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount22:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount23:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount24:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount25:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount26:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount27:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount28:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount29:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount30:
+    Type: Number
+    Description: Account number allowed to read the artifacts
 
 Conditions:
   CreateEcr:
@@ -222,7 +252,7 @@ Resources:
                 - export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
                 - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
                 - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
-                - export PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///')
+                - if echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/ ; then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); export PR_NUM; fi;
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - export MAVEN_CONFIG="--settings maven-settings.xml --no-transfer-progress"
@@ -232,9 +262,25 @@ Resources:
                 - export SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}
                 - export TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=911845998067.dkr.ecr.eu-central-1.amazonaws.com/
                 - |
+                  if ( [ -z "${PR_NUM}" ] ) then
+                    export PR_NUM=$(curl -L \
+                      -H "Accept: application/vnd.github+json" \
+                      -H "X-GitHub-Api-Version: 2022-11-28" \
+                      "https://api.github.com/repos/pagopa/${GITHUB_PRJ_NAME}/pulls?state=all&sort=updated&direction=desc&head=pagopa:${BRANCH_NAME}" | jq -r '.[] | .number ' | head -1)
+                      echo "PR_NUM=${PR_NUM}"
+                  fi
+                - |
+                  if ( [ ! -z "${PR_NUM}" ] ) then
+                    export BRANCH_TARGET=$(curl -L \
+                      -H "Accept: application/vnd.github+json" \
+                      -H "X-GitHub-Api-Version: 2022-11-28" \
+                      "https://api.github.com/repos/pagopa/${GITHUB_PRJ_NAME}/pulls/${PR_NUM}" | jq '.base.ref')
+                    echo "BRANCH_TARGET=${BRANCH_TARGET}"
+                  fi
+                - |
                   SRC_DIR=./src/main/java
                   if [ -e $SRC_DIR ]; then
-                    if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.*$$ ]]; then
+                    if [[ "$BRANCH_NAME" =~ ^(main|develop)|(release|hotfix)\/.*$$ || -z "$PR_NUM" ]]; then
                         SONAR_OPTS="-Dsonar.branch.name=$BRANCH_NAME"
                     else 
                         SONAR_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
@@ -264,7 +310,7 @@ Resources:
               on-failure: ABORT
               commands:
                 - |
-                  if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.*$ ]]; then
+                  if [[ "$BRANCH_NAME" =~ ^(main|develop)|(release|hotfix)\/.*$ ]]; then
                     echo "Ensure different image for each commit"
                     DOCKER_FILE=$(mktemp)
                     echo "FROM ${GITHUB_PRJ_NAME}:$VERSION" >$DOCKER_FILE
@@ -309,11 +355,11 @@ Resources:
           - - Type: EVENT
               Pattern: PUSH, PULL_REQUEST_MERGED
             - Type: HEAD_REF
-              Pattern: ^refs/heads/(main|develop)|release\/.*$
-          - - Type: EVENT
-              Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
-            - Type: BASE_REF
-              Pattern: ^refs/heads/(main|develop)|release\/.*$
+              Pattern: ^refs/heads/(main|develop)|(feature|hotfix|bug|release)\/.+$
+          # - - Type: EVENT
+          #     Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+          #   - Type: BASE_REF
+          #     Pattern: ^refs/heads/(main|develop)|release\/.*$
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -370,11 +416,11 @@ Resources:
                 Condition:
                   StringEquals:
                     'sts:AWSServiceName': codeartifact.amazonaws.com
-              - Sid: GitHubSecret
+              - Sid: SonarCloudTokenSecret
                 Effect: Allow
                 Action:
                   - secretsmanager:GetSecretValue
-                Resource: "*"
+                Resource: "arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM"
               - Sid: CodeArtifactGetAuthorizationTokenPolicy
                 Effect: Allow
                 Action:
@@ -453,292 +499,38 @@ Resources:
               "Sid": "Allow cicd",
               "Effect": "Allow",
               "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount1}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount2}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount3}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount4}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount5}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount6}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount7}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount8}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount9}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount10}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount11}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount12}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount13}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount14}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount15}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount16}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount17}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount18}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount19}:root"
-              },
-              "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-              ]
-            },
-            {
-              "Sid": "Allow uat",
-              "Effect": "Allow",
-              "Principal": {
-                "AWS": "arn:aws:iam::${AllowedDeployAccount20}:root"
+                "AWS": [ 
+                  "arn:aws:iam::${AllowedDeployAccount1}:root",
+                  "arn:aws:iam::${AllowedDeployAccount2}:root",
+                  "arn:aws:iam::${AllowedDeployAccount3}:root",
+                  "arn:aws:iam::${AllowedDeployAccount4}:root",
+                  "arn:aws:iam::${AllowedDeployAccount5}:root",
+                  "arn:aws:iam::${AllowedDeployAccount6}:root",
+                  "arn:aws:iam::${AllowedDeployAccount7}:root",
+                  "arn:aws:iam::${AllowedDeployAccount8}:root",
+                  "arn:aws:iam::${AllowedDeployAccount9}:root",
+                  "arn:aws:iam::${AllowedDeployAccount10}:root",
+                  "arn:aws:iam::${AllowedDeployAccount11}:root",
+                  "arn:aws:iam::${AllowedDeployAccount12}:root",
+                  "arn:aws:iam::${AllowedDeployAccount13}:root",
+                  "arn:aws:iam::${AllowedDeployAccount14}:root",
+                  "arn:aws:iam::${AllowedDeployAccount15}:root",
+                  "arn:aws:iam::${AllowedDeployAccount16}:root",
+                  "arn:aws:iam::${AllowedDeployAccount17}:root",
+                  "arn:aws:iam::${AllowedDeployAccount18}:root",
+                  "arn:aws:iam::${AllowedDeployAccount19}:root",
+                  "arn:aws:iam::${AllowedDeployAccount20}:root",
+                  "arn:aws:iam::${AllowedDeployAccount21}:root",
+                  "arn:aws:iam::${AllowedDeployAccount22}:root",
+                  "arn:aws:iam::${AllowedDeployAccount23}:root",
+                  "arn:aws:iam::${AllowedDeployAccount24}:root",
+                  "arn:aws:iam::${AllowedDeployAccount25}:root",
+                  "arn:aws:iam::${AllowedDeployAccount26}:root",
+                  "arn:aws:iam::${AllowedDeployAccount27}:root",
+                  "arn:aws:iam::${AllowedDeployAccount28}:root",
+                  "arn:aws:iam::${AllowedDeployAccount29}:root",
+                  "arn:aws:iam::${AllowedDeployAccount30}:root"
+                ]
               },
               "Action": [
                 "ecr:BatchCheckLayerAvailability",

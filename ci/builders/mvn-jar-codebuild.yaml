@@ -134,11 +134,27 @@ Resources:
                 - export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
                 - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
                 - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
-                - export PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///')
+                - if echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/ ; then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); export PR_NUM; fi;
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - export MAVEN_CONFIG="--settings maven-settings.xml --no-transfer-progress"
                 - export TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX=911845998067.dkr.ecr.eu-central-1.amazonaws.com/
+                - |
+                  if ( [ -z "${PR_NUM}" ] ) then
+                    export PR_NUM=$(curl -L \
+                      -H "Accept: application/vnd.github+json" \
+                      -H "X-GitHub-Api-Version: 2022-11-28" \
+                      "https://api.github.com/repos/pagopa/${GITHUB_PRJ_NAME}/pulls?state=all&sort=updated&direction=desc&head=pagopa:${BRANCH_NAME}" | jq -r '.[] | .number ' | head -1)
+                      echo "PR_NUM=${PR_NUM}"
+                  fi
+                - |
+                  if ( [ ! -z "${PR_NUM}" ] ) then
+                    export BRANCH_TARGET=$(curl -L \
+                      -H "Accept: application/vnd.github+json" \
+                      -H "X-GitHub-Api-Version: 2022-11-28" \
+                      "https://api.github.com/repos/pagopa/${GITHUB_PRJ_NAME}/pulls/${PR_NUM}" | jq '.base.ref')
+                    echo "BRANCH_TARGET=${BRANCH_TARGET}"
+                  fi
                 - |
                   if [ "x$RELEASE" != "x" ]; then
                     echo "Prepare relase $RELEASE"
@@ -147,7 +163,7 @@ Resources:
                 - |
                   SRC_DIR=./src/main/java
                   if [ -e $SRC_DIR ]; then
-                    if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.*$ ]]; then
+                    if [[ "$BRANCH_NAME" =~ ^(main|develop)|(release|hotfix)\/.*$ || -z "$PR_NUM" ]]; then
                        SONAR_OPTS="-Dsonar.branch.name=$BRANCH_NAME"
                     else 
                        SONAR_OPTS="-Dsonar.pullrequest.key=$PR_NUM -Dsonar.pullrequest.branch=$BRANCH_NAME -Dsonar.pullrequest.base=$BRANCH_TARGET"
@@ -206,11 +222,11 @@ Resources:
           - - Type: EVENT
               Pattern: PUSH, PULL_REQUEST_MERGED
             - Type: HEAD_REF
-              Pattern: ^refs/heads/(main|develop)|release\/.*$
-          - - Type: EVENT
-              Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
-            - Type: BASE_REF
-              Pattern: ^refs/heads/(main|develop)|release\/.*$
+              Pattern: ^refs/heads/(main|develop)|(feature|hotfix|bug|release)\/.+$
+          # - - Type: EVENT
+          #     Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+          #   - Type: BASE_REF
+          #     Pattern: ^refs/heads/(main|develop)|release\/.*$
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -261,11 +277,11 @@ Resources:
                 Condition:
                   StringEquals:
                     'sts:AWSServiceName': codeartifact.amazonaws.com
-              - Sid: GitHubSecret
+              - Sid: SonarCloudTokenSecret
                 Effect: Allow
                 Action:
                   - secretsmanager:GetSecretValue
-                Resource: "*"
+                Resource: "arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM"
               - Sid: CodeArtifactGetAuthorizationTokenPolicy
                 Effect: Allow
                 Action:

@@ -33,9 +33,9 @@ Resources:
     Properties:
       Name: !Sub "${GitHubProjectName}-${PackageName}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
-      BuildBatchConfig:
-        ServiceRole: !GetAtt BuildBatchServiceRole.Arn
-        TimeoutInMins: 15
+      # BuildBatchConfig:
+      #   ServiceRole: !GetAtt BuildBatchServiceRole.Arn
+      #   TimeoutInMins: 15
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -74,8 +74,8 @@ Resources:
       Source:
         Type: GITHUB
         Location: !Sub "https://github.com/pagopa/${GitHubProjectName}"
-        BuildSpec: !Sub "${BaseDir}/buildspec.yaml"
-      TimeoutInMinutes: 10
+        BuildSpec: !Sub "./cra_buildspec.yaml"
+      TimeoutInMinutes: 15
       Cache:
         Type: LOCAL
         Modes: # You can specify one or more cache mode,
@@ -84,44 +84,44 @@ Resources:
           - LOCAL_SOURCE_CACHE
       Triggers:
         Webhook: true
-        BuildType: BUILD_BATCH
+        # BuildType: BUILD_BATCH
         FilterGroups:
           - - Type: EVENT
               Pattern: PUSH
             - Type: HEAD_REF
               Pattern: ^refs/heads/(main|develop|hotfix)|release\/.*$
-          - - Type: EVENT
-              Pattern: PULL_REQUEST_MERGED
-            - Type: BASE_REF
-              Pattern: ^refs/heads/(main|develop|hotfix)|release\/.*$
-            - Type: FILE_PATH
-              Pattern: !Sub "^${BaseDir}/.*"
+          # - - Type: EVENT
+          #     Pattern: PULL_REQUEST_MERGED
+          #   - Type: BASE_REF
+          #     Pattern: ^refs/heads/(main|develop|hotfix)|release\/.*$
+          #   - Type: FILE_PATH
+          #     Pattern: !Sub "^${BaseDir}/.*"
 
-  BuildBatchServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Sid: ""
-            Effect: Allow
-            Principal:
-              Service:
-                - codebuild.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: CodeBuildPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: ""
-                Effect: Allow
-                Resource:
-                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${GitHubProjectName}-${PackageName}-CodeBuild"
-                Action:
-                  - codebuild:StartBuild
-                  - codebuild:StopBuild
-                  - codebuild:RetryBuild
+  # BuildBatchServiceRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Sid: ""
+  #           Effect: Allow
+  #           Principal:
+  #             Service:
+  #               - codebuild.amazonaws.com
+  #           Action: sts:AssumeRole
+  #     Policies:
+  #       - PolicyName: CodeBuildPolicy
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Sid: ""
+  #               Effect: Allow
+  #               Resource:
+  #                 - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${GitHubProjectName}-${PackageName}-CodeBuild"
+  #               Action:
+  #                 - codebuild:StartBuild
+  #                 - codebuild:StopBuild
+  #                 - codebuild:RetryBuild
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -166,11 +166,11 @@ Resources:
                 Condition:
                   StringEquals:
                     "sts:AWSServiceName": codeartifact.amazonaws.com
-              - Sid: GitHubSecret
+              - Sid: SonarCloudTokenSecret
                 Effect: Allow
                 Action:
                   - secretsmanager:GetSecretValue
-                Resource: "*"
+                Resource: "arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM"
               - Sid: CodeArtifactGetAuthorizationTokenPolicy
                 Effect: Allow
                 Action:

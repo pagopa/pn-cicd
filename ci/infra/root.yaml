@@ -18,58 +18,94 @@ Parameters:
     Default: "none"
     Description: Topic for build and pipeline notification
 
-  AllowedDeployAccount1:
+  Ada1:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount2:
+  Ada2:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount3:
+  Ada3:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount4:
+  Ada4:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount5:
+  Ada5:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount6:
+  Ada6:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount7:
+  Ada7:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount8:
+  Ada8:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount9:
+  Ada9:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount10:
+  Ada10:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount11:
+  Ada11:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount12:
+  Ada12:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount13:
+  Ada13:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount14:
+  Ada14:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount15:
+  Ada15:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount16:
+  Ada16:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount17:
+  Ada17:
     Type: Number
     Description: Account number allowed to read the artifacts
-  AllowedDeployAccount18:
+  Ada18:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada19:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada20:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada21:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada22:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada23:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada24:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada25:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada26:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada27:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada28:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada29:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  Ada30:
     Type: Number
     Description: Account number allowed to read the artifacts
 
@@ -111,24 +147,36 @@ Resources:
               - !Sub arn:aws:s3:::${CiArtifactBucket}/*
             Principal:
               AWS:
-                - !Sub arn:aws:iam::${AllowedDeployAccount1}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount2}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount3}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount4}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount5}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount6}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount7}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount8}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount9}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount10}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount11}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount12}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount13}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount14}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount15}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount16}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount17}:root
-                - !Sub arn:aws:iam::${AllowedDeployAccount18}:root
+                - !Sub arn:aws:iam::${Ada1}:root
+                - !Sub arn:aws:iam::${Ada2}:root
+                - !Sub arn:aws:iam::${Ada3}:root
+                - !Sub arn:aws:iam::${Ada4}:root
+                - !Sub arn:aws:iam::${Ada5}:root
+                - !Sub arn:aws:iam::${Ada6}:root
+                - !Sub arn:aws:iam::${Ada7}:root
+                - !Sub arn:aws:iam::${Ada8}:root
+                - !Sub arn:aws:iam::${Ada9}:root
+                - !Sub arn:aws:iam::${Ada10}:root
+                - !Sub arn:aws:iam::${Ada11}:root
+                - !Sub arn:aws:iam::${Ada12}:root
+                - !Sub arn:aws:iam::${Ada13}:root
+                - !Sub arn:aws:iam::${Ada14}:root
+                - !Sub arn:aws:iam::${Ada15}:root
+                - !Sub arn:aws:iam::${Ada16}:root
+                - !Sub arn:aws:iam::${Ada17}:root
+                - !Sub arn:aws:iam::${Ada18}:root
+                - !Sub arn:aws:iam::${Ada19}:root
+                - !Sub arn:aws:iam::${Ada20}:root
+                - !Sub arn:aws:iam::${Ada21}:root
+                - !Sub arn:aws:iam::${Ada22}:root
+                - !Sub arn:aws:iam::${Ada23}:root
+                - !Sub arn:aws:iam::${Ada24}:root
+                - !Sub arn:aws:iam::${Ada25}:root
+                - !Sub arn:aws:iam::${Ada26}:root
+                - !Sub arn:aws:iam::${Ada27}:root
+                - !Sub arn:aws:iam::${Ada28}:root
+                - !Sub arn:aws:iam::${Ada29}:root
+                - !Sub arn:aws:iam::${Ada30}:root
 
   # Progetti CI jar
   ParentPomCI:
@@ -164,6 +212,17 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 5
+  PnF24LibCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-f24lib"
+        GitHubDefaultBranch: "develop"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
   # Progetti docker
   PnDeliveryCI:
     Type: AWS::CloudFormation::Stack
@@ -176,26 +235,36 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         GitHubDefaultBranch: "develop"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnDeliveryPushCI:
     Type: AWS::CloudFormation::Stack
@@ -208,26 +277,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 20
   PnExternalChannelsCI:
     Type: AWS::CloudFormation::Stack
@@ -239,26 +318,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnDataVaultCI:
     Type: AWS::CloudFormation::Stack
@@ -271,26 +360,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnNationalRegistriesCI:
     Type: AWS::CloudFormation::Stack
@@ -302,26 +401,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnExternalRegistriesCI:
     Type: AWS::CloudFormation::Stack
@@ -334,26 +443,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnMandateCI:
     Type: AWS::CloudFormation::Stack
@@ -366,26 +485,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnUserAttributesCI:
     Type: AWS::CloudFormation::Stack
@@ -398,26 +527,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnDowntimeLogsCI:
     Type: AWS::CloudFormation::Stack
@@ -429,26 +568,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnRaddFsuCI:
     Type: AWS::CloudFormation::Stack
@@ -460,26 +609,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnLogExtractorBeCI:
     Type: AWS::CloudFormation::Stack
@@ -491,26 +650,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnLogsaverBeCI:
     Type: AWS::CloudFormation::Stack
@@ -522,26 +691,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnApikeyManagerCI:
     Type: AWS::CloudFormation::Stack
@@ -553,26 +732,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnPaperChannelCI:
     Type: AWS::CloudFormation::Stack
@@ -585,26 +774,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnSSCI:
     Type: AWS::CloudFormation::Stack
@@ -617,26 +816,36 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
   PnStateMachineManagerCI:
     Type: AWS::CloudFormation::Stack
@@ -649,26 +858,120 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
+      TimeoutInMinutes: 5
+  PnECCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-ec"
+        GitHubDefaultBranch: "develop"
+        DisableIntegrationTest: "false"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
+      TimeoutInMinutes: 5
+  PnPlatformUsageEstimatesCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-platform-usage-estimates"
+        GitHubDefaultBranch: "develop"
+        DisableIntegrationTest: "false"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
 
   PnKafkaBridgeCI:
@@ -682,27 +985,124 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        AllowedDeployAccount1: !Ref AllowedDeployAccount1
-        AllowedDeployAccount2: !Ref AllowedDeployAccount2
-        AllowedDeployAccount3: !Ref AllowedDeployAccount3
-        AllowedDeployAccount4: !Ref AllowedDeployAccount4
-        AllowedDeployAccount5: !Ref AllowedDeployAccount5
-        AllowedDeployAccount6: !Ref AllowedDeployAccount6
-        AllowedDeployAccount7: !Ref AllowedDeployAccount7
-        AllowedDeployAccount8: !Ref AllowedDeployAccount8
-        AllowedDeployAccount9: !Ref AllowedDeployAccount9
-        AllowedDeployAccount10: !Ref AllowedDeployAccount10
-        AllowedDeployAccount11: !Ref AllowedDeployAccount11
-        AllowedDeployAccount12: !Ref AllowedDeployAccount12
-        AllowedDeployAccount13: !Ref AllowedDeployAccount13
-        AllowedDeployAccount14: !Ref AllowedDeployAccount14
-        AllowedDeployAccount15: !Ref AllowedDeployAccount15
-        AllowedDeployAccount16: !Ref AllowedDeployAccount16
-        AllowedDeployAccount17: !Ref AllowedDeployAccount17
-        AllowedDeployAccount18: !Ref AllowedDeployAccount18
-        AllowedDeployAccount19: !Ref AllowedDeployAccount18
-        AllowedDeployAccount20: !Ref AllowedDeployAccount18
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 20
+
+  PnRaddBffCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-radd-bff"
+        DisableIntegrationTest: "false"
+        GitHubDefaultBranch: "develop"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
+      TimeoutInMinutes: 20
+
+  PnAddressManagerCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-address-manager"
+        GitHubDefaultBranch: "develop"
+        DisableIntegrationTest: "false"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
+      TimeoutInMinutes: 5
+
   # Progetti Progression Sensor
   PnProgressionSensorLambdas:
     Type: AWS::CloudFormation::Stack
@@ -712,6 +1112,7 @@ Resources:
         GitHubProjectName: "pn-progression-sensor"
         BaseDir: "functions"
         BaseDirEscaped: "functions"        
+        GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 5
@@ -723,61 +1124,11 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-auth-fleet"
         BaseDir: "functions"
+        GitHubDefaultBranch: "develop"
         BaseDirEscaped: "functions"        
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 10
-  # Progetti Lambda
-  PnApikeyAuthorizerLambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-auth-fleet"
-        BaseDir: "apikeyAuthorizer"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
-  PnApiKeyAuthorizerV2Lambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-auth-fleet"
-        BaseDir: "apikeyAuthorizerV2"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
-  PnIoAuthorizerLambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-auth-fleet"
-        BaseDir: "ioAuthorizer"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
-  PnJwtAuthorizerLambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-auth-fleet"
-        BaseDir: "jwtAuthorizer"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
-  PnTokenExchangeLambda:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-lambda-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-auth-fleet"
-        BaseDir: "tokenExchange"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
 
   # Progetti WebApp
   PnPaWebapp:
@@ -929,18 +1280,38 @@ Resources:
         BaseDir: "packages/pn-personafisica-webapp"
       TimeoutInMinutes: 5
 
-  # Progetti template CFN
+  # Progetti Infrastrutturali
   PnInfra:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-infra"
+        GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         BaseDir: "runtime-infra/lambdas"
         BaseDirEscaped: "runtime-infra-lambdas"        
       TimeoutInMinutes: 5
+  PnInfraCore:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/not-compiled-repo-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-infra-core"
+        GitHubDefaultBranch: "develop"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
+  PnInfraConfInfo:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/not-compiled-repo-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-infra-confinfo"
+        GitHubDefaultBranch: "develop"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
+
   PnCiCd:
     Type: AWS::CloudFormation::Stack
     Properties:

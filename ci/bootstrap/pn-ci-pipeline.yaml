@@ -68,6 +68,42 @@ Parameters:
   AllowedDeployAccount18:
     Type: Number
     Description: Account number allowed to read the artifacts
+  AllowedDeployAccount19:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount20:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount21:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount22:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount23:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount24:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount25:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount26:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount27:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount28:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount29:
+    Type: Number
+    Description: Account number allowed to read the artifacts
+  AllowedDeployAccount30:
+    Type: Number
+    Description: Account number allowed to read the artifacts
 
 
 Resources:
@@ -145,24 +181,36 @@ Resources:
                 ParameterOverrides: !Sub '{
                     "PnCiCdTemplatesBucketName" : "${PnCiCdTemplatesBucket}", 
                     "NotificationSNSTopic": "${NotificationSNSTopic}",
-                    "AllowedDeployAccount1": "${AllowedDeployAccount1}",
-                    "AllowedDeployAccount2": "${AllowedDeployAccount2}",
-                    "AllowedDeployAccount3": "${AllowedDeployAccount3}",
-                    "AllowedDeployAccount4": "${AllowedDeployAccount4}",
-                    "AllowedDeployAccount5": "${AllowedDeployAccount5}",
-                    "AllowedDeployAccount6": "${AllowedDeployAccount6}",
-                    "AllowedDeployAccount7": "${AllowedDeployAccount7}",
-                    "AllowedDeployAccount8": "${AllowedDeployAccount8}",
-                    "AllowedDeployAccount9": "${AllowedDeployAccount9}",
-                    "AllowedDeployAccount10": "${AllowedDeployAccount10}",
-                    "AllowedDeployAccount11": "${AllowedDeployAccount11}",
-                    "AllowedDeployAccount12": "${AllowedDeployAccount12}",
-                    "AllowedDeployAccount13": "${AllowedDeployAccount13}",
-                    "AllowedDeployAccount14": "${AllowedDeployAccount14}",
-                    "AllowedDeployAccount15": "${AllowedDeployAccount15}",
-                    "AllowedDeployAccount16": "${AllowedDeployAccount16}",
-                    "AllowedDeployAccount17": "${AllowedDeployAccount17}",
-                    "AllowedDeployAccount18": "${AllowedDeployAccount18}"
+                    "Ada1": "${AllowedDeployAccount1}",
+                    "Ada2": "${AllowedDeployAccount2}",
+                    "Ada3": "${AllowedDeployAccount3}",
+                    "Ada4": "${AllowedDeployAccount4}",
+                    "Ada5": "${AllowedDeployAccount5}",
+                    "Ada6": "${AllowedDeployAccount6}",
+                    "Ada7": "${AllowedDeployAccount7}",
+                    "Ada8": "${AllowedDeployAccount8}",
+                    "Ada9": "${AllowedDeployAccount9}",
+                    "Ada10": "${AllowedDeployAccount10}",
+                    "Ada11": "${AllowedDeployAccount11}",
+                    "Ada12": "${AllowedDeployAccount12}",
+                    "Ada13": "${AllowedDeployAccount13}",
+                    "Ada14": "${AllowedDeployAccount14}",
+                    "Ada15": "${AllowedDeployAccount15}",
+                    "Ada16": "${AllowedDeployAccount16}",
+                    "Ada17": "${AllowedDeployAccount17}",
+                    "Ada18": "${AllowedDeployAccount18}",
+                    "Ada19": "${AllowedDeployAccount19}",
+                    "Ada20": "${AllowedDeployAccount20}",
+                    "Ada21": "${AllowedDeployAccount21}",
+                    "Ada22": "${AllowedDeployAccount22}",
+                    "Ada23": "${AllowedDeployAccount23}",
+                    "Ada24": "${AllowedDeployAccount24}",
+                    "Ada25": "${AllowedDeployAccount25}",
+                    "Ada26": "${AllowedDeployAccount26}",
+                    "Ada27": "${AllowedDeployAccount27}",
+                    "Ada28": "${AllowedDeployAccount28}",
+                    "Ada29": "${AllowedDeployAccount29}",
+                    "Ada30": "${AllowedDeployAccount30}"
                   }'
               OutputArtifacts: [ ]
               RunOrder: 2
