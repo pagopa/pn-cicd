@@ -733,6 +733,9 @@ mkdir -p "pn-pa-webapp"
 )
 
 aws ${aws_command_base_args} \
+    s3 cp "pn-pa-webapp" "s3://${webappPaBucketName}/" --recursive 
+
+aws ${aws_command_base_args} \
     s3 sync "pn-pa-webapp" "s3://${webappPaBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPaDistributionId} --paths "/*"
@@ -752,6 +755,9 @@ mkdir -p "pn-personafisica-webapp"
 )
 
 aws ${aws_command_base_args} \
+    s3 cp "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --recursive 
+
+aws ${aws_command_base_args} \
     s3 sync "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPfDistributionId} --paths "/*"
@@ -768,6 +774,9 @@ mkdir -p "pn-personafisica-login"
      && tar xvzf "../pn-personafisica-login.tar.gz" \
      && replace_config ${env_type} "pn-personafisica-login" \
 )
+
+aws ${aws_command_base_args} \
+    s3 cp "pn-personafisica-login" "s3://${webappPflBucketName}/" --recursive 
 
 aws ${aws_command_base_args} \
     s3 sync "pn-personafisica-login" "s3://${webappPflBucketName}/" --delete 
@@ -789,6 +798,9 @@ mkdir -p "pn-landing-webapp"
 )
 
 aws ${aws_command_base_args} \
+    s3 cp "pn-landing-webapp" "s3://${landingBucketName}/" --recursive 
+
+aws ${aws_command_base_args} \
     s3 sync "pn-landing-webapp" "s3://${landingBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
@@ -806,6 +818,9 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
       && tar xvzf "../pn-personagiuridica-webapp.tar.gz" \
       && replace_config ${env_type} "pn-personagiuridica-webapp" \
   )
+
+  aws ${aws_command_base_args} \
+      s3 cp "pn-personagiuridica-webapp" "s3://${webappPgBucketName}/" --recursive 
 
   aws ${aws_command_base_args} \
       s3 sync "pn-personagiuridica-webapp" "s3://${webappPgBucketName}/" --delete 
@@ -827,6 +842,9 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
       && tar xvzf "../pn-status-webapp.tar.gz" \
       && replace_config ${env_type} "pn-status-webapp" \
   )
+
+  aws ${aws_command_base_args} \
+      s3 cp "pn-status-webapp" "s3://${webappPgBucketName}/" --recursive 
 
   aws ${aws_command_base_args} \
       s3 sync "pn-status-webapp" "s3://${webappPgBucketName}/" --delete 
