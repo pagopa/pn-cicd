@@ -2006,6 +2006,8 @@ Resources:
               - iam:GetPolicy
               - iam:DeletePolicy
               - iam:CreateRole
+              - iam:UpdateRoleDescription
+              - iam:UpdateRole
               - iam:AttachRolePolicy
               - iam:PutRolePolicy
               - iam:CreatePolicyVersion
