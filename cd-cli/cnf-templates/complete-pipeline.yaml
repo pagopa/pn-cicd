@@ -4715,8 +4715,12 @@ Resources:
             version: 0.2
             phases:
               pre_build:
+                on-failure: ABORT
                 commands:
-                  - echo NO PRE_BUILD
+                  - echo Installing chrome
+                  - curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add 
+                  - "echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' >> /etc/apt/sources.list.d/google-chrome.list" 
+                  - apt -y update && apt -y install google-chrome-stable 
               build:
                 on-failure: ABORT
                 commands:
