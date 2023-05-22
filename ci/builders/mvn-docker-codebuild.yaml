@@ -310,14 +310,15 @@ Resources:
               on-failure: ABORT
               commands:
                 - |
+                  echo "Ensure different image for each commit"
+                  DOCKER_FILE=$(mktemp)
+                  echo "FROM ${GITHUB_PRJ_NAME}:$VERSION" >$DOCKER_FILE
+                  echo "LABEL VCS_COMMIT_ID=${CODEBUILD_RESOLVED_SOURCE_VERSION}" >>$DOCKER_FILE
+                  echo "ENV VCS_COMMIT_ID=${CODEBUILD_RESOLVED_SOURCE_VERSION}" >>$DOCKER_FILE
+                  cat $DOCKER_FILE
+                  docker build --tag "${GITHUB_PRJ_NAME}:${VERSION}" - < $DOCKER_FILE
+                    
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)|(release|hotfix)\/.*$ ]]; then
-                    echo "Ensure different image for each commit"
-                    DOCKER_FILE=$(mktemp)
-                    echo "FROM ${GITHUB_PRJ_NAME}:$VERSION" >$DOCKER_FILE
-                    echo "LABEL VCS_COMMIT_ID=${CODEBUILD_RESOLVED_SOURCE_VERSION}" >>$DOCKER_FILE
-                    echo "ENV VCS_COMMIT_ID=${CODEBUILD_RESOLVED_SOURCE_VERSION}" >>$DOCKER_FILE
-                    cat $DOCKER_FILE
-                    docker build --tag "${GITHUB_PRJ_NAME}:${VERSION}" - < $DOCKER_FILE
                     echo "Deploy"
                     docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:$IMAGE_TAG
                     docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:latest
@@ -332,6 +333,13 @@ Resources:
                     echo $EVENT_DETAIL | jq -R -s '[{ "DetailType": "CiEvent","EventBusName": "CiEventBus", "Source":"Builder", "Detail": . }]' > ci_event.json
                     cat ci_event.json
                     aws events put-events --entries file://ci_event.json
+                  else
+                    echo "Deploy"
+                    docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:feature_bug
+                    docker image ls
+                    echo Build completed on `date`
+                    echo Pushing the Docker image...
+                    docker push $ECR_URL/${IMAGE_REPO_NAME}:feature_bug
                   fi
           reports: 
             SurefireReports:
