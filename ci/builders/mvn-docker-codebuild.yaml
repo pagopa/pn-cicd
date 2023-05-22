@@ -335,11 +335,15 @@ Resources:
                     aws events put-events --entries file://ci_event.json
                   else
                     echo "Deploy"
-                    docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:feature_bug
+                    docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:latest_feature_bug
                     docker image ls
                     echo Build completed on `date`
                     echo Pushing the Docker image...
-                    docker push $ECR_URL/${IMAGE_REPO_NAME}:feature_bug
+                    docker push $ECR_URL/${IMAGE_REPO_NAME}:latest_feature_bug
+
+                    IMAGE_URL_WITH_SHA=$( docker inspect --format='{{index .RepoDigests 0}}' $ECR_URL/${IMAGE_REPO_NAME}:latest_feature_bug )
+                    echo "Image Url with SHA = $IMAGE_URL_WITH_SHA"
+                    echo "Commit Id = $CODEBUILD_RESOLVED_SOURCE_VERSION"
                   fi
           reports: 
             SurefireReports:
