@@ -4722,7 +4722,6 @@ Resources:
                   - "echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' >> /etc/apt/sources.list.d/google-chrome.list" 
                   - apt -y update && apt -y install google-chrome-stable 
               build:
-                on-failure: ABORT
                 commands:
                   - echo CLONE E2E TEST REPOSITORY
                   - echo #####################
