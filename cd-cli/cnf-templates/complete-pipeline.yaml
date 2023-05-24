@@ -4727,7 +4727,7 @@ Resources:
                   - echo CLONE E2E TEST REPOSITORY
                   - echo #####################
                   - git clone https://github.com/pagopa/pn-frontend-e2e.git pn-frontend-e2e
-                  - cd pn-frontend-e2e && ./mvnw clean test -Dcucumber.filter.tags=@TestSuite -Dbrowser=chrome -Dheadless=true
+                  - cd pn-frontend-e2e && ./mvnw clean test -Dcucumber.filter.tags=@TestSuite -Dbrowser=chrome -Dheadless=true -Denvironment=${ENV_NAME}
             reports:
               reportGroup: #Cucumber reports from json plugin
                 files:
