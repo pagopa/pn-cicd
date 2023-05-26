@@ -485,6 +485,12 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
+
+  # - save e2e test reports
+  E2eArtifactOutputTest:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
   
   # PIPELINE DEFINITION
   #######################
@@ -4629,11 +4635,19 @@ Resources:
               files:
                 - 'pn-b2b-client/target/cucumber-report.json'
               file-format: CUCUMBERJSON #Type of the report, defaults to JUNITXML
+          artifacts:
+            files:
+              - 'pn-b2b-client/target/cucumber-report.json'
+              - 'pn-b2b-client/target/surefire-reports/*'
+            name: pn-RunE2eTestsCodeBuildProject/$CODEBUILD_BUILD_NUMBER
+            discard-paths: yes
           cache:
             paths:
               - '/root/.m2/**/*'
       Artifacts:
-        Type: NO_ARTIFACTS
+        Type: S3
+        Location: !Ref E2eArtifactOutputTest
+        OverrideArtifactName: true
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
