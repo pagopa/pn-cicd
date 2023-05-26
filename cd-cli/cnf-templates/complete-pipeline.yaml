@@ -181,6 +181,7 @@ Resources:
                 Resource: 
                   - !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
                   - !GetAtt RunTestsCodebuildProject.Arn
+                  - !GetAtt RunTestsFeCodebuildProject.Arn
 
 
   ###           CodeBuild: CHOOSE AND EXECUTE THE C.D. PIPELINE           ###
@@ -953,6 +954,26 @@ Resources:
                         {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
                         {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                         {"name":"TEST_SUITE", "value":"CucumberSmokeTest", "type":"PLAINTEXT"}
+                      ]'
+                  InputArtifacts:
+                    - Name: EmptyZip
+                  RunOrder: 5
+                - !Ref AWS::NoValue
+            
+            - Fn::If:
+                - IsTestCondition
+                - Name: Run_e2e_fe_Tests
+                  ActionTypeId:
+                    Category: Build
+                    Owner: AWS
+                    Version: 1
+                    Provider: CodeBuild
+                  Configuration:
+                    ProjectName: !Ref RunTestsFeCodebuildProject
+                    EnvironmentVariables: !Sub '[
+                        {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
+                        {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                        {"name":"TEST_SUITE", "value":"e2eFeTest", "type":"PLAINTEXT"}
                       ]'
                   InputArtifacts:
                     - Name: EmptyZip
@@ -4585,6 +4606,22 @@ Resources:
             Fn::GetAtt: 
               - "RunTestsCodebuildProject"
               - "Arn"
+  
+  ScheduledRule: 
+    Condition: IsContinuousDeliveryCondition
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "ScheduledRule"
+      ScheduleExpression: "cron(0 7-19/2 ? * MON-FRI *)"
+      State: "ENABLED"
+      RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
+      Targets: 
+        - Id: "TestRunner"
+          RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
+          Arn: 
+            Fn::GetAtt: 
+              - "RunTestsFeCodebuildProject"
+              - "Arn"
           
   
   ###########################################################################
@@ -4673,6 +4710,72 @@ Resources:
     Condition: IsTestCondition
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsCodebuildProject}"
+      RetentionInDays: 14
+
+  ###########################################################################
+  ###  Utility that run e2e FE tests
+  ###########################################################################
+  RunTestsFeCodebuildProject:
+      Condition: IsTestCondition
+      Type: 'AWS::CodeBuild::Project'
+      Properties:
+        Name: !Sub ${ProjectName}-RunFeE2eTestsCodeBuildProject
+        ServiceRole: !GetAtt CodeBuildRole.Arn
+        ConcurrentBuildLimit: 2
+        TimeoutInMinutes: 120
+        Source: 
+          Type: NO_SOURCE
+          BuildSpec: |
+            version: 0.2
+            phases:
+              pre_build:
+                on-failure: ABORT
+                commands:
+                  - echo Installing chrome
+                  - curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add 
+                  - "echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' >> /etc/apt/sources.list.d/google-chrome.list" 
+                  - apt -y update && apt -y install google-chrome-stable 
+              build:
+                commands:
+                  - echo CLONE E2E TEST REPOSITORY
+                  - echo #####################
+                  - git clone https://github.com/pagopa/pn-frontend-e2e.git pn-frontend-e2e
+                  - cd pn-frontend-e2e && ./mvnw clean test -Dcucumber.filter.tags=@TestSuite -Dbrowser=chrome -Dheadless=true -Denvironment=${ENV_NAME}
+            reports:
+              reportGroup: #Cucumber reports from json plugin
+                files:
+                  - 'pn-frontend-e2e/target/cucumber-reports/report.json'
+                file-format: CUCUMBERJSON #Type of the report, defaults to JUNITXML
+            cache:
+              paths:
+                - '/root/.m2/**/*'
+        Artifacts:
+          Type: NO_ARTIFACTS
+        Environment:
+          ComputeType: BUILD_GENERAL1_SMALL
+          Type: LINUX_CONTAINER
+          Image: "aws/codebuild/standard:6.0"
+          EnvironmentVariables:
+            - Name: REGION
+              Type: PLAINTEXT
+              Value: !Ref AWS::Region
+            - Name: ENV_NAME
+              Type: PLAINTEXT
+              Value: !Ref EnvName
+        VpcConfig:
+          Fn::If:
+            - HasE2EVPCConfig
+            - VpcId: !Ref E2EVpcId
+              Subnets: !Ref E2ESubnetsIds
+              SecurityGroupIds: 
+                - !Ref E2ESecurityGroupId
+            - !Ref AWS::NoValue
+
+  RunTestsFeCodebuildProjectLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: IsTestCondition
+    Properties:
+      LogGroupName: !Sub "/aws/codebuild/${RunTestsFeCodebuildProject}"
       RetentionInDays: 14
 
 Outputs:
