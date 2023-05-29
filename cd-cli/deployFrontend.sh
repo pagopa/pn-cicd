@@ -239,7 +239,6 @@ replace_config() {
       | jq ".API_BASE_URL=\"$API_BASE_URL\"" \
       | jq ".URL_API_LOGIN=\"$URL_API_LOGIN\"" \
       | jq ".PF_URL=\"$PF_URL\"" \
-      #| jq ".LANDING_SITE_URL=\"$LANDING_SITE_URL\"" \
       | tee $LocalFilePath
   
     if ( [ $2 != 'pn-personagiuridica-webapp' ] ) then
