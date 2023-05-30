@@ -4754,7 +4754,7 @@ Resources:
                 file-format: CUCUMBERJSON #Type of the report, defaults to JUNITXML
             artifacts:
               files:
-                - 'pn-frontend-e2e/target/cucumber-reports/report.json'
+                - 'pn-frontend-e2e/target/cucumber-reports/*'
                 - 'pn-frontend-e2e/target/surefire-reports/*'
               name: pn-RunFeE2eTestsCodeBuildProject/$CODEBUILD_BUILD_NUMBER
               discard-paths: yes
