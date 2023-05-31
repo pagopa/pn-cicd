@@ -493,6 +493,12 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
   
+  # - save fe e2e test reports
+  FeE2eArtifactOutputTest:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+  
   # PIPELINE DEFINITION
   #######################
   DeployPipeline:
@@ -4746,11 +4752,19 @@ Resources:
                 files:
                   - 'pn-frontend-e2e/target/cucumber-reports/report.json'
                 file-format: CUCUMBERJSON #Type of the report, defaults to JUNITXML
+            artifacts:
+              files:
+                - 'pn-frontend-e2e/target/cucumber-reports/*'
+                - 'pn-frontend-e2e/target/surefire-reports/*'
+              name: pn-RunFeE2eTestsCodeBuildProject/$CODEBUILD_BUILD_NUMBER
+              discard-paths: yes
             cache:
               paths:
                 - '/root/.m2/**/*'
         Artifacts:
-          Type: NO_ARTIFACTS
+          Type: S3
+          Location: !Ref FeE2eArtifactOutputTest
+          OverrideArtifactName: true
         Environment:
           ComputeType: BUILD_GENERAL1_SMALL
           Type: LINUX_CONTAINER
