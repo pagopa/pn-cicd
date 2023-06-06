@@ -1197,6 +1197,7 @@ Resources:
               - lambda:GetFunctionCodeSigningConfig
               - lambda:RemovePermission
               - lambda:UpdateFunctionCode
+              - lambda:PutFunctionConcurrency
             Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*
           - Effect: Allow
             Action:
