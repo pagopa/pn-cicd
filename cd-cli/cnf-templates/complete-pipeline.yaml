@@ -40,6 +40,7 @@ Conditions:
   IsDevCondition: !Equals [ !Ref EnvName, 'dev' ]
   IsSvilCondition: !Equals [ !Ref EnvName, 'svil' ]
   IsTestCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsSvilCondition ]
+  IsE2eTestCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsSvilCondition !Condition IsTestEnv ]
   IsContinuousDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
   HasE2EVpcId: !Not [ !Equals [ !Ref E2EVpcId, '' ] ]
   HasE2ESecurityGroupId: !Not [ !Equals [ !Ref E2ESecurityGroupId, '' ] ]
@@ -947,7 +948,7 @@ Resources:
 
             # Run test if the environment is dev
             - Fn::If:
-                - IsTestCondition
+                - IsE2eTestCondition
                 - Name: Run_e2e_Tests
                   ActionTypeId:
                     Category: Build
@@ -4597,11 +4598,11 @@ Resources:
   ###########################################################################
   ###  RUN E2E TESTS
   ###########################################################################
-  ScheduledRule: 
+  e2eScheduledRule:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::Events::Rule
     Properties:
-      Description: "ScheduledRule"
+      Description: "e2eScheduledRule"
       ScheduleExpression: "cron(0 7-19/2 ? * MON-FRI *)"
       State: "ENABLED"
       RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
@@ -4612,12 +4613,12 @@ Resources:
             Fn::GetAtt: 
               - "RunTestsCodebuildProject"
               - "Arn"
-  
-  ScheduledRule: 
+
+  FeScheduledRule:
     Condition: IsContinuousDeliveryCondition
     Type: AWS::Events::Rule
     Properties:
-      Description: "ScheduledRule"
+      Description: "FeScheduledRule"
       ScheduleExpression: "cron(0 7-19/2 ? * MON-FRI *)"
       State: "ENABLED"
       RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
@@ -4634,7 +4635,7 @@ Resources:
   ###  Utility that run e2e tests
   ###########################################################################
   RunTestsCodebuildProject:
-    Condition: IsTestCondition
+    Condition: IsE2eTestCondition
     Type: 'AWS::CodeBuild::Project'
     Properties:
       Name: !Sub ${ProjectName}-RunE2eTestsCodeBuildProject
@@ -4713,7 +4714,7 @@ Resources:
 
   RunTestsCodebuildProjectLogGroup:
     Type: AWS::Logs::LogGroup
-    Condition: IsTestCondition
+    Condition: IsE2eTestCondition
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsCodebuildProject}"
       RetentionInDays: 14
