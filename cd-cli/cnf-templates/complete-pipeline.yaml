@@ -39,8 +39,7 @@ Conditions:
   IsHotfixCondition: !Equals [ !Ref EnvName, 'hotfix' ]
   IsDevCondition: !Equals [ !Ref EnvName, 'dev' ]
   IsSvilCondition: !Equals [ !Ref EnvName, 'svil' ]
-  IsTestCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsSvilCondition ]
-  IsE2eTestCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsSvilCondition !Condition IsTestEnv ]
+  IsTestCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsSvilCondition !Condition IsTestEnv ]
   IsContinuousDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
   HasE2EVpcId: !Not [ !Equals [ !Ref E2EVpcId, '' ] ]
   HasE2ESecurityGroupId: !Not [ !Equals [ !Ref E2ESecurityGroupId, '' ] ]
@@ -948,7 +947,7 @@ Resources:
 
             # Run test if the environment is dev
             - Fn::If:
-                - IsE2eTestCondition
+                - IsTestCondition
                 - Name: Run_e2e_Tests
                   ActionTypeId:
                     Category: Build
@@ -4635,7 +4634,7 @@ Resources:
   ###  Utility that run e2e tests
   ###########################################################################
   RunTestsCodebuildProject:
-    Condition: IsE2eTestCondition
+    Condition: IsTestCondition
     Type: 'AWS::CodeBuild::Project'
     Properties:
       Name: !Sub ${ProjectName}-RunE2eTestsCodeBuildProject
@@ -4714,7 +4713,7 @@ Resources:
 
   RunTestsCodebuildProjectLogGroup:
     Type: AWS::Logs::LogGroup
-    Condition: IsE2eTestCondition
+    Condition: IsTestCondition
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsCodebuildProject}"
       RetentionInDays: 14
