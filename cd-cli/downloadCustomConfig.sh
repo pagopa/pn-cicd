@@ -226,10 +226,10 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
       REPO=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_commitId//g' | sed -E 's/_/-/g')
       
       # exceptions for pn-cicd and pn-auth-fleet
-      if ( [ $REPO='cd-scripts'] ) then
-        REPO=pn-cicd
-      elif ( [ $REPO='pn-authfleet' ] ) then
-        REPO=pn-auth-fleet
+      if ( [ "$REPO" = "cd-scripts" ] ) then
+        REPO="pn-cicd"
+      elif ( [ "$REPO" = "pn-authfleet" ] ) then
+        REPO="pn-auth-fleet"
       fi
 
       PN_COMMIT_ID=$(echo "$( curl -L -s  \
@@ -250,9 +250,9 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
       REPO=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_commitId//g' | sed -E 's/_/-/g')
 
       # exceptions for pn-cicd and pn-auth-fleet
-      if ( [ $REPO='cd-scripts'] ) then
+      if ( [ "$REPO" = "cd-scripts" ] ) then
         REPO=pn-cicd
-      elif ( [ $REPO='pn-authfleet' ] ) then
+      elif ( [ "$REPO" = "pn-authfleet" ] ) then
         REPO=pn-auth-fleet
       fi
       
