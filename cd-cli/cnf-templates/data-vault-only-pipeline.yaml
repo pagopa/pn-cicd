@@ -2013,6 +2013,7 @@ Resources:
               - iam:PutRolePolicy
               - iam:CreatePolicyVersion
               - iam:GetRolePolicy
+              - iam:UpdateAssumeRolePolicy
             Resource:
               - !Sub arn:aws:iam::${AWS::AccountId}:role/*
               - !Sub arn:aws:iam::${AWS::AccountId}:policy/*
