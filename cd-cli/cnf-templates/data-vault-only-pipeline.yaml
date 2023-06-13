@@ -1668,11 +1668,14 @@ Resources:
               - backup:CreateBackupVault               
               - backup:DeleteBackupPlan             
               - backup:DeleteBackupSelection             
-              - backup:DeleteBackupVault             
+              - backup:DeleteBackupVault*             
               - backup:DescribeBackupVault             
               - backup:GetBackupPlan
+              - backup:GetBackupVault*
               - backup:GetBackupSelection
               - backup:UpdateBackupPlan
+              - backup:PutBackupVault*
+              - backup-storage:*
             Resource: "*"
 
   CodeBuildPolicyECS:
