@@ -354,7 +354,7 @@ Resources:
             paths:
               - '/root/.m2/**/*'
               - '/root/.sonar/**/*'
-      TimeoutInMinutes: 20
+      TimeoutInMinutes: 30
       Cache:
         Type: LOCAL
         Modes: # You can specify one or more cache mode,
