@@ -2264,8 +2264,10 @@ Resources:
               - cloudfront:UpdateFunction
               - cloudfront:GetCloudFrontOriginAccessIdentity
               - acm:ListCertificates
+              - acm:RequestCertificate
               - acm:DescribeCertificate
               - acm:ListTagsForCertificate
+              - acm:AddTagsToCertificate
               - cloudfront:UpdateDistribution
               - cloudfront:UpdateCloudFrontOriginAccessIdentity
               - cloudfront:GetDistributionConfig
