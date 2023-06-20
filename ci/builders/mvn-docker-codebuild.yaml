@@ -331,7 +331,7 @@ Resources:
                       IMAGE_URL_WITH_SHA=$( docker inspect --format='{{index .RepoDigests 0}}' $ECR_URL/${IMAGE_REPO_NAME}:${IMAGE_TAG} )
                     else
                       IMAGE_URL_WITH_SHA=$( docker inspect --format='{{index .RepoDigests 0}}' $ECR_URL/${IMAGE_REPO_NAME}:${CODEBUILD_RESOLVED_SOURCE_VERSION} )
-                    if
+                    fi
                     docker image ls
                     echo Generate build event
                     
