@@ -1116,6 +1116,21 @@ Resources:
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 5
+
+  # Progetti Progression Sensor
+  PnCnLambdas:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-cn"
+        BaseDir: "functions"
+        BaseDirEscaped: "functions"        
+        GitHubDefaultBranch: "develop"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
+
   # Progetto Auth Fleet con Multilambda
   PnAuthFleetLambdas:
     Type: AWS::CloudFormation::Stack
