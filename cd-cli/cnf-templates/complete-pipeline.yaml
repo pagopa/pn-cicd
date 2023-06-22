@@ -40,7 +40,7 @@ Conditions:
   IsDevCondition: !Equals [ !Ref EnvName, 'dev' ]
   IsSvilCondition: !Equals [ !Ref EnvName, 'svil' ]
   # !Condition IsDevCondition temporarily removed from IsTestCondition
-  IsTestCondition: !Or [ !Condition IsHotfixCondition, !Condition IsSvilCondition, !Condition IsTestEnv, !Condition IsUatEnv ]
+  IsTestCondition: !Or [ !Condition IsDevCondition, !Condition IsHotfixCondition, !Condition IsSvilCondition, !Condition IsTestEnv, !Condition IsUatEnv ]
   IsContinuousDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
   HasE2EVpcId: !Not [ !Equals [ !Ref E2EVpcId, '' ] ]
   HasE2ESecurityGroupId: !Not [ !Equals [ !Ref E2ESecurityGroupId, '' ] ]
@@ -1610,6 +1610,9 @@ Resources:
               - codebuild:StopBuild               
               - codebuild:BatchPutTestCases
               - codebuild:BatchPutCodeCoverages
+              - codebuild:CreateProject
+              - codebuild:UpdateProject
+              - codebuild:DeleteProject
           - Effect: Allow
             Action:
               - ecs:UpdateService
