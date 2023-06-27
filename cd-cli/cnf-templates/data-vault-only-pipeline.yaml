@@ -975,21 +975,21 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateMultilambdaMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-address-manager", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-cn", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"0", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_cn", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
-                - Name: PnAddressManagerOutput
+                - Name: PnCnOutput
               RunOrder: 3
 
   # CODEBUILD used to download scripts
