@@ -2256,7 +2256,7 @@ Resources:
           - Sid: Cloudfront
             Effect: Allow
             Action:
-              - waf:ListWebACLs
+              - waf:ListWebACL
               - cloudfront:ListCloudFrontOriginAccessIdentities
               - cloudfront:GetFunction
               - cloudfront:ListFunctions
@@ -2324,6 +2324,9 @@ Resources:
               - wafv2:UpdateWebACL
               - wafv2:GetWebACL
               - wafv2:CreateWebACL
+              - wafv2:DeleteLoggingConfiguration
+              - wafv2:GetLoggingConfiguration
+              - wafv2:PutLoggingConfiguration
             Resource: "*"
 
   CodeBuildPolicyEventLogs:
