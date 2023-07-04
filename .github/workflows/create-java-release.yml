@@ -1,0 +1,133 @@
+name: Create Java Release Action
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'GIT Repository project to run the workflow'
+        required: true
+        type: string
+      tag:
+        description: 'Tag value'
+        required: true
+        type: string
+      increment_snapshot:
+        description: 'Increment SNAPSHOT version in a branch next-release'
+        type: boolean
+        default: false
+      base_branch:
+        description: 'Base branch to create the RC TAG. Default is develop'
+        type: string
+        default: "develop"
+        required: false
+
+permissions: write-all
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITBOT_TOKEN_FOR_RELEASE }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.repository }}
+          token: ${{ secrets.GITBOT_TOKEN_FOR_RELEASE }}
+          ref: ${{ inputs.base_branch }}
+          fetch-depth: 0
+      - name: setup git config
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+      - name: run RC flow
+        if: contains(inputs.tag, 'RC')
+        run: |
+          tag=${{ inputs.tag }}
+          increment_snapshot=${{ inputs.increment_snapshot }}
+          base_branch=$([ ${{ inputs.base_branch }}  = "" ] && echo "develop" || echo "${{ inputs.base_branch }}")
+          echo "Creating RC tag: $tag - increment snapshot?: $increment_snapshot"
+          # Esegui git fetch
+          git fetch
+          # Sposta sul ramo $base_branch e allineati al ramo remoto
+          git checkout $base_branch
+          git pull origin $base_branch
+          echo "Check no snapshots dependencies"
+          ./mvnw org.apache.maven.plugins:maven-enforcer-plugin:3.3.0:enforce -Denforcer.rules=requireReleaseDeps
+          # Verifica se il tag contiene "RC"
+          # Prendi versione corrente del progetto
+          current_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          suffix="-SNAPSHOT"
+          release_branch_name=${current_version%"$suffix"} #esempio, da 0.0.1-SNAPSHOT a 0.0.1
+          release_exists=$(git ls-remote origin release/"$release_branch_name" | wc -l)
+          if [[ $release_exists -eq 1 ]]; then
+            git checkout release/"$release_branch_name"
+            git pull origin release/"$release_branch_name"
+          else
+            git checkout -b release/"$release_branch_name"
+          fi
+          git merge --no-edit $base_branch
+          # Modifica la versione del pom.xml con il tag dato in input (esempio da 0.0.1-SNAPSHOT a 0.0.1-RC-1)
+          ./mvnw build-helper:parse-version versions:set -DnewVersion=$tag -U versions:commit
+          git add pom.xml
+          git commit -m "[$tag] Modifica versione nel pom.xml"
+          git push origin release/"$release_branch_name"
+          # Crea il tag dal ramo base_branch con il prefisso "v" (esempio v0.0.1-RC-1)
+          git tag -a "v$tag" -m "Release Candidate $tag"
+          git push origin "v$tag"
+
+      - name: run RELEASE flow
+        if: "!contains(inputs.tag, 'RC')"
+        run: |
+          tag=${{ inputs.tag }}
+          echo "Creating RELEASE tag: $tag"
+          # Esegui git fetch
+          git fetch
+          # Sposta sul ramo develop e allineati al ramo remoto
+          git checkout develop
+          git pull origin develop
+          
+          echo "Creating RELEASE version $tag ..."
+          release_exists=$(git ls-remote origin release/"$tag" | wc -l)
+          if [[ $release_exists -eq 1 ]]; then
+            git checkout release/$tag
+            git pull origin release/$tag
+          else
+            echo "Branch release/$tag does not exit. Creating it from develop branch..."
+            git checkout -b release/$tag
+          fi
+          echo "Check no snapshots dependencies"
+          ./mvnw org.apache.maven.plugins:maven-enforcer-plugin:3.3.0:enforce -Denforcer.rules=requireReleaseDeps
+          echo "Edit pom version to $tag"
+          ./mvnw build-helper:parse-version versions:set -DnewVersion=$tag -U versions:commit
+          git add pom.xml
+          git commit -m "[$tag] Create Release Version"
+          git push origin release/$tag
+          git checkout main
+          git pull origin main
+          git merge release/$tag
+          git push origin main
+          # Crea il tag sul branch main (esempio v0.0.1)
+          echo "Creating tag v$tag"
+          gh release create v$tag --generate-notes
+
+      - name: run increment SNAPSHOT
+        if: inputs.increment_snapshot
+        run: |
+          echo "Incrementing patch SNAPSHOT version from develop branch..."
+          git checkout develop
+          # Verifica se esiste il branch "next-release"
+          next_exists=$(git ls-remote origin next-release | wc -l)
+          if [[ $next_exists -eq 1 ]]; then
+            git checkout next-release
+            git pull origin next-release
+          else
+            git checkout -b next-release
+          fi
+          # Incrementa la versione patch nel pom.xml e pusha sul ramo next-release (esempio da 0.0.1-RC-1 a 0.0.2-SNAPSHOT)
+          ./mvnw build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}-SNAPSHOT -U versions:commit
+          next_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          git add pom.xml
+          git commit -m "[$next_version] Incrementa versione minor nel pom.xml"
+          git push origin next-release
+          
+        
