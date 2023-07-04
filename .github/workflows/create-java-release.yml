@@ -28,6 +28,43 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITBOT_TOKEN_FOR_RELEASE }}
+      SETTINGS: |
+        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+            http://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <profiles>
+              <profile>
+                <id>ci-profile</id>
+                <activation>
+                 <property><name>${{ vars.CODEBUILD_CI }}</name></property>
+                </activation>
+                <repositories>
+                    <repository>
+                    <id>pn-codeartifact-repo</id>
+                    <name>AWS Code Artifact</name>
+                    <url>https://${{ vars.CODEARTIFACT_DOMAIN_FULL }}/maven/${{ vars.CODEARTIFACT_REPO }}/</url>
+                  </repository>
+                </repositories>
+              </profile>
+            </profiles>
+            <servers>
+              <server>
+                <id>pn-codeartifact</id>
+                <username>aws</username>
+                <password>${{ secrets.CODEARTIFACT_AUTH_TOKEN }}</password>
+              </server>
+            </servers>
+            <mirrors>
+              <mirror>
+                <id>pn-codeartifact</id>
+                <name>pn-codeartifact</name>
+                <url>https://${{ vars.CODEARTIFACT_DOMAIN_FULL }}/maven/${{ vars.CODEARTIFACT_REPO }}/</url>
+                <mirrorOf>*</mirrorOf>
+              </mirror>
+            </mirrors>
+          </settings>
+      MAVEN_CONFIG: --settings /tmp/maven-settings.xml --no-transfer-progress
     steps:
       - uses: actions/checkout@v3
         with:
@@ -39,6 +76,10 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
+      - name: create Maven settings.xml
+        run: |
+          echo $SETTINGS > /tmp/maven-settings.xml
+          cat /tmp/maven-settings.xml
       - name: run RC flow
         if: contains(inputs.tag, 'RC')
         run: |
@@ -52,10 +93,10 @@ jobs:
           git checkout $base_branch
           git pull origin $base_branch
           echo "Check no snapshots dependencies"
-          ./mvnw org.apache.maven.plugins:maven-enforcer-plugin:3.3.0:enforce -Denforcer.rules=requireReleaseDeps
+          ./mvnw org.apache.maven.plugins:maven-enforcer-plugin:3.3.0:enforce -Denforcer.rules=requireReleaseDeps $MAVEN_CONFIG
           # Verifica se il tag contiene "RC"
           # Prendi versione corrente del progetto
-          current_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          current_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG)
           suffix="-SNAPSHOT"
           release_branch_name=${current_version%"$suffix"} #esempio, da 0.0.1-SNAPSHOT a 0.0.1
           release_exists=$(git ls-remote origin release/"$release_branch_name" | wc -l)
@@ -67,7 +108,7 @@ jobs:
           fi
           git merge --no-edit $base_branch
           # Modifica la versione del pom.xml con il tag dato in input (esempio da 0.0.1-SNAPSHOT a 0.0.1-RC-1)
-          ./mvnw build-helper:parse-version versions:set -DnewVersion=$tag -U versions:commit
+          ./mvnw build-helper:parse-version versions:set -DnewVersion=$tag -U versions:commit $MAVEN_CONFIG
           git add pom.xml
           git commit -m "[$tag] Modifica versione nel pom.xml"
           git push origin release/"$release_branch_name"
@@ -96,9 +137,9 @@ jobs:
             git checkout -b release/$tag
           fi
           echo "Check no snapshots dependencies"
-          ./mvnw org.apache.maven.plugins:maven-enforcer-plugin:3.3.0:enforce -Denforcer.rules=requireReleaseDeps
+          ./mvnw org.apache.maven.plugins:maven-enforcer-plugin:3.3.0:enforce -Denforcer.rules=requireReleaseDeps $MAVEN_CONFIG
           echo "Edit pom version to $tag"
-          ./mvnw build-helper:parse-version versions:set -DnewVersion=$tag -U versions:commit
+          ./mvnw build-helper:parse-version versions:set -DnewVersion=$tag -U versions:commit $MAVEN_CONFIG
           git add pom.xml
           git commit -m "[$tag] Create Release Version"
           git push origin release/$tag
@@ -124,8 +165,8 @@ jobs:
             git checkout -b next-release
           fi
           # Incrementa la versione patch nel pom.xml e pusha sul ramo next-release (esempio da 0.0.1-RC-1 a 0.0.2-SNAPSHOT)
-          ./mvnw build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}-SNAPSHOT -U versions:commit
-          next_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          ./mvnw build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}-SNAPSHOT -U versions:commit $MAVEN_CONFIG
+          next_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG)
           git add pom.xml
           git commit -m "[$next_version] Incrementa versione minor nel pom.xml"
           git push origin next-release
