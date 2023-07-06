@@ -50,7 +50,7 @@ Conditions:
   IsTestEnv: !Equals [ !Ref EnvName, 'test' ]
   IsUatEnv: !Equals [ !Ref EnvName, 'uat' ]
   IsProdEnv: !Equals [ !Ref EnvName, 'prod' ]
-  IsNewConfiguration: !Or [ !Condition IsTestEnv, !Condition IsUatEnv, !Condition IsProdEnv ]
+  IsNewConfiguration: !Or [ !Condition IsTestEnv, !Condition IsUatEnv, !Condition IsProdEnv, !Condition IsHotfixCondition ]
   RequiresSingleProjects: !Or [ !Condition IsContinuousDeliveryCondition, !Condition IsNewConfiguration ]
 
 Mappings: 
