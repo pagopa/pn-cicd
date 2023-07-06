@@ -30,41 +30,44 @@ jobs:
       GH_TOKEN: ${{ secrets.GITBOT_TOKEN_FOR_RELEASE }}
       SETTINGS: |
         <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
-            http://maven.apache.org/xsd/settings-1.0.0.xsd">
-            <profiles>
-              <profile>
-                <id>ci-profile</id>
-                <activation>
-                 <property><name>${{ vars.CODEBUILD_CI }}</name></property>
-                </activation>
-                <repositories>
-                    <repository>
-                    <id>pn-codeartifact-repo</id>
-                    <name>AWS Code Artifact</name>
-                    <url>https://${{ vars.CODEARTIFACT_DOMAIN_FULL }}/maven/${{ vars.CODEARTIFACT_REPO }}/</url>
-                  </repository>
-                </repositories>
-              </profile>
-            </profiles>
-            <servers>
-              <server>
-                <id>pn-codeartifact</id>
-                <username>aws</username>
-                <password>${{ secrets.CODEARTIFACT_AUTH_TOKEN }}</password>
-              </server>
-            </servers>
-            <mirrors>
-              <mirror>
-                <id>pn-codeartifact</id>
-                <name>pn-codeartifact</name>
-                <url>https://${{ vars.CODEARTIFACT_DOMAIN_FULL }}/maven/${{ vars.CODEARTIFACT_REPO }}/</url>
-                <mirrorOf>*</mirrorOf>
-              </mirror>
-            </mirrors>
-          </settings>
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+          <profiles>
+            <profile>
+              <id>ci-profile</id>
+              <activation>
+               <property><name>env.CODEBUILD_CI</name></property>
+              </activation>
+              <repositories>
+                  <repository>
+                  <id>pn-codeartifact-repo</id>
+                  <name>AWS Code Artifact</name>
+                  <url>https://${env.CODEARTIFACT_DOMAIN_FULL}/maven/${env.CODEARTIFACT_REPO}/</url>
+                </repository>
+              </repositories>
+            </profile>
+          </profiles>
+          <servers>
+            <server>
+              <id>pn-codeartifact</id>
+              <username>aws</username>
+              <password>${env.CODEARTIFACT_AUTH_TOKEN}</password>
+            </server>
+          </servers>
+          <mirrors>
+            <mirror>
+              <id>pn-codeartifact</id>
+              <name>pn-codeartifact</name>
+              <url>https://${env.CODEARTIFACT_DOMAIN_FULL}/maven/${env.CODEARTIFACT_REPO}/</url>
+              <mirrorOf>*</mirrorOf>
+            </mirror>
+          </mirrors>
+        </settings>
       MAVEN_CONFIG: --settings /tmp/maven-settings.xml --no-transfer-progress
+      CODEARTIFACT_DOMAIN_NAME: ${{ vars.CODEARTIFACT_DOMAIN_NAME }}
+      CODEARTIFACT_DOMAIN_FULL: ${{ vars.CODEARTIFACT_DOMAIN_FULL }}
+      CODEARTIFACT_REPO: ${{ vars.CODEARTIFACT_REPO }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -80,9 +83,17 @@ jobs:
         run: |
           echo $SETTINGS > /tmp/maven-settings.xml
           cat /tmp/maven-settings.xml
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+          role-session-name: GitHubReleaseSession
       - name: run RC flow
         if: contains(inputs.tag, 'RC')
         run: |
+          export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
           tag=${{ inputs.tag }}
           increment_snapshot=${{ inputs.increment_snapshot }}
           base_branch=$([ ${{ inputs.base_branch }}  = "" ] && echo "develop" || echo "${{ inputs.base_branch }}")
@@ -119,6 +130,7 @@ jobs:
       - name: run RELEASE flow
         if: "!contains(inputs.tag, 'RC')"
         run: |
+          export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
           tag=${{ inputs.tag }}
           echo "Creating RELEASE tag: $tag"
           # Esegui git fetch
@@ -154,6 +166,7 @@ jobs:
       - name: run increment SNAPSHOT
         if: inputs.increment_snapshot
         run: |
+          export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
           echo "Incrementing patch SNAPSHOT version from develop branch..."
           git checkout develop
           # Verifica se esiste il branch "next-release"
