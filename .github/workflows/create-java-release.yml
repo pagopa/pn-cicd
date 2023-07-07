@@ -90,6 +90,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
           role-session-name: GitHubReleaseSession
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+          cache: 'maven'
       - name: run RC flow
         if: contains(inputs.tag, 'RC')
         run: |
