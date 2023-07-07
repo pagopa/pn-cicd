@@ -37,7 +37,7 @@ jobs:
             <profile>
               <id>ci-profile</id>
               <activation>
-               <property><name>env.CODEBUILD_CI</name></property>
+               <activeByDefault>true</activeByDefault>
               </activation>
               <repositories>
                   <repository>
