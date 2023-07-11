@@ -50,9 +50,9 @@ aws --profile $CiCdAccountProfile --region $AWSRegion cloudformation deploy \
       AllowedDeployAccount11=603228414473 \
       AllowedDeployAccount12=354805605941 \
       \
-      AllowedDeployAccount13=804103868123 \
+      AllowedDeployAccount13=207905393513 \
       AllowedDeployAccount14=063295570123 \
-      AllowedDeployAccount15=118759374619 \
+      AllowedDeployAccount15=839620963891 \
       \
       AllowedDeployAccount16=911845998067 \
       AllowedDeployAccount17=911845998067 \
@@ -100,17 +100,17 @@ aws --profile $CiCdAccountProfile --region $AWSRegion cloudformation deploy \
 #354805605941 | pn-helpdesk CERT
 #734487133479 | pn-confinfo CERT
 
-#804103868123 | team-notifiche+pn-core-hotfix@pagopa.it      | pn-core     HOTFIX
 #907690015624 | team-notifiche+pn-hotfix@pagopa.it           | pn-spidhub  HOTFIX
 #063295570123 | team-notifiche+pn-helpdesk-hotfix@pagopa.it  | pn-helpdesk HOTFIX
-#118759374619 | team-notifiche+pn_hotfix@pagopa.it           | pn-confinfo HOTFIX
-
 
 #830192246553 | pn-core-dev@pagopa.it      | pn-core     DEV (Versione B che contiene anche helpdesk) 
 #089813480515 | pn-confinfo-dev@pagopa.it  | pn-confinfo DEV (Versione B che contiene anche spidhub) 
 
 #644374009812 | pn-core-uat@pagopa.it      | pn-core     UAT (Versione B che contiene anche helpdesk) 
 #956319218727 | pn-confinfo-uat@pagopa.it  | pn-confinfo UAT (Versione B che contiene anche spidhub) 
+
+#207905393513 | pn-core-hotfix@pagopa.it      | pn-core     HOTFIX (Versione B che contiene anche helpdesk) 
+#839620963891 | pn-confinfo-hotfix@pagopa.it  | pn-confinfo HOTFIX (Versione B che contiene anche spidhub) 
 
 #510769970275 | pn-core-prod@pagopa.it     | pn-core     PROD (Versione B che contiene anche helpdesk) 
 #350578575906 | pn-confinfo-prod@pagopa.it | pn-confinfo PROD (Versione B che contiene anche spidhub) 
