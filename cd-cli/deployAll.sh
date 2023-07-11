@@ -171,9 +171,3 @@ source "${desired_commit_id_dir}/${env_type}/desired-commit-ids-env.sh"
       -r $aws_region -e $env_type -i $pn_infra_commitId \
       -f $pn_frontend_commitId -B $LambdasBucketName \
       -b $bucketName -w $work_dir -c $custom_config_dir
-
-
-./deployShowcaseSite.sh $aws_profile_param \
-      -r $aws_region -e $env_type -i $pn_infra_commitId \
-      -f $pn_showcase_site_commitId -B $LambdasBucketName \
-      -b $bucketName -w $work_dir -c $custom_config_dir 
