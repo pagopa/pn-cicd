@@ -350,12 +350,7 @@ Resources:
                   if ( [ "$PROJECT" = "pn-helpdesk-fe" ] ) then
                     sed -i -e "s|pn_helpdesk_fe_commitId=.*|pn_helpdesk_fe_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-helpdesk-fe-update-pipeline"
-                  fi
-                - |
-                  if ( [ "$PROJECT" = "pn-showcase-site" ] ) then
-                    sed -i -e "s|pn_showcase_site_commitId=.*|pn_showcase_site_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-showcase-site-update-pipeline"
-                  fi              
+                  fi           
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
                 - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
