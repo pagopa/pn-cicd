@@ -167,7 +167,7 @@ jobs:
           git push origin main
           # Crea il tag sul branch main (esempio v0.0.1)
           echo "Creating tag v$tag"
-          gh release create v$tag --generate-notes
+          gh release create v$tag --generate-notes --target main
 
       - name: run increment SNAPSHOT
         if: inputs.increment_snapshot
