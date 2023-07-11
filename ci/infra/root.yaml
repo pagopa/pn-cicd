@@ -1111,7 +1111,7 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-progression-sensor"
         BaseDir: "functions"
-        BaseDirEscaped: "functions"        
+        BaseDirEscaped: "functions"
         GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
@@ -1125,7 +1125,7 @@ Resources:
         GitHubProjectName: "pn-auth-fleet"
         BaseDir: "functions"
         GitHubDefaultBranch: "develop"
-        BaseDirEscaped: "functions"        
+        BaseDirEscaped: "functions"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 10
@@ -1191,6 +1191,19 @@ Resources:
         GitHubProjectName: "pn-frontend"
         PackageName: "pn-landing-webapp"
         BaseDir: "packages/pn-landing-webapp"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
+  PnShowcaseSite:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-showcase-site"
+        PackageName: "pn-showcase-site"
+        BaseDir: "pn-showcase-site"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         CiArtifactBucket: !Ref "CiArtifactBucket"
@@ -1291,7 +1304,7 @@ Resources:
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         BaseDir: "runtime-infra/lambdas"
-        BaseDirEscaped: "runtime-infra-lambdas"        
+        BaseDirEscaped: "runtime-infra-lambdas"
       TimeoutInMinutes: 5
   PnInfraCore:
     Type: AWS::CloudFormation::Stack
