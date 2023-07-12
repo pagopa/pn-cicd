@@ -508,7 +508,7 @@ Resources:
     Properties:
       ImageScanningConfiguration:
         ScanOnPush: true
-      ImageTagMutability: MUTABLE
+      ImageTagMutability: ImageTagMutability
       RepositoryName: !Sub '${GitHubProjectName}'
       RepositoryPolicyText: !Sub '{
           "Version": "2008-10-17",
