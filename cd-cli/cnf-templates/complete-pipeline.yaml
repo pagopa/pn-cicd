@@ -353,6 +353,11 @@ Resources:
                   if ( [ "$PROJECT" = "pn-helpdesk-fe" ] ) then
                     sed -i -e "s|pn_helpdesk_fe_commitId=.*|pn_helpdesk_fe_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-helpdesk-fe-update-pipeline"
+                  fi   
+                - |
+                  if ( [ "$PROJECT" = "pn-showcase-site" ] ) then
+                    sed -i -e "s|pn_showcase_site_commitId=.*|pn_showcase_site_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-showcase-site-update-pipeline"
                   fi           
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
@@ -1463,6 +1468,53 @@ Resources:
                 - 'echo ""'
                 - 'echo "./deployFrontend.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_frontend_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir"'
                 - '(cd scripts/cd-cli && ./deployFrontend.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_frontend_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:6.0"
+
+  # CODEBUILD used to update showcase site
+  ###################################################
+  UpdateShowcaseSiteCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateShowcaseSiteCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###                  UPDATE SHOWCASE SITE                 ###"'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo "./deployShowcaseSite.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_showcase_site_commitid -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir"'
+                - '(cd scripts/cd-cli && ./deployShowcaseSite.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_showcase_site_commitid -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
