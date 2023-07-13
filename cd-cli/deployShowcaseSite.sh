@@ -140,7 +140,7 @@ fi
 
 echo "=== Download pn-showcase-site" 
 if ( [ ! -e pn-showcase-site ] ) then 
-  git clone https://github.com/pagopa/pn-showcase-sitegit
+  git clone https://github.com/pagopa/pn-showcase-site.git
 fi
 
 echo ""
