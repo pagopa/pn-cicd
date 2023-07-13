@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}")  [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -s <pn-showcase-site-github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <webArtifactBucketName> 
+    Usage: $(basename "${BASH_SOURCE[0]}")  [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -f <pn-showcase-site-github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <webArtifactBucketName> 
     
     [-h]                           : this help message
     [-v]                           : verbose mode
@@ -21,7 +21,7 @@ usage() {
     -r <aws-region>                : aws region as eu-south-1
     -e <env-type>                  : one of dev / uat / svil / coll / cert / prod
     -i <infra-github-commitid>     : commitId for github repository pagopa/pn-infra
-    -s <showcase-site-github-commitid>  : commitId for github repository pagopa/pn-showcase-site
+    -f <showcase-site-github-commitid>  : commitId for github repository pagopa/pn-showcase-site
     [-c <custom_config_dir>]       : where tor read additional env-type configurations
     -b <artifactBucketName>        : bucket name to use as temporary artifacts storage
     -B <webArtifactBucketName>     : bucket name where web application artifact are memorized
@@ -64,7 +64,7 @@ parse_params() {
       pn_infra_commitid="${2-}"
       shift
       ;;
-    -s | --showcase-site-commitid) 
+    -f | --showcase-site-commitid) 
       pn_showcase_site_commitid="${2-}"
       shift
       ;;
@@ -177,14 +177,14 @@ fi
 aws_log_base_args="${aws_log_base_args} --region eu-central-1"
 
 
-ShocasesiteSiteDomain=$( aws ${aws_command_base_args} \
+LandingDomain=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
       --stack-name pn-ipc-$env_type \
       --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ShocasesiteSiteDomain\") | .OutputValue" )
-SHOWCASE_SITE_URL=""
-if ( [ $ShocasesiteSiteDomain != '-' ] ) then
-  SHOWCASE_SITE_URL="https://${ShocasesiteSiteDomain}"
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" )
+LANDING_SITE_URL=""
+if ( [ $LandingDomain != '-' ] ) then
+  LANDING_SITE_URL="https://${LandingDomain}"
 fi
 
 echo ""
@@ -303,7 +303,7 @@ function prepareOneCloudFront() {
 ZONE_ID=""
 SHOWCASE_SITE_CERTIFICATE_ARN=""
 
-SHOWCASE_SITE_DOMAIN="www.${env_type}.pn.pagopa.it"
+LANDING_DOMAIN="www.${env_type}.pn.pagopa.it"
 
 REACT_APP_URL_API=""
 
@@ -328,45 +328,45 @@ if ( [ $ZoneId != '-' ] ) then
 fi
 
 # CERTIFICATES
-ShowcaseSiteCertificateArn=$( aws ${aws_command_base_args} \
+LandingCertificateArn=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
       --stack-name pn-ipc-$env_type \
       --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ShowcaseSiteCertificateArn\") | .OutputValue" ) 
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingCertificateArn\") | .OutputValue" ) 
 
-if ( [ $ShowcaseSiteCertificateArn != '-' ] ) then
-  SHOWCASE_SITE_CERTIFICATE_ARN=$LandingCertificateArn
+if ( [ $LandingCertificateArn != '-' ] ) then
+  LANDING_CERTIFICATE_ARN=$LandingCertificateArn
 fi
 
 # DOMAIN
-ShowcaseSiteDomain=$( aws ${aws_command_base_args} \
+LandingDomain=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
       --stack-name pn-ipc-$env_type \
       --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ShowcaseSiteDomain\") | .OutputValue" ) 
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" ) 
 
-if ( [ $ShowcaseSiteDomain != '-' ] ) then
-  SHOWCASE_SITE_DOMAIN=$ShowcaseSiteDomain
+if ( [ $LandingDomain != '-' ] ) then
+  LANDING_DOMAIN=$LandingDomain
 fi
 
-prepareOneCloudFront web-showcase-site-cdn-${env_type} \
-    "$SHOWCASE_SITE_DOMAIN" \
-    "$SHOWCASE_SITE_CERTIFICATE_ARN" \
+prepareOneCloudFront web-landing-cdn-${env_type} \
+    "$LANDING_DOMAIN" \
+    "$LANDING_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "${SHOWCASE_SITE_SITE_ALTERNATE_DNS-}"
-showcaseSiteBucketName=${bucketName}
-showcaseSiteDistributionId=${distributionId}
-showcaseSiteTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
-showcaseSiteTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
+    "${LANDING_SITE_ALTERNATE_DNS-}"
+landingBucketName=${bucketName}
+landingDistributionId=${distributionId}
+landingTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
+landingTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 
 
 echo ""
-echo " === Bucket Sito LAnding = ${showcaseSiteBucketName}"
-echo " === Distribution ID Portale Landing = ${showcaseSiteDistributionId}"
-echo " === Too Many Request Alarm Landing = ${showcaseSiteTooManyRequestsAlarmArn}"
-echo " === Too Many Errors Alarm Landing = ${showcaseSiteTooManyErrorsAlarmArn}"
+echo " === Bucket Sito Vetrina = ${landingBucketName}"
+echo " === Distribution ID Portale Sito Vetrins = ${landingDistributionId}"
+echo " === Too Many Request Alarm Sito Vetrina = ${landingTooManyRequestsAlarmArn}"
+echo " === Too Many Errors Alarm Sito Vetrina = ${landingTooManyErrorsAlarmArn}"
 if ( [ ! -z "$HAS_MONITORING" ]) then
 
   echo ""
@@ -386,14 +386,14 @@ if ( [ ! -z "$HAS_MONITORING" ]) then
   echo "=== Create CDN monitoring dashboard"
   aws ${aws_command_base_args} \
     cloudformation deploy \
-      --stack-name showcase-site-monitoring-${env_type} \
+      --stack-name frontend-monitoring-${env_type} \
       --template-file pn-showcase-site/aws-cdn-templates/one-monitoring.yaml \
       --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --parameter-overrides \
         ProjectName="${project_name}" \
         TemplateBucketBaseUrl="${templateBucketHttpsBaseUrl}" \
-        ShowcaseSiteTooManyErrorsAlarmArn="${showcaseSiteTooManyErrorsAlarmArn}" \
-        ShowcaseSiteTooManyRequestsAlarmArn="${showcaseSiteTooManyRequestsAlarmArn}"
+        LandingTooManyErrorsAlarmArn="${landingTooManyErrorsAlarmArn}" \
+        LandingTooManyRequestsAlarmArn="${landingTooManyRequestsAlarmArn}"
 fi
 
 echo ""
@@ -423,9 +423,9 @@ mkdir -p "pn-showcase-site-webapp"
 )
 
 aws ${aws_command_base_args} \
-    s3 cp "pn-showcase-site-webapp" "s3://${showcaseSiteBucketName}/" --recursive 
+    s3 cp "pn-showcase-site-webapp" "s3://${landingBucketName}/" --recursive 
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-showcase-site-webapp" "s3://${showcaseSiteBucketName}/" --delete 
+    s3 sync "pn-showcase-site-webapp" "s3://${landingBucketName}/" --delete 
 
-aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${showcaseSiteDistributionId} --paths "/*"
+aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
