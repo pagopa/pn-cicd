@@ -1116,6 +1116,21 @@ Resources:
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 5
+
+  # Progetti Progression Sensor
+  PnCnLambdas:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-cn"
+        BaseDir: "functions"
+        BaseDirEscaped: "functions"        
+        GitHubDefaultBranch: "develop"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
+
   # Progetto Auth Fleet con Multilambda
   PnAuthFleetLambdas:
     Type: AWS::CloudFormation::Stack
@@ -1272,25 +1287,6 @@ Resources:
         GitHubProjectName: "pn-helpdesk-fe"
         PackageName: "pn-helpdesk-fe"
         BaseDir: "pn-helpdesk-fe"
-      TimeoutInMinutes: 5
-  # Web cypress pipeline
-  PnPaCypress:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-cypress-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-frontend"
-        PackageName: "pn-pa-webapp"
-        BaseDir: "packages/pn-pa-webapp"
-      TimeoutInMinutes: 5
-  PnPersonafisicaCypress:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-cypress-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-frontend"
-        PackageName: "pn-personafisica-webapp"
-        BaseDir: "packages/pn-personafisica-webapp"
       TimeoutInMinutes: 5
 
   # Progetti Infrastrutturali

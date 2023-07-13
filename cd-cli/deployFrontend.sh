@@ -239,7 +239,6 @@ replace_config() {
       | jq ".API_BASE_URL=\"$API_BASE_URL\"" \
       | jq ".URL_API_LOGIN=\"$URL_API_LOGIN\"" \
       | jq ".PF_URL=\"$PF_URL\"" \
-      | jq ".LANDING_SITE_URL=\"$LANDING_SITE_URL\"" \
       | tee $LocalFilePath
   
     if ( [ $2 != 'pn-personagiuridica-webapp' ] ) then
@@ -784,26 +783,28 @@ aws ${aws_command_base_args} \
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPflDistributionId} --paths "/*"
 
 
-echo ""
-echo "===                          SITO LANDING                         ==="
-echo "====================================================================="
-aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-landing-webapp.tar.gz" \
-      "pn-landing-webapp.tar.gz"
+if ( [ $env_type != 'prod' ] ) then
+  echo ""
+  echo "===                          SITO LANDING                         ==="
+  echo "====================================================================="
+  aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-landing-webapp.tar.gz" \
+        "pn-landing-webapp.tar.gz"
 
-# landing site has a different config management - we use env variables but they are the same for each env
-mkdir -p "pn-landing-webapp"
-( cd "pn-landing-webapp" \
-     && tar xvzf "../pn-landing-webapp.tar.gz" \
-)
+  # landing site has a different config management - we use env variables but they are the same for each env
+  mkdir -p "pn-landing-webapp"
+  ( cd "pn-landing-webapp" \
+      && tar xvzf "../pn-landing-webapp.tar.gz" \
+  )
 
-aws ${aws_command_base_args} \
-    s3 cp "pn-landing-webapp" "s3://${landingBucketName}/" --recursive 
+  aws ${aws_command_base_args} \
+      s3 cp "pn-landing-webapp" "s3://${landingBucketName}/" --recursive 
 
-aws ${aws_command_base_args} \
-    s3 sync "pn-landing-webapp" "s3://${landingBucketName}/" --delete 
+  aws ${aws_command_base_args} \
+      s3 sync "pn-landing-webapp" "s3://${landingBucketName}/" --delete 
 
-aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
+  aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
+fi
 
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
   echo ""

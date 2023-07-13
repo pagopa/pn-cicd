@@ -224,6 +224,14 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
       TAG=$(echo $PN_COMMIT | cut -d "/" -f 2)
       #declare variable for repo:
       REPO=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_commitId//g' | sed -E 's/_/-/g')
+      
+      # exceptions for pn-cicd and pn-auth-fleet
+      if ( [ "$REPO" = "cd-scripts" ] ) then
+        REPO="pn-cicd"
+      elif ( [ "$REPO" = "pn-authfleet" ] ) then
+        REPO="pn-auth-fleet"
+      fi
+
       PN_COMMIT_ID=$(echo "$( curl -L -s  \
       -H "Accept: application/vnd.github+json" \
       -H "X-GitHub-Api-Version: 2022-11-28" \
@@ -240,6 +248,14 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
       echo "BRANCH is present for $PN_CONFIGURATION_TAG_param , got to GitHub:";
       #declare variable for repo:
       REPO=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_commitId//g' | sed -E 's/_/-/g')
+
+      # exceptions for pn-cicd and pn-auth-fleet
+      if ( [ "$REPO" = "cd-scripts" ] ) then
+        REPO=pn-cicd
+      elif ( [ "$REPO" = "pn-authfleet" ] ) then
+        REPO=pn-auth-fleet
+      fi
+      
       PN_COMMIT_ID=$(echo "$( curl -L -s \
       -H "Accept: application/vnd.github+json" \
       -H "X-GitHub-Api-Version: 2022-11-28" \
