@@ -414,10 +414,7 @@ Resources:
                     pg=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
                     echo "pg is build ${pg}"
 
-                    landing=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-landing-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-                    echo "landing is build ${landing}"
-
-                    if ( [ "${pf}" = "KO" -o "${pfl}" = "KO" -o "${pa}" = "KO" -o "${pg}" = "KO" -o "${landing}" = "KO" ] ) then
+                    if ( [ "${pf}" = "KO" -o "${pfl}" = "KO" -o "${pa}" = "KO" -o "${pg}" = "KO" ] ) then
                       echo "##### WARNING pn-frontend have not ended"
                       export PIPELINE_NAME=""
                     fi
@@ -1513,8 +1510,8 @@ Resources:
                 - 'echo "###                  UPDATE SHOWCASE SITE                 ###"'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployShowcaseSite.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_showcase_site_commitid -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir"'
-                - '(cd scripts/cd-cli && ./deployShowcaseSite.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_showcase_site_commitid -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployShowcaseSite.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_showcase_site_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir"'
+                - '(cd scripts/cd-cli && ./deployShowcaseSite.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_showcase_site_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
