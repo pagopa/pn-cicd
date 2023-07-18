@@ -903,6 +903,30 @@ Resources:
                 - Name: PnProgressionSensorOutput
               RunOrder: 3
 
+            # Update pn-logextractor-be
+            - Name: Update_LogextractorBe
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-logextractor-be", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"17", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_logextractor_be", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnLogextractorBeOutput
+              RunOrder: 3
+
             # Update Frontend
             - Name: Update_Frontend
               ActionTypeId:
@@ -925,6 +949,28 @@ Resources:
                 - Name: FrontEndOutput
               RunOrder: 4
             
+            # Update Helpdesk FE
+            - Name: Update_HelpdeskFE
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateHelpdeskCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: HelpdeskFeOutput
+              RunOrder: 4
+
             # Update logs and Usage Plans
             - Name: Infrastructure_Post_Deploy
               ActionTypeId:
@@ -4142,7 +4188,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
             
-            # Update pn-paper-channel
+            # Update pn-logextractor-be
             - Name: Update_PnLogextractorBe
               ActionTypeId:
                 Category: Build

@@ -496,7 +496,55 @@ Resources:
                 - Name: PnAddressManagerOutput
               RunOrder: 4
 
+            - Name: Update_PnEC
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-ec", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_ec", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnECOutput
+              RunOrder: 4
+
+            - Name: Update_PnSS
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnSSOutput
+              RunOrder: 4
+
+
              # Update logs and Usage Plans
+
             - Name: Infrastructure_Post_Deploy
               ActionTypeId:
                 Category: Build
