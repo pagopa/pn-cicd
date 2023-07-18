@@ -543,6 +543,29 @@ Resources:
               RunOrder: 4
 
 
+            - Name: Update_PnStatemachinemanager
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnStatemachinemanagerOutput
+              RunOrder: 4
+
              # Update logs and Usage Plans
 
             - Name: Infrastructure_Post_Deploy
