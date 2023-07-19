@@ -413,19 +413,19 @@ echo ""
 echo "===                          SITO VETRINA                         ==="
 echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-      --bucket "$LambdasBucketName" --key "pn-showcase-site/commits/${pn_showcase_site_commitid}/pn-showcase-site-webapp.tar.gz" \
-      "pn-showcase-site-webapp.tar.gz"
+      --bucket "$LambdasBucketName" --key "pn-showcase-site/commits/${pn_showcase_site_commitid}/pn-showcase-site.tar.gz" \
+      "pn-showcase-site.tar.gz"
 
 # showcase site has a different config management - we use env variables but they are the same for each env
-mkdir -p "pn-showcase-site-webapp"
-( cd "pn-showcase-site-webapp" \
-     && tar xvzf "../pn-showcase-site-webapp.tar.gz" \
+mkdir -p "pn-showcase-site"
+( cd "pn-showcase-site" \
+     && tar xvzf "../pn-showcase-site.tar.gz" \
 )
 
 aws ${aws_command_base_args} \
-    s3 cp "pn-showcase-site-webapp" "s3://${landingBucketName}/" --recursive 
+    s3 cp "pn-showcase-site" "s3://${landingBucketName}/" --recursive 
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-showcase-site-webapp" "s3://${landingBucketName}/" --delete 
+    s3 sync "pn-showcase-site" "s3://${landingBucketName}/" --delete 
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
