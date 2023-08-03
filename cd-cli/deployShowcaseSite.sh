@@ -176,6 +176,17 @@ if ( [ ! -z "${aws_profile}" ] ) then
 fi
 aws_log_base_args="${aws_log_base_args} --region eu-central-1"
 
+
+LandingDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" )
+LANDING_SITE_URL=""
+if ( [ $LandingDomain != '-' ] ) then
+  LANDING_SITE_URL="https://${LandingDomain}"
+fi
+
 echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
@@ -292,6 +303,8 @@ function prepareOneCloudFront() {
 ZONE_ID=""
 SHOWCASE_SITE_CERTIFICATE_ARN=""
 
+LANDING_DOMAIN="www.${env_type}.pn.pagopa.it"
+
 REACT_APP_URL_API=""
 
 ENV_FILE_PATH="pn-showcase-site/aws-cdn-templates/${env_type}/env-cdn.sh" 
@@ -313,3 +326,106 @@ ZoneId=$( aws ${aws_command_base_args} \
 if ( [ $ZoneId != '-' ] ) then
   ZONE_ID=$ZoneId
 fi
+
+# CERTIFICATES
+LandingCertificateArn=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingCertificateArn\") | .OutputValue" ) 
+
+if ( [ $LandingCertificateArn != '-' ] ) then
+  LANDING_CERTIFICATE_ARN=$LandingCertificateArn
+fi
+
+# DOMAIN
+LandingDomain=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-ipc-$env_type \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" ) 
+
+if ( [ $LandingDomain != '-' ] ) then
+  LANDING_DOMAIN=$LandingDomain
+fi
+
+prepareOneCloudFront web-landing-cdn-${env_type} \
+    "$LANDING_DOMAIN" \
+    "$LANDING_CERTIFICATE_ARN" \
+    "$ZONE_ID" \
+    "$REACT_APP_URL_API" \
+    "${LANDING_SITE_ALTERNATE_DNS-}"
+landingBucketName=${bucketName}
+landingDistributionId=${distributionId}
+landingTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
+landingTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
+
+
+
+echo ""
+echo " === Bucket Sito Vetrina = ${landingBucketName}"
+echo " === Distribution ID Portale Sito Vetrins = ${landingDistributionId}"
+echo " === Too Many Request Alarm Sito Vetrina = ${landingTooManyRequestsAlarmArn}"
+echo " === Too Many Errors Alarm Sito Vetrina = ${landingTooManyErrorsAlarmArn}"
+if ( [ ! -z "$HAS_MONITORING" ]) then
+
+  echo ""
+  echo ""
+  echo ""
+  echo ""
+
+  echo "====================================================================="
+  echo "====================================================================="
+  echo "===                                                               ==="
+  echo "===               DEPLOY CDN MONITORING DASHBOARD                 ==="
+  echo "===                                                               ==="
+  echo "====================================================================="
+  echo "====================================================================="
+  
+  echo ""
+  echo "=== Create CDN monitoring dashboard"
+  aws ${aws_command_base_args} \
+    cloudformation deploy \
+      --stack-name frontend-monitoring-${env_type} \
+      --template-file pn-showcase-site/aws-cdn-templates/one-monitoring.yaml \
+      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+      --parameter-overrides \
+        ProjectName="${project_name}" \
+        TemplateBucketBaseUrl="${templateBucketHttpsBaseUrl}" \
+        LandingTooManyErrorsAlarmArn="${landingTooManyErrorsAlarmArn}" \
+        LandingTooManyRequestsAlarmArn="${landingTooManyRequestsAlarmArn}"
+fi
+
+echo ""
+echo ""
+echo ""
+echo ""
+
+echo "====================================================================="
+echo "====================================================================="
+echo "===                                                               ==="
+echo "===                 DEPLOY WEB APPLICATION TO CDN                 ==="
+echo "===                                                               ==="
+echo "====================================================================="
+echo "====================================================================="
+
+echo ""
+echo "===                          SITO VETRINA                         ==="
+echo "====================================================================="
+aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+      --bucket "$LambdasBucketName" --key "pn-showcase-site/commits/${pn_showcase_site_commitid}/pn-showcase-site.tar.gz" \
+      "pn-showcase-site.tar.gz"
+
+# showcase site has a different config management - we use env variables but they are the same for each env
+mkdir -p "pn-showcase-site"
+( cd "pn-showcase-site" \
+     && tar xvzf "../pn-showcase-site.tar.gz" \
+)
+
+aws ${aws_command_base_args} \
+    s3 cp "pn-showcase-site" "s3://${landingBucketName}/" --recursive 
+
+aws ${aws_command_base_args} \
+    s3 sync "pn-showcase-site" "s3://${landingBucketName}/" --delete 
+
+aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
