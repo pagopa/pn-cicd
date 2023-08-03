@@ -1125,7 +1125,7 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-cn"
         BaseDir: "functions"
-        BaseDirEscaped: "functions"        
+        BaseDirEscaped: "functions"
         GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
@@ -1180,32 +1180,6 @@ Resources:
         GitHubProjectName: "pn-frontend"
         PackageName: "pn-personagiuridica-webapp"
         BaseDir: "packages/pn-personagiuridica-webapp"
-        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
-        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
-  PnLoginWebapp:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-frontend"
-        PackageName: "pn-personafisica-login"
-        BaseDir: "packages/pn-personafisica-login"
-        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
-        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-      TimeoutInMinutes: 5
-  PnLandingWebapp:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-frontend"
-        PackageName: "pn-landing-webapp"
-        BaseDir: "packages/pn-landing-webapp"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         CiArtifactBucket: !Ref "CiArtifactBucket"
