@@ -680,14 +680,24 @@ mkdir -p "pn-pa-webapp"
      && replace_config ${env_type} "pn-pa-webapp" \
 )
 
+# copy new files
 aws ${aws_command_base_args} \
     s3 cp "pn-pa-webapp" "s3://${webappPaBucketName}/" --recursive 
 
+# get the id of the cache invalidation (async) request
+paInvalidationRequestId=$(aws ${aws_command_base_args} \
+  cloudfront create-invalidation \
+    --distribution-id ${webappPaDistributionId} \
+    --paths "/*" \
+    --output json
+  | jq -r ".Invalidation.Id")
+
+# wait invalidation succeed
+aws ${aws_command_base_args} cloudfront invalidation-completed --distribution-id ${webappPaDistributionId} --id ${paInvalidationRequestId}
+
+# remove old files
 aws ${aws_command_base_args} \
     s3 sync "pn-pa-webapp" "s3://${webappPaBucketName}/" --delete 
-
-aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPaDistributionId} --paths "/*"
-
 
 echo ""
 echo "===                          PORTALE PF                           ==="
@@ -702,13 +712,24 @@ mkdir -p "pn-personafisica-webapp"
      && replace_config ${env_type} "pn-personafisica-webapp" \
 )
 
+# copy new files
 aws ${aws_command_base_args} \
     s3 cp "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --recursive 
 
+# get the id of the cache invalidation (async) request
+pfInvalidationRequestId=$(aws ${aws_command_base_args} \
+  cloudfront create-invalidation \
+    --distribution-id ${webappPfDistributionId} \
+    --paths "/*" \
+    --output json
+  | jq -r ".Invalidation.Id")
+
+# wait invalidation succeed
+aws ${aws_command_base_args} cloudfront invalidation-completed --distribution-id ${webappPfDistributionId} --id ${pfInvalidationRequestId}
+
+# remove old files
 aws ${aws_command_base_args} \
     s3 sync "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --delete 
-
-aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPfDistributionId} --paths "/*"
 
 echo ""
 echo "===                       PORTALE PF LOGIN                        ==="
@@ -723,13 +744,24 @@ mkdir -p "pn-personafisica-login"
      && replace_config ${env_type} "pn-personafisica-login" \
 )
 
+# copy new files
 aws ${aws_command_base_args} \
     s3 cp "pn-personafisica-login" "s3://${webappPflBucketName}/" --recursive 
 
+# get the id of the cache invalidation (async) request
+pflInvalidationRequestId=$(aws ${aws_command_base_args} \
+  cloudfront create-invalidation \
+    --distribution-id ${webappPflDistributionId} \
+    --paths "/*"\
+    --output json
+  | jq -r ".Invalidation.Id")
+
+# wait invalidation succeed
+aws ${aws_command_base_args} cloudfront invalidation-completed --distribution-id ${webappPflDistributionId} --id ${pflInvalidationRequestId}
+
+# remove old files
 aws ${aws_command_base_args} \
     s3 sync "pn-personafisica-login" "s3://${webappPflBucketName}/" --delete 
-
-aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPflDistributionId} --paths "/*"
 
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
   echo ""
@@ -745,14 +777,24 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
       && replace_config ${env_type} "pn-personagiuridica-webapp" \
   )
 
+  # copy new files
   aws ${aws_command_base_args} \
       s3 cp "pn-personagiuridica-webapp" "s3://${webappPgBucketName}/" --recursive 
 
+  # get the id of the cache invalidation (async) request
+  pgInvalidationRequestId=$(aws ${aws_command_base_args} \
+    cloudfront create-invalidation \
+      --distribution-id ${webappPgDistributionId} \
+      --paths "/*" \
+      --output json
+    | jq -r ".Invalidation.Id")
+  
+  # wait invalidation succeed
+  aws ${aws_command_base_args} cloudfront invalidation-completed --distribution-id ${webappPgDistributionId} --id ${pgInvalidationRequestId}
+
+  # remove old files
   aws ${aws_command_base_args} \
       s3 sync "pn-personagiuridica-webapp" "s3://${webappPgBucketName}/" --delete 
-
-  aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPgDistributionId} --paths "/*"
-
 fi
 
 if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
@@ -769,12 +811,22 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
       && replace_config ${env_type} "pn-status-webapp" \
   )
 
+  # copy new files
   aws ${aws_command_base_args} \
-      s3 cp "pn-status-webapp" "s3://${webappPgBucketName}/" --recursive 
+      s3 cp "pn-status-webapp" "s3://${webappStatusBucketName}/" --recursive 
 
+  # get the id of the cache invalidation (async) request
+  statusInvalidationRequestId=$(aws ${aws_command_base_args} \
+    cloudfront create-invalidation \
+      --distribution-id ${webappStatusDistributionId} \
+      --paths "/*" \
+      --output json
+    | jq -r ".Invalidation.Id")
+  
+  # wait invalidation succeed
+  aws ${aws_command_base_args} cloudfront invalidation-completed --distribution-id ${webappStatusDistributionId} --id ${statusInvalidationRequestId}
+
+  # remove old files  
   aws ${aws_command_base_args} \
-      s3 sync "pn-status-webapp" "s3://${webappPgBucketName}/" --delete 
-
-  aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappStatusDistributionId} --paths "/*"
-
+      s3 sync "pn-status-webapp" "s3://${webappStatusBucketName}/" --delete 
 fi
