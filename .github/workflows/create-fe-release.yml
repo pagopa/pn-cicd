@@ -42,8 +42,10 @@ jobs:
       - name: Set up NODE
         uses: actions/setup-node@v3
         with:
-          node-version: '' # TODO inserire versione
-          cache: '' #TODO inserire valore. Supported values: npm, yarn, pnpm
+          node-version: '16'
+          cache: 'yarn'
+      
+      # RC flow
       - name: run RC flow
         if: contains(inputs.tag, 'RC')
         run: |
@@ -55,10 +57,23 @@ jobs:
           # Sposta sul ramo $base_branch e allineati al ramo remoto
           git checkout $base_branch
           git pull origin $base_branch
+          # get current monorepo version
+          current_version=$(node -p "require('./lerna.json').version");
           # TODO verifica esistenza branch release, nel caso esista già, effettuare merge di $base_branch dentro il branch release
           # TODO modificare versione package.json, creare tag RC e pushare tutto sul branch release
-          
+          release_branch_name=${current_version%-*} # da 0.0.1-RC.* a 0.0.1
+          release_exists=$(git ls-remote origin release/"$release_branch_name" | wc -l)
+          if [[ $release_exists -eq 1 ]]; then
+            git checkout release/"$release_branch_name"
+            git pull origin release/"$release_branch_name"
+          else
+            git checkout -b release/"$release_branch_name"
+          fi
+          git merge --no-edit $base_branch
+          npx lerna version prerelease --conventional-prerelease --no-push --preid RC
+          git push --atomic origin release/"$release_branch_name" "v$tag"
 
+      # Release flow
       - name: run RELEASE flow
         if: "!contains(inputs.tag, 'RC')"
         run: |
