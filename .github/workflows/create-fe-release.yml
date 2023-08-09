@@ -70,7 +70,7 @@ jobs:
           fi
           git merge --no-edit $base_branch
           # aggiornare la versione di prerelease, creare tag RC e pushare tutto sul branch release
-          npx lerna version prerelease --conventional-prerelease --no-push --preid RC
+          npx lerna version prerelease --conventional-prerelease --no-push --preid --yes RC
           git push --atomic origin release/"$release_branch_name" "v$tag"
 
       # Release flow
@@ -95,7 +95,7 @@ jobs:
             git checkout -b release/$tag
           fi
           # update alla versione $tag di release e generazione del changelog
-          npx lerna version $tag --no-git-tag-version --conventional-commits
+          npx lerna version $tag --no-git-tag-version --conventional-commits --yes
           # commit e push dell'aggiornamento di versione
           git add '**/**/package.json' '**/**/CHANGELOG.md' lerna.json CHANGELOG.md
           git commit -m "[$tag] Create Release Version"
