@@ -59,8 +59,7 @@ jobs:
           git pull origin $base_branch
           # get current monorepo version
           current_version=$(node -p "require('./lerna.json').version");
-          # TODO verifica esistenza branch release, nel caso esista già, effettuare merge di $base_branch dentro il branch release
-          # TODO modificare versione package.json, creare tag RC e pushare tutto sul branch release
+          # verifica esistenza branch release, nel caso esista già, effettuare merge di $base_branch dentro il branch release
           release_branch_name=${current_version%-*} # da 0.0.1-RC.* a 0.0.1
           release_exists=$(git ls-remote origin release/"$release_branch_name" | wc -l)
           if [[ $release_exists -eq 1 ]]; then
@@ -70,6 +69,7 @@ jobs:
             git checkout -b release/"$release_branch_name"
           fi
           git merge --no-edit $base_branch
+          # aggiornare la versione di prerelease, creare tag RC e pushare tutto sul branch release
           npx lerna version prerelease --conventional-prerelease --no-push --preid RC
           git push --atomic origin release/"$release_branch_name" "v$tag"
 
