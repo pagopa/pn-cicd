@@ -94,7 +94,13 @@ jobs:
             echo "Branch release/$tag does not exit. Creating it from develop branch..."
             git checkout -b release/$tag
           fi
-          # TODO modificare (e pushare) sul branch release la versione del package.json (ma non creare il tag!)
+          # update alla versione $tag di release e generazione del changelog
+          npx lerna version $tag --no-git-tag-version --conventional-commits
+          # commit e push dell'aggiornamento di versione
+          git add '**/**/package.json' '**/**/CHANGELOG.md' lerna.json CHANGELOG.md
+          git commit -m "[$tag] Create Release Version"
+          git push origin release/$tag
+          # merge del branch release e creo il tag su main
           git checkout main
           git pull origin main
           git merge release/$tag
