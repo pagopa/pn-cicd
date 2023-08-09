@@ -217,16 +217,6 @@ if ( [ $PortalePfLoginDomain != '-' ] ) then
   URL_FE_LOGIN="https://${PortalePfLoginDomain}/"
 fi
 
-LandingDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" )
-LANDING_SITE_URL=""
-if ( [ $LandingDomain != '-' ] ) then
-  LANDING_SITE_URL="https://${LandingDomain}"
-fi
-
 # replace config files in build artifact
 replace_config() {
 #  cp ./conf/env/config.$1.json ./conf/config.json
@@ -371,14 +361,12 @@ ZONE_ID=""
 PORTALE_PA_CERTIFICATE_ARN=""
 PORTALE_PF_CERTIFICATE_ARN=""
 PORTALE_PF_LOGIN_CERTIFICATE_ARN=""
-LANDING_CERTIFICATE_ARN=""
 PORTALE_PG_CERTIFICATE_ARN=""
 PORTALE_STATUS_CERTIFICATE_ARN=""
 
 PORTALE_PA_DOMAIN="portale-pa.${env_type}.pn.pagopa.it"
 PORTALE_PF_DOMAIN="portale.${env_type}.pn.pagopa.it"
 PORTALE_PF_LOGIN_DOMAIN="portale-login.${env_type}.pn.pagopa.it"
-LANDING_DOMAIN="www.${env_type}.pn.pagopa.it"
 PORTALE_PG_DOMAIN="portale-pg.${env_type}.pn.pagopa.it"
 PORTALE_STATUS_DOMAIN="status.${env_type}.pn.pagopa.it"
 
@@ -435,16 +423,6 @@ if ( [ $PortalePfLoginCertificateArn != '-' ] ) then
   PORTALE_PF_LOGIN_CERTIFICATE_ARN=$PortalePfLoginCertificateArn
 fi
 
-LandingCertificateArn=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingCertificateArn\") | .OutputValue" ) 
-
-if ( [ $LandingCertificateArn != '-' ] ) then
-  LANDING_CERTIFICATE_ARN=$LandingCertificateArn
-fi
-
 PortalePgCertificateArn=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
       --stack-name pn-ipc-$env_type \
@@ -495,16 +473,6 @@ PortalePfLoginDomain=$( aws ${aws_command_base_args} \
 
 if ( [ $PortalePfLoginDomain != '-' ] ) then
   PORTALE_PF_LOGIN_DOMAIN=$PortalePfLoginDomain
-fi
-
-LandingDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" ) 
-
-if ( [ $LandingDomain != '-' ] ) then
-  LANDING_DOMAIN=$LandingDomain
 fi
 
 PortalePgDomain=$( aws ${aws_command_base_args} \
@@ -612,19 +580,6 @@ webappPflDistributionId=${distributionId}
 webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
-prepareOneCloudFront web-landing-cdn-${env_type} \
-    "$LANDING_DOMAIN" \
-    "$LANDING_CERTIFICATE_ARN" \
-    "$ZONE_ID" \
-    "$REACT_APP_URL_API" \
-    "${LANDING_SITE_ALTERNATE_DNS-}"
-landingBucketName=${bucketName}
-landingDistributionId=${distributionId}
-landingTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
-landingTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
-
-
-
 echo ""
 echo " === Distribution ID Portale PA = ${webappPaDistributionId}"
 echo " === Bucket Portale PA = ${webappPaBucketName}"
@@ -638,10 +593,6 @@ echo " === Bucket Portale PF login = ${webappPflBucketName}"
 echo " === Distribution ID Portale PF login = ${webappPflDistributionId}"
 echo " === Too Many Request Alarm Portale PFL = ${webappPflTooManyRequestsAlarmArn}"
 echo " === Too Many Errors Alarm Portale PFL = ${webappPflTooManyErrorsAlarmArn}"
-echo " === Bucket Sito LAnding = ${landingBucketName}"
-echo " === Distribution ID Portale Landing = ${landingDistributionId}"
-echo " === Too Many Request Alarm Landing = ${landingTooManyRequestsAlarmArn}"
-echo " === Too Many Errors Alarm Landing = ${landingTooManyErrorsAlarmArn}"
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
   echo " === Bucket Portale PG = ${webappPgBucketName}"
   echo " === Too Many Request Alarm Portale PG = ${webappPgTooManyRequestsAlarmArn}"
@@ -698,8 +649,6 @@ if ( [ ! -z "$HAS_MONITORING" ]) then
         PFTooManyRequestsAlarmArn="${webappPfTooManyRequestsAlarmArn}" \
         PFLoginTooManyErrorsAlarmArn="${webappPflTooManyErrorsAlarmArn}" \
         PFLoginTooManyRequestsAlarmArn="${webappPflTooManyRequestsAlarmArn}" \
-        LandingTooManyErrorsAlarmArn="${landingTooManyErrorsAlarmArn}" \
-        LandingTooManyRequestsAlarmArn="${landingTooManyRequestsAlarmArn}" \
         $OptionalMonitoringParameters
 fi
 
@@ -734,11 +683,10 @@ mkdir -p "pn-pa-webapp"
 aws ${aws_command_base_args} \
     s3 cp "pn-pa-webapp" "s3://${webappPaBucketName}/" --recursive 
 
-aws ${aws_command_base_args} \
-    s3 sync "pn-pa-webapp" "s3://${webappPaBucketName}/" --delete 
-
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPaDistributionId} --paths "/*"
 
+aws ${aws_command_base_args} \
+    s3 sync "pn-pa-webapp" "s3://${webappPaBucketName}/" --delete 
 
 echo ""
 echo "===                          PORTALE PF                           ==="
@@ -756,10 +704,10 @@ mkdir -p "pn-personafisica-webapp"
 aws ${aws_command_base_args} \
     s3 cp "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --recursive 
 
+aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPfDistributionId} --paths "/*"
+
 aws ${aws_command_base_args} \
     s3 sync "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --delete 
-
-aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPfDistributionId} --paths "/*"
 
 echo ""
 echo "===                       PORTALE PF LOGIN                        ==="
@@ -777,34 +725,10 @@ mkdir -p "pn-personafisica-login"
 aws ${aws_command_base_args} \
     s3 cp "pn-personafisica-login" "s3://${webappPflBucketName}/" --recursive 
 
-aws ${aws_command_base_args} \
-    s3 sync "pn-personafisica-login" "s3://${webappPflBucketName}/" --delete 
-
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPflDistributionId} --paths "/*"
 
-
-if ( [ $env_type != 'prod' ] ) then
-  echo ""
-  echo "===                          SITO LANDING                         ==="
-  echo "====================================================================="
-  aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-landing-webapp.tar.gz" \
-        "pn-landing-webapp.tar.gz"
-
-  # landing site has a different config management - we use env variables but they are the same for each env
-  mkdir -p "pn-landing-webapp"
-  ( cd "pn-landing-webapp" \
-      && tar xvzf "../pn-landing-webapp.tar.gz" \
-  )
-
-  aws ${aws_command_base_args} \
-      s3 cp "pn-landing-webapp" "s3://${landingBucketName}/" --recursive 
-
-  aws ${aws_command_base_args} \
-      s3 sync "pn-landing-webapp" "s3://${landingBucketName}/" --delete 
-
-  aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
-fi
+aws ${aws_command_base_args} \
+    s3 sync "pn-personafisica-login" "s3://${webappPflBucketName}/" --delete 
 
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
   echo ""
@@ -823,11 +747,11 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
   aws ${aws_command_base_args} \
       s3 cp "pn-personagiuridica-webapp" "s3://${webappPgBucketName}/" --recursive 
 
+  aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPgDistributionId} --paths "/*"
+  
   aws ${aws_command_base_args} \
       s3 sync "pn-personagiuridica-webapp" "s3://${webappPgBucketName}/" --delete 
-
-  aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPgDistributionId} --paths "/*"
-
+      
 fi
 
 if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
@@ -845,11 +769,11 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   )
 
   aws ${aws_command_base_args} \
-      s3 cp "pn-status-webapp" "s3://${webappPgBucketName}/" --recursive 
-
-  aws ${aws_command_base_args} \
-      s3 sync "pn-status-webapp" "s3://${webappPgBucketName}/" --delete 
+      s3 cp "pn-status-webapp" "s3://${webappStatusBucketName}/" --recursive 
 
   aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappStatusDistributionId} --paths "/*"
+  
+  aws ${aws_command_base_args} \
+      s3 sync "pn-status-webapp" "s3://${webappStatusBucketName}/" --delete 
 
 fi
