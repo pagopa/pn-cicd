@@ -65,12 +65,13 @@ jobs:
           if [[ $release_exists -eq 1 ]]; then
             git checkout release/"$release_branch_name"
             git pull origin release/"$release_branch_name"
+            git merge --no-edit $base_branch
           else
             git checkout -b release/"$release_branch_name"
           fi
-          git merge --no-edit $base_branch
+          # TODO gestire il bump di versione in caso di pre release
           # aggiornare la versione di prerelease, creare tag RC e pushare tutto sul branch release
-          npx lerna version prerelease --conventional-prerelease --no-push --preid --yes RC
+          npx lerna version prerelease --conventional-prerelease --no-push --yes --preid RC
           git push --atomic origin release/"$release_branch_name" "v$tag"
 
       # Release flow
@@ -81,9 +82,9 @@ jobs:
           echo "Creating RELEASE tag: $tag"
           # Esegui git fetch
           git fetch
-          # Sposta sul ramo develop e allineati al ramo remoto
-          git checkout develop
-          git pull origin develop
+          # Sposta sul ramo $base_branch e allineati al ramo remoto
+          git checkout $base_branch
+          git pull origin $base_branch
           
           echo "Creating RELEASE version $tag ..."
           release_exists=$(git ls-remote origin release/"$tag" | wc -l)
@@ -108,5 +109,3 @@ jobs:
           # Crea il tag sul branch main (esempio v0.0.1)
           echo "Creating tag v$tag"
           gh release create v$tag --generate-notes --target main
-          
-        
