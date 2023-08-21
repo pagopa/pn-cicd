@@ -183,6 +183,8 @@ _clone_repository(){
   fi
 
   git clone ${_GITURI}
+
+  (cd pn-configuration && git reflog -n 10)
 }
 
 if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then

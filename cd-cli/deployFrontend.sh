@@ -683,11 +683,10 @@ mkdir -p "pn-pa-webapp"
 aws ${aws_command_base_args} \
     s3 cp "pn-pa-webapp" "s3://${webappPaBucketName}/" --recursive 
 
-aws ${aws_command_base_args} \
-    s3 sync "pn-pa-webapp" "s3://${webappPaBucketName}/" --delete 
-
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPaDistributionId} --paths "/*"
 
+aws ${aws_command_base_args} \
+    s3 sync "pn-pa-webapp" "s3://${webappPaBucketName}/" --delete 
 
 echo ""
 echo "===                          PORTALE PF                           ==="
@@ -705,10 +704,10 @@ mkdir -p "pn-personafisica-webapp"
 aws ${aws_command_base_args} \
     s3 cp "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --recursive 
 
+aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPfDistributionId} --paths "/*"
+
 aws ${aws_command_base_args} \
     s3 sync "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --delete 
-
-aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPfDistributionId} --paths "/*"
 
 echo ""
 echo "===                       PORTALE PF LOGIN                        ==="
@@ -726,10 +725,10 @@ mkdir -p "pn-personafisica-login"
 aws ${aws_command_base_args} \
     s3 cp "pn-personafisica-login" "s3://${webappPflBucketName}/" --recursive 
 
+aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPflDistributionId} --paths "/*"
+
 aws ${aws_command_base_args} \
     s3 sync "pn-personafisica-login" "s3://${webappPflBucketName}/" --delete 
-
-aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPflDistributionId} --paths "/*"
 
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
   echo ""
@@ -748,11 +747,11 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
   aws ${aws_command_base_args} \
       s3 cp "pn-personagiuridica-webapp" "s3://${webappPgBucketName}/" --recursive 
 
+  aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPgDistributionId} --paths "/*"
+  
   aws ${aws_command_base_args} \
       s3 sync "pn-personagiuridica-webapp" "s3://${webappPgBucketName}/" --delete 
-
-  aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPgDistributionId} --paths "/*"
-
+      
 fi
 
 if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
@@ -770,11 +769,11 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   )
 
   aws ${aws_command_base_args} \
-      s3 cp "pn-status-webapp" "s3://${webappPgBucketName}/" --recursive 
-
-  aws ${aws_command_base_args} \
-      s3 sync "pn-status-webapp" "s3://${webappPgBucketName}/" --delete 
+      s3 cp "pn-status-webapp" "s3://${webappStatusBucketName}/" --recursive 
 
   aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappStatusDistributionId} --paths "/*"
+  
+  aws ${aws_command_base_args} \
+      s3 sync "pn-status-webapp" "s3://${webappStatusBucketName}/" --delete 
 
 fi
