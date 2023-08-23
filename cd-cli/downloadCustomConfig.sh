@@ -193,6 +193,7 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
   SUB1=tag
   SUB2=amazonaws
   SUB3=sha
+  SUB4=latest
   
   #cloning git repository and change directory:
   _clone_repository
@@ -206,16 +207,28 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
     if grep -q "$SUB2" <<< "$PN_COMMIT"; then
       echo "IMAGE is present. Searching for SHA or Image Tag"
 
+      if  grep -q "$SUB4" <<< "$PN_COMMIT"; then
+      echo "IMAGE latest is present, retrive data from AWS ECR:"
+      REPOIMAGE=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_imageUrl//g' | sed -E 's/_/-/g');
+      TAGIMAGE=$(echo $PN_COMMIT | cut -d "@" -f 2);
+      SHAIMAGE=$(aws ecr describe-images --profile pn-cicd --repository-name $REPOIMAGE --region eu-central-1 --image-ids imageTag="$TAGIMAGE" | jq -r .imageDetails | jq -r '.[0]' | jq -r '.imageDigest')
+      PN_COMMIT_ID=$(echo $PN_COMMIT | sed -E "s|$TAGIMAGE|$SHAIMAGE|g" )
+      echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
+      fi
+
       if  grep -q "$SUB3" <<< "$PN_COMMIT"; then
       echo "IMAGE SHA is present, copy to script:"
       echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT" >> desired-commit-ids-env.sh
 
       else
       echo "IMAGE SHA is not present, retrive data from AWS ECR:"
-      REPOIMAGE=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_imageUrl//g' | sed -E 's/_/-/g');
-      TAGIMAGE=$(echo $PN_COMMIT | cut -d "@" -f 2);
-      SHAIMAGE=$(aws ${aws_cicd_command_base_args} ecr describe-images --repository-name $REPOIMAGE --image-ids imageTag="$TAGIMAGE" --registry-id="$cicd_account_id" | jq -r .imageDetails | jq -r '.[0]' | jq -r '.imageDigest')
-      PN_COMMIT_ID=$(echo $PN_COMMIT | sed -E "s|$TAGIMAGE|$SHAIMAGE|g" )
+      REPOIMAGE2=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_imageUrl//g' | sed -E 's/_/-/g');
+      echo $REPOIMAGE2
+      TAGIMAGE2=$(echo $PN_COMMIT | cut -d ":" -f 2);
+      echo $TAGIMAGE2
+      SHAIMAGE2=$(aws ecr describe-images --profile pn-cicd --repository-name $REPOIMAGE2 --region eu-central-1 --image-ids imageTag="$TAGIMAGE2" | jq -r .imageDetails | jq -r '.[0]' | jq -r '.imageDigest')
+      echo $SHAIMAGE2
+      PN_COMMIT_ID=$(echo $PN_COMMIT | sed -E "s|$TAGIMAGE2|$SHAIMAGE2|g" )
       echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
       fi
 
