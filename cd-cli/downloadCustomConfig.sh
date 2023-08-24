@@ -192,7 +192,7 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
   PN_CONFIGURATION_TAG_param=""
   SUB1=tag
   SUB2=amazonaws
-  SUB3=sha
+  SUB3=sha256
   
   #cloning git repository and change directory:
   _clone_repository
@@ -207,16 +207,20 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
       echo "IMAGE is present. Searching for SHA or Image Tag"
 
       if  grep -q "$SUB3" <<< "$PN_COMMIT"; then
-      echo "IMAGE SHA is present, copy to script:"
-      echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT" >> desired-commit-ids-env.sh
+        echo "IMAGE SHA is present, copy to script:"
+        echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT" >> desired-commit-ids-env.sh
 
+      #for ECR Image tag:
       else
-      echo "IMAGE SHA is not present, retrive data from AWS ECR:"
-      REPOIMAGE=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_imageUrl//g' | sed -E 's/_/-/g');
-      TAGIMAGE=$(echo $PN_COMMIT | cut -d "@" -f 2);
-      SHAIMAGE=$(aws ${aws_cicd_command_base_args} ecr describe-images --repository-name $REPOIMAGE --image-ids imageTag="$TAGIMAGE" --registry-id="$cicd_account_id" | jq -r .imageDetails | jq -r '.[0]' | jq -r '.imageDigest')
-      PN_COMMIT_ID=$(echo $PN_COMMIT | sed -E "s|$TAGIMAGE|$SHAIMAGE|g" )
-      echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
+        echo "IMAGE SHA is not present, retrive data from AWS ECR:"
+        REPOIMAGE=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_imageUrl//g' | sed -E 's/_/-/g');
+        echo $REPOIMAGE
+        TAGIMAGE=$(echo $PN_COMMIT | cut -d ":" -f 2);
+        echo $TAGIMAGE
+        SHAIMAGE=$(aws ${aws_cicd_command_base_args} ecr describe-images --repository-name $REPOIMAGE --image-ids imageTag="$TAGIMAGE" --registry-id="$cicd_account_id" | jq -r .imageDetails | jq -r '.[0]' | jq -r '.imageDigest')
+        echo $SHAIMAGE
+        PN_COMMIT_ID=$(echo $PN_COMMIT | sed -E "s|$TAGIMAGE|$SHAIMAGE|g" )
+        echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
       fi
 
     #TAG:
