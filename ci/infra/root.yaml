@@ -1172,6 +1172,7 @@ Resources:
         GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        NodeVersion: '18'
       TimeoutInMinutes: 5
 
   # Progetto Auth Fleet con Multilambda
