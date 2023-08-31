@@ -258,7 +258,7 @@ if ( [ $portaleStatusTarballPresent = "OK" ] ) then
   unzip ${lambdasZip} -d ./${lambdasLocalPath}
 
   aws ${aws_command_base_args} s3 cp --recursive \
-      "${lambdasLocalPath}/" \
+      "${lambdasLocalPath}" \
       "${microserviceBucketS3BaseUrl}/"
 
 else
