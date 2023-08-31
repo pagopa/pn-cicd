@@ -250,9 +250,9 @@ lambdasZip='functions.zip'
 lambdasLocalPath='functions'
 
 functionsDirPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "${repo_name}/commits/${pn_microsvc_commitId}/${lambdasZip}" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
-if ( [ $portaleStatusTarballPresent = "OK" ] ) then
+if ( [ $functionsDirPresent = "OK" ] ) then
   aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
-        --bucket "$LambdasBucketName" --key "${repo_name}/commits/${pn_microsvc_commitId}/${lambdasZip}" \
+        --bucket "$LambdasBucketName" --key "${microcvs_name}/commits/${pn_microsvc_commitId}/${lambdasZip}" \
         "${lambdasZip}"
 
   unzip ${lambdasZip} -d ./${lambdasLocalPath}

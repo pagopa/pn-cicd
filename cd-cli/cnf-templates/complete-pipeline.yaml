@@ -612,6 +612,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-delivery", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_delivery", "type":"PLAINTEXT"}
@@ -636,6 +637,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-delivery-push", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_delivery_push", "type":"PLAINTEXT"}
@@ -660,6 +662,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-mandate", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"4", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_mandate", "type":"PLAINTEXT"}
@@ -684,6 +687,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-external-registries", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"6", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_external_registries", "type":"PLAINTEXT"}
@@ -708,6 +712,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-user-attributes", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"7", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_user_attributes", "type":"PLAINTEXT"}
@@ -732,6 +737,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-downtime-logs", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"8", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_downtime_logs", "type":"PLAINTEXT"}
@@ -756,6 +762,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-radd-fsu", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"9", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_radd_fsu", "type":"PLAINTEXT"}
@@ -780,6 +787,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
@@ -804,6 +812,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-national-registries", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_national_registries", "type":"PLAINTEXT"}
@@ -828,6 +837,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-apikey-manager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_apikey_manager", "type":"PLAINTEXT"}
@@ -852,6 +862,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-paper-channel", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_paper_channel", "type":"PLAINTEXT"}
@@ -876,6 +887,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-kafka-bridge", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"14", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_kafka_bridge", "type":"PLAINTEXT"}
@@ -925,6 +937,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-logextractor-be", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"17", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_logextractor_be", "type":"PLAINTEXT"}
@@ -3143,6 +3156,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-delivery", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_delivery", "type":"PLAINTEXT"}
@@ -3325,6 +3339,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-delivery-push", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_delivery_push", "type":"PLAINTEXT"}
@@ -3418,6 +3433,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-user-attributes", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"7", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_user_attributes", "type":"PLAINTEXT"}
@@ -3511,6 +3527,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-mandate", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"4", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_mandate", "type":"PLAINTEXT"}
@@ -3603,6 +3620,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-external-registries", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"6", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_external_registries", "type":"PLAINTEXT"}
@@ -3696,6 +3714,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-downtime-logs", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"8", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_downtime_logs", "type":"PLAINTEXT"}
@@ -3789,6 +3808,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-radd-fsu", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"9", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_radd_fsu", "type":"PLAINTEXT"}
@@ -3882,6 +3902,7 @@ Resources:
                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                   {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                    {"name":"MsName", "value":"pn-external-channels", "type":"PLAINTEXT"},
                    {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
                    {"name":"VarPrefix", "value":"pn_external_channels", "type":"PLAINTEXT"}
@@ -3976,6 +3997,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
@@ -4069,6 +4091,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-national-registries", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_national_registries", "type":"PLAINTEXT"}
@@ -4161,6 +4184,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-apikey-manager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_apikey_manager", "type":"PLAINTEXT"}
@@ -4253,6 +4277,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-paper-channel", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_paper_channel", "type":"PLAINTEXT"}
@@ -4345,6 +4370,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-logextractor-be", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"17", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_logextractor_be", "type":"PLAINTEXT"}
@@ -4530,6 +4556,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-kafka-bridge", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"14", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_kafka_bridge", "type":"PLAINTEXT"}
@@ -4622,6 +4649,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-radd-bff", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"16", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_radd_bff", "type":"PLAINTEXT"}
@@ -4714,6 +4742,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-platform-usage-estimates", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"15", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_platform_usage_estimates", "type":"PLAINTEXT"}
@@ -4806,6 +4835,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-service-desk", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"18", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_service_desk", "type":"PLAINTEXT"}
