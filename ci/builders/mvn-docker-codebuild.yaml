@@ -325,7 +325,7 @@ Resources:
                 - ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
                 - echo "Functions Build"
                 - |
-                  if [ -d $FUNCTIONS_FOLDER_NAME ] && [ -z $CI_BUCKET_NAME ]; then
+                  if [ -d $FUNCTIONS_FOLDER_NAME ] && [ -n $CI_BUCKET_NAME ]; then
                     cd $FUNCTIONS_FOLDER_NAME
                     for i in */
                     do
@@ -345,7 +345,7 @@ Resources:
                 - |
                   echo "Copy lambdas on s3"
                   export COMMIT_ID=$(git rev-parse --verify HEAD)
-                  if [ -d $FUNCTIONS_FOLDER_NAME ] && [ -z $CI_BUCKET_NAME ]; then
+                  if [ -d $FUNCTIONS_FOLDER_NAME ] && [ -n $CI_BUCKET_NAME ]; then
                     cd $FUNCTIONS_FOLDER_NAME
                     echo $COMMIT_ID > commitID.txt
                     for i in *; do cp -p "${i}/function.zip" "${i}.zip"; done
