@@ -259,7 +259,7 @@ if ( [ $functionsDirPresent = "OK" ] ) then
 
   aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}" \
-      "${microserviceBucketS3BaseUrl}/"
+      "${microserviceBucketS3BaseUrl}/functions_zip/"
 
 else
   echo "File functions.zip not found, skipping lambda functions deployment"
