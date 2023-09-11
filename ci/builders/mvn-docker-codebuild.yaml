@@ -348,7 +348,7 @@ Resources:
                   if [ -d $FUNCTIONS_FOLDER_NAME ] && [ -n $CI_BUCKET_NAME ]; then
                     cd $FUNCTIONS_FOLDER_NAME
                     echo $COMMIT_ID > commitID.txt
-                    for i in $(find . -type f -name function.zip -depth 2); do cp -p "${i}" "${i%/*}.zip"; done
+                    for i in *; do cp -p "${i}/function.zip" "${i}.zip"; done
                     zip -u functions.zip commitID.txt *.zip
                     aws s3 cp functions.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/functions.zip"
                     aws s3 cp functions.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/commits/$COMMIT_ID/functions.zip"
