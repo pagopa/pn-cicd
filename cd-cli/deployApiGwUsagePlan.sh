@@ -139,6 +139,11 @@ function createUsagePlan() {
       aws ${aws_command_base_args} cloudformation deploy \
         --template-file pn-infra/runtime-infra/fragments/api-gw-usageplans-B2B.yaml \
         --stack-name "STANDARD-B2B-api-usage-plan"
+  elif [[ ${PLAN_NAME} == "SERVICEDESK" ]]
+  then
+      aws ${aws_command_base_args} cloudformation deploy \
+        --template-file pn-infra/runtime-infra/fragments/api-gw-usageplans-SERVICEDESK.yaml \
+        --stack-name "SERVICEDESK-api-usage-plan"       
   elif [[ ${PLAN_NAME} == "SELCPG" ]]
   then
       if ( [ -f pn-infra/runtime-infra/fragments/api-gw-usageplans-PNPG.yaml ] ) then
