@@ -1662,22 +1662,13 @@ Resources:
             Action:
               - lambda:Create*
               - lambda:Get*
+              - lambda:List*
               - lambda:Delete*
+              - lambda:Update*
               - lambda:TagResource
-              - lambda:UpdateEventSourceMapping
               - lambda:AddPermission
               - lambda:InvokeFunction
-              - lambda:GetEventSourceMapping
-              - lambda:ListEventSourceMappings
-              - lambda:DeleteFunction
-              - lambda:CreateEventSourceMapping
-              - lambda:DeleteEventSourceMapping
               - lambda:UntagResource
-              - lambda:Update*
-              - lambda:ListVersionsByFunction
-              - lambda:DeleteProvisionedConcurrencyConfig
-              - lambda:GetProvisionedConcurrencyConfig
-              - lambda:ListProvisionedConcurrencyConfigs
               - lambda:PublishVersion
               - lambda:PutProvisionedConcurrencyConfig
             Resource: "*"
