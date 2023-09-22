@@ -2228,6 +2228,23 @@ Resources:
               - ecs:*
               - elasticfilesystem:DescribeAccessPoints
               - elasticfilesystem:DescribeFileSystems
+              - elasticfilesystem:CreateFileSystem
+              - elasticfilesystem:DeleteFileSystem
+              - elasticfilesystem:CreateAccessPoint
+              - elasticfilesystem:DeleteAccessPoint
+              - elasticfilesystem:CreateMountTarget
+              - elasticfilesystem:DescribeMountTargets
+              - elasticfilesystem:DescribeMountTargetSecurityGroups
+              - elasticfilesystem:DeleteMountTarget
+              - elasticfilesystem:ClientWrite
+              - elasticfilesystem:ClientMount
+              - elasticfilesystem:CreateTags
+              - elasticfilesystem:DeleteTags
+              - elasticfilesystem:DescribeTags
+              - elasticfilesystem:TagResource
+              - elasticfilesystem:UntagResource
+              - elasticfilesystem:ListTagsForResource
+              - elasticfilesystem:DescribeFileSystemPolicy
               - elasticloadbalancing:CreateListener
               - elasticloadbalancing:CreateLoadBalancer
               - elasticloadbalancing:CreateRule
