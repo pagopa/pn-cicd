@@ -2243,6 +2243,8 @@ Resources:
               - elasticfilesystem:DescribeTags
               - elasticfilesystem:TagResource
               - elasticfilesystem:UntagResource
+              - elasticfilesystem:ListTagsForResource
+              - elasticfilesystem:DescribeFileSystemPolicy
               - elasticloadbalancing:CreateListener
               - elasticloadbalancing:CreateLoadBalancer
               - elasticloadbalancing:CreateRule
