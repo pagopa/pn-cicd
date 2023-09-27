@@ -119,15 +119,15 @@ jobs:
           fi
           
           export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
-          current_version_pom=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG)
-          echo "Current version pom: $current_version_pom"
+          current_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG)
+          echo "Current version pom: current_version"
           echo "Tag version: $tag"
           suffix_snap="-SNAPSHOT"
           suffix_rc="-RC*"
-          current_versione=${current_version%"suffix_snap"}
-          current_versione=${current_version%"suffix_rc"}
-          echo "Current version pom without suffix: $current_version_pom"
-          if [[ "$tag" == *"$current_versione"* ]]; then
+          current_version=${current_version%"suffix_snap"}
+          current_version=${current_version%"suffix_rc"}
+          echo "Current version pom without suffix: $current_version"
+          if [[ "$tag" == *"$current_version"* ]]; then
             echo "The tag and the pom version are consistency."
           else
             echo "The tag and the pom version are not consistency!"
