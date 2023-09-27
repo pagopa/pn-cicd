@@ -123,9 +123,9 @@ jobs:
           echo "Current version pom: $current_version"
           echo "Tag version: $tag"
           suffix_snap="-SNAPSHOT"
-          suffix_rc="-RC*"
+          suffix_rc="-RC"
           current_version=${current_version%"$suffix_snap"}
-          current_version=${current_version%"$suffix_rc"}
+          current_version=$(echo "$current_version" | sed "s/suffix_rc.*//")
           echo "Current version pom without suffix: $current_version"
           if [[ "$tag" == *"$current_version"* ]]; then
             echo "The tag and the pom version are consistency."
