@@ -98,6 +98,26 @@ jobs:
           cache: 'maven'
       - name: check tag and pom version consistency
         run: |
+          tag=${{ inputs.tag }}
+          if [[ "$tag" == *"RC"* ]]; then
+            base_branch=$([ ${{ inputs.base_branch }}  = "" ] && echo "develop" || echo "${{ inputs.base_branch }}")
+            echo "Check consistency from branch: $base_branch"
+            git checkout $base_branch
+          else
+            git checkout develop
+            git pull origin develop
+            echo "Creating RELEASE version $tag ..."
+            release_exists=$(git ls-remote origin release/"$tag" | wc -l)
+            if [[ $release_exists -eq 1 ]]; then
+              git checkout release/$tag
+              git pull origin release/$tag
+            else
+              echo "Branch release/$tag does not exit. Creating it from develop branch..."
+              git checkout -b release/$tag
+            echo "Check consistency from branch: $release/$tag"
+          fi
+          
+          export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
           current_version_pom=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG)
           echo "Current version pom: $current_version_pom"
           echo "Tag version: $tag"
@@ -105,7 +125,8 @@ jobs:
           suffix_rc="-RC*"
           current_versione=${current_version%"suffix_snap"}
           current_versione=${current_version%"suffix_rc"}
-          if [[ "$tag" == *"current_versione"* ]]; then
+          echo "Current version pom without suffix: $current_version_pom"
+          if [[ "$tag" == *"$current_versione"* ]]; then
             echo "The tag and the pom version are consistency."
           else
             echo "The tag and the pom version are not consistency!"
@@ -116,9 +137,7 @@ jobs:
         run: |
           export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
           tag=${{ inputs.tag }}
-          increment_snapshot=${{ inputs.increment_snapshot }}
           base_branch=$([ ${{ inputs.base_branch }}  = "" ] && echo "develop" || echo "${{ inputs.base_branch }}")
-          echo "Creating RC tag: $tag - increment snapshot?: $increment_snapshot"
           # Esegui git fetch
           git fetch
           # Sposta sul ramo $base_branch e allineati al ramo remoto
