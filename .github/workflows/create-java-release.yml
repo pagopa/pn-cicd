@@ -127,9 +127,9 @@ jobs:
           current_version=$(echo "$current_version" | sed "s/$suffix_rc.*//")
           echo "Current version pom without suffix: $current_version"
           if [[ "$tag" == *"$current_version"* ]]; then
-            echo "The tag and the pom version are consistency."
+            echo "The tag and the pom versions are consistent."
           else
-            echo "The tag and the pom version are not consistency!"
+            echo "The tag and the pom versions are not consistent!"
             exit 1
           fi
       - name: run RC flow
