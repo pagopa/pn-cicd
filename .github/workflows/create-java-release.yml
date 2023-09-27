@@ -111,10 +111,9 @@ jobs:
             if [[ $release_exists -eq 1 ]]; then
               git checkout release/$tag
               git pull origin release/$tag
+              echo "Check consistency from branch: release/$tag"
             else
-              echo "Branch release/$tag does not exit. Creating it from develop branch..."
-              git checkout -b release/$tag
-            echo "Check consistency from branch: release/$tag"
+              echo "Branch release/$tag does not exit. Check consistency from branch: develop"
             fi
           fi
           
