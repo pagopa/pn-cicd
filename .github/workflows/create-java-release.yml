@@ -115,6 +115,7 @@ jobs:
               echo "Branch release/$tag does not exit. Creating it from develop branch..."
               git checkout -b release/$tag
             echo "Check consistency from branch: $release/$tag"
+            fi
           fi
           
           export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
