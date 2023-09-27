@@ -96,6 +96,21 @@ jobs:
           distribution: 'corretto'
           java-version: '17'
           cache: 'maven'
+      - name: check tag and pom version consistency
+        run: |
+          current_version_pom=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG)
+          echo "Current version pom: $current_version_pom"
+          echo "Tag version: $tag"
+          suffix_snap="-SNAPSHOT"
+          suffix_rc="-RC*"
+          current_versione=${current_version%"suffix_snap"}
+          current_versione=${current_version%"suffix_rc"}
+          if [[ "$tag" == *"current_versione"* ]]; then
+            echo "The tag and the pom version are consistency."
+          else
+            echo "The tag and the pom version are not consistency!"
+            exit 1
+          fi
       - name: run RC flow
         if: contains(inputs.tag, 'RC')
         run: |
