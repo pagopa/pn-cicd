@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       tag:
-        description: 'Tag value'
+        description: 'Tag value (without v prefix)'
         required: true
         type: string
       increment_snapshot:
@@ -114,7 +114,7 @@ jobs:
             else
               echo "Branch release/$tag does not exit. Creating it from develop branch..."
               git checkout -b release/$tag
-            echo "Check consistency from branch: $release/$tag"
+            echo "Check consistency from branch: release/$tag"
             fi
           fi
           
