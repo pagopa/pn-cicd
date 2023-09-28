@@ -70,9 +70,10 @@ jobs:
             git checkout -b release/"$release_branch_name"
           fi
           # TODO gestire il bump di versione in caso di pre release
-          # aggiornare la versione di prerelease, creare tag RC e pushare tutto sul branch release
-          npx lerna version prerelease --conventional-prerelease --no-push --yes --preid RC
-          git push --atomic origin release/"$release_branch_name" "v$tag"
+          # aggiornare la versione di minor in prerelease, creare tag RC e pushare tutto sul branch release
+          # by default, lerna pusha le ultime modifiche effettuate (compreso il tag generato)
+          # in questo modo siamo sicuri di non pushare un tag sbagliato
+          npx lerna version preminor --conventional-prerelease --conventional-commits --yes --preid RC
 
       # Release flow
       - name: run RELEASE flow
@@ -96,7 +97,7 @@ jobs:
             git checkout -b release/$tag
           fi
           # update alla versione $tag di release e generazione del changelog
-          npx lerna version $tag --no-git-tag-version --conventional-commits --yes
+          npx lerna version $tag --no-git-tag-version --conventional-commits --conventional-graduate --yes
           # commit e push dell'aggiornamento di versione
           git add '**/**/package.json' '**/**/CHANGELOG.md' lerna.json CHANGELOG.md
           git commit -m "[$tag] Create Release Version"
