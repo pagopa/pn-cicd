@@ -235,6 +235,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         GitHubDefaultBranch: "develop"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -277,6 +278,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -318,6 +320,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -360,6 +363,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -401,6 +405,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -443,6 +448,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -485,6 +491,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -527,6 +534,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -568,6 +576,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -609,6 +618,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -650,6 +660,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -691,6 +702,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -732,6 +744,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -774,6 +787,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -816,6 +830,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -858,6 +873,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -900,6 +916,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -942,6 +959,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -985,6 +1003,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1028,6 +1047,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1066,6 +1086,137 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-address-manager"
+        GitHubDefaultBranch: "develop"
+        DisableIntegrationTest: "false"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
+      TimeoutInMinutes: 5
+
+  PnServiceDeskCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-service-desk"
+        GitHubDefaultBranch: "develop"
+        DisableIntegrationTest: "false"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
+      TimeoutInMinutes: 5
+
+  PnF24CI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-f24"
+        GitHubDefaultBranch: "develop"
+        DisableIntegrationTest: "false"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
+      TimeoutInMinutes: 5
+
+  PnPecMockCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-pecmock"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1129,6 +1280,7 @@ Resources:
         GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        NodeVersion: '18'
       TimeoutInMinutes: 5
 
   # Progetto Auth Fleet con Multilambda

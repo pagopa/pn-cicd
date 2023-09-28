@@ -20,6 +20,12 @@ Parameters:
   NotificationSNSTopic:
     Type: String
     Description: Topic for build and pipeline notification
+  NodeVersion:
+    Type: Number
+    Default: '16'
+
+Conditions:
+  RequiresNode18: !Equals [ !Ref NodeVersion, '18' ]
 
 Resources:
   CodeBuildProject:
@@ -31,7 +37,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:6.0
+        Image: !If [ RequiresNode18, aws/codebuild/standard:7.0, aws/codebuild/standard:6.0 ]
         EnvironmentVariables:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
