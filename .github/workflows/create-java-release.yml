@@ -218,7 +218,7 @@ jobs:
             git checkout -b next-release
           fi
           # Incrementa la versione patch nel pom.xml e pusha sul ramo next-release (esempio da 0.0.1-RC-1 a 0.0.2-SNAPSHOT)
-          ./mvnw build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}-SNAPSHOT -U versions:commit $MAVEN_CONFIG
+          ./mvnw build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.nextIncrementalVersion}.\0-SNAPSHOT -U versions:commit $MAVEN_CONFIG
           next_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG)
           git add pom.xml
           git commit -m "[$next_version] Incrementa versione minor nel pom.xml"
