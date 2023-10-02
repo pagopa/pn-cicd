@@ -5121,6 +5121,7 @@ Resources:
               files:
                 - 'pn-frontend-e2e/target/cucumber-reports/*'
                 - 'pn-frontend-e2e/target/surefire-reports/*'
+                - 'pn-frontend-e2e/logs/*'
               name: pn-RunFeE2eTestsCodeBuildProject/$CODEBUILD_BUILD_NUMBER
               discard-paths: yes
             cache:
