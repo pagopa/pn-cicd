@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       tag:
-        description: 'Tag value'
+        description: 'Tag value (without v prefix)'
         required: true
         type: string
       increment_snapshot:
@@ -96,14 +96,48 @@ jobs:
           distribution: 'corretto'
           java-version: '17'
           cache: 'maven'
+      - name: check tag and pom version consistency
+        run: |
+          tag=${{ inputs.tag }}
+          if [[ "$tag" == *"RC"* ]]; then
+            base_branch=$([ ${{ inputs.base_branch }}  = "" ] && echo "develop" || echo "${{ inputs.base_branch }}")
+            echo "Check consistency from branch: $base_branch"
+            git checkout $base_branch
+          else
+            git checkout develop
+            git pull origin develop
+            echo "Creating RELEASE version $tag ..."
+            release_exists=$(git ls-remote origin release/"$tag" | wc -l)
+            if [[ $release_exists -eq 1 ]]; then
+              git checkout release/$tag
+              git pull origin release/$tag
+              echo "Check consistency from branch: release/$tag"
+            else
+              echo "Branch release/$tag does not exit. Check consistency from branch: develop"
+            fi
+          fi
+          
+          export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
+          current_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG)
+          echo "Current version pom: $current_version"
+          echo "Tag version: $tag"
+          suffix_snap="-SNAPSHOT"
+          suffix_rc="-RC"
+          current_version=${current_version%"$suffix_snap"}
+          current_version=$(echo "$current_version" | sed "s/$suffix_rc.*//")
+          echo "Current version pom without suffix: $current_version"
+          if [[ "$tag" == *"$current_version"* ]]; then
+            echo "The tag and the pom versions are consistent."
+          else
+            echo "The tag and the pom versions are not consistent!"
+            exit 1
+          fi
       - name: run RC flow
         if: contains(inputs.tag, 'RC')
         run: |
           export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
           tag=${{ inputs.tag }}
-          increment_snapshot=${{ inputs.increment_snapshot }}
           base_branch=$([ ${{ inputs.base_branch }}  = "" ] && echo "develop" || echo "${{ inputs.base_branch }}")
-          echo "Creating RC tag: $tag - increment snapshot?: $increment_snapshot"
           # Esegui git fetch
           git fetch
           # Sposta sul ramo $base_branch e allineati al ramo remoto
@@ -167,7 +201,7 @@ jobs:
           git push origin main
           # Crea il tag sul branch main (esempio v0.0.1)
           echo "Creating tag v$tag"
-          gh release create v$tag --generate-notes
+          gh release create v$tag --generate-notes --target main
 
       - name: run increment SNAPSHOT
         if: inputs.increment_snapshot
@@ -184,7 +218,7 @@ jobs:
             git checkout -b next-release
           fi
           # Incrementa la versione patch nel pom.xml e pusha sul ramo next-release (esempio da 0.0.1-RC-1 a 0.0.2-SNAPSHOT)
-          ./mvnw build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}-SNAPSHOT -U versions:commit $MAVEN_CONFIG
+          ./mvnw build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.nextIncrementalVersion}.\0-SNAPSHOT -U versions:commit $MAVEN_CONFIG
           next_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG)
           git add pom.xml
           git commit -m "[$next_version] Incrementa versione minor nel pom.xml"

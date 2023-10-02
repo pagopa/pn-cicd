@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] -n <microcvs-name> -N <microcvs-idx> [-p <aws-profile>] -r <aws-region> -e <env-type> -d <cicd-github-commitid> -i <pn-infra-github-commitid> -m <pn-microsvc-github-commitid> -I <countainer-image-uri> -b <artifactBucketName> [-w <work_dir>] [-c <custom_config_dir>]
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] -n <microcvs-name> -N <microcvs-idx> [-p <aws-profile>] -r <aws-region> -e <env-type> -d <cicd-github-commitid> -i <pn-infra-github-commitid> -m <pn-microsvc-github-commitid> -I <countainer-image-uri> -b <artifactBucketName> -b <lambdaArtifactBucketName> [-w <work_dir>] [-c <custom_config_dir>]
     
     [-h]                             : this help message
     [-v]                             : verbose mode
@@ -25,6 +25,7 @@ usage() {
     -m <pn-microsvc-github-commitid> : commitId for github repository del microservizio
     [-c <custom_config_dir>]         : where tor read additional env-type configurations
     -b <artifactBucketName>          : bucket name to use as temporary artifacts storage
+    -B <lambdaArtifactBucketName>  : bucket name where lambda artifact are memorized    
     -n <microcvs-name>               : nome del microservizio
     -N <microcvs-idx>                : id del microservizio
     -I <image-uri>                   : url immagine docker microservizio
@@ -95,6 +96,10 @@ parse_params() {
       bucketName="${2-}"
       shift
       ;;
+    -B | --lambda-bucket-name) 
+      LambdasBucketName="${2-}"
+      shift
+      ;;      
     -I | --container-image-url) 
       ContainerImageUri="${2-}"
       shift
@@ -113,6 +118,7 @@ parse_params() {
   [[ -z "${pn_infra_commitid-}" ]] && usage
   [[ -z "${pn_microsvc_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
+  [[ -z "${LambdasBucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
   [[ -z "${ContainerImageUri-}" ]] && usage
   [[ -z "${microcvs_name-}" ]] && usage
@@ -136,6 +142,7 @@ dump_params(){
   echo "AWS region:          ${aws_region}"
   echo "AWS profile:         ${aws_profile}"
   echo "Bucket Name:         ${bucketName}"
+  echo "Lambda Bucket Name:  ${LambdasBucketName}"
   echo "Container image URL: ${ContainerImageUri}"
 }
 
@@ -236,6 +243,27 @@ microserviceBucketS3BaseUrl="s3://${microserviceBucketName}/${microserviceBucket
 aws ${aws_command_base_args} \
     s3 cp ${microcvs_name} $microserviceBucketS3BaseUrl \
       --recursive --exclude ".git/*"
+
+
+echo " - Copy Lambdas zip"
+lambdasZip='functions.zip'
+lambdasLocalPath='functions'
+
+functionsDirPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "${microcvs_name}/commits/${pn_microsvc_commitid}/${lambdasZip}" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+if ( [ $functionsDirPresent = "OK" ] ) then
+  aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+        --bucket "$LambdasBucketName" --key "${microcvs_name}/commits/${pn_microsvc_commitid}/${lambdasZip}" \
+        "${lambdasZip}"
+
+  unzip ${lambdasZip} -d ./${lambdasLocalPath}
+
+  aws ${aws_command_base_args} s3 cp --recursive \
+      "${lambdasLocalPath}" \
+      "${microserviceBucketS3BaseUrl}/functions_zip/"
+
+else
+  echo "File functions.zip not found, skipping lambda functions deployment"
+fi
 
 echo ""
 echo ""

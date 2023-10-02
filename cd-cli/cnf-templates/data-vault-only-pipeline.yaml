@@ -496,7 +496,78 @@ Resources:
                 - Name: PnAddressManagerOutput
               RunOrder: 4
 
+            - Name: Update_PnEC
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-ec", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_ec", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnECOutput
+              RunOrder: 4
+
+            - Name: Update_PnSS
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnSSOutput
+              RunOrder: 4
+
+
+            - Name: Update_PnStatemachinemanager
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnStatemachinemanagerOutput
+              RunOrder: 4
+
              # Update logs and Usage Plans
+
             - Name: Infrastructure_Post_Deploy
               ActionTypeId:
                 Category: Build
@@ -1893,6 +1964,23 @@ Resources:
               - ecs:*
               - elasticfilesystem:DescribeAccessPoints
               - elasticfilesystem:DescribeFileSystems
+              - elasticfilesystem:CreateFileSystem
+              - elasticfilesystem:DeleteFileSystem
+              - elasticfilesystem:CreateAccessPoint
+              - elasticfilesystem:DeleteAccessPoint
+              - elasticfilesystem:CreateMountTarget
+              - elasticfilesystem:DescribeMountTargets
+              - elasticfilesystem:DescribeMountTargetSecurityGroups
+              - elasticfilesystem:DeleteMountTarget
+              - elasticfilesystem:ClientWrite
+              - elasticfilesystem:ClientMount
+              - elasticfilesystem:CreateTags
+              - elasticfilesystem:DeleteTags
+              - elasticfilesystem:DescribeTags
+              - elasticfilesystem:TagResource
+              - elasticfilesystem:UntagResource
+              - elasticfilesystem:ListTagsForResource
+              - elasticfilesystem:DescribeFileSystemPolicy
               - elasticloadbalancing:CreateListener
               - elasticloadbalancing:CreateLoadBalancer
               - elasticloadbalancing:CreateRule
