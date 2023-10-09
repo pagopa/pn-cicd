@@ -41,7 +41,8 @@ Conditions:
   IsSvilCondition: !Equals [ !Ref EnvName, 'svil' ]
   # !Condition IsDevCondition temporarily removed from IsTestCondition
   IsTestCondition: !Or [ !Condition IsDevCondition, !Condition IsHotfixCondition, !Condition IsSvilCondition, !Condition IsTestEnv, !Condition IsUatEnv ]
-  IsTestScheduledCondition: !Equals [ !Ref EnvName, 'hotfix' ]
+  IsTestScheduledCondition: !Equals [ !Ref EnvName, 'hotfix-to-be-removed' ]
+  IsFeTestScheduledCondition: !Or [ !Condition IsTestEnv, !Condition IsDevCondition ]
   IsContinuousDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
   HasE2EVpcId: !Not [ !Equals [ !Ref E2EVpcId, '' ] ]
   HasE2ESecurityGroupId: !Not [ !Equals [ !Ref E2ESecurityGroupId, '' ] ]
@@ -162,7 +163,6 @@ Resources:
 
   # - Role and policy used to activate CodeBuild from EventBridge rule
   EventBusRunCodeBuildRole:
-    Condition: IsContinuousDeliveryCondition
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -4972,7 +4972,7 @@ Resources:
               - "Arn"
 
   FeScheduledRule:
-    Condition: IsTestScheduledCondition
+    Condition: IsFeTestScheduledCondition
     Type: AWS::Events::Rule
     Properties:
       Description: "FeScheduledRule"
