@@ -401,6 +401,8 @@ aws ${aws_command_base_args} \
       --stack-name ${microcvs_name}-microsvc-$env_type \
       --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file ${TemplateFilePath} \
+      --s3-bucket ${bucketName} \
+      --s3-prefix cfn \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
    
 
