@@ -406,7 +406,7 @@ else
   echo "Backup file doesn't exist, stack update skipped"
 fi
 
-MONITORING_STACK_FILE=${microcvs_name}/scripts/aws/cfn/infra-monitoring.yml
+MONITORING_STACK_FILE=${microcvs_name}/scripts/aws/cfn/infra-monitoring.yaml
 if [[ -f "$MONITORING_STACK_FILE" ]]; then
     echo "$MONITORING_STACK_FILE exists, updating monitoring stack"
 
