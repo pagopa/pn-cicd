@@ -406,6 +406,43 @@ else
   echo "Backup file doesn't exist, stack update skipped"
 fi
 
+MONITORING_STACK_FILE=${microcvs_name}/scripts/aws/cfn/infra-monitoring.yaml
+if [[ -f "$MONITORING_STACK_FILE" ]]; then
+    echo "$MONITORING_STACK_FILE exists, updating monitoring stack"
+
+    echo ""
+    echo "= Read Outputs from previous stack"
+    aws ${aws_command_base_args}  \
+        cloudformation describe-stacks \
+          --stack-name infra-$env_type \
+          --query "Stacks[0].Outputs" \
+          --output json \
+          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+          | tee ${PreviousOutputFilePath}
+
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath} 
+
+    echo ""
+    echo "= Enanched parameters file"
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+      > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name pn-infra-monitoring-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --template-file ${MONITORING_STACK_FILE} \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+
+else
+  echo "Backup file doesn't exist, stack update skipped"
+fi
+
 
 echo ""
 echo ""
