@@ -238,7 +238,7 @@ aws ${aws_command_base_args} \
 echo ""
 echo "=== Upload microservice files to bucket"
 microserviceBucketName=$bucketName
-microserviceBucketBaseKey="projects/${microcvs_name}/${pn_microsvc_commitid}"
+microserviceBucketBaseKey="projects/${microcvs_name}/${pn_microsvc_commitid}_$(date +%s)"
 microserviceBucketS3BaseUrl="s3://${microserviceBucketName}/${microserviceBucketBaseKey}"
 aws ${aws_command_base_args} \
     s3 cp ${microcvs_name} $microserviceBucketS3BaseUrl \
@@ -256,16 +256,6 @@ if ( [ $functionsDirPresent = "OK" ] ) then
         "${lambdasZip}"
 
   unzip ${lambdasZip} -d ./${lambdasLocalPath}
-
-  # timestamp.txt workaround to fix problem with Lambda versioning when deploying the same commit ID
-  date > timestamp.txt
-
-  for f in $lambdasLocalPath/*.zip; do
-    if [ -f "$f" ]; then
-      zip $f timestamp.txt
-    fi
-  done
-  # end of timestamp.txt workaround
 
   aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}" \
