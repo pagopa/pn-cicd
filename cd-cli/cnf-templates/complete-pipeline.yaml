@@ -5171,7 +5171,7 @@ Resources:
         Location: !Ref E2eArtifactOutputTest
         OverrideArtifactName: true
       Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
+        ComputeType: BUILD_GENERAL1_MEDIUM
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
         EnvironmentVariables:
@@ -5246,7 +5246,7 @@ Resources:
           Location: !Ref FeE2eArtifactOutputTest
           OverrideArtifactName: true
         Environment:
-          ComputeType: BUILD_GENERAL1_MEDIUM
+          ComputeType: BUILD_GENERAL1_SMALL
           Type: LINUX_CONTAINER
           Image: "aws/codebuild/standard:6.0"
           EnvironmentVariables:
