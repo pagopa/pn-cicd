@@ -78,6 +78,13 @@ Mappings:
           "source": [{"prefix": "" }],
           "detail": { "project_branch": ["main"] }
         }
+    test:
+      BuildEvtPatten: |
+        {
+          "source": [{"prefix": "" }],
+          "detail": { "project_branch": ["testDeploy"] }
+          "detail": { "project_branch": ["testDeploy"] }
+        }
           
 
 
