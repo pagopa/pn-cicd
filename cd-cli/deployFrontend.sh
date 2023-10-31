@@ -239,7 +239,12 @@ replace_config() {
     fi
   fi
 
-  jq -s ".[0] * .[1]" ./conf/env/config.$1.json ${LocalFilePath} > ./conf/config.json
+  # if persona fisica login, the configuration file is in the auth dir
+  if ( [ $2 != 'pn-personafisica-login' ] ) then
+    jq -s ".[0] * .[1]" ./auth/conf/env/config.$1.json ${LocalFilePath} > ./auth/conf/config.json
+  else
+    jq -s ".[0] * .[1]" ./conf/env/config.$1.json ${LocalFilePath} > ./conf/config.json
+  fi
 }
 
 
