@@ -78,6 +78,12 @@ Mappings:
           "source": [{"prefix": "" }],
           "detail": { "project_branch": ["main"] }
         }
+    test:
+      BuildEvtPatten: |
+        {
+          "source": [{"prefix": "" }],
+          "detail": { "project_branch": ["testDeploy"] }
+        }
           
 
 
@@ -5176,7 +5182,7 @@ Resources:
         Location: !Ref E2eArtifactOutputTest
         OverrideArtifactName: true
       Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
+        ComputeType: BUILD_GENERAL1_MEDIUM
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
         EnvironmentVariables:
