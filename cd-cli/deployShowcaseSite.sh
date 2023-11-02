@@ -222,8 +222,7 @@ function prepareOneCloudFront() {
   WebDomain=$2
   WebCertificateArn=$3
   HostedZoneId=$4
-  WebApiUrl=$5
-  AlternateWebDomain=$6
+  AlternateWebDomain=$5
   
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
@@ -266,7 +265,6 @@ function prepareOneCloudFront() {
         WebDomain="${WebDomain}" \
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
-        WebApiUrl="${WebApiUrl}" \
         $OptionalParameters
   
   bucketName=$( aws ${aws_command_base_args} \

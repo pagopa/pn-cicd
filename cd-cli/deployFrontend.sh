@@ -284,8 +284,7 @@ function prepareOneCloudFront() {
   WebDomain=$2
   WebCertificateArn=$3
   HostedZoneId=$4
-  WebApiUrl=$5
-  AlternateWebDomain=$6
+  AlternateWebDomain=$5
   
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
@@ -328,7 +327,6 @@ function prepareOneCloudFront() {
         WebDomain="${WebDomain}" \
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
-        WebApiUrl="${WebApiUrl}" \
         $OptionalParameters
   
   bucketName=$( aws ${aws_command_base_args} \
@@ -374,8 +372,6 @@ PORTALE_PF_DOMAIN="portale.${env_type}.pn.pagopa.it"
 PORTALE_PF_LOGIN_DOMAIN="portale-login.${env_type}.pn.pagopa.it"
 PORTALE_PG_DOMAIN="portale-pg.${env_type}.pn.pagopa.it"
 PORTALE_STATUS_DOMAIN="status.${env_type}.pn.pagopa.it"
-
-REACT_APP_URL_API=""
 
 ENV_FILE_PATH="pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
 if ( [ -f $ENV_FILE_PATH ] ) then
@@ -500,19 +496,6 @@ if ( [ $PortaleStatusDomain != '-' ] ) then
   PORTALE_STATUS_DOMAIN=$PortaleStatusDomain
 fi
 
-ReactAppUrlApi=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ReactAppUrlApi\") | .OutputValue" ) 
-
-echo "ReactAppUrlApi ${ReactAppUrlApi}"
-if ( [ "$ReactAppUrlApi" != '-' ] ) then
-  REACT_APP_URL_API=$ReactAppUrlApi
-fi
-
-echo "REACT_APP_URL_API ${REACT_APP_URL_API}"
-
 portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_PG=""
 if ( [ $portalePgTarballPresent = "OK" ] ) then
@@ -529,7 +512,6 @@ prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "$PORTALE_PA_DOMAIN" \
     "$PORTALE_PA_CERTIFICATE_ARN" \
     "$ZONE_ID" \
-    "$REACT_APP_URL_API" \
     "${PORTALE_PA_ALTERNATE_DNS-}"
 
 webappPaBucketName=${bucketName}
@@ -541,7 +523,6 @@ prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "$PORTALE_PF_DOMAIN" \
     "$PORTALE_PF_CERTIFICATE_ARN" \
     "$ZONE_ID" \
-    "$REACT_APP_URL_API" \
     "${PORTALE_PF_ALTERNATE_DNS-}"
 webappPfBucketName=${bucketName}
 webappPfDistributionId=${distributionId}
@@ -553,7 +534,6 @@ if ( [ ! -z $HAS_PORTALE_PG ] ) then
       "$PORTALE_PG_DOMAIN" \
       "$PORTALE_PG_CERTIFICATE_ARN" \
       "$ZONE_ID" \
-      "$REACT_APP_URL_API" \
       "${PORTALE_PG_ALTERNATE_DNS-}"
   webappPgBucketName=${bucketName}
   webappPgDistributionId=${distributionId}
@@ -566,7 +546,6 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
       "$PORTALE_STATUS_DOMAIN" \
       "$PORTALE_STATUS_CERTIFICATE_ARN" \
       "$ZONE_ID" \
-      "$REACT_APP_URL_API" \
       "${PORTALE_STATUS_ALTERNATE_DNS-}"
   webappStatusBucketName=${bucketName}
   webappStatusDistributionId=${distributionId}
@@ -578,7 +557,6 @@ prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "$PORTALE_PF_LOGIN_DOMAIN" \
     "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
     "$ZONE_ID" \
-    "$REACT_APP_URL_API" \
     "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
 webappPflBucketName=${bucketName}
 webappPflDistributionId=${distributionId}
