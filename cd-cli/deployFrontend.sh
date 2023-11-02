@@ -285,7 +285,7 @@ function prepareOneCloudFront() {
   WebCertificateArn=$3
   HostedZoneId=$4
   AlternateWebDomain=$5
-  LoginWebDomain=$6
+  LoginWebDomain=${6-no_value}
   
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
