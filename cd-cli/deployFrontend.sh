@@ -286,8 +286,6 @@ function prepareOneCloudFront() {
   WebCertificateArn=$3
   HostedZoneId=$4
   AlternateWebDomain=$5
-  SubCdnDomain=${6-no_value}
-  SubWebDomain=${7-no_value}
   
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
@@ -316,6 +314,14 @@ function prepareOneCloudFront() {
     | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LogsBucketName\") | .OutputValue" )
 
     OptionalParameters="${OptionalParameters} S3LogsBucket=${logBucketName}"
+  fi
+
+  if ($CdnName == webapp-pf-cdn-* ) then
+    OptionalParameters="${OptionalParameters} SubCdnDomain=${PORTALE_PF_LOGIN_CDN_DOMAIN}"
+  fi
+
+  if ($CdnName == webapp-pfl-cdn-* ) then
+    OptionalParameters="${OptionalParameters} RootWebDomain=${PORTALE_PF_DOMAIN}"
   fi
 
   echo ""
@@ -381,6 +387,7 @@ PORTALE_STATUS_CERTIFICATE_ARN=""
 PORTALE_PA_DOMAIN="portale-pa.${env_type}.pn.pagopa.it"
 PORTALE_PF_DOMAIN="portale.${env_type}.pn.pagopa.it"
 PORTALE_PF_LOGIN_DOMAIN="portale-login.${env_type}.pn.pagopa.it"
+PORTALE_PF_LOGIN_CDN_DOMAIN="portale-login-cdn.${env_type}.pn.pagopa.it"
 PORTALE_PG_DOMAIN="portale-pg.${env_type}.pn.pagopa.it"
 PORTALE_STATUS_DOMAIN="status.${env_type}.pn.pagopa.it"
 
@@ -524,7 +531,6 @@ prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "$PORTALE_PA_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "${PORTALE_PA_ALTERNATE_DNS-}"
-
 webappPaBucketName=${bucketName}
 webappPaDistributionId=${distributionId}
 webappPaTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
@@ -537,7 +543,7 @@ prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
 webappPflBucketName=${bucketName}
 webappPflDistributionId=${distributionId}
-webappPflDistributionDomainName=${distributionDomainName}
+PORTALE_PF_LOGIN_CDN_DOMAIN=${distributionDomainName}
 webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
@@ -545,9 +551,7 @@ prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "$PORTALE_PF_DOMAIN" \
     "$PORTALE_PF_CERTIFICATE_ARN" \
     "$ZONE_ID" \
-    "${PORTALE_PF_ALTERNATE_DNS-}"\
-    "$webappPflDistributionDomainName" \
-    "$PORTALE_PF_LOGIN_DOMAIN"
+    "${PORTALE_PF_ALTERNATE_DNS-}"
 webappPfBucketName=${bucketName}
 webappPfDistributionId=${distributionId}
 webappPfTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
@@ -588,7 +592,7 @@ echo " === Too Many Request Alarm Portale PF = ${webappPfTooManyRequestsAlarmArn
 echo " === Too Many Errors Alarm Portale PF = ${webappPfTooManyErrorsAlarmArn}"
 echo " === Bucket Portale PF login = ${webappPflBucketName}"
 echo " === Distribution ID Portale PF login = ${webappPflDistributionId}"
-echo " === Distribution Domain Name Portale PF login = ${webappPflDistributionDomainName}"
+echo " === Distribution Domain Name Portale PF login = ${PORTALE_PF_LOGIN_CDN_DOMAIN}"
 echo " === Too Many Request Alarm Portale PFL = ${webappPflTooManyRequestsAlarmArn}"
 echo " === Too Many Errors Alarm Portale PFL = ${webappPflTooManyErrorsAlarmArn}"
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
