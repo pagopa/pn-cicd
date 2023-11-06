@@ -345,10 +345,10 @@ function prepareOneCloudFront() {
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"DistributionId\") | .OutputValue" )
 
   distributionDomainName=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name $CdnName \
+    cloudfront get-distribution \
+      --id $distributionId \
       --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"DistributionDomainName\") | .OutputValue" )
+  | jq -r ".Distribution | .DomainName" )
 
   if ( [ ! -z "$HAS_MONITORING" ]) then
     tooManyRequestsAlarmArn=$( aws ${aws_command_base_args} \
@@ -528,12 +528,23 @@ webappPaDistributionId=${distributionId}
 webappPaTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPaTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
+prepareOneCloudFront webapp-pfl-cdn-${env_type} \
+    "$PORTALE_PF_LOGIN_DOMAIN" \
+    "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
+    "$ZONE_ID" \
+    "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
+webappPflBucketName=${bucketName}
+webappPflDistributionId=${distributionId}
+webappPflDistributionDomainName=${distributionDomainName}
+webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
+webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
+
 prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "$PORTALE_PF_DOMAIN" \
     "$PORTALE_PF_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "${PORTALE_PF_ALTERNATE_DNS-}"\
-    "$PORTALE_PF_LOGIN_DOMAIN"
+    "$webappPflDistributionDomainName"
 webappPfBucketName=${bucketName}
 webappPfDistributionId=${distributionId}
 webappPfTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
@@ -562,17 +573,6 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   webappStatusTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
   webappStatusTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 fi
-
-prepareOneCloudFront webapp-pfl-cdn-${env_type} \
-    "$PORTALE_PF_LOGIN_DOMAIN" \
-    "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
-    "$ZONE_ID" \
-    "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
-webappPflBucketName=${bucketName}
-webappPflDistributionId=${distributionId}
-webappPflDistributionDomainName=${distributionDomainName}
-webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
-webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 echo ""
 echo " === Distribution ID Portale PA = ${webappPaDistributionId}"
