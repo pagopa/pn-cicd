@@ -286,7 +286,8 @@ function prepareOneCloudFront() {
   WebCertificateArn=$3
   HostedZoneId=$4
   AlternateWebDomain=$5
-  LoginWebDomain=${6-no_value}
+  SubCdnDomain=${6-no_value}
+  SubWebDomain=${7-no_value}
   
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
@@ -329,7 +330,8 @@ function prepareOneCloudFront() {
         WebDomain="${WebDomain}" \
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
-        LoginWebDomain="${LoginWebDomain}"\
+        SubCdnDomain="${SubCdnDomain}"\
+        SubWebDomain="${SubWebDomain}"\
         $OptionalParameters
   
   bucketName=$( aws ${aws_command_base_args} \
@@ -544,7 +546,8 @@ prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "$PORTALE_PF_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "${PORTALE_PF_ALTERNATE_DNS-}"\
-    "$webappPflDistributionDomainName"
+    "$webappPflDistributionDomainName" \
+    "$PORTALE_PF_LOGIN_DOMAIN"
 webappPfBucketName=${bucketName}
 webappPfDistributionId=${distributionId}
 webappPfTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
