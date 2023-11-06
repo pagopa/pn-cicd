@@ -40,6 +40,7 @@ parse_params() {
   pn_frontend_commitid=""
   bucketName=""
   distributionId=""
+  distributionDomainName=""
   tooManyErrorsAlarmArn=""
   tooManyRequestsAlarmArn=""
   LambdasBucketName=""
@@ -343,6 +344,12 @@ function prepareOneCloudFront() {
       --output json \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"DistributionId\") | .OutputValue" )
 
+  distributionDomainName=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name $CdnName \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"DistributionDomainName\") | .OutputValue" )
+
   if ( [ ! -z "$HAS_MONITORING" ]) then
     tooManyRequestsAlarmArn=$( aws ${aws_command_base_args} \
       cloudformation describe-stacks \
@@ -563,6 +570,7 @@ prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
 webappPflBucketName=${bucketName}
 webappPflDistributionId=${distributionId}
+webappPflDistributionDomainName=${distributionDomainName}
 webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
@@ -577,6 +585,7 @@ echo " === Too Many Request Alarm Portale PF = ${webappPfTooManyRequestsAlarmArn
 echo " === Too Many Errors Alarm Portale PF = ${webappPfTooManyErrorsAlarmArn}"
 echo " === Bucket Portale PF login = ${webappPflBucketName}"
 echo " === Distribution ID Portale PF login = ${webappPflDistributionId}"
+echo " === Distribution Domain Name Portale PF login = ${webappPflDistributionDomainName}"
 echo " === Too Many Request Alarm Portale PFL = ${webappPflTooManyRequestsAlarmArn}"
 echo " === Too Many Errors Alarm Portale PFL = ${webappPflTooManyErrorsAlarmArn}"
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
