@@ -33,7 +33,7 @@ Resources:
             Value: main
           - Name: SUB_PRJ_NAME
             Type: PLAINTEXT
-            Value: !Sub "${BaseDir}"
+            Value: !If [BaseDir, !Sub "${BaseDir}", !Ref AWS::NoValue]
           - Name: PACKAGE_NAME
             Type: PLAINTEXT
             Value: !Sub "${PackageName}"
@@ -54,7 +54,7 @@ Resources:
           - - Type: EVENT
               Pattern: PUSH
             - Type: FILE_PATH
-              Pattern: !Sub "^${BaseDir}/.*"
+              Pattern: !If [BaseDir, !Sub "^${BaseDir}/.*", !Ref AWS::NoValue]
           # - - Type: EVENT
           #     Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
           #   - Type: BASE_REF

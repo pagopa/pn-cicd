@@ -1438,7 +1438,6 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-helpdesk-fe"
         PackageName: "pn-helpdesk-fe"
-        BaseDir: "pn-helpdesk-fe"
       TimeoutInMinutes: 5
 
   # Progetti Infrastrutturali
