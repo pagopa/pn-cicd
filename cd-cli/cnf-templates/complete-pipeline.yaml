@@ -5097,7 +5097,7 @@ Resources:
       Name: !Sub ${ProjectName}-RunE2eTestsCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       ConcurrentBuildLimit: 2
-      TimeoutInMinutes: 120
+      TimeoutInMinutes: 300
       Source: 
         Type: NO_SOURCE
         BuildSpec: |
