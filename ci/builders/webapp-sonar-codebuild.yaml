@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: CodeBuild for sonar-webapp project (node)
+
 Parameters:
   GitHubProjectName:
     Description: Name of pagopa project name
@@ -8,9 +9,13 @@ Parameters:
   BaseDir:
     Description: base directory of the front end project pattern = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
+    Default: ""
   PackageName:
     Description: build project name pattern = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
+
+Conditions:
+  HasBaseDir: !Not [!Equals [!Ref BaseDir, ""]]
 
 Resources:
   CodeBuildProject:
@@ -33,7 +38,7 @@ Resources:
             Value: main
           - Name: SUB_PRJ_NAME
             Type: PLAINTEXT
-            Value: !If [BaseDir, !Sub "${BaseDir}", !Ref AWS::NoValue]
+            Value: !Ref BaseDir
           - Name: PACKAGE_NAME
             Type: PLAINTEXT
             Value: !Sub "${PackageName}"
@@ -53,8 +58,11 @@ Resources:
         FilterGroups:
           - - Type: EVENT
               Pattern: PUSH
-            - Type: FILE_PATH
-              Pattern: !If [BaseDir, !Sub "^${BaseDir}/.*", !Ref AWS::NoValue]
+            - Fn::If:
+                - HasBaseDir
+                - Type: FILE_PATH
+                  Pattern: !Sub "^${BaseDir}/.*"
+                - !Ref AWS::NoValue
           # - - Type: EVENT
           #     Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
           #   - Type: BASE_REF
