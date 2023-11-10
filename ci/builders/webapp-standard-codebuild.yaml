@@ -8,6 +8,7 @@ Parameters:
   BaseDir:
     Description: base directory of the front end project pattern = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
+    Default: ""
   PackageName:
     Description: build project name pattern = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
@@ -61,7 +62,7 @@ Resources:
             Value: !Sub "${GitHubProjectName}"
           - Name: SUB_PRJ_NAME
             Type: PLAINTEXT
-            Value: !Sub "${BaseDir}"
+            Value: !Ref BaseDir
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
             Value: main
