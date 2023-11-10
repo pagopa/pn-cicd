@@ -5075,7 +5075,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "FeScheduledRule"
-      ScheduleExpression: "cron(0 23 ? * MON-FRI *)"
+      ScheduleExpression: "cron(3 4 ? * MON-FRI *)"
       State: "ENABLED"
       RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
       Targets: 
@@ -5218,7 +5218,7 @@ Resources:
         Name: !Sub ${ProjectName}-RunFeE2eTestsCodeBuildProject
         ServiceRole: !GetAtt CodeBuildRole.Arn
         ConcurrentBuildLimit: 2
-        TimeoutInMinutes: 240
+        TimeoutInMinutes: 300
         Source: 
           Type: NO_SOURCE
           BuildSpec: |
