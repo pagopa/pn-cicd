@@ -257,8 +257,14 @@ function prepareOneCloudFront() {
   WebDomain=$2
   WebCertificateArn=$3
   HostedZoneId=$4
+  AlternateWebDomain=$5
 
   OptionalParameters=""
+  if ( [ ! -z "$AlternateWebDomain" ] ) then
+    OptionalParameters="${OptionalParameters} AlternateWebDomain=${AlternateWebDomain}"
+    OptionalParameters="${OptionalParameters} WebDomainReferenceToSite=false"
+    OptionalParameters="${OptionalParameters} AlternateWebDomainReferenceToSite=true"
+  fi
   
   if ( [ -f "pn-helpdesk-fe/aws-cdn-templates/one-logging.yaml" ] ) then
     echo ""
@@ -348,7 +354,8 @@ fi
 prepareOneCloudFront webapp-helpdesk-cdn-${env_type} \
     "$PORTALE_HELPDESK_DOMAIN" \
     "$PORTALE_HELPDESK_CERTIFICATE_ARN" \
-    "$ZONE_ID"
+    "$ZONE_ID" \
+    "${PORTALE_HELPDESK_ALTERNATE_DNS-}"
 
 webappHelpdeskBucketName=${bucketName}
 webappHelpdeskBDistributionId=${distributionId}
