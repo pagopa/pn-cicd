@@ -241,14 +241,6 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
-AlarmSNSTopicArn=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name once-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"AlarmSNSTopicArn\") | .OutputValue" )
-
-echo "AlarmSNSTopicArn : ${AlarmSNSTopicArn}"
-
 echo ""
 echo ""
 echo ""
@@ -266,7 +258,23 @@ function prepareOneCloudFront() {
   WebCertificateArn=$3
   HostedZoneId=$4
   
-  OptionalParameters="AlarmSNSTopicArn=${AlarmSNSTopicArn}"
+  if ( [ -f "pn-helpdesk-fe/aws-cdn-templates/one-logging.yaml" ] ) then
+    echo ""
+    echo "=== Create Logs Bucket ${CdnName}"
+    aws ${aws_log_base_args} \
+      cloudformation deploy \
+        --no-fail-on-empty-changeset \
+        --stack-name $CdnName-logging \
+        --template-file pn-helpdesk-fe/aws-cdn-templates/one-logging.yaml
+
+    logBucketName=$( aws ${aws_log_base_args} \
+      cloudformation describe-stacks \
+        --stack-name $CdnName-logging \
+        --output json \
+    | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LogsBucketName\") | .OutputValue" )
+
+    OptionalParameters="${OptionalParameters} S3LogsBucket=${logBucketName}"
+  fi
 
   echo ""
   echo "=== Create CDN ${CdnName} with domain ${WebDomain} in zone ${HostedZoneId}"
