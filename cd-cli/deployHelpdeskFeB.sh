@@ -325,7 +325,7 @@ fi
 PortaleHelpdeskCertificateArn=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
       --stack-name pn-ipc-$env_type \
-      --outout json \
+      --output json \
   | jq -r ".Stacks[0].Outputs | .[] | select(.OutputKey==\"PortaleHelpdeskCertificateArn\") | .OutputValue" )
 PORTALE_HELPDESK_CERTIFICATE_ARN=""
 if ( [ $PortaleHelpdeskCertificateArn != '-' ] ) then
