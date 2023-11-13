@@ -1442,7 +1442,7 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
   
-   # CODEBUILD used to update helpdesk fe microservice
+   # CODEBUILD used to update helpdesk fe
   ###################################################
   UpdateHelpdeskCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
