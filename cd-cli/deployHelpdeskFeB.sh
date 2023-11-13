@@ -190,7 +190,7 @@ fi
 
 BoApiDnsName=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \ 
+      --stack-name pn-ipc-$env_type \
       --output json \
   | jq -r ".Stacks[0].Outputs | .[] | select(.OutputKey==\"BoApiDnsName\") | .OutputValue" )
 BO_API_BASE_URL=""
