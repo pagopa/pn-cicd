@@ -257,6 +257,8 @@ function prepareOneCloudFront() {
   WebDomain=$2
   WebCertificateArn=$3
   HostedZoneId=$4
+
+  OptionalParameters=""
   
   if ( [ -f "pn-helpdesk-fe/aws-cdn-templates/one-logging.yaml" ] ) then
     echo ""
