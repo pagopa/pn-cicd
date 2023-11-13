@@ -211,7 +211,7 @@ fi
 
 CognitoWebClientId=$( aws ${aws_command_base_args} \
     cloudformation describe-stacks \
-      --stack-name pn-cognito-$env_type \ 
+      --stack-name pn-cognito-$env_type \
       --output json \
   | jq -r ".Stacks[0].Outputs | .[] | select(.OutputKey==\"CognitoWebClientId\") | .OutputValue" )
 WEB_CLIENT_ID=""
