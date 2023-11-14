@@ -223,8 +223,9 @@ fi
 function replace_config() {
 #  cp ./conf/env/config.$1.json ./conf/config.json
 
-  LocalFilePath=/tmp/$2-filled.json
+  LocalFilePath=/tmp/$2.json
   echo '{}' > $LocalFilePath
+  LocalFilePath=/tmp/$2-filled.json
 
   jq -r '.' /tmp/$2.json \
       | jq ".AWS_USER_POOLS_ID=\"$USER_POOL_ID\"" \
