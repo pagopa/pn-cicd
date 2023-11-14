@@ -5202,6 +5202,9 @@ Resources:
           - Name: ENV_NAME
             Type: PLAINTEXT
             Value: !Ref EnvName
+          - Name: INTEROP_ENABLED
+            Type: PLAINTEXT
+            Value: 'false'
       VpcConfig:
         Fn::If:
           - HasE2EVPCConfig
