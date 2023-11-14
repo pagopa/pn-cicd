@@ -348,7 +348,7 @@ PortaleHelpdeskDomain=$( aws ${aws_command_base_args} \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortaleHelpdeskDomain\") | .OutputValue" )
 PORTALE_HELPDESK_DOMAIN=""
 if ( [ $PortaleHelpdeskDomain != '-' ] ) then
-  PORTALE_HELPDESK_DOMAIN="https://${PortaleHelpdeskDomain}"
+  PORTALE_HELPDESK_DOMAIN=$PortaleHelpdeskDomain
 fi
 
 prepareOneCloudFront webapp-helpdesk-cdn-${env_type} \
