@@ -41,7 +41,8 @@ Conditions:
   IsSvilCondition: !Equals [ !Ref EnvName, 'svil' ]
   # !Condition IsDevCondition temporarily removed from IsTestCondition
   IsTestCondition: !Or [ !Condition IsDevCondition, !Condition IsHotfixCondition, !Condition IsSvilCondition, !Condition IsTestEnv, !Condition IsUatEnv ]
-  IsTestScheduledCondition: !Equals [ !Ref EnvName, 'test' ]
+  IsTestFeScheduledCondition: !Equals [ !Ref EnvName, 'test' ]
+  IsTestBeScheduledCondition: !Or [ !Condition IsTestEnv, !Condition IsUatEnv ]
   IsContinuousDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsTestEnv ]
   HasE2EVpcId: !Not [ !Equals [ !Ref E2EVpcId, '' ] ]
   HasE2ESecurityGroupId: !Not [ !Equals [ !Ref E2ESecurityGroupId, '' ] ]
@@ -5047,7 +5048,7 @@ Resources:
   ###  RUN E2E TESTS
   ###########################################################################
   e2eScheduledRule:
-    Condition: IsTestScheduledCondition
+    Condition: IsTestBeScheduledCondition
     Type: AWS::Events::Rule
     Properties:
       Description: "e2eScheduledRule"
@@ -5063,7 +5064,7 @@ Resources:
               - "Arn"
 
   FeScheduledRule:
-    Condition: IsTestScheduledCondition
+    Condition: IsTestFeScheduledCondition
     Type: AWS::Events::Rule
     Properties:
       Description: "FeScheduledRule"
