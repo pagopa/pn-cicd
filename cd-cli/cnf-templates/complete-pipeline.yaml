@@ -43,7 +43,7 @@ Conditions:
   IsTestCondition: !Or [ !Condition IsDevCondition, !Condition IsHotfixCondition, !Condition IsSvilCondition, !Condition IsTestEnv, !Condition IsUatEnv ]
   IsTestFeScheduledCondition: !Equals [ !Ref EnvName, 'test' ]
   IsTestBeScheduledCondition: !Or [ !Condition IsTestEnv, !Condition IsUatEnv ]
-  IsContinuousDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsTestEnv ]
+  IsContinuousDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsTestEnv, !Condition IsUatEnv ]
   HasE2EVpcId: !Not [ !Equals [ !Ref E2EVpcId, '' ] ]
   HasE2ESecurityGroupId: !Not [ !Equals [ !Ref E2ESecurityGroupId, '' ] ]
   HasE2ESubnetsIds: !Not [!Equals [!Join ['', !Ref E2ESubnetsIds], '']]
@@ -84,6 +84,12 @@ Mappings:
         {
           "source": [{"prefix": "" }],
           "detail": { "project_branch": ["testDeploy"] }
+        }
+    uat:
+      BuildEvtPatten: |
+        {
+          "source": [{"prefix": "" }],
+          "detail": { "project_branch": ["uatDeploy"] }
         }
           
 
