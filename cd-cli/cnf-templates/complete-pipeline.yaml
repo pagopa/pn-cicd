@@ -374,6 +374,12 @@ Resources:
                     export PIPELINE_NAME="pn-helpdesk-fe-update-pipeline"
                   fi   
                 - |
+                  if ( [ "$PROJECT" = "pn-f24" ] ) then
+                    sed -i -e "s|pn_f24_commitId=.*|pn_f24_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_f24_imageUrl=.*|pn_f24_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-f24-update-pipeline"
+                  fi           
+                - |
                   if ( [ "$PROJECT" = "pn-showcase-site" ] ) then
                     sed -i -e "s|pn_showcase_site_commitId=.*|pn_showcase_site_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-showcase-site-update-pipeline"
