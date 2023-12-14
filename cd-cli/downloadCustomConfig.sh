@@ -174,7 +174,6 @@ _clone_repository(){
   else
     echo " - sshkey $_DEPLOYKEY found - git clone via SSH"
     mkdir -p ~/.ssh
-    curl -L https://api.github.com/meta | jq -r '.ssh_keys | .[]' | sed -e 's/^/github.com /' > ~/.ssh/known_hosts
     _AWSDEPLOYKEY=$(aws ${aws_command_base_args} \
     secretsmanager get-secret-value --secret-id $_DEPLOYKEY --output json )
     echo $_AWSDEPLOYKEY | jq '.SecretString' | cut -d "\"" -f 2 | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
