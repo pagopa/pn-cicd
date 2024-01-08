@@ -1443,6 +1443,7 @@ Resources:
             Action:
               - lambda:Create*
               - lambda:Get*
+              - lambda:List*
               - lambda:Delete*
               - lambda:TagResource
               - lambda:UpdateEventSourceMapping
