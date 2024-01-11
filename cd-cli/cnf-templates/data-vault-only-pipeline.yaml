@@ -566,6 +566,30 @@ Resources:
                 - Name: PnStatemachinemanagerOutput
               RunOrder: 4
 
+            - Name: Update_PnCn
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMultilambdaMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-cn", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"20", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_cn", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnCnOutput
+              RunOrder: 4
+
              # Update logs and Usage Plans
 
             - Name: Infrastructure_Post_Deploy
@@ -1419,6 +1443,7 @@ Resources:
             Action:
               - lambda:Create*
               - lambda:Get*
+              - lambda:List*
               - lambda:Delete*
               - lambda:TagResource
               - lambda:UpdateEventSourceMapping

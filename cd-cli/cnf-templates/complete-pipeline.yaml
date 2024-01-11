@@ -41,8 +41,10 @@ Conditions:
   IsSvilCondition: !Equals [ !Ref EnvName, 'svil' ]
   # !Condition IsDevCondition temporarily removed from IsTestCondition
   IsTestCondition: !Or [ !Condition IsDevCondition, !Condition IsHotfixCondition, !Condition IsSvilCondition, !Condition IsTestEnv, !Condition IsUatEnv ]
-  IsTestScheduledCondition: !Equals [ !Ref EnvName, 'test' ]
-  IsContinuousDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsTestEnv ]
+  IsTestFeScheduledCondition: !Equals [ !Ref EnvName, 'test' ]
+  #IsTestBeScheduledCondition: !Or [ !Condition IsTestEnv, !Condition IsUatEnv ]
+  IsTestBeScheduledCondition: !Condition IsTestEnv
+  IsContinuousDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition, !Condition IsTestEnv, !Condition IsUatEnv ]
   HasE2EVpcId: !Not [ !Equals [ !Ref E2EVpcId, '' ] ]
   HasE2ESecurityGroupId: !Not [ !Equals [ !Ref E2ESecurityGroupId, '' ] ]
   HasE2ESubnetsIds: !Not [!Equals [!Join ['', !Ref E2ESubnetsIds], '']]
@@ -83,6 +85,12 @@ Mappings:
         {
           "source": [{"prefix": "" }],
           "detail": { "project_branch": ["testDeploy"] }
+        }
+    uat:
+      BuildEvtPatten: |
+        {
+          "source": [{"prefix": "" }],
+          "detail": { "project_branch": ["uatDeploy"] }
         }
           
 
@@ -366,6 +374,12 @@ Resources:
                     sed -i -e "s|pn_helpdesk_fe_commitId=.*|pn_helpdesk_fe_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-helpdesk-fe-update-pipeline"
                   fi   
+                - |
+                  if ( [ "$PROJECT" = "pn-f24" ] ) then
+                    sed -i -e "s|pn_f24_commitId=.*|pn_f24_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_f24_imageUrl=.*|pn_f24_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-f24-update-pipeline"
+                  fi           
                 - |
                   if ( [ "$PROJECT" = "pn-showcase-site" ] ) then
                     sed -i -e "s|pn_showcase_site_commitId=.*|pn_showcase_site_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
@@ -953,6 +967,31 @@ Resources:
               OutputArtifacts:
                 - Name: PnLogextractorBeOutput
               RunOrder: 3
+              
+            # Update pn-f24
+            - Name: Update_PnF24
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-f24", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"19", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_f24", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnF24Output
+              RunOrder: 3
 
             # Update Frontend
             - Name: Update_Frontend
@@ -1034,7 +1073,8 @@ Resources:
                     EnvironmentVariables: !Sub '[
                         {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
                         {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                        {"name":"TEST_SUITE", "value":"CucumberSmokeTest", "type":"PLAINTEXT"}
+                        {"name":"TEST_SUITE", "value":"CucumberSmokeTest", "type":"PLAINTEXT"},
+                        {"name":"INTEROP_ENABLED", "value":"false", "type":"PLAINTEXT"}
                       ]'
                   InputArtifacts:
                     - Name: EmptyZip
@@ -1442,7 +1482,7 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
   
-   # CODEBUILD used to update helpdesk fe microservice
+   # CODEBUILD used to update helpdesk fe
   ###################################################
   UpdateHelpdeskCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
@@ -1454,15 +1494,6 @@ Resources:
         BuildSpec: |
           version: 0.2
           phases:
-            install:
-              runtime-versions:
-                nodejs: 16
-              commands:
-                #install yarn
-                - echo installing yarn
-                - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-                - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-                - apt install --no-install-recommends yarn
             pre_build:
               commands:
                 - 'echo "### SCRIPTS ###"'
@@ -1483,11 +1514,11 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "########################################################"'
-                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "###       UPDATE HELPDESK FE    ###"'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployHelpdeskFeB.sh -v -r $AwsRegion -e $EnvName -m $pn_helpdesk_fe_commitId -f $pn_frontend_commitId -w /tmp -c $custom_config_dir"'
-                - '(cd scripts/cd-cli && ./deployHelpdeskFeB.sh -v -r $AwsRegion -e $EnvName -m $pn_helpdesk_fe_commitId -f $pn_frontend_commitId -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployHelpdeskFeB.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_helpdesk_fe_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir"'
+                - '(cd scripts/cd-cli && ./deployHelpdeskFeB.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_helpdesk_fe_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
@@ -5055,7 +5086,7 @@ Resources:
   ###  RUN E2E TESTS
   ###########################################################################
   e2eScheduledRule:
-    Condition: IsTestScheduledCondition
+    Condition: IsTestBeScheduledCondition
     Type: AWS::Events::Rule
     Properties:
       Description: "e2eScheduledRule"
@@ -5071,11 +5102,11 @@ Resources:
               - "Arn"
 
   FeScheduledRule:
-    Condition: IsTestScheduledCondition
+    Condition: IsTestFeScheduledCondition
     Type: AWS::Events::Rule
     Properties:
       Description: "FeScheduledRule"
-      ScheduleExpression: "cron(0 23 ? * MON-FRI *)"
+      ScheduleExpression: "cron(3 4 ? * MON-FRI *)"
       State: "ENABLED"
       RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
       Targets: 
@@ -5114,6 +5145,11 @@ Resources:
                       API_KEY_GA=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKeyGA' )
                       API_KEY_SON=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKeySON' )
                       API_KEY_ROOT=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKeyROOT' )
+                      API_KEY_INTEROP=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKeyInterop' )
+                      API_KEY_2_INTEROP=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKey2Interop' )
+                      API_KEY_GA_INTEROP=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKeyGAInterop' )
+                      API_KEY_SON_INTEROP=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKeySONInterop' )
+                      API_KEY_ROOT_INTEROP=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestApiKeyROOTInterop' )
                       API_KEY_APPIO=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eAppIOTestApiKey' )
                       SENDER_ID_1=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestSenderId1' )
                       SENDER_ID_2=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestSenderId2' )
@@ -5145,6 +5181,7 @@ Resources:
                       DATA_VAULT_URL=$(aws ssm get-parameters --names /pn-test-e2e/dataVaultUrl --query "Parameters[*].Value" --output text)
                       DELIVERY_PUSH_URL=$(aws ssm get-parameters --names /pn-test-e2e/deliveryPushUrl --query "Parameters[*].Value" --output text)
                       EXTERNAL_CHANNEL_URL=$(aws ssm get-parameters --names /pn-test-e2e/externalChannelsUrl --query "Parameters[*].Value" --output text)
+                      DELIVERY_URL=$(aws ssm get-parameters --names /pn-test-e2e/deliveryUrl --query "Parameters[*].Value" --output text)
                       PA_TAX_ID_1=$(aws ssm get-parameters --names /pn-test-e2e/paTaxId1 --query "Parameters[*].Value" --output text)
                       PA_TAX_ID_2=$(aws ssm get-parameters --names 	/pn-test-e2e/paTaxId2 --query "Parameters[*].Value" --output text)
                       PA_TAX_ID_GA=$(aws ssm get-parameters --names /pn-test-e2e/paTaxIdGA --query "Parameters[*].Value" --output text)
@@ -5157,11 +5194,15 @@ Resources:
                       GPD_URL=$(aws ssm get-parameters --names /pn-test-e2e/GpdUrl --query "Parameters[*].Value" --output text)
                       DIGITAL_DOMICILIO_ALT=$(aws ssm get-parameters --names /pn-test-e2e/digitalDomicileAlt --query "Parameters[*].Value" --output text)
                       COSTO_BASE_NOTIFICA=$(aws ssm get-parameters --names /pn-test-e2e/CostoBaseNotifica --query "Parameters[*].Value" --output text)
+                      INTEROP_CLIENT_ID=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestClientIdInterop' )
+                      INTEROP_TOKEN_ASSERTION=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestTokenClientAssertionInterop' )
+                      INTEROP_BASE_URL=$(aws ssm get-parameters --names /pn-test-e2e/interopBaseUrl --query "Parameters[*].Value" --output text)
+                      INTEROP_TOKEN_PATH=$(aws ssm get-parameters --names /pn-test-e2e/interopTokenPath --query "Parameters[*].Value" --output text)
                       - |
                       echo "### CLONE E2E TEST REPOSITORY ###"
                       echo "#####################"
                       git clone --depth 1 --branch ${ENV_NAME} https://github.com/pagopa/pn-b2b-client pn-b2b-client
-                      ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.cucumber.${TEST_SUITE:-NrtTest} -Dpn.external.base-url=https://api.${ENV_NAME}.${DOMAIN} '-Dpn.OpenSearch.base-url=${OPERN_SEARCH_URL}' '-Dpn.retention.videotime.preload=${PRE_RETENTION_VIDEOTIME}' '-Dpn.OpenSearch.password=${OPEN_SEARCH_PASSWORD}' '-Dpn.OpenSearch.username=${OPEN_SEARCH_USERNAME}' '-Dpn.external.api-keys.service-desk=${SERVICE_DESK_KEY}' '-Dpn.external.bearer-token-pg2.id=${PG2_ORGANIZATION_ID}' '-Dpn.external.bearer-token-pg1.id=${PG1_ORGANIZATION_ID}' '-Dpn.external.costo_base_notifica=${COSTO_BASE_NOTIFICA}' '-Dpn.external.digitalDomicile.address=${DIGITAL_DOMICILIO}' '-Dpn.external.digitalDomicile.address.alt=${DIGITAL_DOMICILIO_ALT}' '-Dpn.internal.gpd-base-url=${GPD_URL}' '-Dspring.profiles.active=${ENV_NAME}' '-Dpn.external.api-key=${API_KEY}' '-Dpn.external.bearer-token-pa-1=${TOKEN_PA_1}' '-Dpn.external.bearer-token-pa-SON=${TOKEN_PA_SON}' '-Dpn.external.bearer-token-pa-ROOT=${TOKEN_PA_ROOT}' '-Dpn.bearer-token.user3=${TOKEN_USER_3}' '-Dpn.bearer-token.user4=${TOKEN_USER_4}' '-Dpn.bearer-token.user5=${TOKEN_USER_5}' '-Dpn.bearer-token.pg1=${TOKEN_USER_PG_1}' '-Dpn.bearer-token.pg2=${TOKEN_USER_PG_2}' '-Dpn.external.api-key-taxID=${PA_TAX_ID_1}' '-Dpn.external.api-key-2-taxID=${PA_TAX_ID_2}' '-Dpn.external.api-key-GA-taxID=${PA_TAX_ID_GA}' '-Dpn.external.api-key-SON-taxID=${PA_TAX_ID_SON}' '-Dpn.external.api-key-ROOT-taxID=${PA_TAX_ID_ROOT}' '-Dpn.bearer-token.user1.taxID=${USER_TAX_ID_1}' '-Dpn.bearer-token.user2.taxID=${USER_TAX_ID_2}' '-Dpn.external.api-key-2=${API_KEY_2}' '-Dpn.external.api-key-GA=${API_KEY_GA}' '-Dpn.external.api-key-SON=${API_KEY_SON}' '-Dpn.external.api-key-ROOT=${API_KEY_ROOT}' '-Dpn.external.senderId=${SENDER_ID_1}' '-Dpn.external.senderId-2=${SENDER_ID_2}' '-Dpn.external.senderId-GA=${SENDER_ID_GA}' '-Dpn.external.senderId-SON=${SENDER_ID_SON}' '-Dpn.external.senderId-ROOT=${SENDER_ID_ROOT}' '-Dpn.external.appio.api-key=${API_KEY_APPIO}' '-Dpn.webapi.external.base-url=https://webapi.${ENV_NAME}.${DOMAIN}' '-Dpn.appio.externa.base-url=https://api-io.${ENV_NAME}.${DOMAIN}' '-Dpn.bearer-token.user2=${CRISTOFORO_C}' '-Dpn.bearer-token.user1=${FIERAMOSCA_E}' '-Dpn.retention.time.preload=${PRE_RETENTION_TIME}' '-Dpn.retention.time.load=${LOAD_RETENTION_TIME}' '-Dpn.safeStorage.base-url=${SAFE_STORAGE_URL}' '-Dpn.internal.delivery-push-base-url=${DELIVERY_PUSH_URL}' '-Dpn.externalChannels.base-url=${EXTERNAL_CHANNEL_URL}' '-Dpn.external.api-subscription-key=${SUBSCRIPTION_KEY}' '-Dpn.bearer-token-payinfo=${TOKEN_PAY_INFO}' '-Dpn.dataVault.base-url=${DATA_VAULT_URL}' clean verify )
+                      ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.cucumber.${TEST_SUITE:-NrtTest_${ENV_NAME}} -Dpn.external.base-url=https://api.${ENV_NAME}.${DOMAIN} '-Dpn.interop.enable=${INTEROP_ENABLED:-false}' '-Dpn.external.api-keys.pagopa-dev-false=${API_KEY}' '-Dpn.external.api-keys.pagopa-dev-2-false=${API_KEY_2}' '-Dpn.external.api-keys.pagopa-dev-GA-false=${API_KEY_GA}' '-Dpn.external.api-keys.pagopa-dev-SON-false=${API_KEY_SON}' '-Dpn.external.api-keys.pagopa-dev-ROOT-false=${API_KEY_ROOT}' '-Dpn.external.api-keys.pagopa-dev-true=${API_KEY_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-2-true=${API_KEY_2_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-GA-true=${API_KEY_GA_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-SON-true=${API_KEY_SON_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-ROOT-true=${API_KEY_ROOT_INTEROP}' '-Dpn.interop.token-oauth2.path=${INTEROP_TOKEN_PATH}' '-Dpn.interop.base-url=${INTEROP_BASE_URL}' '-Dpn.interop.token-oauth2.client-assertion=${INTEROP_TOKEN_ASSERTION}' '-Dpn.interop.clientId=${INTEROP_CLIENT_ID}' '-Dpn.OpenSearch.base-url=${OPERN_SEARCH_URL}' '-Dpn.retention.videotime.preload=${PRE_RETENTION_VIDEOTIME}' '-Dpn.OpenSearch.password=${OPEN_SEARCH_PASSWORD}' '-Dpn.OpenSearch.username=${OPEN_SEARCH_USERNAME}' '-Dpn.external.api-keys.service-desk=${SERVICE_DESK_KEY}' '-Dpn.external.bearer-token-pg2.id=${PG2_ORGANIZATION_ID}' '-Dpn.external.bearer-token-pg1.id=${PG1_ORGANIZATION_ID}' '-Dpn.external.costo_base_notifica=${COSTO_BASE_NOTIFICA}' '-Dpn.external.digitalDomicile.address=${DIGITAL_DOMICILIO}' '-Dpn.external.digitalDomicile.address.alt=${DIGITAL_DOMICILIO_ALT}' '-Dpn.internal.gpd-base-url=${GPD_URL}' '-Dspring.profiles.active=${ENV_NAME}' '-Dpn.external.bearer-token-pa-1=${TOKEN_PA_1}' '-Dpn.external.bearer-token-pa-SON=${TOKEN_PA_SON}' '-Dpn.external.bearer-token-pa-ROOT=${TOKEN_PA_ROOT}' '-Dpn.bearer-token.user3=${TOKEN_USER_3}' '-Dpn.bearer-token.user4=${TOKEN_USER_4}' '-Dpn.bearer-token.user5=${TOKEN_USER_5}' '-Dpn.bearer-token.pg1=${TOKEN_USER_PG_1}' '-Dpn.bearer-token.pg2=${TOKEN_USER_PG_2}' '-Dpn.external.api-key-taxID=${PA_TAX_ID_1}' '-Dpn.external.api-key-2-taxID=${PA_TAX_ID_2}' '-Dpn.external.api-key-GA-taxID=${PA_TAX_ID_GA}' '-Dpn.external.api-key-SON-taxID=${PA_TAX_ID_SON}' '-Dpn.external.api-key-ROOT-taxID=${PA_TAX_ID_ROOT}' '-Dpn.bearer-token.user1.taxID=${USER_TAX_ID_1}' '-Dpn.bearer-token.user2.taxID=${USER_TAX_ID_2}'  '-Dpn.external.senderId=${SENDER_ID_1}' '-Dpn.external.senderId-2=${SENDER_ID_2}' '-Dpn.external.senderId-GA=${SENDER_ID_GA}' '-Dpn.external.senderId-SON=${SENDER_ID_SON}' '-Dpn.external.senderId-ROOT=${SENDER_ID_ROOT}' '-Dpn.external.appio.api-key=${API_KEY_APPIO}' '-Dpn.webapi.external.base-url=https://webapi.${ENV_NAME}.${DOMAIN}' '-Dpn.appio.externa.base-url=https://api-io.${ENV_NAME}.${DOMAIN}' '-Dpn.bearer-token.user2=${CRISTOFORO_C}' '-Dpn.bearer-token.user1=${FIERAMOSCA_E}' '-Dpn.retention.time.preload=${PRE_RETENTION_TIME}' '-Dpn.retention.time.load=${LOAD_RETENTION_TIME}' '-Dpn.safeStorage.base-url=${SAFE_STORAGE_URL}' '-Dpn.internal.delivery-push-base-url=${DELIVERY_PUSH_URL}' '-Dpn.externalChannels.base-url=${EXTERNAL_CHANNEL_URL}' '-Dpn.external.api-subscription-key=${SUBSCRIPTION_KEY}' '-Dpn.bearer-token-payinfo=${TOKEN_PAY_INFO}' '-Dpn.dataVault.base-url=${DATA_VAULT_URL}' '-Dpn.radd.base-url=${DELIVERY_PUSH_URL}' '-Dpn.delivery.base-url=${DELIVERY_URL}' clean verify )
           reports:
             reportGroup: #Cucumber reports from json plugin
               files:
@@ -5192,6 +5233,9 @@ Resources:
           - Name: ENV_NAME
             Type: PLAINTEXT
             Value: !Ref EnvName
+          - Name: INTEROP_ENABLED
+            Type: PLAINTEXT
+            Value: 'false'
       VpcConfig:
         Fn::If:
           - HasE2EVPCConfig
@@ -5218,7 +5262,7 @@ Resources:
         Name: !Sub ${ProjectName}-RunFeE2eTestsCodeBuildProject
         ServiceRole: !GetAtt CodeBuildRole.Arn
         ConcurrentBuildLimit: 2
-        TimeoutInMinutes: 240
+        TimeoutInMinutes: 300
         Source: 
           Type: NO_SOURCE
           BuildSpec: |

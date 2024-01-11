@@ -21,7 +21,7 @@ usage() {
     -r <aws-region>                : aws region as eu-south-1
     -e <env-type>                  : one of dev / uat / svil / coll / cert / prod
     -i <infra-github-commitid>     : commitId for github repository pagopa/pn-infra
-    -f <showcase-site-github-commitid>  : commitId for github repository pagopa/pn-showcase-site
+    -f <pn-showcase-site-github-commitid>  : commitId for github repository pagopa/pn-showcase-site
     [-c <custom_config_dir>]       : where tor read additional env-type configurations
     -b <artifactBucketName>        : bucket name to use as temporary artifacts storage
     -B <webArtifactBucketName>     : bucket name where web application artifact are memorized
