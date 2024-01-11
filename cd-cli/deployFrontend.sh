@@ -40,6 +40,7 @@ parse_params() {
   pn_frontend_commitid=""
   bucketName=""
   distributionId=""
+  distributionDomainName=""
   tooManyErrorsAlarmArn=""
   tooManyRequestsAlarmArn=""
   LambdasBucketName=""
@@ -239,7 +240,12 @@ replace_config() {
     fi
   fi
 
-  jq -s ".[0] * .[1]" ./conf/env/config.$1.json ${LocalFilePath} > ./conf/config.json
+  # if persona fisica login, the configuration file is in the auth dir
+  if ( [ $2 != 'pn-personafisica-login' ] ) then
+    jq -s ".[0] * .[1]" ./conf/env/config.$1.json ${LocalFilePath} > ./conf/config.json
+  else
+    jq -s ".[0] * .[1]" ./auth/conf/env/config.$1.json ${LocalFilePath} > ./auth/conf/config.json
+  fi
 }
 
 
@@ -281,6 +287,8 @@ function prepareOneCloudFront() {
   HostedZoneId=$4
   WebApiUrl=$5
   AlternateWebDomain=$6
+  SubCdnDomain=${7-no_value}
+  RootWebDomain=${8-no_value}
   
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
@@ -324,6 +332,8 @@ function prepareOneCloudFront() {
         WebCertificateArn="${WebCertificateArn}" \
         HostedZoneId="${HostedZoneId}" \
         WebApiUrl="${WebApiUrl}" \
+        SubCdnDomain="${SubCdnDomain}" \
+        RootWebDomain="${RootWebDomain}" \
         $OptionalParameters
   
   bucketName=$( aws ${aws_command_base_args} \
@@ -337,6 +347,12 @@ function prepareOneCloudFront() {
       --stack-name $CdnName \
       --output json \
   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"DistributionId\") | .OutputValue" )
+
+  distributionDomainName=$( aws ${aws_command_base_args} \
+    cloudfront get-distribution \
+      --id $distributionId \
+      --output json \
+  | jq -r ".Distribution | .DomainName" )
 
   if ( [ ! -z "$HAS_MONITORING" ]) then
     tooManyRequestsAlarmArn=$( aws ${aws_command_base_args} \
@@ -526,18 +542,32 @@ prepareOneCloudFront webapp-pa-cdn-${env_type} \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
     "${PORTALE_PA_ALTERNATE_DNS-}"
-
 webappPaBucketName=${bucketName}
 webappPaDistributionId=${distributionId}
 webappPaTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPaTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
+
+prepareOneCloudFront webapp-pfl-cdn-${env_type} \
+    "$PORTALE_PF_LOGIN_DOMAIN" \
+    "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
+    "$ZONE_ID" \
+    "$REACT_APP_URL_API" \
+    "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"\
+    ""\
+    "$PORTALE_PF_DOMAIN"
+webappPflBucketName=${bucketName}
+webappPflDistributionId=${distributionId}
+webappPflDistributionDomainName=${distributionDomainName}
+webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
+webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 prepareOneCloudFront webapp-pf-cdn-${env_type} \
     "$PORTALE_PF_DOMAIN" \
     "$PORTALE_PF_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "${PORTALE_PF_ALTERNATE_DNS-}"
+    "${PORTALE_PF_ALTERNATE_DNS-}"\
+    "$webappPflDistributionDomainName"
 webappPfBucketName=${bucketName}
 webappPfDistributionId=${distributionId}
 webappPfTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
@@ -569,17 +599,6 @@ if ( [ ! -z $HAS_PORTALE_STATUS ] ) then
   webappStatusTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 fi
 
-prepareOneCloudFront webapp-pfl-cdn-${env_type} \
-    "$PORTALE_PF_LOGIN_DOMAIN" \
-    "$PORTALE_PF_LOGIN_CERTIFICATE_ARN" \
-    "$ZONE_ID" \
-    "$REACT_APP_URL_API" \
-    "${PORTALE_PF_LOGIN_ALTERNATE_DNS-}"
-webappPflBucketName=${bucketName}
-webappPflDistributionId=${distributionId}
-webappPflTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
-webappPflTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
-
 echo ""
 echo " === Distribution ID Portale PA = ${webappPaDistributionId}"
 echo " === Bucket Portale PA = ${webappPaBucketName}"
@@ -591,6 +610,7 @@ echo " === Too Many Request Alarm Portale PF = ${webappPfTooManyRequestsAlarmArn
 echo " === Too Many Errors Alarm Portale PF = ${webappPfTooManyErrorsAlarmArn}"
 echo " === Bucket Portale PF login = ${webappPflBucketName}"
 echo " === Distribution ID Portale PF login = ${webappPflDistributionId}"
+echo " === Distribution Domain Name Portale PF login = ${webappPflDistributionDomainName}"
 echo " === Too Many Request Alarm Portale PFL = ${webappPflTooManyRequestsAlarmArn}"
 echo " === Too Many Errors Alarm Portale PFL = ${webappPflTooManyErrorsAlarmArn}"
 if ( [ ! -z $HAS_PORTALE_PG ] ) then
