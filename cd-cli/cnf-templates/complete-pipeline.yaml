@@ -1707,6 +1707,7 @@ Resources:
               - lambda:InvokeFunction
               - lambda:UntagResource
               - lambda:PublishVersion
+              - lambda:PutFunctionConcurrency
               - lambda:PutProvisionedConcurrencyConfig
             Resource: "*"
           - Effect: Allow
