@@ -5224,7 +5224,7 @@ Resources:
         Location: !Ref E2eArtifactOutputTest
         OverrideArtifactName: true
       Environment:
-        ComputeType: BUILD_GENERAL1_MEDIUM
+        ComputeType: BUILD_GENERAL1_LARGE
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
         EnvironmentVariables:
