@@ -5169,7 +5169,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-bff", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"20", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"21", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_bff", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
