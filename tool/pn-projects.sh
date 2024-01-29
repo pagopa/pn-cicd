@@ -1,8 +1,9 @@
-BE_MVN_COMMON_PROJECTS=(pn-parent pn-model pn-commons)
+BE_MVN_COMMON_PROJECTS=(pn-parent pn-model pn-commons pn-authorization)
 BE_MVN_PROJECTS=(pn-delivery pn-delivery-push pn-external-registries pn-mandate pn-data-vault\
  pn-user-attributes pn-radd-fsu pn-downtime-logs\
  pn-logextractor-be pn-logsaver-be pn-national-registries \
- pn-apikey-manager)
+ pn-apikey-manager \
+ pn-bff)
 BE_PROJECTS+=( "${BE_MVN_COMMON_PROJECTS[@]}" "${BE_MVN_PROJECTS[@]}")
 FE_PROJECTS=(pn-frontend pn-helpdesk-fe)
 INFRA_PROJECTS=(pn-infra pn-cicd pn-auth-fleet)
