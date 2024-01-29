@@ -1,4 +1,4 @@
-BE_MVN_COMMON_PROJECTS=(pn-parent pn-model pn-commons pn-authotization)
+BE_MVN_COMMON_PROJECTS=(pn-parent pn-model pn-commons pn-authorization)
 BE_MVN_PROJECTS=(pn-delivery pn-delivery-push pn-external-registries pn-mandate pn-data-vault\
  pn-user-attributes pn-radd-fsu pn-downtime-logs\
  pn-logextractor-be pn-logsaver-be pn-national-registries \
