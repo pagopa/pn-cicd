@@ -463,6 +463,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"99", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
@@ -486,6 +487,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-address-manager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_address_manager", "type":"PLAINTEXT"}
@@ -509,6 +511,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ec", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_ec", "type":"PLAINTEXT"}
@@ -532,6 +535,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
@@ -556,6 +560,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
@@ -715,6 +720,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
@@ -805,6 +811,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
@@ -895,6 +902,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ec", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_ec", "type":"PLAINTEXT"}
@@ -985,6 +993,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-address-manager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_address_manager", "type":"PLAINTEXT"}
@@ -1265,8 +1274,8 @@ Resources:
                 - 'echo "###       UPDATE MICROSERVICE $MsName    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployPnDataVaultExternalService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployPnDataVaultExternalService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployPnDataVaultExternalService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployPnDataVaultExternalService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
