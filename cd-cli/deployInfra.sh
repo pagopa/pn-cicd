@@ -602,6 +602,45 @@ else
   echo "Backup file doesn't exist, stack update skipped"
 fi
 
+echo ""
+echo "=== Deploy PN-Data-Monitoring FOR $env_type ACCOUNT"
+DATA_MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-data-monitoring.yaml
+
+if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
+    echo "$DATA_MONITORING_STACK_FILE exists, updating pn-data-monitoring stack"
+
+    echo ""
+    echo "= Read Outputs from previous stack"
+    aws ${aws_command_base_args}  \
+        cloudformation describe-stacks \
+          --stack-name pn-ipc-$env_type \
+          --query "Stacks[0].Outputs" \
+          --output json \
+          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+          | tee ${PreviousOutputFilePath}
+
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath} 
+
+    echo ""
+    echo "= Enanched parameters file"
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+      > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name pn-data-monitoring-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --template-file ${DATA_MONITORING_STACK_FILE} \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+
+else
+  echo "${DATA_MONITORING_STACK_FILE} file doesn't exist, stack update skipped"
+fi
 
 echo ""
 echo "=== Deploy PN-CN FOR $env_type ACCOUNT"
