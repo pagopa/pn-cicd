@@ -1516,6 +1516,11 @@ Resources:
               - codebuild:StopBuild     
               - codebuild:BatchPutTestCases
               - codebuild:BatchPutCodeCoverages
+              - codebuild:CreateProject
+              - codebuild:UpdateProject
+              - codebuild:DeleteProject
+              - codebuild:BatchGetProjects
+
           - Effect: Allow
             Action:
               - ecs:UpdateService
