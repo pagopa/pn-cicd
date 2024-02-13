@@ -2055,6 +2055,8 @@ Resources:
               - logs:FilterLogEvents
               - iam:ListInstanceProfiles
               - iam:ListRoles
+              - iam:ListRolePolicies
+              - iam:ListInstanceProfilesForRole
               - iam:UpdateAssumeRolePolicy
             Resource: "*"
           - Effect: Allow
