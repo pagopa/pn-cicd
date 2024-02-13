@@ -154,6 +154,10 @@ echo ""
 echo "=== Checkout ${infra_repo} commitId=${pn_infra_commitid}"
 ( cd ${infra_repo} && git fetch && git checkout $pn_infra_commitid )
 
+## Build diagnostic Lambda
+if ( [ -f ${infra_repo}/functions/build_lambda.sh ] ) then
+	( cd ${infra_repo}/functions/ && ./build_lambda.sh )
+fi
 
 ## Apply tf
 (cd ${infra_repo}/src/main && ./terraform.sh init ${env_type} && ./terraform.sh apply ${env_type} --auto-approve)
