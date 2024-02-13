@@ -42,7 +42,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_MEDIUM
-        Image: aws/codebuild/standard:6.0
+        Image: aws/codebuild/standard:7.0
         EnvironmentVariables:
           - Name: CODEARTIFACT_DOMAIN_NAME
             Type: PLAINTEXT
