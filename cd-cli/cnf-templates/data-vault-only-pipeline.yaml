@@ -1639,6 +1639,8 @@ Resources:
               - iam:ListInstanceProfiles
               - iam:ListRoles
               - iam:UpdateAssumeRolePolicy
+              - iam:ListRolePolicies
+              - iam:ListInstanceProfilesForRole              
             Resource: "*"
           - Effect: Allow
             Action:
