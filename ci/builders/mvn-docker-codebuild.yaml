@@ -332,7 +332,7 @@ Resources:
                       echo "Bulding $i"
                       cd $i
                       npm ci
-                      npm run-script test-build
+                      npm run-script test-build || exit 1
                       cd ..
                     done
                     cd ..
