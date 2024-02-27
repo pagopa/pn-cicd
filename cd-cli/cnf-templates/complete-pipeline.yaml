@@ -2058,6 +2058,10 @@ Resources:
               - iam:ListRolePolicies
               - iam:ListInstanceProfilesForRole
               - iam:UpdateAssumeRolePolicy
+              - iam:TagRole
+              - iam:UntagRole
+              - iam:ListRoleTags
+              - iam:ListTagsForResource
             Resource: "*"
           - Effect: Allow
             Action:
