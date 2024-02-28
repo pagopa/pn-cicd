@@ -234,6 +234,17 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 5
+  PnServizifiduciariSpapiCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-servizifiduciari-spapi"
+        GitHubDefaultBranch: "develop"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
   # Progetti docker
   PnDeliveryCI:
     Type: AWS::CloudFormation::Stack
