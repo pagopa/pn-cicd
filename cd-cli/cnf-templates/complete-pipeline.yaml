@@ -5735,11 +5735,7 @@ Resources:
                       TOKEN_RADD_JWT_SCADUTO=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenRaddJwtScaduto' )
                       TOKEN_RADD_KID_DIVERSO=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenRaddKidDiverso' )
                       TOKEN_RADD_AUD_ERRATO=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenRaddAudErrato' )
-                      TOKEN_RADD_PRIVATEKEY_DIVERSO=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenRaddPrivateKeyDiverso' )
-          
-                                
-                      
-                      
+                      TOKEN_RADD_PRIVATEKEY_DIVERSO=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenRaddPrivateKeyDiverso' )              
                       PRE_RETENTION_TIME=$(aws ssm get-parameters --names /pn-test-e2e/preLoadRetetionTime --query "Parameters[*].Value" --output text)
                       LOAD_RETENTION_TIME=$(aws ssm get-parameters --names /pn-test-e2e/loadRetentionTime --query "Parameters[*].Value" --output text)
                       PRE_RETENTION_VIDEOTIME=$(aws ssm get-parameters --names /pn-test-e2e/retentionVideotimePreload --query "Parameters[*].Value" --output text)
