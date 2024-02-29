@@ -1005,6 +1005,31 @@ Resources:
                 - Name: PnF24Output
               RunOrder: 3
 
+            # Update pn-service-desk
+            - Name: Update_PnServiceDesk
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-service-desk", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"18", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_service_desk", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnServiceDeskOutput
+              RunOrder: 3
+
             # Update Frontend
             - Name: Update_Frontend
               ActionTypeId:
