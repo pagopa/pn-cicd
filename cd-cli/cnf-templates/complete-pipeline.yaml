@@ -2238,6 +2238,21 @@ Resources:
               - "sns:Get*"
             Resource: "*"
 
+  CodeBuildPolicyLayers:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-Layers
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+            - Effect: Allow
+              Action:
+                - lambda:PublishLayerVersion
+              Resource: !Sub  "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:*"
+                               
+
   CodeBuildPolicyData:
     Type: AWS::IAM::ManagedPolicy
     Properties:
