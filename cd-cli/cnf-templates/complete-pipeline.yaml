@@ -2263,6 +2263,8 @@ Resources:
               - "sns:Get*"
             Resource: "*"
 
+                               
+
   CodeBuildPolicyData:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -2523,6 +2525,10 @@ Resources:
               - events:Remove*
             Resource:
               - "*"
+          - Effect: Allow
+            Action:
+               - lambda:PublishLayerVersion
+            Resource: !Sub  "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:*"
           - Effect: Allow
             Action:
               - ssm:GetParameter

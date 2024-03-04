@@ -114,9 +114,18 @@ Resources:
                 - |
                   for i in *
                   do
-                    [ -f "${i}/function.zip" ] && cp -p "${i}/function.zip" "${i}.zip"
-                    [ -f "${i}/code_layer.zip" ] && cp -p "${i}/code_layer.zip" "${i}_code.zip"
-                    [ -f "${i}/lib_layer.zip" ] && cp -p "${i}/lib_layer.zip" "${i}_libs.zip" 
+                    if [[ -f "${i}/function.zip" ]]
+                    then
+                      cp -p "${i}/function.zip" "${i}.zip" 
+                    fi
+                    if [[ -f "${i}/code_layer.zip" ]]
+                    then
+                      cp -p "${i}/code_layer.zip" "${i}_code.zip" 
+                    fi
+                    if [[ -f "${i}/lib_layer.zip" ]]
+                    then
+                      cp -p "${i}/lib_layer.zip" "${i}_libs.zip"
+                    fi
                   done 
                 - zip -u functions.zip commitID.txt *.zip
                 - aws s3 cp functions.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/functions.zip"
