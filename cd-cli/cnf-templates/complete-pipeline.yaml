@@ -2741,6 +2741,12 @@ Resources:
               - dynamodb:DescribeKinesisStreamingDestination
               - dynamodb:DisableKinesisStreamingDestination
             Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
+          - Effect: Allow
+            Action:
+              - ce:*
+            Resource: 
+              - !Sub "arn:aws:ce::${AWS::AccountId}:anomalymonitor/*"
+              - !Sub "arn:aws:ce::${AWS::AccountId}:anomalysubscription/*"
 
   CodeBuildPolicyIAM:
     Type: AWS::IAM::ManagedPolicy
