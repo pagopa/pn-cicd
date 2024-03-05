@@ -1411,6 +1411,9 @@ Resources:
               - cloudformation:DescribeChangeSet
               - cloudformation:DescribeStacks
               - cloudformation:ExecuteChangeSet
+              - cloudformation:RollbackStack
+              - cloudformation:ContinueUpdateRollback
+              - cloudformation:CancelUpdateStack
             Resource: "*"
           - Effect: Allow
             Action: cloudwatch:PutDashboard
