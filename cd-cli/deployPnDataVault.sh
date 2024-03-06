@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] -n <microcvs-name> -N <microcvs-idx> [-p <aws-profile>] -r  <aws-region> -e <env-type> -i <pn-infra-github-commitid> -m <pn-microsvc-github-commitid> -I <countainer-image-uri> [-c <custom_config_dir>]
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] -n <microcvs-name> [-p <aws-profile>] -r  <aws-region> -e <env-type> -i <pn-infra-github-commitid> -m <pn-microsvc-github-commitid> [-c <custom_config_dir>]
     
     [-h]                             : this help message
     [-v]                             : verbose mode
@@ -21,6 +21,7 @@ usage() {
     -r <aws-region>                  : aws region as eu-south-1
     -e <env-type>                    : one of dev / uat / svil / coll / cert / prod
     -i <infra-github-commitid>       : commitId for github repository pagopa/pn-infra
+    -m <pn-microsvc-github-commitid> : commitId for github repository del microservizio
     [-c <custom_config_dir>]         : where tor read additional env-type configurations
     -b <artifactBucketName>          : bucket name to use as temporary artifacts storage
     -n <microcvs-name>               : nome del microservizio
@@ -38,6 +39,7 @@ parse_params() {
   aws_region=""
   env_type=""
   pn_infra_commitid=""
+  pn_microsvc_commitid=""
   bucketName=""
   LambdasBucketName=""
 
@@ -59,6 +61,10 @@ parse_params() {
       ;;
     -i | --infra-commitid) 
       pn_infra_commitid="${2-}"
+      shift
+      ;;
+    -m | --ms-commitid)
+      pn_microsvc_commitid="${2-}"
       shift
       ;;
     -n | --ms-name) 
@@ -88,6 +94,7 @@ parse_params() {
   # check required params and arguments
   [[ -z "${env_type-}" ]] && usage 
   [[ -z "${pn_infra_commitid-}" ]] && usage
+  [[ -z "${pn_microsvc_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
   [[ -z "${microcvs_name-}" ]] && usage
@@ -102,6 +109,7 @@ dump_params(){
   echo "Work directory:      ${work_dir}"
   echo "Custom config dir:   ${custom_config_dir}"
   echo "Infra CommitId:      ${pn_infra_commitid}"
+  echo "Microsvc CommitId:   ${pn_microsvc_commitid}"
   echo "Microsvc Name:       ${microcvs_name}"
   echo "Env Name:            ${env_type}"
   echo "AWS region:          ${aws_region}"
@@ -135,6 +143,20 @@ echo " - copy pn-infra-confinfo config"
 if ( [ -d "${custom_config_dir}/pn-infra-confinfo" ] ) then
   cp -r $custom_config_dir/pn-infra-confinfo .
 fi
+
+echo "=== Download microservizio ${microcvs_name}"
+if ( [ ! -e ${microcvs_name} ] ) then
+  git clone "https://github.com/pagopa/${microcvs_name}.git"
+fi
+
+echo ""
+echo "=== Checkout ${microcvs_name} commitId=${pn_microsvc_commitid}"
+( cd ${microcvs_name} && git fetch && git checkout $pn_microsvc_commitid )
+echo " - copy custom config"
+if ( [ ! -z "${custom_config_dir}" ] ) then
+  cp -r $custom_config_dir/${microcvs_name} .
+fi
+
 
 
 echo ""
