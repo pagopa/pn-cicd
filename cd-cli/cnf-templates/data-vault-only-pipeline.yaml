@@ -439,7 +439,8 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"}
+                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1380,7 +1381,8 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"}
+                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1491,7 +1493,6 @@ Resources:
             build:
               commands:
                 - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
-                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
                 - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
                 - 'echo ""'
                 - 'echo ""'
@@ -1517,8 +1518,8 @@ Resources:
                 - 'echo "###       UPDATE INFRA    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
