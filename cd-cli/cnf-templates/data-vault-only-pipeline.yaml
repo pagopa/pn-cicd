@@ -439,6 +439,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"5", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
@@ -1175,6 +1176,7 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"5", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
