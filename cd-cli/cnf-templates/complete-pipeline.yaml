@@ -2090,6 +2090,13 @@ Resources:
               - iam:UntagRole
               - iam:ListRoleTags
               - iam:ListTagsForResource
+              - iam:RemoveRoleFromInstanceProfile
+              - iam:GetInstanceProfile
+              - iam:DeleteInstanceProfile
+              - iam:CreateInstanceProfile
+              - iam:ListInstanceProfiles
+              - iam:AddRoleToInstanceProfile
+              - iam:ListInstanceProfilesForRole
             Resource: "*"
           - Effect: Allow
             Action:
