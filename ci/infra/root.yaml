@@ -1417,6 +1417,20 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 10
 
+  # Progetto Zen Desk Auth con Lambda
+  PnZenDeskAuthLambda:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-zendesk-auth"
+        BaseDir: "functions"
+        GitHubDefaultBranch: "develop"
+        BaseDirEscaped: "functions"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 10
+
   # Progetti WebApp
   PnPaWebapp:
     Type: AWS::CloudFormation::Stack
