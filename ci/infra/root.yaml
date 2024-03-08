@@ -1418,12 +1418,12 @@ Resources:
       TimeoutInMinutes: 10
 
   # Progetto Zen Desk Auth con Lambda
-  PnZendDeskAuthLambda:
+  PnZenDeskAuthLambda:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
       Parameters:
-        GitHubProjectName: "pn-zenddesk-auth"
+        GitHubProjectName: "pn-zendesk-auth"
         BaseDir: "functions"
         GitHubDefaultBranch: "develop"
         BaseDirEscaped: "functions"
