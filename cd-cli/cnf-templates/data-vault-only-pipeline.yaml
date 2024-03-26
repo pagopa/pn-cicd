@@ -203,12 +203,12 @@ Resources:
                 - |
                   if ( [ "$PROJECT" = "pn-infra-confinfo" ] ) then
                     sed -i -e "s|pn_infra_confinfo_commitId=.*|pn_infra_confinfo_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-env-update-pipeline"
+                    export PIPELINE_NAME="pn-infra-update-pipeline"
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-infra" ] ) then
                     sed -i -e "s|pn_infra_commitId=.*|pn_infra_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-env-update-pipeline"
+                    export PIPELINE_NAME="pn-infra-update-pipeline"
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-data-vault" ] ) then
@@ -220,7 +220,7 @@ Resources:
                   if ( [ "$PROJECT" = "pn-logsaver-be" ] ) then
                     sed -i -e "s|pn_logsaver_be_commitId=.*|pn_logsaver_be_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_logsaver_be_imageUrl=.*|pn_logsaver_be_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-env-update-pipeline"
+                    export PIPELINE_NAME="pn-logsaver-be-update-pipeline"
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-ss" ] ) then 
@@ -425,8 +425,8 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
             
-            # Update pn-data-vault
-            - Name: Update_PnDataVault
+            # Update pn-infra
+            - Name: Update_Infrastructure
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -440,6 +440,30 @@ Resources:
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnInfraOutput
+              RunOrder: 3
+
+            # Update pn-data-vault
+            - Name: Update_PnDataVault
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"5", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
                   ]'
@@ -447,7 +471,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDataVaultOutput
-              RunOrder: 3
+              RunOrder: 4
             
             # Update pn-logsaver-be
             - Name: Update_LogsaverBe
@@ -1004,7 +1028,6 @@ Resources:
                 - Name: PnAddressManagerOutput
               RunOrder: 3
 
-
   PnCnDeployPipeline:
     Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
@@ -1094,6 +1117,277 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnCnOutput
+              RunOrder: 3
+
+  PnDataVaultDeployPipeline:
+    Condition: RequiresSingleProjects
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-data-vault-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-datavault
+            - Name: Update_PnDataVault
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"5", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnDataVaultOutput
+              RunOrder: 3
+
+  PnLogsaverBEDeployPipeline:
+    Condition: RequiresSingleProjects
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-logsaver-be-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-logsaver-be
+            - Name: Update_PnLogsaverBE
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"99", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnLogsaverBEOutput
+              RunOrder: 3
+
+  PnInfraDeployPipeline:
+    Condition: RequiresSingleProjects
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-infra-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update infra
+            - Name: Update_Infrastructure
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnInfraOutput
               RunOrder: 3
 
   # CODEBUILD used to download scripts
@@ -1199,7 +1493,6 @@ Resources:
             build:
               commands:
                 - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
-                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
                 - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
                 - 'echo ""'
                 - 'echo ""'
@@ -1222,11 +1515,11 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "########################################################"'
-                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "###       UPDATE INFRA    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployPnDataVault.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
