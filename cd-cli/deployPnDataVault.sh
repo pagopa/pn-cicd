@@ -208,6 +208,18 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   echo "PnCoreAwsAccountId  ${PnCoreAwsAccountId}"
 fi
 
+account_id=$(aws sts get-caller-identity --query Account --output text)
+bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
+file_env_name="runtime-variable.env"
+if aws s3api head-object --bucket ${bucket_env_path} --key ${microcvs_name}/${file_env_name} > /dev/null 2>&1; then
+    echo "File ${runtime-variable.env} already exists."
+else
+  touch ./runtime-variable.env
+  echo "Generating ${file_env_name}"
+  aws s3 cp ${file_env_name} s3://${bucket_env_path}/pn-mandate/
+  rm ./${file_env_name}
+fi
+
 echo ""
 echo ""
 echo ""
