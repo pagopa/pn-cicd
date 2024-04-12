@@ -193,4 +193,5 @@ aws ${aws_command_base_args} cloudformation deploy \
       --stack-name pn-opensearch-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file "$TemplateFilePath" \
+      --tags Microservice=pn-infra-logs \
       --parameter-overrides file://$(realpath $EnanchedParamFilePath)

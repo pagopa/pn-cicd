@@ -1523,6 +1523,7 @@ Resources:
               - codebuild:UpdateProject
               - codebuild:DeleteProject
               - codebuild:BatchGetProjects
+              - codebuild:*Tags*
 
           - Effect: Allow
             Action:
@@ -1727,6 +1728,7 @@ Resources:
               - s3:DeleteBucketPolicy
               - s3:GetBucketLocation
               - s3:DeleteBucket
+              - s3:*Tags*
               - "s3-object-lambda:Get*"
               - "s3-object-lambda:List*"               
             Resource: arn:aws:s3:::*
@@ -1770,6 +1772,7 @@ Resources:
               - "kinesis:UpdateShardCount"
               - "kinesis:DescribeLimits"
               - "kinesis:DisableEnhancedMonitoring"
+              - "kinesis:*Tags*"
             Resource: "*"
           - Effect: Allow
             Action:
@@ -1789,6 +1792,7 @@ Resources:
               - sqs:DeleteQueue
               - sqs:CreateQueue
               - sqs:SetQueueAttributes
+              - sqs:*Tags*
             Resource: !Sub arn:aws:sqs:*:${AWS::AccountId}:*
           - Effect: Allow
             Action: sqs:ListQueues
@@ -1851,6 +1855,7 @@ Resources:
               - dynamodb:UpdateGlobalTableVersion
               - dynamodb:CreateGlobalTable
               - dynamodb:DeleteBackup
+              - dynamodb:*Tags*
             Resource:
               - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/backup/*
               - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/import/*
@@ -1922,6 +1927,7 @@ Resources:
               - firehose:TagDeliveryStream
               - firehose:UpdateDestination
               - firehose:UntagDeliveryStream
+              - firehose:*Tags*
             Resource: !Sub arn:aws:firehose:*:${AWS::AccountId}:deliverystream/*
           - Effect: Allow
             Action: firehose:ListDeliveryStreams
@@ -1940,6 +1946,7 @@ Resources:
               - backup:GetBackupSelection
               - backup:UpdateBackupPlan
               - backup:PutBackupVault*
+              - backup:*Tags*
               - backup-storage:*
             Resource: "*"
 
@@ -1961,13 +1968,15 @@ Resources:
               - application-autoscaling:DescribeScalingPolicies
               - application-autoscaling:PutScalingPolicy
               - application-autoscaling:RegisterScalableTarget
-              - application-autoscaling:DescribeScheduledActions              
+              - application-autoscaling:DescribeScheduledActions     
+              - application-autoscaling:*Tags*         
               - autoscaling:CreateAutoScalingGroup
               - autoscaling:CreateLaunchConfiguration
               - autoscaling:DeleteAutoScalingGroup
               - autoscaling:DeleteLaunchConfiguration
               - autoscaling:Describe*
               - autoscaling:UpdateAutoScalingGroup
+              - autoscaling:*Tags*
               - batch:*
               - cloudformation:CreateStack
               - cloudformation:DeleteStack
@@ -1999,6 +2008,7 @@ Resources:
               - codedeploy:ListDeploymentTargets
               - codedeploy:RegisterApplicationRevision
               - codedeploy:StopDeployment
+              - codedeploy:*Tags*
               - ec2:AssociateRouteTable
               - ec2:AttachInternetGateway
               - ec2:AuthorizeSecurityGroupIngress
@@ -2029,6 +2039,7 @@ Resources:
               - elasticfilesystem:UntagResource
               - elasticfilesystem:ListTagsForResource
               - elasticfilesystem:DescribeFileSystemPolicy
+              - elasticfilesystem:*Tags*
               - elasticloadbalancing:CreateListener
               - elasticloadbalancing:CreateLoadBalancer
               - elasticloadbalancing:CreateRule
@@ -2052,13 +2063,16 @@ Resources:
               - pipes:CreatePipe 
               - pipes:UpdatePipe               
               - pipes:DescribePipe               
-              - pipes:ListPipes               
+              - pipes:ListPipes     
+              - pipes:*Tags*          
               - fsx:DescribeFileSystems
+              - fsx:*Tags*
               - iam:ListAttachedRolePolicies
               - iam:ListInstanceProfiles
               - iam:ListRoles
               - iam:PassRole
               - lambda:ListFunctions
+              - lambda:*Tags*
               - logs:CreateLogGroup
               - logs:DescribeLogGroups
               - logs:FilterLogEvents
@@ -2067,6 +2081,7 @@ Resources:
               - route53:GetHealthCheck
               - route53:GetHostedZone
               - route53:ListHostedZonesByName
+              - route53:*Tags*
               - servicediscovery:CreatePrivateDnsNamespace
               - servicediscovery:CreateService
               - servicediscovery:DeleteService
@@ -2076,9 +2091,11 @@ Resources:
               - servicediscovery:ListNamespaces
               - servicediscovery:ListServices
               - servicediscovery:UpdateService
+              - servicediscovery:*Tags*
               - sns:ListTopics
               - elasticloadbalancing:DescribeRules
               - secretsmanager:ListSecrets
+              - secretsmanager:*Tags*
               - events:Put*
               - events:List*
               - events:Remove*
@@ -2089,6 +2106,7 @@ Resources:
               - ssm:GetParameter
               - ssm:GetParameters
               - ssm:GetParametersByPath
+              - ssm:*Tags*
             Resource: arn:aws:ssm:*:*:parameter/aws/service/ecs*
           - Effect: Allow
             Action:
@@ -2175,6 +2193,7 @@ Resources:
               - cloudfront:CreateFunction
               - cloudfront:CreateCloudFrontOriginAccessIdentity
               - elasticloadbalancing:DescribeLoadBalancers
+              - elasticloadbalancing:*Tags*
               - cloudfront:GetDistribution
               - cloudfront:UpdateFunction
               - cloudfront:GetCloudFrontOriginAccessIdentity
@@ -2186,15 +2205,18 @@ Resources:
               - acm:RequestCertificate
               - acm:DeleteCertificate	
               - acm:RemoveTagsFromCertificate
+              - acm:*Tags*
               - cloudfront:UpdateDistribution
               - cloudfront:UpdateCloudFrontOriginAccessIdentity
               - cloudfront:GetDistributionConfig
               - cloudfront:CreateInvalidation
               - waf:GetWebACL
+              - waf:*Tags*
               - cloudfront:UntagResource
               - cloudfront:GetCloudFrontOriginAccessIdentityConfig
               - cloudfront:PublishFunction
               - sns:ListSubscriptionsByTopic
+              - sns:*Tags*
               - cloudfront:TagResource
               - cloudfront:ListDistributionsByLambdaFunction
               - cloudfront:CreateDistribution
@@ -2203,6 +2225,7 @@ Resources:
               - cloudfront:ListDistributions
               - cloudfront:DeleteDistribution
               - cloudfront:DeleteFunction
+              - cloudfront:*Tags*
             Resource: "*"
           - Effect: Allow
             Action: s3:PutBucketPolicy
@@ -2220,6 +2243,7 @@ Resources:
               - apigateway:POST
               - apigateway:GET
               - apigateway:RemoveCertificateFromDomain
+              - apigateway:*Tags*
             Resource: "*"
           - Effect: Allow
             Action:
@@ -2235,6 +2259,7 @@ Resources:
               - wafv2:UpdateWebACL
               - wafv2:GetWebACL
               - wafv2:CreateWebACL
+              - wafv2:*Tags*
             Resource: "*"
 
   CodeBuildPolicyEventLogs:
@@ -2252,6 +2277,7 @@ Resources:
               - cloudwatch:PutDashboard
               - cloudwatch:DeleteDashboards
               - cloudwatch:GetDashboard
+              - cloudwatch:*Tags*
             Resource:
               - !Sub arn:aws:cloudwatch:*:${AWS::AccountId}:alarm:*
               - !Sub arn:aws:cloudwatch::${AWS::AccountId}:dashboard/*
@@ -2259,10 +2285,14 @@ Resources:
             Action: cloudwatch:ListDashboards
             Resource: "*"
           - Effect: Allow
-            Action: events:DescribeRule
+            Action: 
+              - events:DescribeRule
+              - events:*Tags*
             Resource: !Sub arn:aws:events:*:${AWS::AccountId}:rule/*/*
           - Effect: Allow
-            Action: events:DescribeRule
+            Action: 
+              - events:DescribeRule
+              - events:*Tags*
             Resource: !Sub arn:aws:events:*:${AWS::AccountId}:rule/*
           - Effect: Allow
             Action:
@@ -2274,6 +2304,7 @@ Resources:
               - logs:CreateLogGroup
               - logs:Put*
               - logs:Delete*
+              - logs:*Tags*
             Resource: "*"
           - Effect: Allow
             Action:
@@ -2286,6 +2317,7 @@ Resources:
               - dynamodb:Enable*
               - dynamodb:DescribeKinesisStreamingDestination
               - dynamodb:DisableKinesisStreamingDestination
+              - dybamodb:*Tags*
             Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
           - Effect: Allow
             Action:
@@ -2327,6 +2359,7 @@ Resources:
               - iam:DeletePolicyVersion
               - iam:SetDefaultPolicyVersion
               - iam:ListPolicyVersions
+              - iam:*Tags*
             Resource: !Sub arn:aws:iam::${AWS::AccountId}:policy/*
           - Effect: Allow
             Action:
@@ -2376,6 +2409,7 @@ Resources:
               - "kms:CreateKey"
               - "kms:ConnectCustomKeyStore"
               - "kms:CreateCustomKeyStore"
+              - "kms:*Tags*"
             Resource: "*"
 
   CodeBuildNetworking:
@@ -2538,6 +2572,7 @@ Resources:
               - ec2:UnassignPrivateIpAddresses
               - ec2:UpdateSecurityGroupRuleDescriptionsEgress
               - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+              - ec2:*Tags*
             Resource: "*"
             Effect: Allow
 

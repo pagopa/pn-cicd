@@ -255,4 +255,5 @@ aws ${aws_command_base_args} cloudformation deploy \
       --stack-name pn-logs-export-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM \
       --template-file "$TemplateFilePath" \
+      --tags Microservice=pn-infra-logs \
       --parameter-overrides file://$(realpath $EnanchedParamFilePath)
