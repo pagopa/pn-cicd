@@ -785,30 +785,30 @@ Resources:
                 - Name: PnDowntimeLogsOutput
               RunOrder: 3
             
-            # Update pn-radd-fsu
-            - Name: Update_RaddFsu
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-                PrimarySource: DesiredCommitIdsAndScripts
-                EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
-                    {"name":"MsName", "value":"pn-radd-fsu", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"9", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_radd_fsu", "type":"PLAINTEXT"}
-                  ]'
-              InputArtifacts:
-                - Name: DesiredCommitIdsAndScripts
-              OutputArtifacts:
-                - Name: PnRaddFsuOutput
-              RunOrder: 3
+            # # Update pn-radd-fsu
+            # - Name: Update_RaddFsu
+            #   ActionTypeId:
+            #     Category: Build
+            #     Owner: AWS
+            #     Version: 1
+            #     Provider: CodeBuild
+            #   Configuration:
+            #     ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+            #     PrimarySource: DesiredCommitIdsAndScripts
+            #     EnvironmentVariables: !Sub '[
+            #         {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+            #         {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+            #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+            #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+            #         {"name":"MsName", "value":"pn-radd-fsu", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"9", "type":"PLAINTEXT"},
+            #         {"name":"VarPrefix", "value":"pn_radd_fsu", "type":"PLAINTEXT"}
+            #       ]'
+            #   InputArtifacts:
+            #     - Name: DesiredCommitIdsAndScripts
+            #   OutputArtifacts:
+            #     - Name: PnRaddFsuOutput
+            #   RunOrder: 3
             
             # Update pn-logsaver-be
             - Name: Update_LogsaverBe
@@ -960,6 +960,31 @@ Resources:
                 - Name: PnProgressionSensorOutput
               RunOrder: 3
 
+            # Update pn-zendesk-auth
+            - Name: Update_ZendeskAuth
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMultiLambdaServiceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-zendesk-auth", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"0", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_zendesk_auth", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnZendeskAuthOutput
+              RunOrder: 3
+
             # Update pn-logextractor-be
             - Name: Update_LogextractorBe
               ActionTypeId:
@@ -1033,6 +1058,31 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnServiceDeskOutput
+              RunOrder: 3
+
+            # Update pn-radd-alt
+            - Name: Update_PnRaddAlt
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-radd-alt", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"20", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_radd_alt", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnRaddAltOutput
               RunOrder: 3
 
             # Update Frontend
