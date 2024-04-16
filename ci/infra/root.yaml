@@ -212,6 +212,17 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 5
+  PnLollipopClientCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-lollipop-client"
+        GitHubDefaultBranch: "develop"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
   PnF24LibCI:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -245,6 +256,50 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 5
+  PnEcArubaPecCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-ec-aruba-pec"
+        GitHubDefaultBranch: "develop"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5      
+  PnSsArubaSignCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-ss-aruba-sign"
+        GitHubDefaultBranch: "develop"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5 
+  PnEcNamirialPecCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-ec-namirial-pec"
+        GitHubDefaultBranch: "develop"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5      
+  PnSsNamirialSignCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-ss-namirial-sign"
+        GitHubDefaultBranch: "develop"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5            
   # Progetti docker
   PnDeliveryCI:
     Type: AWS::CloudFormation::Stack
@@ -1399,6 +1454,20 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-auth-fleet"
+        BaseDir: "functions"
+        GitHubDefaultBranch: "develop"
+        BaseDirEscaped: "functions"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 10
+
+  # Progetto Zen Desk Auth con Lambda
+  PnZenDeskAuthLambda:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-zendesk-auth"
         BaseDir: "functions"
         GitHubDefaultBranch: "develop"
         BaseDirEscaped: "functions"
