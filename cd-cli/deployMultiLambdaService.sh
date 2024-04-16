@@ -203,6 +203,14 @@ aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}/" \
       "s3://$bucketName/${bucketBasePath}/"
 
+
+echo ""
+echo "=== Upload microservice files to bucket"
+microserviceBucketS3BaseUrl="s3://${bucketName}/${bucketBasePath}"
+aws ${aws_command_base_args} \
+    s3 cp "${repo_name}/" $microserviceBucketS3BaseUrl \
+      --recursive --exclude ".git/*" --exclude "functions/*"
+
 MicroserviceNumber=0
 
 echo ""
