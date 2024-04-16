@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-    
+
 set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 
@@ -13,8 +13,8 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] -n <microcvs-name> -N <microcvs-idx> [-p <aws-profile>] -r  <aws-region> -e <env-type> -i <pn-infra-github-commitid> -m <pn-microsvc-github-commitid> -I <countainer-image-uri> [-c <custom_config_dir>]
-    
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] -n <microcvs-name> [-p <aws-profile>] -r  <aws-region> -e <env-type> -i <pn-infra-github-commitid> -m <pn-microsvc-github-commitid> [-c <custom_config_dir>]
+
     [-h]                             : this help message
     [-v]                             : verbose mode
     [-p <aws-profile>]               : aws cli profile (optional)
@@ -25,8 +25,6 @@ usage() {
     [-c <custom_config_dir>]         : where tor read additional env-type configurations
     -b <artifactBucketName>          : bucket name to use as temporary artifacts storage
     -n <microcvs-name>               : nome del microservizio
-    -N <microcvs-idx>                : id del microservizio
-    -I <image-uri>                   : url immagine docker microservizio
 
 EOF
   exit 1
@@ -49,19 +47,19 @@ parse_params() {
     case "${1-}" in
     -h | --help) usage ;;
     -v | --verbose) set -x ;;
-    -p | --profile) 
+    -p | --profile)
       aws_profile="${2-}"
       shift
       ;;
-    -r | --region) 
+    -r | --region)
       aws_region="${2-}"
       shift
       ;;
-    -e | --env-name) 
+    -e | --env-name)
       env_type="${2-}"
       shift
       ;;
-    -i | --infra-commitid) 
+    -i | --infra-commitid)
       pn_infra_commitid="${2-}"
       shift
       ;;
@@ -71,10 +69,6 @@ parse_params() {
       ;;
     -n | --ms-name)
       microcvs_name="${2-}"
-      shift
-      ;;
-    -N | --ms-number)
-      MicroserviceNumber="${2-}"
       shift
       ;;
     -c | --custom-config-dir)
@@ -87,10 +81,6 @@ parse_params() {
       ;;
     -b | --bucket-name)
       bucketName="${2-}"
-      shift
-      ;;
-    -I | --container-image-url)
-      ContainerImageUri="${2-}"
       shift
       ;;
     -?*) die "Unknown option: $1" ;;
@@ -107,9 +97,7 @@ parse_params() {
   [[ -z "${pn_microsvc_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
-  [[ -z "${ContainerImageUri-}" ]] && usage
   [[ -z "${microcvs_name-}" ]] && usage
-  [[ -z "${MicroserviceNumber-}" ]] && usage
   return 0
 }
 
@@ -123,12 +111,10 @@ dump_params(){
   echo "Infra CommitId:      ${pn_infra_commitid}"
   echo "Microsvc CommitId:   ${pn_microsvc_commitid}"
   echo "Microsvc Name:       ${microcvs_name}"
-  echo "Microsvc Idx:        ${MicroserviceNumber}"
   echo "Env Name:            ${env_type}"
   echo "AWS region:          ${aws_region}"
   echo "AWS profile:         ${aws_profile}"
   echo "Bucket Name:         ${bucketName}"
-  echo "Container image URL: ${ContainerImageUri}"
 }
 
 
@@ -239,7 +225,7 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   echo "======================================================================="
   echo "======================================================================="
   echo "===                                                                 ==="
-  echo "===                       INFRA-STORAGE DEPLOYMENT               ==="
+  echo "===                       INFRA-STORAGE DEPLOYMENT                  ==="
   echo "===                                                                 ==="
   echo "======================================================================="
   echo "======================================================================="
@@ -338,7 +324,7 @@ echo "= Read Outputs from previous stack"
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra.yml
 EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
@@ -446,46 +432,6 @@ else
   echo "${DATA_MONITORING_STACK_FILE} file doesn't exist, stack update skipped"
 fi
 
-echo ""
-echo "=== Deploy PN-Cost-Saving FOR $env_type ACCOUNT"
-COST_SAVING_STACK_FILE=pn-infra/runtime-infra/pn-cost-saving.yaml
-
-if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
-    echo "$COST_SAVING_STACK_FILE exists, updating pn-cost-saving stack"
-
-    echo ""
-    echo "= Read Outputs from previous stack"
-    aws ${aws_command_base_args}  \
-        cloudformation describe-stacks \
-          --stack-name infra-$env_type \
-          --query "Stacks[0].Outputs" \
-          --output json \
-          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-          | tee ${PreviousOutputFilePath}
-
-    echo ""
-    echo "= Read Parameters file"
-    cat ${ParamFilePath} 
-
-    echo ""
-    echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
-      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
-      > ${EnanchedParamFilePath}
-    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
-    cat ${EnanchedParamFilePath}
-
-    aws ${aws_command_base_args} \
-        cloudformation deploy \
-          --stack-name pn-cost-saving-$env_type \
-          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-          --template-file ${COST_SAVING_STACK_FILE} \
-          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
-
-else
-  echo "${COST_SAVING_STACK_FILE} file doesn't exist, stack update skipped"
-fi
-
 MONITORING_STACK_FILE=${microcvs_name}/scripts/aws/cfn/infra-monitoring.yaml
 if [[ -f "$MONITORING_STACK_FILE" ]]; then
     echo "$MONITORING_STACK_FILE exists, updating monitoring stack"
@@ -522,149 +468,3 @@ if [[ -f "$MONITORING_STACK_FILE" ]]; then
 else
   echo "Backup file doesn't exist, stack update skipped"
 fi
-
-
-echo ""
-echo ""
-echo ""
-echo "======================================================================="
-echo "======================================================================="
-echo "===                                                                 ==="
-echo "===                $microcvs_name STORAGE DEPLOYMENT                ==="
-echo "===                                                                 ==="
-echo "======================================================================="
-echo "======================================================================="
-echo ""
-echo ""
-echo ""
-echo "=== Prepare parameters for $microcvs_name storage deployment in $env_type ACCOUNT"
-PreviousOutputFilePath=infra-$env_type-out.json
-TemplateFilePath=${microcvs_name}/scripts/aws/cfn/storage.yml
-EnanchedParamFilePath=${microcvs_name}-storage-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
-
-echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
-echo " - TemplateFilePath: ${TemplateFilePath}"
-echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
-echo " - PipelineParams: ${PipelineParams}"
-
-
-echo ""
-echo "= Read Outputs from previous stack"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name infra-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${PreviousOutputFilePath}
-
-echo ""
-echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } " ${PreviousOutputFilePath} \
-   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
-   > ${EnanchedParamFilePath}
-echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
-cat ${EnanchedParamFilePath}
-
-
-echo ""
-echo "=== Deploy $microcvs_name STORAGE FOR $env_type ACCOUNT"
-aws ${aws_command_base_args} \
-    cloudformation deploy \
-      --stack-name ${microcvs_name}-storage-$env_type \
-      --capabilities CAPABILITY_NAMED_IAM \
-      --template-file ${TemplateFilePath} \
-      --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
-
-
-
-
-
-
-
-
-
-
-echo ""
-echo ""
-echo ""
-echo "======================================================================="
-echo "======================================================================="
-echo "===                                                                 ==="
-echo "===              $microcvs_name MICROSERVICE DEPLOYMENT              ==="
-echo "===                                                                 ==="
-echo "======================================================================="
-echo "======================================================================="
-echo ""
-echo ""
-echo ""
-echo "=== Prepare parameters for $microcvs_name microservice deployment in $env_type ACCOUNT"
-PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
-InfraOnceOutputFilePath=infra-$env_type-out.json
-TemplateFilePath=${microcvs_name}/scripts/aws/cfn/microservice.yml
-ParamFilePath=${microcvs_name}/scripts/aws/cfn/microservice-${env_type}-cfg.json
-EnanchedParamFilePath=${microcvs_name}-microservice-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
-     \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
-     \"ContainerImageUri=${ContainerImageUri}\",\
-     \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
-
-echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
-echo " - InfraOnceOutputFilePath: ${InfraOnceOutputFilePath}"
-echo " - TemplateFilePath: ${TemplateFilePath}"
-echo " - ParamFilePath: ${ParamFilePath}"
-echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
-echo " - PipelineParams: ${PipelineParams}"
-
-
-echo ""
-echo "= Read Outputs from previous stack"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name ${microcvs_name}-storage-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${PreviousOutputFilePath}
-
-echo ""
-echo "= Read Outputs from infrastructure stack"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name infra-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${InfraOnceOutputFilePath}
-
-echo ""
-echo "= Read Parameters file"
-cat ${ParamFilePath}
-
-echo ""
-echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * .[1] * { \"Parameters\": .[2] }" \
-   ${PreviousOutputFilePath} ${ParamFilePath} ${InfraOnceOutputFilePath} \
-   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
-   > ${EnanchedParamFilePath}
-echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
-cat ${EnanchedParamFilePath}
-
-
-echo ""
-echo "=== Deploy $microcvs_name MICROSERVICE FOR $env_type ACCOUNT"
-aws ${aws_command_base_args} \
-    cloudformation deploy \
-      --stack-name ${microcvs_name}-microsvc-$env_type \
-      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-      --template-file ${TemplateFilePath} \
-      --s3-bucket ${bucketName} \
-      --s3-prefix cfn \
-      --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
-
-
-
-
-
-
