@@ -25,7 +25,7 @@ EOF
 
 parse_params() {
   # default values of variables set from params
-  project_name=$HOME
+  project_name="pn"
   aws_region=""
   microcvs_name=""
 
