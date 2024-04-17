@@ -236,7 +236,7 @@ aws ${aws_command_base_args} \
       --recursive --exclude ".git/*"
 
 echo "Environment variables file creation"
-(cd ../commons && ./runtime-env-file-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
+(cd ${cwdir}/../commons && ./runtime-env-file-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
 
 echo ""
 echo "=== Upload microservice files to bucket"
