@@ -179,7 +179,7 @@ _clone_repository(){
 parse_params "$@"
 dump_params
 
-
+cwdir=$(pwd)
 cd $work_dir
 
 echo "=== Download pn-infra" 
@@ -234,6 +234,9 @@ echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
+
+echo "Environment variables file creation"
+(cd ${cwdir}/commons && ./runtime-env-file-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
 
 echo ""
 echo "=== Upload microservice files to bucket"
