@@ -137,7 +137,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
-
+cwdir=$(pwd)
 cd $work_dir
 
 echo "=== Download pn-infra"
@@ -209,7 +209,7 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
 fi
 
 echo "Environment variables file creation"
-(cd ../commons && ./runrime-env-file-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
+(cd ${cwdir}/../commons && ./runtime-env-file-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
 
 echo ""
 echo ""
