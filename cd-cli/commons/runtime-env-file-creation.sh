@@ -70,6 +70,16 @@ dump_params(){
 
 parse_params "$@"
 dump_params
+declare -A components_map
+
+components_map["pn-ec"]="pn-external-channel"
+components_map["pn-ss"]="pn-safe-storage"
+components_map["pn-statemachinemanager"]="pn-state-machine-manager"
+components_map["pn-data-vault"]="pn-data-vault-sep"
+
+if [[ -n ${components_map[${microcvs_name}]+_} ]]; then
+    microcvs_name=${components_map[${microcvs_name}]}
+fi
 
 account_id=$(aws sts get-caller-identity --query Account --output text)
 bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
