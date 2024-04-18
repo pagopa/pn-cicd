@@ -1957,6 +1957,10 @@ Resources:
               - logs:PutLogEvents
             Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
           - Effect: Allow
+            Action:
+              - "cloudtrail:*Trail*"
+            Resource: "*"
+          - Effect: Allow
             Action: secretsmanager:GetSecretValue
             Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*
           - Effect: Allow
