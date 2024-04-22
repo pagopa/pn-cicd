@@ -1518,8 +1518,8 @@ Resources:
                 - 'echo "###       UPDATE INFRA    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'

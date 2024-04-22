@@ -83,6 +83,10 @@ parse_params() {
       bucketName="${2-}"
       shift
       ;;
+    -B | --lambda-bucket-name) 
+      LambdasBucketName="${2-}"
+      shift
+      ;;
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -98,6 +102,7 @@ parse_params() {
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
   [[ -z "${microcvs_name-}" ]] && usage
+  [[ -z "${LambdasBucketName-}" ]] && usage
   return 0
 }
 
@@ -115,6 +120,7 @@ dump_params(){
   echo "AWS region:          ${aws_region}"
   echo "AWS profile:         ${aws_profile}"
   echo "Bucket Name:         ${bucketName}"
+  echo "Lambdas Bucket Name: ${LambdasBucketName}"
 }
 
 
@@ -157,6 +163,25 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/${microcvs_name} .
 fi
 
+
+echo " - Copy Lambdas zip"
+lambdasZip='functions.zip'
+lambdasLocalPath='functions'
+repo_name='pn-infra'
+
+aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+      --bucket "$LambdasBucketName" --key "${repo_name}/commits/${pn_infra_commitid}/${lambdasZip}" \
+      "${lambdasZip}"
+
+unzip ${lambdasZip} -d ./${lambdasLocalPath}
+
+bucketBasePath="${repo_name}/${pn_infra_commitid}"
+aws ${aws_command_base_args} s3 cp --recursive \
+      "${lambdasLocalPath}/" \
+      "s3://$bucketName/${bucketBasePath}/"
+
+# delete functions folder
+rm -rf ${lambdasLocalPath} 
 
 
 echo ""
@@ -324,7 +349,7 @@ echo "= Read Outputs from previous stack"
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra.yml
 EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},\"BucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",pn_infra_commitId=${pn_infra_commitid}\""
 
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
