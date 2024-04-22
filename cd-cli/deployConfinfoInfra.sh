@@ -275,7 +275,7 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   PreviousOutputFilePath=once4account-${env_type}-out.json
   TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra-storage.yaml
   EnanchedParamFilePath=infra-storage-${env_type}-cfg-enanched.json
-  PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},\"pn_infra_commitId=${pn_infra_commitid}\""
+  PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
   echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
   echo " - TemplateFilePath: ${TemplateFilePath}"
@@ -349,7 +349,7 @@ echo "= Read Outputs from previous stack"
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra.yml
 EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},\"CdBucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",pn_infra_commitId=${pn_infra_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"CdBucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
