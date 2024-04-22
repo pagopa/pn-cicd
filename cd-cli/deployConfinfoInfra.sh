@@ -164,6 +164,32 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
 fi
 
 
+echo ""
+echo "=== Base AWS command parameters"
+aws_command_base_args=""
+if ( [ ! -z "${aws_profile}" ] ) then
+  aws_command_base_args="${aws_command_base_args} --profile $aws_profile"
+fi
+if ( [ ! -z "${aws_region}" ] ) then
+  aws_command_base_args="${aws_command_base_args} --region  $aws_region"
+fi
+echo ${aws_command_base_args}
+
+templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
+templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
+echo " - Bucket Name: ${bucketName}"
+echo " - Bucket Template S3 Url: ${templateBucketS3BaseUrl}"
+echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
+
+
+
+echo ""
+echo "=== Upload files to bucket"
+aws ${aws_command_base_args} \
+    s3 cp pn-infra $templateBucketS3BaseUrl \
+      --recursive --exclude ".git/*"
+
+
 echo " - Copy Lambdas zip"
 lambdasZip='functions.zip'
 lambdasLocalPath='functions'
@@ -183,32 +209,6 @@ aws ${aws_command_base_args} s3 cp --recursive \
 # delete functions folder
 rm -rf ${lambdasLocalPath} 
 
-
-echo ""
-echo "=== Base AWS command parameters"
-aws_command_base_args=""
-if ( [ ! -z "${aws_profile}" ] ) then
-  aws_command_base_args="${aws_command_base_args} --profile $aws_profile"
-fi
-if ( [ ! -z "${aws_region}" ] ) then
-  aws_command_base_args="${aws_command_base_args} --region  $aws_region"
-fi
-echo ${aws_command_base_args}
-
-
-templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
-templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
-echo " - Bucket Name: ${bucketName}"
-echo " - Bucket Template S3 Url: ${templateBucketS3BaseUrl}"
-echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
-
-
-
-echo ""
-echo "=== Upload files to bucket"
-aws ${aws_command_base_args} \
-    s3 cp pn-infra $templateBucketS3BaseUrl \
-      --recursive --exclude ".git/*"
 
 TERRAFORM_PARAMS_FILEPATH=pn-infra-confinfo/terraform-${env_type}-cfg.json
 TmpFilePath=terraform-merge-${env_type}-cfg.json
@@ -349,7 +349,7 @@ echo "= Read Outputs from previous stack"
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra.yml
 EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},\"BucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",pn_infra_commitId=${pn_infra_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},\"CdBucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",pn_infra_commitId=${pn_infra_commitid}\""
 
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
