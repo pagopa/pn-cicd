@@ -137,7 +137,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
-
+cwdir=$(pwd)
 cd $work_dir
 
 echo "=== Download pn-infra"
@@ -207,6 +207,9 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   PnCoreAwsAccountId=$(cat $TERRAFORM_PARAMS_FILEPATH | jq -r '.Parameters.PnCoreAwsAccountId')
   echo "PnCoreAwsAccountId  ${PnCoreAwsAccountId}"
 fi
+
+echo "Environment variables file creation"
+(cd ${cwdir}/commons && ./runtime-env-file-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
 
 echo ""
 echo ""
