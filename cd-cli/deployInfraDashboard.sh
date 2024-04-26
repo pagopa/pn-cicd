@@ -251,4 +251,5 @@ aws ${aws_command_base_args} cloudformation deploy \
       --stack-name pn-infra-dashboard-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file "$TemplateFilePath" \
+      --tags Microservice=pn-infra-monitoring \
       --parameter-overrides file://$(realpath $EnanchedParamFilePath)

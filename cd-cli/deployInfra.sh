@@ -282,6 +282,7 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
         --stack-name pn-infra-storage-$env_type \
         --capabilities CAPABILITY_NAMED_IAM \
         --template-file pn-infra/runtime-infra/pn-infra-storage.yaml \
+        --tags Microservice=pn-infra-logs \
         --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
   
   INFRA_INPUT_STACK=pn-infra-storage-${env_type}
@@ -356,6 +357,7 @@ aws ${aws_command_base_args} \
       --stack-name pn-infra-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \
       --template-file pn-infra/runtime-infra/pn-infra.yaml \
+      --tags Microservice=pn-infra-networking \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
         
 
@@ -555,6 +557,7 @@ if [[ -f "$MONITORING_STACK_FILE" ]]; then
           --stack-name pn-monitoring-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${MONITORING_STACK_FILE} \
+          --tags Microservice=pn-infra-monitoring \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 else
@@ -596,6 +599,7 @@ if [[ -f "$BACKUP_STACK_FILE" ]]; then
           --stack-name pn-dynamodb-backup-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${BACKUP_STACK_FILE} \
+          --tags Microservice=pn-infra-backup \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 else
@@ -636,6 +640,7 @@ if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
           --stack-name pn-data-monitoring-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${DATA_MONITORING_STACK_FILE} \
+          --tags Microservice=pn-infra-data-monitoring \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 else
@@ -676,6 +681,7 @@ if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
           --stack-name pn-cost-saving-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${COST_SAVING_STACK_FILE} \
+          --tags Microservice=pn-infra-cost-saving \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 else
@@ -717,6 +723,7 @@ if [[ -f "$CN_STACK_FILE" ]]; then
           --stack-name pn-cn-infra-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${CN_STACK_FILE} \
+          --tags Microservice=pn-cn \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 else

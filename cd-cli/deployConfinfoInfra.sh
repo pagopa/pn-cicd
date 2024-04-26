@@ -313,6 +313,7 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
       cloudformation deploy \
         --stack-name infra-storage-$env_type \
         --capabilities CAPABILITY_NAMED_IAM \
+        --tags Microservice=pn-infra-logs \
         --template-file ${microcvs_name}/scripts/aws/cfn/infra-storage.yaml \
         --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
@@ -373,6 +374,7 @@ aws ${aws_command_base_args}  \
     cloudformation deploy \
       --stack-name infra-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \
+      --tags "Microservice=pn-infra-networking" \
       --template-file ${microcvs_name}/scripts/aws/cfn/infra.yml \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
@@ -410,6 +412,7 @@ if [[ -f "$BACKUP_STACK_FILE" ]]; then
         cloudformation deploy \
           --stack-name pn-dynamodb-backup-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --tags Microservice=pn-infra-backup \
           --template-file ${BACKUP_STACK_FILE} \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
@@ -450,6 +453,7 @@ if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
         cloudformation deploy \
           --stack-name pn-data-monitoring-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --tags Microservice=pn-infra-data-monitoring \
           --template-file ${DATA_MONITORING_STACK_FILE} \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
@@ -490,6 +494,7 @@ if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
         cloudformation deploy \
           --stack-name pn-cost-saving-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --tags Microservice=pn-infra-cost-saving \
           --template-file ${COST_SAVING_STACK_FILE} \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
@@ -527,6 +532,7 @@ if [[ -f "$MONITORING_STACK_FILE" ]]; then
         cloudformation deploy \
           --stack-name pn-infra-monitoring-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --tags Microservice=pn-infra-monitoring \
           --template-file ${MONITORING_STACK_FILE} \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 

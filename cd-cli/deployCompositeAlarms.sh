@@ -177,6 +177,7 @@ aws ${aws_command_base_args} cloudformation deploy \
       --stack-name pn-aggregate-alarm-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file pn-infra/runtime-infra/pn-aggregate-alarms.yaml \
+      --tags Microservice=pn-infra-monitoring \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
         AlarmSNSTopicArn="$AlarmSNSTopicArn" \

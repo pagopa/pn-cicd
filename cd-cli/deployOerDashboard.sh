@@ -246,6 +246,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
         --stack-name pn-oer-dashboard-${env_type} \
         --capabilities CAPABILITY_NAMED_IAM \
         --template-file pn-infra/runtime-infra/pn-oer-dashboard.yaml \
+        --tags Microservice=pn-infra-monitoring \
         --parameter-overrides \
             ProjectName=${project_name} \
             Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}" \

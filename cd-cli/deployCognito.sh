@@ -178,4 +178,5 @@ aws ${aws_command_base_args} cloudformation deploy \
       --stack-name pn-cognito-${env_type} \
       --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file "$TemplateFilePath" \
+      --tags Microservice=pn-logextractor-be \
       --parameter-overrides file://$(realpath $EnanchedParamFilePath)
