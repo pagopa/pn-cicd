@@ -2398,6 +2398,8 @@ Resources:
               - events:Put*
               - events:List*
               - events:Remove*
+              - events:*Tag*
+              - events:*tag*
             Resource:
               - "*"
           - Effect: Allow
@@ -2587,11 +2589,13 @@ Resources:
             Action: 
               - events:DescribeRule
               - events:*Tag*
+              - events:*tag*
             Resource: !Sub arn:aws:events:*:${AWS::AccountId}:rule/*/*
           - Effect: Allow
             Action: 
               - events:DescribeRule
               - events:*Tag*
+              - events:*tag*              
             Resource: !Sub arn:aws:events:*:${AWS::AccountId}:rule/*
           - Effect: Allow
             Action:
