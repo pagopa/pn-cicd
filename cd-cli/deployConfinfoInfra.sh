@@ -83,6 +83,10 @@ parse_params() {
       bucketName="${2-}"
       shift
       ;;
+    -B | --lambda-bucket-name) 
+      LambdasBucketName="${2-}"
+      shift
+      ;;
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -98,6 +102,7 @@ parse_params() {
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
   [[ -z "${microcvs_name-}" ]] && usage
+  [[ -z "${LambdasBucketName-}" ]] && usage
   return 0
 }
 
@@ -115,6 +120,7 @@ dump_params(){
   echo "AWS region:          ${aws_region}"
   echo "AWS profile:         ${aws_profile}"
   echo "Bucket Name:         ${bucketName}"
+  echo "Lambdas Bucket Name: ${LambdasBucketName}"
 }
 
 
@@ -158,7 +164,6 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
 fi
 
 
-
 echo ""
 echo "=== Base AWS command parameters"
 aws_command_base_args=""
@@ -169,7 +174,6 @@ if ( [ ! -z "${aws_region}" ] ) then
   aws_command_base_args="${aws_command_base_args} --region  $aws_region"
 fi
 echo ${aws_command_base_args}
-
 
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
 templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
@@ -184,6 +188,27 @@ echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
+
+
+echo " - Copy Lambdas zip"
+lambdasZip='functions.zip'
+lambdasLocalPath='functions'
+repo_name='pn-infra'
+
+aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+      --bucket "$LambdasBucketName" --key "${repo_name}/commits/${pn_infra_commitid}/${lambdasZip}" \
+      "${lambdasZip}"
+
+unzip ${lambdasZip} -d ./${lambdasLocalPath}
+
+bucketBasePath="${repo_name}/${pn_infra_commitid}"
+aws ${aws_command_base_args} s3 cp --recursive \
+      "${lambdasLocalPath}/" \
+      "s3://$bucketName/${bucketBasePath}/"
+
+# delete functions folder
+rm -rf ${lambdasLocalPath} 
+
 
 TERRAFORM_PARAMS_FILEPATH=pn-infra-confinfo/terraform-${env_type}-cfg.json
 TmpFilePath=terraform-merge-${env_type}-cfg.json
@@ -324,7 +349,7 @@ echo "= Read Outputs from previous stack"
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra.yml
 EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"CdBucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
@@ -430,6 +455,46 @@ if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
 
 else
   echo "${DATA_MONITORING_STACK_FILE} file doesn't exist, stack update skipped"
+fi
+
+echo ""
+echo "=== Deploy PN-Cost-Saving FOR $env_type ACCOUNT"
+COST_SAVING_STACK_FILE=pn-infra/runtime-infra/pn-cost-saving.yaml
+
+if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
+    echo "$COST_SAVING_STACK_FILE exists, updating pn-cost-saving stack"
+
+    echo ""
+    echo "= Read Outputs from previous stack"
+    aws ${aws_command_base_args}  \
+        cloudformation describe-stacks \
+          --stack-name infra-$env_type \
+          --query "Stacks[0].Outputs" \
+          --output json \
+          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+          | tee ${PreviousOutputFilePath}
+
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath} 
+
+    echo ""
+    echo "= Enanched parameters file"
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+      > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name pn-cost-saving-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --template-file ${COST_SAVING_STACK_FILE} \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+
+else
+  echo "${COST_SAVING_STACK_FILE} file doesn't exist, stack update skipped"
 fi
 
 MONITORING_STACK_FILE=${microcvs_name}/scripts/aws/cfn/infra-monitoring.yaml
