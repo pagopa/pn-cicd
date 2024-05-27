@@ -114,7 +114,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
-
+cwdir=$(pwd)
 cd $work_dir
 
 echo "=== Download pn-infra" 
@@ -495,8 +495,6 @@ INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
 # echo merge all
 cat $INFRA_ALL_OUTPUTS_FILE
 # end merge all
-
-# output file in ${cwdire}
 
 echo ""
 echo "=== Deploy PN-EVENT-BRIDGE FOR $env_type ACCOUNT"
