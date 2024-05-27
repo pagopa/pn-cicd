@@ -43,7 +43,7 @@ parse_params() {
       shift
       ;;
     -e | --env-type)
-      aws_profile="${2-}"
+      env_type="${2-}"
       shift
       ;;    
     -o | --output-file)
@@ -61,6 +61,7 @@ parse_params() {
    # check required params and arguments
   [[ -z "${aws_region-}" ]] && usage
   [[ -z "${env_type-}" ]] && usage
+  [[ -z "${output_file-}" ]] && usage
   return 0
 }
 
@@ -68,9 +69,9 @@ dump_params(){
   echo ""
   echo "######      PARAMETERS      ######"
   echo "##################################"
-  echo "Project Name:                ${project_name}"
   echo "AWS Region:                  ${aws_region}"
   echo "Env Type:                    ${env_type}"
+  echo "Output File:                 ${output_file}"
 }
 
 parse_params "$@"
