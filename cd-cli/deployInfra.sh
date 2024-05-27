@@ -488,6 +488,15 @@ aws ${aws_command_base_args} \
       --template-file pn-infra/runtime-infra/pn-ipc.yaml \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -p ${aws_profile} -o $( realpath ${INFRA_ALL_OUTPUTS_FILE} ) )
+
+# echo merge all
+cat $INFRA_ALL_OUTPUTS_FILE
+# end merge all
+
+# output file in ${cwdire}
 
 echo ""
 echo "=== Deploy PN-EVENT-BRIDGE FOR $env_type ACCOUNT"
@@ -502,6 +511,7 @@ aws ${aws_command_base_args}  \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${PreviousOutputFilePath}
+
 
 echo ""
 echo "= Read Parameters file"
