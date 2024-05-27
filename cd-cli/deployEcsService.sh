@@ -301,7 +301,7 @@ echo ""
 echo ""
 echo ""
 echo "=== Prepare parameters for $microcvs_name storage deployment in $env_type ACCOUNT"
-PreviousOutputFilePath=pn-ipc-${env_type}-out.json
+PreviousOutputFilePath=$INFRA_ALL_OUTPUTS_FILE
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/storage.yml
 EnanchedParamFilePath=${microcvs_name}-storage-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
@@ -312,15 +312,15 @@ echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " - PipelineParams: ${PipelineParams}"
 
 
-echo ""
-echo "= Read Outputs from previous stack"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${PreviousOutputFilePath}
+# echo ""
+# echo "= Read Outputs from previous stack"
+# aws ${aws_command_base_args} \
+#     cloudformation describe-stacks \
+#       --stack-name pn-ipc-$env_type \
+#       --query "Stacks[0].Outputs" \
+#       --output json \
+#       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+#       | tee ${PreviousOutputFilePath}
 
 echo ""
 echo "= Enanched parameters file"
@@ -357,7 +357,7 @@ echo ""
 echo ""
 echo "=== Prepare parameters for $microcvs_name microservice deployment in $env_type ACCOUNT"
 PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
-InfraIpcOutputFilePath=pn-ipc-${env_type}-out.json
+InfraIpcOutputFilePath=$INFRA_ALL_OUTPUTS_FILE
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/microservice.yml
 ParamFilePath=${microcvs_name}/scripts/aws/cfn/microservice-${env_type}-cfg.json
 EnanchedParamFilePath=${microcvs_name}-microservice-${env_type}-cfg-enanched.json
@@ -385,15 +385,15 @@ aws ${aws_command_base_args} \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${PreviousOutputFilePath}
 
-echo ""
-echo "= Read Outputs from infrastructure stack"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${InfraIpcOutputFilePath}
+# echo ""
+# echo "= Read Outputs from infrastructure stack"
+# aws ${aws_command_base_args} \
+#     cloudformation describe-stacks \
+#       --stack-name pn-ipc-$env_type \
+#       --query "Stacks[0].Outputs" \
+#       --output json \
+#       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+#       | tee ${InfraIpcOutputFilePath}
 
 echo ""
 echo "= Read Parameters file"
