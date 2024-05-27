@@ -280,7 +280,7 @@ fi
 
 echo "Load all outputs in a single file for next stack deployments"
 INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
-(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -p ${aws_profile} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
 
 echo "## start merge all ##"
 cat $INFRA_ALL_OUTPUTS_FILE
