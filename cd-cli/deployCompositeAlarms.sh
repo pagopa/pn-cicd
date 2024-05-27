@@ -173,10 +173,6 @@ echo "###########################################################"
 DowntimeLogsCompositeAlarmQueueARN=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.DowntimeLogsAggregateAlarmQueueARN') 
 
 AlarmSNSTopicArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.AlarmSNSTopicArn') 
-$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name pn-ipc-${env_type} | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AlarmSNSTopicArn\") | .OutputValue" \
-    )
 
 aws ${aws_command_base_args} cloudformation deploy \
       --stack-name pn-aggregate-alarm-${env_type} \
