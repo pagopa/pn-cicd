@@ -500,15 +500,15 @@ echo ""
 echo "=== Deploy PN-EVENT-BRIDGE FOR $env_type ACCOUNT"
 
 ParamFilePath=pn-infra/runtime-infra/pn-event-bridge-${env_type}-cfg.json
-echo ""
-echo "= Read Outputs from previous stack"
-aws ${aws_command_base_args}  \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${PreviousOutputFilePath}
+# echo ""
+# echo "= Read Outputs from previous stack"
+# aws ${aws_command_base_args}  \
+#     cloudformation describe-stacks \
+#       --stack-name pn-ipc-$env_type \
+#       --query "Stacks[0].Outputs" \
+#       --output json \
+#       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+#       | tee ${PreviousOutputFilePath}
 
 
 echo ""
@@ -517,7 +517,7 @@ cat ${ParamFilePath}
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
   > ${EnanchedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
@@ -538,15 +538,15 @@ MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-monitoring.yaml
 if [[ -f "$MONITORING_STACK_FILE" ]]; then
     echo "$MONITORING_STACK_FILE exists, updating monitoring stack"
 
-    echo ""
-    echo "= Read Outputs from previous stack"
-    aws ${aws_command_base_args}  \
-        cloudformation describe-stacks \
-          --stack-name pn-ipc-$env_type \
-          --query "Stacks[0].Outputs" \
-          --output json \
-          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-          | tee ${PreviousOutputFilePath}
+    # echo ""
+    # echo "= Read Outputs from previous stack"
+    # aws ${aws_command_base_args}  \
+    #     cloudformation describe-stacks \
+    #       --stack-name pn-ipc-$env_type \
+    #       --query "Stacks[0].Outputs" \
+    #       --output json \
+    #       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+    #       | tee ${PreviousOutputFilePath}
 
     echo ""
     echo "= Read Parameters file"
@@ -554,7 +554,7 @@ if [[ -f "$MONITORING_STACK_FILE" ]]; then
 
     echo ""
     echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
       > ${EnanchedParamFilePath}
     echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
@@ -580,15 +580,15 @@ BACKUP_STACK_FILE=pn-infra/runtime-infra/pn-backup_core_dynamotable.yaml
 if [[ -f "$BACKUP_STACK_FILE" ]]; then
     echo "$BACKUP_STACK_FILE exists, updating backup stack"
 
-    echo ""
-    echo "= Read Outputs from previous stack"
-    aws ${aws_command_base_args}  \
-        cloudformation describe-stacks \
-          --stack-name pn-ipc-$env_type \
-          --query "Stacks[0].Outputs" \
-          --output json \
-          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-          | tee ${PreviousOutputFilePath}
+    # echo ""
+    # echo "= Read Outputs from previous stack"
+    # aws ${aws_command_base_args}  \
+    #     cloudformation describe-stacks \
+    #       --stack-name pn-ipc-$env_type \
+    #       --query "Stacks[0].Outputs" \
+    #       --output json \
+    #       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+    #       | tee ${PreviousOutputFilePath}
 
     echo ""
     echo "= Read Parameters file"
@@ -596,7 +596,7 @@ if [[ -f "$BACKUP_STACK_FILE" ]]; then
 
     echo ""
     echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
       > ${EnanchedParamFilePath}
     echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
@@ -621,15 +621,15 @@ DATA_MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-data-monitoring.yaml
 if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
     echo "$DATA_MONITORING_STACK_FILE exists, updating pn-data-monitoring stack"
 
-    echo ""
-    echo "= Read Outputs from previous stack"
-    aws ${aws_command_base_args}  \
-        cloudformation describe-stacks \
-          --stack-name pn-ipc-$env_type \
-          --query "Stacks[0].Outputs" \
-          --output json \
-          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-          | tee ${PreviousOutputFilePath}
+    # echo ""
+    # echo "= Read Outputs from previous stack"
+    # aws ${aws_command_base_args}  \
+    #     cloudformation describe-stacks \
+    #       --stack-name pn-ipc-$env_type \
+    #       --query "Stacks[0].Outputs" \
+    #       --output json \
+    #       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+    #       | tee ${PreviousOutputFilePath}
 
     echo ""
     echo "= Read Parameters file"
@@ -637,7 +637,7 @@ if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
 
     echo ""
     echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
       > ${EnanchedParamFilePath}
     echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
@@ -662,15 +662,15 @@ COST_SAVING_STACK_FILE=pn-infra/runtime-infra/pn-cost-saving.yaml
 if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
     echo "$COST_SAVING_STACK_FILE exists, updating pn-cost-saving stack"
 
-    echo ""
-    echo "= Read Outputs from previous stack"
-    aws ${aws_command_base_args}  \
-        cloudformation describe-stacks \
-          --stack-name pn-ipc-$env_type \
-          --query "Stacks[0].Outputs" \
-          --output json \
-          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-          | tee ${PreviousOutputFilePath}
+    # echo ""
+    # echo "= Read Outputs from previous stack"
+    # aws ${aws_command_base_args}  \
+    #     cloudformation describe-stacks \
+    #       --stack-name pn-ipc-$env_type \
+    #       --query "Stacks[0].Outputs" \
+    #       --output json \
+    #       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+    #       | tee ${PreviousOutputFilePath}
 
     echo ""
     echo "= Read Parameters file"
@@ -678,7 +678,7 @@ if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
 
     echo ""
     echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
       > ${EnanchedParamFilePath}
     echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
@@ -704,15 +704,15 @@ if [[ -f "$CN_STACK_FILE" ]]; then
     echo "$CN_STACK_FILE exists, updating backup stack"
 
     PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"BucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",\"EnvironmentType=$env_type\"${OptionalParams}"
-    echo ""
-    echo "= Read Outputs from previous stack"
-    aws ${aws_command_base_args}  \
-        cloudformation describe-stacks \
-          --stack-name pn-ipc-$env_type \
-          --query "Stacks[0].Outputs" \
-          --output json \
-          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-          | tee ${PreviousOutputFilePath}
+    # echo ""
+    # echo "= Read Outputs from previous stack"
+    # aws ${aws_command_base_args}  \
+    #     cloudformation describe-stacks \
+    #       --stack-name pn-ipc-$env_type \
+    #       --query "Stacks[0].Outputs" \
+    #       --output json \
+    #       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+    #       | tee ${PreviousOutputFilePath}
 
     echo ""
     echo "= Read Parameters file"
@@ -720,7 +720,7 @@ if [[ -f "$CN_STACK_FILE" ]]; then
 
     echo ""
     echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
       > ${EnanchedParamFilePath}
     echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}

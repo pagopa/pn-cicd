@@ -124,7 +124,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
-
+cwdir=$(pwd)
 cd $work_dir
 
 echo "=== Download pn-infra" 
@@ -177,22 +177,24 @@ if ( [ ! -z "${aws_profile}" ] ) then
 fi
 aws_log_base_args="${aws_log_base_args} --region eu-central-1"
 
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
+
 # API
-WebApiDnsName=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"WebApiDnsName\") | .OutputValue" )
+WebApiDnsName=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.WebApiDnsName' )
+
+WebApiDnsName=
 API_BASE_URL=""
 if ( [ $WebApiDnsName != '-' ] ) then
   API_BASE_URL="https://${WebApiDnsName}/"
 fi
 
-BoApiDnsName=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select(.OutputKey==\"BoApiDnsName\") | .OutputValue" )
+BoApiDnsName=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.BoApiDnsName' )
 BO_API_BASE_URL=""
 if ( [ $BoApiDnsName != '-' ] ) then
   BO_API_BASE_URL="https://${BoApiDnsName}/"
@@ -320,33 +322,21 @@ function prepareOneCloudFront() {
 echo ""
 echo "= Read Outputs from pn-ipc stack"
 
-ZoneId=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select(.OutputKey==\"CdnZoneId\") | .OutputValue" )
+ZoneId=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.CdnZoneId' ) 
 ZONE_ID=""
 if ( [ $ZoneId != '-' ] ) then
   ZONE_ID=$ZoneId
 fi
 
 # CERTIFICATES
-PortaleHelpdeskCertificateArn=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select(.OutputKey==\"PortaleHelpdeskCertificateArn\") | .OutputValue" )
+PortaleHelpdeskCertificateArn=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortaleHelpdeskCertificateArn' ) 
 PORTALE_HELPDESK_CERTIFICATE_ARN=""
 if ( [ $PortaleHelpdeskCertificateArn != '-' ] ) then
   PORTALE_HELPDESK_CERTIFICATE_ARN=$PortaleHelpdeskCertificateArn
 fi
 
 # DOMAIN
-PortaleHelpdeskDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortaleHelpdeskDomain\") | .OutputValue" )
+PortaleHelpdeskDomain=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortaleHelpdeskDomain' ) 
 PORTALE_HELPDESK_DOMAIN=""
 if ( [ $PortaleHelpdeskDomain != '-' ] ) then
   PORTALE_HELPDESK_DOMAIN=$PortaleHelpdeskDomain

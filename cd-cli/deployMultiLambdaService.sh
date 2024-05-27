@@ -132,6 +132,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
+cwdir=$(pwd)
 cd $work_dir
 
 echo "=== Download pn-infra" 
@@ -213,6 +214,15 @@ aws ${aws_command_base_args} \
 
 MicroserviceNumber=0
 
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
+
+
 echo ""
 echo ""
 echo ""
@@ -238,19 +248,19 @@ echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " - PipelineParams: ${PipelineParams}"
 
 
-echo ""
-echo "= Read Outputs from previous stack"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${PreviousOutputFilePath}
+# echo ""
+# echo "= Read Outputs from previous stack"
+# aws ${aws_command_base_args} \
+#     cloudformation describe-stacks \
+#       --stack-name pn-ipc-$env_type \
+#       --query "Stacks[0].Outputs" \
+#       --output json \
+#       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+#       | tee ${PreviousOutputFilePath}
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } " ${PreviousOutputFilePath} \
+jq -s "{ \"Parameters\": .[0] } " ${INFRA_ALL_OUTPUTS_FILE} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
@@ -316,15 +326,15 @@ aws ${aws_command_base_args} \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${PreviousOutputFilePath}
 
-echo ""
-echo "= Read Outputs from infrastructure stack"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${InfraIpcOutputFilePath}
+# echo ""
+# echo "= Read Outputs from infrastructure stack"
+# aws ${aws_command_base_args} \
+#     cloudformation describe-stacks \
+#       --stack-name pn-ipc-$env_type \
+#       --query "Stacks[0].Outputs" \
+#       --output json \
+#       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+#       | tee ${InfraIpcOutputFilePath}
 
 echo ""
 echo "= Read Parameters file"
@@ -333,7 +343,7 @@ cat ${ParamFilePath}
 echo ""
 echo "= Enanched parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1] * { \"Parameters\": .[2] }" \
-   ${PreviousOutputFilePath} ${ParamFilePath} ${InfraIpcOutputFilePath} \
+   ${PreviousOutputFilePath} ${ParamFilePath} ${INFRA_ALL_OUTPUTS_FILE} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}

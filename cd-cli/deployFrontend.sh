@@ -124,6 +124,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
+cwdir=$(pwd)
 cd $work_dir
 
 echo "=== Download pn-infra" 
@@ -178,41 +179,33 @@ fi
 aws_log_base_args="${aws_log_base_args} --region eu-central-1"
 
 
-WebApiDnsName=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"WebApiDnsName\") | .OutputValue" )
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
+
+WebApiDnsName=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.WebApiDnsName')
 API_BASE_URL=""
 if ( [ $WebApiDnsName != '-' ] ) then
   API_BASE_URL="https://${WebApiDnsName}/"
 fi
 
-HubLoginDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"HubLoginDomain\") | .OutputValue" )
+HubLoginDomain=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.HubLoginDomain')
 URL_API_LOGIN=""
 if ( [ $HubLoginDomain != '-' ] ) then
   URL_API_LOGIN="https://${HubLoginDomain}"
 fi
 
-PortalePfDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfDomain\") | .OutputValue" )
+PortalePfDomain=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.PortalePfDomain')
 PF_URL=""
 if ( [ $PortalePfDomain != '-' ] ) then
   PF_URL="https://${PortalePfDomain}"
 fi
 
-PortalePfLoginDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginDomain\") | .OutputValue" )
+PortalePfLoginDomain=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.PortalePfLoginDomain')
 URL_FE_LOGIN=""
 if ( [ $PortalePfLoginDomain != '-' ] ) then
   URL_FE_LOGIN="https://${PortalePfLoginDomain}/"
@@ -398,125 +391,65 @@ echo ""
 echo "= Read Outputs from pn-ipc stack"
 
 
-ZoneId=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"CdnZoneId\") | .OutputValue" )
-
+ZoneId=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.CdnZoneId' )
 if ( [ $ZoneId != '-' ] ) then
   ZONE_ID=$ZoneId
 fi
 
 # CERTIFICATES
-PortalePaCertificateArn=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePaCertificateArn\") | .OutputValue" )
-
+PortalePaCertificateArn=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePaCertificateArn' )
 if ( [ $PortalePaCertificateArn != '-' ] ) then
   PORTALE_PA_CERTIFICATE_ARN=$PortalePaCertificateArn
 fi
 
-PortalePfCertificateArn=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfCertificateArn\") | .OutputValue" )
-
+PortalePfCertificateArn=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePfCertificateArn' )
 if ( [ $PortalePfCertificateArn != '-' ] ) then
   PORTALE_PF_CERTIFICATE_ARN=$PortalePfCertificateArn
 fi
 
-PortalePfLoginCertificateArn=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginCertificateArn\") | .OutputValue" )  
-
+PortalePfLoginCertificateArn=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePfLoginCertificateArn' )
 if ( [ $PortalePfLoginCertificateArn != '-' ] ) then
   PORTALE_PF_LOGIN_CERTIFICATE_ARN=$PortalePfLoginCertificateArn
 fi
 
-PortalePgCertificateArn=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePgCertificateArn\") | .OutputValue" ) 
-
+PortalePgCertificateArn=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePgCertificateArn' )
 if ( [ $PortalePgCertificateArn != '-' ] ) then
   PORTALE_PG_CERTIFICATE_ARN=$PortalePgCertificateArn
 fi
 
-PortaleStatusCertificateArn=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortaleStatusCertificateArn\") | .OutputValue" ) 
-
+PortaleStatusCertificateArn=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortaleStatusCertificateArn' )
 if ( [ $PortaleStatusCertificateArn != '-' ] ) then
   PORTALE_STATUS_CERTIFICATE_ARN=$PortaleStatusCertificateArn
 fi
 
 # DOMAIN
 
-PortalePaDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePaDomain\") | .OutputValue" )
-
+PortalePaDomain=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePaDomain' )
 if ( [ $PortalePaDomain != '-' ] ) then
   PORTALE_PA_DOMAIN=$PortalePaDomain
 fi
 
-PortalePfDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfDomain\") | .OutputValue" )
-
+PortalePfDomain=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePfDomain' )
 if ( [ $PortalePfDomain != '-' ] ) then
   PORTALE_PF_DOMAIN=$PortalePfDomain
 fi
 
-PortalePfLoginDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePfLoginDomain\") | .OutputValue" )  
-
+PortalePfLoginDomain=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePfLoginDomain' )
 if ( [ $PortalePfLoginDomain != '-' ] ) then
   PORTALE_PF_LOGIN_DOMAIN=$PortalePfLoginDomain
 fi
 
-PortalePgDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortalePgDomain\") | .OutputValue" ) 
-
+PortalePgDomain=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePgDomain' )
 if ( [ $PortalePgDomain != '-' ] ) then
   PORTALE_PG_DOMAIN=$PortalePgDomain
 fi
 
-PortaleStatusDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"PortaleStatusDomain\") | .OutputValue" ) 
-
+PortaleStatusDomain=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortaleStatusDomain' )
 if ( [ $PortaleStatusDomain != '-' ] ) then
   PORTALE_STATUS_DOMAIN=$PortaleStatusDomain
 fi
 
-ReactAppUrlApi=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ReactAppUrlApi\") | .OutputValue" ) 
-
+ReactAppUrlApi=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.ReactAppUrlApi' )
 echo "ReactAppUrlApi ${ReactAppUrlApi}"
 if ( [ "$ReactAppUrlApi" != '-' ] ) then
   REACT_APP_URL_API=$ReactAppUrlApi
