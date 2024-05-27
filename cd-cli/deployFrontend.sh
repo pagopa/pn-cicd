@@ -386,11 +386,6 @@ if ( [ -f $ENV_FILE_PATH ] ) then
   source $ENV_FILE_PATH
 fi
 
-# read output from pn-ipc
-echo ""
-echo "= Read Outputs from pn-ipc stack"
-
-
 ZoneId=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.CdnZoneId' )
 if ( [ $ZoneId != '-' ] ) then
   ZONE_ID=$ZoneId

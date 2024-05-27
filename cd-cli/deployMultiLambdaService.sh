@@ -237,26 +237,13 @@ echo ""
 echo ""
 echo ""
 echo "=== Prepare parameters for $repo_name storage deployment in $env_type ACCOUNT"
-PreviousOutputFilePath=pn-ipc-${env_type}-out.json
 TemplateFilePath=${repo_name}/scripts/aws/cfn/storage.yml
 EnanchedParamFilePath=${repo_name}-storage-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
 
-echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " - PipelineParams: ${PipelineParams}"
-
-
-# echo ""
-# echo "= Read Outputs from previous stack"
-# aws ${aws_command_base_args} \
-#     cloudformation describe-stacks \
-#       --stack-name pn-ipc-$env_type \
-#       --query "Stacks[0].Outputs" \
-#       --output json \
-#       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-#       | tee ${PreviousOutputFilePath}
 
 echo ""
 echo "= Enanched parameters file"
@@ -290,7 +277,7 @@ echo ""
 echo "======================================================================="
 echo "======================================================================="
 echo "===                                                                 ==="
-echo "===             PN-PROGRESSION-SENSOR DEPLOYMENT                    ==="
+echo "===             MICROSERVICE DEPLOYMENT                             ==="
 echo "===                                                                 ==="
 echo "======================================================================="
 echo "======================================================================="
@@ -299,7 +286,6 @@ echo ""
 echo ""
 echo "=== Prepare parameters for pn-infra.yaml deployment in $env_type ACCOUNT"
 PreviousOutputFilePath=${repo_name}-storage-${env_type}-out.json
-InfraIpcOutputFilePath=pn-ipc-${env_type}-out.json
 TemplateFilePath=${repo_name}/scripts/aws/cfn/microservice.yml
 ParamFilePath=${repo_name}/scripts/aws/cfn/microservice-${env_type}-cfg.json
 EnanchedParamFilePath=${repo_name}-microservice-${env_type}-cfg-enanched.json
@@ -309,7 +295,6 @@ PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
-echo " - InfraIpcOutputFilePath: ${InfraIpcOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
 echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
@@ -325,16 +310,6 @@ aws ${aws_command_base_args} \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${PreviousOutputFilePath}
-
-# echo ""
-# echo "= Read Outputs from infrastructure stack"
-# aws ${aws_command_base_args} \
-#     cloudformation describe-stacks \
-#       --stack-name pn-ipc-$env_type \
-#       --query "Stacks[0].Outputs" \
-#       --output json \
-#       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-#       | tee ${InfraIpcOutputFilePath}
 
 echo ""
 echo "= Read Parameters file"

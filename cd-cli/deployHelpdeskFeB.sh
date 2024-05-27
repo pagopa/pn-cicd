@@ -318,10 +318,6 @@ function prepareOneCloudFront() {
   echo " - Created bucket name: ${bucketName}"
 }
 
-# read output from pn-ipc
-echo ""
-echo "= Read Outputs from pn-ipc stack"
-
 ZoneId=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.CdnZoneId' ) 
 ZONE_ID=""
 if ( [ $ZoneId != '-' ] ) then

@@ -235,21 +235,6 @@ echo " - ParamFilePath: ${ParamFilePath}"
 echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " ==== Directory listing"
 
-# echo ""
-# echo "= Read Outputs from previous stack adding new parameters"
-# aws ${aws_command_base_args} \
-#     cloudformation describe-stacks \
-#       --stack-name pn-ipc-$env_type \
-#       --query "Stacks[0].Outputs" \
-#       --output json \
-#       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-#       | jq ".TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\"" \
-#       | jq ".LambdasBucketName= \"$lambdasBucketName\"" \
-#       | jq ".LambdasBasePath = \"$lambdasBasePath\"" \
-#       | jq ".ProjectName = \"$project_name\"" \
-#       | jq ".Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\"" \
-#       | tee ${PreviousOutputFilePath}
-
 echo ""
 echo "= Enanched parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1] * { \"Parameters\": .[2] }" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} ${OpensearchParamFilePath} \

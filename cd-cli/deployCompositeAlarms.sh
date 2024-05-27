@@ -114,7 +114,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
-
+cwdir=$(pwd)
 cd $work_dir
 
 
@@ -157,18 +157,23 @@ aws ${aws_command_base_args} \
       --recursive --exclude ".git/*"
 
 
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
 
 
 echo ""
 echo "###       UPDATE AGGREGATE ALARM FOR DOWNTIME LOGS       ###"
 echo "###########################################################"
 
-DowntimeLogsCompositeAlarmQueueARN=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name pn-ipc-${env_type} | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DowntimeLogsAggregateAlarmQueueARN\") | .OutputValue" \
-    )
+DowntimeLogsCompositeAlarmQueueARN=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.DowntimeLogsAggregateAlarmQueueARN') 
 
-AlarmSNSTopicArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+AlarmSNSTopicArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.AlarmSNSTopicArn') 
+$( aws ${aws_command_base_args} cloudformation describe-stacks \
       --stack-name pn-ipc-${env_type} | jq -r \
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AlarmSNSTopicArn\") | .OutputValue" \
     )

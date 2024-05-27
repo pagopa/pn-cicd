@@ -312,16 +312,6 @@ echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " - PipelineParams: ${PipelineParams}"
 
 
-# echo ""
-# echo "= Read Outputs from previous stack"
-# aws ${aws_command_base_args} \
-#     cloudformation describe-stacks \
-#       --stack-name pn-ipc-$env_type \
-#       --query "Stacks[0].Outputs" \
-#       --output json \
-#       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-#       | tee ${PreviousOutputFilePath}
-
 echo ""
 echo "= Enanched parameters file"
 jq -s "{ \"Parameters\": .[0] } " ${PreviousOutputFilePath} \
@@ -384,16 +374,6 @@ aws ${aws_command_base_args} \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${PreviousOutputFilePath}
-
-# echo ""
-# echo "= Read Outputs from infrastructure stack"
-# aws ${aws_command_base_args} \
-#     cloudformation describe-stacks \
-#       --stack-name pn-ipc-$env_type \
-#       --query "Stacks[0].Outputs" \
-#       --output json \
-#       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-#       | tee ${InfraIpcOutputFilePath}
 
 echo ""
 echo "= Read Parameters file"

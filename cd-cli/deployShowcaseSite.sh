@@ -181,15 +181,9 @@ echo "Load all outputs in a single file for next stack deployments"
 INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
 (cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
 
-echo "## start merge all ##"
+echo "## start merge all ##"
 cat $INFRA_ALL_OUTPUTS_FILE
 echo "## end merge all ##"
-
-# LandingDomain=$( aws ${aws_command_base_args} \
-#     cloudformation describe-stacks \
-#       --stack-name pn-ipc-$env_type \
-#       --output json \
-#   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" )
 
 LandingDomain=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingDomain' )
 
@@ -321,41 +315,16 @@ if ( [ -f $ENV_FILE_PATH ] ) then
   source $ENV_FILE_PATH
 fi
 
-# read output from pn-ipc
-echo ""
-echo "= Read Outputs from pn-ipc stack"
-
-
-# ZoneId=$( aws ${aws_command_base_args} \
-#     cloudformation describe-stacks \
-#       --stack-name pn-ipc-$env_type \
-#       --output json \
-#   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"CdnZoneId\") | .OutputValue" )
-
 ZoneId=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.CdnZoneId' )
 
 if ( [ $ZoneId != '-' ] ) then
   ZONE_ID=$ZoneId
 fi
 
-# CERTIFICATES
-# LandingCertificateArn=$( aws ${aws_command_base_args} \
-#     cloudformation describe-stacks \
-#       --stack-name pn-ipc-$env_type \
-#       --output json \
-#   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingCertificateArn\") | .OutputValue" ) 
-
 LandingCertificateArn=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingCertificateArn' )
 if ( [ $LandingCertificateArn != '-' ] ) then
   LANDING_CERTIFICATE_ARN=$LandingCertificateArn
 fi
-
-# DOMAIN
-# LandingDomain=$( aws ${aws_command_base_args} \
-#     cloudformation describe-stacks \
-#       --stack-name pn-ipc-$env_type \
-#       --output json \
-#   | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" ) 
 
 LandingDomain=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingDomain' )
 if ( [ $LandingDomain != '-' ] ) then

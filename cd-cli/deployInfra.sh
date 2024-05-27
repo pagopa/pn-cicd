@@ -500,16 +500,6 @@ echo ""
 echo "=== Deploy PN-EVENT-BRIDGE FOR $env_type ACCOUNT"
 
 ParamFilePath=pn-infra/runtime-infra/pn-event-bridge-${env_type}-cfg.json
-# echo ""
-# echo "= Read Outputs from previous stack"
-# aws ${aws_command_base_args}  \
-#     cloudformation describe-stacks \
-#       --stack-name pn-ipc-$env_type \
-#       --query "Stacks[0].Outputs" \
-#       --output json \
-#       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-#       | tee ${PreviousOutputFilePath}
-
 
 echo ""
 echo "= Read Parameters file"
@@ -537,16 +527,6 @@ MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-monitoring.yaml
 
 if [[ -f "$MONITORING_STACK_FILE" ]]; then
     echo "$MONITORING_STACK_FILE exists, updating monitoring stack"
-
-    # echo ""
-    # echo "= Read Outputs from previous stack"
-    # aws ${aws_command_base_args}  \
-    #     cloudformation describe-stacks \
-    #       --stack-name pn-ipc-$env_type \
-    #       --query "Stacks[0].Outputs" \
-    #       --output json \
-    #       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-    #       | tee ${PreviousOutputFilePath}
 
     echo ""
     echo "= Read Parameters file"
@@ -580,16 +560,6 @@ BACKUP_STACK_FILE=pn-infra/runtime-infra/pn-backup_core_dynamotable.yaml
 if [[ -f "$BACKUP_STACK_FILE" ]]; then
     echo "$BACKUP_STACK_FILE exists, updating backup stack"
 
-    # echo ""
-    # echo "= Read Outputs from previous stack"
-    # aws ${aws_command_base_args}  \
-    #     cloudformation describe-stacks \
-    #       --stack-name pn-ipc-$env_type \
-    #       --query "Stacks[0].Outputs" \
-    #       --output json \
-    #       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-    #       | tee ${PreviousOutputFilePath}
-
     echo ""
     echo "= Read Parameters file"
     cat ${ParamFilePath} 
@@ -621,16 +591,6 @@ DATA_MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-data-monitoring.yaml
 if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
     echo "$DATA_MONITORING_STACK_FILE exists, updating pn-data-monitoring stack"
 
-    # echo ""
-    # echo "= Read Outputs from previous stack"
-    # aws ${aws_command_base_args}  \
-    #     cloudformation describe-stacks \
-    #       --stack-name pn-ipc-$env_type \
-    #       --query "Stacks[0].Outputs" \
-    #       --output json \
-    #       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-    #       | tee ${PreviousOutputFilePath}
-
     echo ""
     echo "= Read Parameters file"
     cat ${ParamFilePath} 
@@ -661,16 +621,6 @@ COST_SAVING_STACK_FILE=pn-infra/runtime-infra/pn-cost-saving.yaml
 
 if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
     echo "$COST_SAVING_STACK_FILE exists, updating pn-cost-saving stack"
-
-    # echo ""
-    # echo "= Read Outputs from previous stack"
-    # aws ${aws_command_base_args}  \
-    #     cloudformation describe-stacks \
-    #       --stack-name pn-ipc-$env_type \
-    #       --query "Stacks[0].Outputs" \
-    #       --output json \
-    #       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-    #       | tee ${PreviousOutputFilePath}
 
     echo ""
     echo "= Read Parameters file"
@@ -704,16 +654,7 @@ if [[ -f "$CN_STACK_FILE" ]]; then
     echo "$CN_STACK_FILE exists, updating backup stack"
 
     PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"BucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",\"EnvironmentType=$env_type\"${OptionalParams}"
-    # echo ""
-    # echo "= Read Outputs from previous stack"
-    # aws ${aws_command_base_args}  \
-    #     cloudformation describe-stacks \
-    #       --stack-name pn-ipc-$env_type \
-    #       --query "Stacks[0].Outputs" \
-    #       --output json \
-    #       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-    #       | tee ${PreviousOutputFilePath}
-
+    
     echo ""
     echo "= Read Parameters file"
     cat ${ParamFilePath} 
