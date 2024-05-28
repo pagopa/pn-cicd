@@ -5846,7 +5846,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "e2eScheduledRule"
-      ScheduleExpression: "cron(0 1 ? * MON-FRI *)"
+      ScheduleExpression: "cron(0 5 ? * MON-FRI *)"
       State: "ENABLED"
       RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
       Targets: 
