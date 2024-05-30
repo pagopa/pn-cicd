@@ -238,16 +238,27 @@ echo ""
 echo ""
 echo "=== Prepare parameters for $repo_name storage deployment in $env_type ACCOUNT"
 TemplateFilePath=${repo_name}/scripts/aws/cfn/storage.yml
+ParamFilePath=${repo_name}/scripts/aws/cfn/storage-${env_type}-cfg.json
 EnanchedParamFilePath=${repo_name}-storage-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
 
 echo " - TemplateFilePath: ${TemplateFilePath}"
+echo " - ParamFilePath: ${ParamFilePath}"
 echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " - PipelineParams: ${PipelineParams}"
 
+# if ParamFilePath doesn't exist, create an empty one
+if [ ! -f ${ParamFilePath} ]; then
+  echo "{ \"Parameters\": {} }" > ${ParamFilePath}
+fi
+
+echo ""
+echo "= Read Parameters file"
+cat ${ParamFilePath} 
+
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } " ${INFRA_ALL_OUTPUTS_FILE} \
+jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
