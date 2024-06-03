@@ -264,6 +264,8 @@ aws ${aws_command_base_args} \
       --stack-name ${repo_name}-storage-$env_type \
       --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file ${TemplateFilePath} \
+      --s3-bucket ${bucketName} \
+      --s3-prefix cfn \
       --tags "Microservice=${repo_name}" \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
    
@@ -347,5 +349,7 @@ aws ${aws_command_base_args} \
       --stack-name ${repo_name}-microsvc-$env_type \
       --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --template-file ${TemplateFilePath} \
+      --s3-bucket ${bucketName} \
+      --s3-prefix cfn \
       --tags "Microservice=${repo_name}" \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
