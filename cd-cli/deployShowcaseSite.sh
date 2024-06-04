@@ -424,6 +424,6 @@ aws ${aws_command_base_args} \
     s3 cp "pn-showcase-site" "s3://${landingBucketName}/" --recursive 
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-showcase-site" "s3://${landingBucketName}/" --delete 
+    s3 sync "pn-showcase-site" "s3://${landingBucketName}/" --delete --exclude "public/static/documents/*"
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
