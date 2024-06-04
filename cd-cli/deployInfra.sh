@@ -313,6 +313,23 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
   cat ${TmpFilePath}
   mv ${TmpFilePath} ${ParamFilePath}
+
+  redisServerlessArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-cache-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"RedisServerlessArn\") | .OutputValue" \
+  )
+
+  redisServerlessName=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-cache-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"RedisServerlessName\") | .OutputValue" \
+  )
+
+  elasticCacheUser1Arn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name "pn-cache-${env_type}" | jq -r \
+    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"ElasticCacheUser1Arn\") | .OutputValue" \
+  )
+
+  OptionalParams=",\"RedisServerlessArn=$redisServerlessArn\",\"RedisServerlessName=$redisServerlessName\",\"ElasticCacheUser1Arn=$elasticCacheUser1Arn\""
 fi
 
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
