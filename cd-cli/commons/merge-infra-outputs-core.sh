@@ -100,6 +100,18 @@ aws ${aws_command_base_args}  \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${InfraStorageOutputFilePath}
 
+# Infra pn-cache output stack
+CacheOutputFilePath="cache-output.json"
+echo ""
+echo "= Read Outputs from pn-cache stack"
+aws ${aws_command_base_args}  \
+    cloudformation describe-stacks \
+      --stack-name pn-cache-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | tee ${CacheOutputFilePath}
+
 # Infra output stack
 InfraOutputFilePath="infra-output.json"
 echo ""
@@ -127,9 +139,10 @@ aws ${aws_command_base_args}  \
 # merge all outputs
 echo ""
 echo "= Merge all outputs"
-jq -s '.[0] * .[1] * .[2]' ${InfraStorageOutputFilePath} ${InfraOutputFilePath} ${IpcOutputFilePath} | tee ${output_file}
+jq -s '.[0] * .[1] * .[2] * .[3]' ${InfraStorageOutputFilePath} ${CacheOutputFilePath} ${InfraOutputFilePath} ${IpcOutputFilePath} | tee ${output_file}
 
 # cleanup
 rm ${InfraStorageOutputFilePath}
+rm ${CacheOutputFilePath}
 rm ${InfraOutputFilePath}
 rm ${IpcOutputFilePath}

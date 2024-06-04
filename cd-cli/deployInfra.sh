@@ -426,17 +426,7 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
     ".Stacks[0].Outputs | .[] | select(.OutputKey==\"DomainEndpoint\") | .OutputValue" \
   )
 
-  elasticacheEndpoint=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-    --stack-name "pn-cache-${env_type}" | jq -r \
-    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"RedisEndpoint\") | .OutputValue" \
-  )
-
-  elasticacheSecurityGroupId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-    --stack-name "pn-cache-${env_type}" | jq -r \
-    ".Stacks[0].Outputs | .[] | select(.OutputKey==\"AllowedSecurityGroupId\") | .OutputValue" \
-  )
-
-  OptionalParams=",\"CognitoUserPoolArn=$cognitoUserPoolArn\",\"CognitoClientId=$cognitoWebClientId\",\"HelpdeskAccountId=$helpdeskAccountId\",\"OpenSearchArn=$openSearchArn\",\"OpenSearchEndpoint=$openSearchEndpoint\",\"ElasticacheEndpoint=$elasticacheEndpoint\",\"ElasticacheSecurityGroup=$elasticacheSecurityGroupId\""
+  OptionalParams=",\"CognitoUserPoolArn=$cognitoUserPoolArn\",\"CognitoClientId=$cognitoWebClientId\",\"HelpdeskAccountId=$helpdeskAccountId\",\"OpenSearchArn=$openSearchArn\",\"OpenSearchEndpoint=$openSearchEndpoint\""
 
 fi
 
