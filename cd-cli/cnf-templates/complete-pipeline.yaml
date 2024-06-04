@@ -1384,8 +1384,7 @@ Resources:
                     echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
                     (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
                   else
-                    echo "(cd scripts/cd-cli && ./deployAuthFleet.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
-                    (cd scripts/cd-cli && ./deployAuthFleet.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
+                    echo "Auth fleet non multifunctions is not supported"
                   fi
           artifacts:
             files:
@@ -1527,8 +1526,7 @@ Resources:
                     echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
                     (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
                   else
-                    echo "(cd scripts/cd-cli && ./deployAuthFleet.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
-                    (cd scripts/cd-cli && ./deployAuthFleet.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
+                    echo "Auth fleet non multifunction is not supported"
                   fi
           artifacts:
             files:
