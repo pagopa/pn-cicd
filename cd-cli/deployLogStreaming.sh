@@ -114,7 +114,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
-
+cwdir=$(pwd)
 cd $work_dir
 
 
@@ -162,27 +162,28 @@ aws ${aws_command_base_args} \
       --recursive --exclude ".git/*"
 
 
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
+
+
 echo ""
 echo ""
 echo ""
 echo "###                  LOGS BUCKET INFO                  ###"
 echo "##########################################################"
 
-logsBucketName=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks --stack-name pn-ipc-${env_type} \
-      | jq -r '.Stacks[0].Outputs | .[] | select(.OutputKey=="LogsBucketName") | .OutputValue' )
+logsBucketName=$( cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LogsBucketName' )
 
-logsExporterRoleArn=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks --stack-name pn-ipc-${env_type} \
-      | jq -r '.Stacks[0].Outputs | .[] | select(.OutputKey=="LogsExporterRoleArn") | .OutputValue' )
+logsExporterRoleArn=$( cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LogsExporterRoleArn' )
 
-lambdasBucketName=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks --stack-name pn-ipc-${env_type} \
-      | jq -r '.Stacks[0].Outputs | .[] | select(.OutputKey=="LambdasBucketName") | .OutputValue' )
+lambdasBucketName=$( cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LambdasBucketName' )
 
-lambdasBasePath=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks --stack-name pn-ipc-${env_type} \
-      | jq -r '.Stacks[0].Outputs | .[] | select(.OutputKey=="LambdasBasePath") | .OutputValue' )
+lambdasBasePath=$( cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LambdasBasePath' )
 
 echo "LOGS Bucker: ${logsBucketName}"
 echo "LOGS Role Arn: ${logsExporterRoleArn}"
@@ -214,6 +215,11 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
       --query "Stacks[0].Outputs" \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | jq ".TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\"" \
+      | jq ".LambdasBucketName= \"$lambdasBucketName\"" \
+      | jq ".LambdasBasePath = \"$lambdasBasePath\"" \
+      | jq ".ProjectName = \"$project_name\"" \
+      | jq ".Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\"" \
       | tee ${OpensearchParamFilePath}
 else
   echo '{}' > $OpensearchParamFilePath
@@ -230,23 +236,8 @@ echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " ==== Directory listing"
 
 echo ""
-echo "= Read Outputs from previous stack adding new parameters"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | jq ".TemplateBucketBaseUrl = \"$templateBucketHttpsBaseUrl\"" \
-      | jq ".LambdasBucketName= \"$lambdasBucketName\"" \
-      | jq ".LambdasBasePath = \"$lambdasBasePath\"" \
-      | jq ".ProjectName = \"$project_name\"" \
-      | jq ".Version = \"cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\"" \
-      | tee ${PreviousOutputFilePath}
-
-echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * .[1] * { \"Parameters\": .[2] }" ${PreviousOutputFilePath} ${ParamFilePath} ${OpensearchParamFilePath} \
+jq -s "{ \"Parameters\": .[0] } * .[1] * { \"Parameters\": .[2] }" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} ${OpensearchParamFilePath} \
    > ${EnanchedParamFilePath}
 cat ${EnanchedParamFilePath}
 

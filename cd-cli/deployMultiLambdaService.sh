@@ -132,6 +132,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
+cwdir=$(pwd)
 cd $work_dir
 
 echo "=== Download pn-infra" 
@@ -213,6 +214,15 @@ aws ${aws_command_base_args} \
 
 MicroserviceNumber=0
 
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
+
+
 echo ""
 echo ""
 echo ""
@@ -227,30 +237,28 @@ echo ""
 echo ""
 echo ""
 echo "=== Prepare parameters for $repo_name storage deployment in $env_type ACCOUNT"
-PreviousOutputFilePath=pn-ipc-${env_type}-out.json
 TemplateFilePath=${repo_name}/scripts/aws/cfn/storage.yml
+ParamFilePath=${repo_name}/scripts/aws/cfn/storage-${env_type}-cfg.json
 EnanchedParamFilePath=${repo_name}-storage-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
 
-echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
+echo " - ParamFilePath: ${ParamFilePath}"
 echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " - PipelineParams: ${PipelineParams}"
 
+# if ParamFilePath doesn't exist, create an empty one
+if [ ! -f ${ParamFilePath} ]; then
+  echo "{ \"Parameters\": {} }" > ${ParamFilePath}
+fi
 
 echo ""
-echo "= Read Outputs from previous stack"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${PreviousOutputFilePath}
+echo "= Read Parameters file"
+cat ${ParamFilePath} 
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } " ${PreviousOutputFilePath} \
+jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
@@ -282,7 +290,7 @@ echo ""
 echo "======================================================================="
 echo "======================================================================="
 echo "===                                                                 ==="
-echo "===             PN-PROGRESSION-SENSOR DEPLOYMENT                    ==="
+echo "===             MICROSERVICE DEPLOYMENT                             ==="
 echo "===                                                                 ==="
 echo "======================================================================="
 echo "======================================================================="
@@ -291,7 +299,6 @@ echo ""
 echo ""
 echo "=== Prepare parameters for pn-infra.yaml deployment in $env_type ACCOUNT"
 PreviousOutputFilePath=${repo_name}-storage-${env_type}-out.json
-InfraIpcOutputFilePath=pn-ipc-${env_type}-out.json
 TemplateFilePath=${repo_name}/scripts/aws/cfn/microservice.yml
 ParamFilePath=${repo_name}/scripts/aws/cfn/microservice-${env_type}-cfg.json
 EnanchedParamFilePath=${repo_name}-microservice-${env_type}-cfg-enanched.json
@@ -301,7 +308,6 @@ PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
-echo " - InfraIpcOutputFilePath: ${InfraIpcOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
 echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
@@ -319,23 +325,13 @@ aws ${aws_command_base_args} \
       | tee ${PreviousOutputFilePath}
 
 echo ""
-echo "= Read Outputs from infrastructure stack"
-aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json \
-      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-      | tee ${InfraIpcOutputFilePath}
-
-echo ""
 echo "= Read Parameters file"
 cat ${ParamFilePath} 
 
 echo ""
 echo "= Enanched parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1] * { \"Parameters\": .[2] }" \
-   ${PreviousOutputFilePath} ${ParamFilePath} ${InfraIpcOutputFilePath} \
+   ${PreviousOutputFilePath} ${ParamFilePath} ${INFRA_ALL_OUTPUTS_FILE} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
