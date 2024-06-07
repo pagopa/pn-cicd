@@ -188,7 +188,6 @@ echo "## end merge all ##"
 # API
 WebApiDnsName=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.WebApiDnsName' )
 
-WebApiDnsName=
 API_BASE_URL=""
 if ( [ $WebApiDnsName != '-' ] ) then
   API_BASE_URL="https://${WebApiDnsName}/"
