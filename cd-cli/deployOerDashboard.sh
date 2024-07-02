@@ -114,7 +114,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
-
+cwdir=$(pwd)
 cd $work_dir
 
 
@@ -156,6 +156,15 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
+
+
 ## Script to get metric alarms not used by any composite alarm
 if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     echo "Deploy OER dashboard deploy"
@@ -164,34 +173,19 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
 
     comm -3 all_metric_alarms.txt used.txt | tee not_referenced_metric_allarms.txt
 
-    confidentialInfoAccountId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name "pn-ipc-${env_type}" | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"ConfidentialInfoAccountId\") | .OutputValue" \
-    ) 
+    confidentialInfoAccountId=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.ConfidentialInfoAccountId') 
     echo "ConfidentialInfoAccountId=${confidentialInfoAccountId}"
 
-    helpdeskAccountId=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name "pn-ipc-${env_type}" | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"HelpdeskAccountId\") | .OutputValue" \
-    ) 
+    helpdeskAccountId=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.HelpdeskAccountId') 
     echo "HelpdeskAccountId=${helpdeskAccountId}"
 
-    openSearchArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name "pn-ipc-${env_type}" | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"OpenSearchArn\") | .OutputValue" \
-    ) 
+    openSearchArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.OpenSearchArn') 
     echo "OpenSearchArn=${openSearchArn}"
 
-    logsBucketName=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name "pn-ipc-${env_type}" | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"LogsBucketName\") | .OutputValue" \
-    ) 
+    logsBucketName=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LogsBucketName') 
     echo "LogsBucketName=${logsBucketName}"
 
-    applicationLoadBalancerListenerArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-      --stack-name "pn-infra-${env_type}" | jq -r \
-      ".Stacks[0].Outputs | .[] | select(.OutputKey==\"ApplicationLoadBalancerListenerArn\") | .OutputValue" \
-    ) 
+    applicationLoadBalancerListenerArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.ApplicationLoadBalancerListenerArn') 
     echo "ApplicationLoadBalancerListenerArn=${applicationLoadBalancerListenerArn}"
 
     raddTargetGroupArn=$( aws ${aws_command_base_args}  elbv2 describe-rules --listener-arn ${applicationLoadBalancerListenerArn}  \

@@ -123,6 +123,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
+cwdir=$(pwd)
 cd $work_dir
 
 echo "=== Download pn-infra" 
@@ -176,12 +177,16 @@ if ( [ ! -z "${aws_profile}" ] ) then
 fi
 aws_log_base_args="${aws_log_base_args} --region eu-central-1"
 
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
 
-LandingDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" )
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
+
+LandingDomain=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingDomain' )
+
 LANDING_SITE_URL=""
 if ( [ $LandingDomain != '-' ] ) then
   LANDING_SITE_URL="https://${LandingDomain}"
@@ -310,39 +315,18 @@ if ( [ -f $ENV_FILE_PATH ] ) then
   source $ENV_FILE_PATH
 fi
 
-# read output from pn-ipc
-echo ""
-echo "= Read Outputs from pn-ipc stack"
-
-
-ZoneId=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"CdnZoneId\") | .OutputValue" )
+ZoneId=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.CdnZoneId' )
 
 if ( [ $ZoneId != '-' ] ) then
   ZONE_ID=$ZoneId
 fi
 
-# CERTIFICATES
-LandingCertificateArn=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingCertificateArn\") | .OutputValue" ) 
-
+LandingCertificateArn=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingCertificateArn' )
 if ( [ $LandingCertificateArn != '-' ] ) then
   LANDING_CERTIFICATE_ARN=$LandingCertificateArn
 fi
 
-# DOMAIN
-LandingDomain=$( aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-ipc-$env_type \
-      --output json \
-  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LandingDomain\") | .OutputValue" ) 
-
+LandingDomain=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingDomain' )
 if ( [ $LandingDomain != '-' ] ) then
   LANDING_DOMAIN=$LandingDomain
 fi
@@ -424,6 +408,6 @@ aws ${aws_command_base_args} \
     s3 cp "pn-showcase-site" "s3://${landingBucketName}/" --recursive 
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-showcase-site" "s3://${landingBucketName}/" --delete 
+    s3 sync "pn-showcase-site" "s3://${landingBucketName}/" --delete --exclude "public/static/documents/*"
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
