@@ -2565,6 +2565,13 @@ Resources:
               - events:PutRule
               - events:PutTargets
               - events:RemoveTargets
+              - scheduler:ListSchedules
+              - scheduler:GetSchedule
+              - scheduler:CreateSchedule
+              - scheduler:UpdateSchedule
+              - scheduler:DeleteSchedule
+              - scheduler:TagResource
+              - scheduler:UntagResource
               - pipes:DeletePipe              
               - pipes:CreatePipe 
               - pipes:UpdatePipe               
