@@ -2565,6 +2565,7 @@ Resources:
               - events:PutRule
               - events:PutTargets
               - events:RemoveTargets
+              - scheduler:*
               - pipes:DeletePipe              
               - pipes:CreatePipe 
               - pipes:UpdatePipe               
