@@ -217,7 +217,7 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
 
           #Check if token is invalid or expired and print a Warning with the http code error:
           if [ "$http_code" -ne 200 ]; then
-              echo "****   WARNING: GitHub token is expired or invalid, because the request for check failed with HTTP status code $http_code. Continuing without authentication.   ****"
+              echo "****   WARNING: GitHub token is expired or invalid, because the request for check failed with HTTP status code $http_code. CHECK TOKEN!!! CONTINUING THE SCRIPT WITHOUT AUTH.   ****"
               USE_TOKEN=false
               github_request "$url"
               return
@@ -228,9 +228,10 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
           http_code=$(tail -n1 <<< "$response")
       fi
 
-      #If script failed exit from them immediately:
+      #If script failed exit from immediately:
       if [ "$http_code" -ne 200 ]; then
           echo "****   ERROR: GitHub request not authetincated failed with HTTP status code $http_code error response. Exit from script.   ****"
+          echo "****   EXPORT IS NOT COMPLETED   ****"
           exit 1
       fi
   }
