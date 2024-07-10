@@ -200,24 +200,38 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
       echo "****   WARNING: GitHub token not retrieved or is empty. Continuing without authentication.   ****"
       USE_TOKEN=false
   else
-      echo "****   INFO: GitHub token retrieved successfully. Using authentication.   ****"
+      echo "****   INFO: GitHub token retrieved successfully. Using authentication Token.   ****"
       USE_TOKEN=true
   fi
   
   #Function for Github request:
   github_request() {
-      #Local variable, take the first value passed to fuction:
+      #Local variables, take the first value passed to fuction:
       local url=$1
-       
-      #check if Github token is valid or invalid: 
+      local response
+      local http_code
+
       if $USE_TOKEN; then
           response=$(curl -s -w "%{http_code}" -o response.json -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer $GITHUB_TOKEN" "$url")
           http_code=$(tail -n1 <<< "$response")
+
+          #Check if token is invalid or expired and print a Warning with the http code error:
           if [ "$http_code" -ne 200 ]; then
-              echo "****   WARNING: GitHub token is expired or invalid with HTTP status code $http_code. Continuing without authentication.   ****"
+              echo "****   WARNING: GitHub token is expired or invalid, because the request for check failed with HTTP status code $http_code. Continuing without authentication.   ****"
               USE_TOKEN=false
-              response=$(curl -s -w "%{http_code}" -o response.json -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "$url")
+              github_request "$url"
+              return
           fi
+      else
+          #Go to GitHub without Auth:
+          response=$(curl -s -w "%{http_code}" -o response.json -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "$url")
+          http_code=$(tail -n1 <<< "$response")
+      fi
+
+      #If script failed exit from them immediately:
+      if [ "$http_code" -ne 200 ]; then
+          echo "****   ERROR: GitHub request not authetincated failed with HTTP status code $http_code error response. Exit from script.   ****"
+          exit 1
       fi
   }
 
