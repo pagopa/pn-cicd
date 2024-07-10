@@ -192,7 +192,35 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
   SUB1=tag
   SUB2=amazonaws
   SUB3=sha256
+  #retrive secret:
+  GITHUB_TOKEN=$(aws ${aws_command_base_args} secretsmanager get-secret-value --secret-id github-token --query SecretString --output text)
+
+  #check if GitHub token is not null:
+  if [ -z "$GITHUB_TOKEN" ]; then
+      echo "****   WARNING: GitHub token not retrieved or is empty. Continuing without authentication.   ****"
+      USE_TOKEN=false
+  else
+      echo "****   INFO: GitHub token retrieved successfully. Using authentication.   ****"
+      USE_TOKEN=true
+  fi
   
+  #Function for Github request:
+  github_request() {
+      #Local variable, take the first value passed to fuction:
+      local url=$1
+       
+      #check if Github token is valid or invalid: 
+      if $USE_TOKEN; then
+          response=$(curl -s -w "%{http_code}" -o response.json -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer $GITHUB_TOKEN" "$url")
+          http_code=$(tail -n1 <<< "$response")
+          if [ "$http_code" -ne 200 ]; then
+              echo "****   WARNING: GitHub token is expired or invalid with HTTP status code $http_code. Continuing without authentication.   ****"
+              USE_TOKEN=false
+              response=$(curl -s -w "%{http_code}" -o response.json -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "$url")
+          fi
+      fi
+  }
+
   #cloning git repository and change directory:
   _clone_repository
   
@@ -224,24 +252,22 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
 
     #TAG:
     elif grep -q "$SUB1" <<< "$PN_COMMIT"; then
-      echo "TAG is present for $PN_CONFIGURATION_TAG_param , go to GitHub";
-      #take only tag es: v1.0.0:
-      TAG=$(echo $PN_COMMIT | cut -d "/" -f 2)
-      #declare variable for repo:
-      REPO=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_commitId//g' | sed -E 's/_/-/g')
-      
-      # exceptions for pn-cicd and pn-auth-fleet
-      if ( [ "$REPO" = "cd-scripts" ] ) then
-        REPO="pn-cicd"
-      elif ( [ "$REPO" = "pn-authfleet" ] ) then
-        REPO="pn-auth-fleet"
-      fi
+        echo "TAG is present for $PN_CONFIGURATION_TAG_param , go to GitHub";
+        #take only tag es: v1.0.0:
+        TAG=$(echo $PN_COMMIT | cut -d "/" -f 2)
+        #declare variable for repo:
+        REPO=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_commitId//g' | sed -E 's/_/-/g')
+        
+        # exceptions for pn-cicd and pn-auth-fleet
+        if ( [ "$REPO" = "cd-scripts" ] ) then
+          REPO="pn-cicd"
+        elif ( [ "$REPO" = "pn-authfleet" ] ) then
+          REPO="pn-auth-fleet"
+        fi
 
-      PN_COMMIT_ID=$(echo "$( curl -L -s  \
-      -H "Accept: application/vnd.github+json" \
-      -H "X-GitHub-Api-Version: 2022-11-28" \
-      https://api.github.com/repos/pagopa/$REPO/tags | jq '.[] | select(.name=='\"$TAG\"') ' |  jq -r '.commit.sha' )") ;
-      echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
+        github_request "https://api.github.com/repos/pagopa/$REPO/tags"
+        PN_COMMIT_ID=$(jq -r '.[] | select(.name=='\"$TAG\"') | .commit.sha' response.json)
+        echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
     
     #CommitID (nothing to do):
     elif  [ $(echo  $PN_COMMIT | wc -c) -eq 41 ] ; then
@@ -250,25 +276,24 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
 
     #BRANCH
     else
-      echo "BRANCH is present for $PN_CONFIGURATION_TAG_param , got to GitHub:";
-      #declare variable for repo:
-      REPO=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_commitId//g' | sed -E 's/_/-/g')
+        echo "BRANCH is present for $PN_CONFIGURATION_TAG_param , got to GitHub:";
+        #declare variable for repo:
+        REPO=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_commitId//g' | sed -E 's/_/-/g')
 
-      # exceptions for pn-cicd and pn-auth-fleet
-      if ( [ "$REPO" = "cd-scripts" ] ) then
-        REPO=pn-cicd
-      elif ( [ "$REPO" = "pn-authfleet" ] ) then
-        REPO=pn-auth-fleet
-      fi
-      
-      PN_COMMIT_ID=$(echo "$( curl -L -s \
-      -H "Accept: application/vnd.github+json" \
-      -H "X-GitHub-Api-Version: 2022-11-28" \
-      https://api.github.com/repos/pagopa/$REPO/branches/$PN_COMMIT |  jq -r '.commit.sha' )") ;
-      echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
+        # exceptions for pn-cicd and pn-auth-fleet
+        if ( [ "$REPO" = "cd-scripts" ] ) then
+          REPO=pn-cicd
+        elif ( [ "$REPO" = "pn-authfleet" ] ) then
+          REPO=pn-auth-fleet
+        fi
+        
+        github_request "https://api.github.com/repos/pagopa/$REPO/branches/$PN_COMMIT"
+        PN_COMMIT_ID=$(jq -r '.commit.sha' response.json)
+        echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
     fi
   done
-  echo export completed
+
+echo "****   EXPORT COMPLETED   ****"
 
   mkdir -p custom-config
   cp -r pn-configuration/${env_type}/* custom-config/
