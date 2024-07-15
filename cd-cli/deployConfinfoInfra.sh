@@ -129,7 +129,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
-
+cwdir=$(pwd)
 cd $work_dir
 
 echo "=== Download pn-infra"
@@ -218,6 +218,14 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   PnCoreAwsAccountId=$(cat $TERRAFORM_PARAMS_FILEPATH | jq -r '.Parameters.PnCoreAwsAccountId')
   echo "PnCoreAwsAccountId  ${PnCoreAwsAccountId}"
 fi
+
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-confinfo.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
 
 echo ""
 echo ""
@@ -387,22 +395,12 @@ if [[ -f "$BACKUP_STACK_FILE" ]]; then
     echo "$BACKUP_STACK_FILE exists, updating backup stack"
 
     echo ""
-    echo "= Read Outputs from previous stack"
-    aws ${aws_command_base_args}  \
-        cloudformation describe-stacks \
-          --stack-name infra-$env_type \
-          --query "Stacks[0].Outputs" \
-          --output json \
-          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-          | tee ${PreviousOutputFilePath}
-
-    echo ""
     echo "= Read Parameters file"
     cat ${ParamFilePath}
 
     echo ""
     echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
       > ${EnanchedParamFilePath}
     echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
@@ -427,23 +425,13 @@ DATA_MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-data-monitoring.yaml
 if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
     echo "$DATA_MONITORING_STACK_FILE exists, updating pn-data-monitoring stack"
 
-    echo ""
-    echo "= Read Outputs from previous stack"
-    aws ${aws_command_base_args}  \
-        cloudformation describe-stacks \
-          --stack-name infra-$env_type \
-          --query "Stacks[0].Outputs" \
-          --output json \
-          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-          | tee ${PreviousOutputFilePath}
-
-    echo ""
+    
     echo "= Read Parameters file"
     cat ${ParamFilePath}
 
     echo ""
     echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
       > ${EnanchedParamFilePath}
     echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
@@ -469,22 +457,12 @@ if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
     echo "$COST_SAVING_STACK_FILE exists, updating pn-cost-saving stack"
 
     echo ""
-    echo "= Read Outputs from previous stack"
-    aws ${aws_command_base_args}  \
-        cloudformation describe-stacks \
-          --stack-name infra-$env_type \
-          --query "Stacks[0].Outputs" \
-          --output json \
-          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-          | tee ${PreviousOutputFilePath}
-
-    echo ""
     echo "= Read Parameters file"
     cat ${ParamFilePath} 
 
     echo ""
     echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
       > ${EnanchedParamFilePath}
     echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
@@ -507,22 +485,12 @@ if [[ -f "$MONITORING_STACK_FILE" ]]; then
     echo "$MONITORING_STACK_FILE exists, updating monitoring stack"
 
     echo ""
-    echo "= Read Outputs from previous stack"
-    aws ${aws_command_base_args}  \
-        cloudformation describe-stacks \
-          --stack-name infra-$env_type \
-          --query "Stacks[0].Outputs" \
-          --output json \
-          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-          | tee ${PreviousOutputFilePath}
-
-    echo ""
     echo "= Read Parameters file"
     cat ${ParamFilePath}
 
     echo ""
     echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PreviousOutputFilePath} ${ParamFilePath} \
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
       > ${EnanchedParamFilePath}
     echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
