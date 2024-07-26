@@ -394,6 +394,8 @@ echo "====================================================================="
 echo ""
 echo "===                          SITO VETRINA                         ==="
 echo "====================================================================="
+mkdir -p "deploy"
+cd "deploy"
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
       --bucket "$LambdasBucketName" --key "pn-showcase-site/commits/${pn_showcase_site_commitid}/pn-showcase-site.tar.gz" \
       "pn-showcase-site.tar.gz"
