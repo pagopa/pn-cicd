@@ -2472,6 +2472,8 @@ Resources:
               - logs:CreateLogGroup
               - logs:DescribeLogGroups
               - logs:FilterLogEvents
+              - logs:PutAccountPolicy
+              - logs:PutDataProtectionPolicy
               - route53:CreateHostedZone
               - route53:DeleteHostedZone
               - route53:GetHealthCheck
