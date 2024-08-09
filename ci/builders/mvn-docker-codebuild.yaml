@@ -142,21 +142,11 @@ Conditions:
     Fn::Equals:
       - Ref: ShouldCreateEcrParam
       - 'true'
-
-  PnExternalRegistriesModule:
-    Fn::Equals:
-      - Ref: GitHubProjectName
-      - 'pn-external-registries'
-
-  PnDeliveryPushModule:
+  
+  NeedMediumBuildEnv:
     Fn::Equals:
       - Ref: GitHubProjectName
       - 'pn-delivery-push'
-
-  NeedMediumBuildEnv:
-    Fn::Or:
-      - Condition: PnDeliveryPushModule
-      - Condition: PnExternalRegistriesModule
 
 Resources:
 
