@@ -169,3 +169,36 @@ echo " - copy custom config"
 mkdir -p $custom_config_dir/${infra_repo}
 cp -p ${terraformOutputPath} $custom_config_dir/${infra_repo}/
 
+ParamFilePath=$custom_config_dir/${infra_repo}/${terraformOutputPath}
+
+echo ""
+echo "=== Deploy microservice-cloudwatch-dashboard FOR $env_type ACCOUNT"
+CLOUDWATCH_DASHBOARD_STACK_FILE=pn-infra/runtime-infra/microservice-cloudwatch-dashboard.yaml 
+
+if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
+    echo "$CLOUDWATCH_DASHBOARD_STACK_FILE exists, updating monitoring stack"
+
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath} 
+
+    echo ""
+    echo "= Enanched parameters file"
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PARAM_FILE_PATH} \
+      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+      > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name pn-cloudwatch-dashboard-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --template-file ${CLOUDWATCH_DASHBOARD_STACK_FILE} \
+          --tags Microservice=pn-infra-monitoring \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+
+else
+  echo "microservice-cloudwatch-dashboard file doesn't exist, stack update skipped"
+fi
+

@@ -22,212 +22,10 @@ Parameters:
     Type: String
   
   CdArtifactBucket:
-    Default: 'cd-confinfo-pipeline-cdartifactbucket-eu-south-1-891377202032'
     Description: 'Bucket name containing lambda and frontend artifacts'
     Type: String
 
-Conditions:
-  IsHotfixCondition: !Equals [ !Ref EnvName, 'hotfix' ]
-  IsDevCondition: !Equals [ !Ref EnvName, 'dev' ]
-  IsContinuosDeliveryCondition: !Or [ !Condition IsHotfixCondition, !Condition IsDevCondition ]
-  IsTestEnv: !Equals [ !Ref EnvName, 'test' ]
-  IsUatEnv: !Equals [ !Ref EnvName, 'uat' ]
-  IsProdEnv: !Equals [ !Ref EnvName, 'prod' ]
-  IsNewConfiguration: !Or [ !Condition IsTestEnv, !Condition IsUatEnv, !Condition IsProdEnv, !Condition IsHotfixCondition ]
-  RequiresSingleProjects: !Or [ !Condition IsContinuosDeliveryCondition, !Condition IsNewConfiguration ]
-
 Resources:
-
-  ###                    Continuos Delivery EVENT BUS                     ###
-  ###########################################################################
-  # - Receive Continuos Integration build events and activate the needed 
-  #   Continuos Delivery pipeline
-  CdEventBus:
-    Condition: IsContinuosDeliveryCondition
-    Type: AWS::Events::EventBus
-    Properties: 
-      Name: 'CdEventBus'
-  
-  # Receive Events from CI system
-  CdEventBusAccessPolicy: 
-    Condition: IsContinuosDeliveryCondition
-    Type: AWS::Events::EventBusPolicy
-    Properties: 
-      EventBusName: !Ref CdEventBus
-      StatementId: "allowEventsFromCI"
-      Statement: 
-        Effect: "Allow"
-        Principal: 
-            AWS: !Sub "arn:aws:iam::${CiAccountId}:root"
-        Action: "events:PutEvents"
-        Resource: !GetAtt "CdEventBus.Arn"
-  
-
-  ###                           CI to CD BRIDGE                           ###
-  ###########################################################################
-  # EVENT BRIDGE RULE: transform events into CodeBuild Execution
-  SendAllBuildEventsToCodeBuild:
-    Condition: IsContinuosDeliveryCondition
-    Type: AWS::Events::Rule
-    Properties: 
-      Description: Save build events
-      RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
-      EventBusName: !Ref CdEventBus
-      EventPattern: !FindInMap [ EventPatternMap, !Ref EnvName, BuildEvtPatten ]
-      Targets: 
-        - Id: 'CdEventBus-ToPipelineChooser'
-          Arn: !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
-          RoleArn: !GetAtt "EventBusRunCodeBuildRole.Arn"
-          InputTransformer:
-            InputPathsMap:
-              "project_type": "$.detail.project_type"
-              "project": "$.detail.project"
-              "project_branch": "$.detail.project_branch"
-              "image_url": "$.detail.image_url"
-              "commit_id": "$.detail.commit_id"
-            InputTemplate: |
-              {
-                "environmentVariablesOverride": [{
-                    "name": "PROJECT_TYPE",
-                    "type": "PLAINTEXT",
-                    "value": <project_type>
-                  },
-                  {
-                    "name": "PROJECT",
-                    "type": "PLAINTEXT",
-                    "value": <project>
-                  },
-                  {
-                    "name": "PROJECT_BRANCH",
-                    "type": "PLAINTEXT",
-                    "value": <project_branch>
-                  },
-                  {
-                    "name": "COMMIT_ID",
-                    "type": "PLAINTEXT",
-                    "value": <commit_id>
-                  },
-                  {
-                    "name": "IMAGE_URL",
-                    "type": "PLAINTEXT",
-                    "value": <image_url>
-                  }
-                ]
-              }
-
-  # - Role and policy used to activate CodeBuild from EventBridge rule
-  EventBusRunCodeBuildRole:
-    Condition: IsContinuosDeliveryCondition
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action: sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service: events.amazonaws.com
-        Version: "2012-10-17"
-      Policies:
-        - PolicyName: runCodeBuild
-          PolicyDocument:
-            Statement:
-              - Sid: startProjectRun
-                Action:
-                  - "codebuild:*"
-                Effect: Allow
-                Resource: !GetAtt ChooseAndLaunchPipelineCodeBuild.Arn
-
-
-  ###           CodeBuild: CHOOSE AND EXECUTE THE C.D. PIPELINE           ###
-  ###########################################################################
-  # - The codebuild project
-  ChooseAndLaunchPipelineCodeBuild:
-    Condition: IsContinuosDeliveryCondition
-    Type: 'AWS::CodeBuild::Project'
-    Properties:
-      Name: 'ChooseCdPipeline'
-      ServiceRole: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
-      Source: 
-        Type: NO_SOURCE
-        BuildSpec: |
-          version: 0.2
-          phases:
-            pre_build:
-              commands:
-                - env
-            build:
-              commands:
-                - 'echo " launch right pipeline"'
-                - 'echo "PROJECT_NAME=$PROJECT"'
-                - 'echo "PROJECT_TYPE=$PROJECT_TYPE"'
-                - 'echo "PROJECT_BRANCH=$PROJECT_BRANCH"'
-                - 'echo "COMMIT_ID=$COMMIT_ID"'
-                - 'echo "IMAGE_URL=$IMAGE_URL"'
-                - 'echo ""'
-                - |
-                  if ( [ ! -z "$IMAGE_URL" ]) then
-                    IMAGE_URL=$(echo $IMAGE_URL | sed "s/eu-central-1/eu-south-1/g")
-                    echo "REPLACE IMAGE URL = $IMAGE_URL"
-                  fi
-                - 'echo "Retrieve commit configuration file"'
-                - 'aws s3 cp s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh desired-commit-ids-env.sh'
-                - 'cat desired-commit-ids-env.sh'
-                - 'echo ""'
-                - 'echo "Mutate commit configuration file"'
-                - |
-                  if ( [ "$PROJECT" = "pn-cicd" ] ) then
-                    sed -i -e "s|cd_scripts_commitId=.*|cd_scripts_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME=""
-                  fi
-                - |
-                  if ( [ "$PROJECT" = "pn-infra-confinfo" ] ) then
-                    sed -i -e "s|pn_infra_confinfo_commitId=.*|pn_infra_confinfo_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-infra-update-pipeline"
-                  fi
-                - |
-                  if ( [ "$PROJECT" = "pn-infra" ] ) then
-                    sed -i -e "s|pn_infra_commitId=.*|pn_infra_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-infra-update-pipeline"
-                  fi
-                - |
-                  if ( [ "$PROJECT" = "pn-ss" ] ) then 
-                    sed -i -e "s|pn_ss_commitId=.*|pn_ss_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    sed -i -e "s|pn_ss_imageUrl=.*|pn_ss_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-ss-update-pipeline"
-                  fi
-                - |
-                  if ( [ "$PROJECT" = "pn-statemachinemanager" ] ) then 
-                    sed -i -e "s|pn_statemachinemanager_commitId=.*|pn_statemachinemanager_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    sed -i -e "s|pn_statemachinemanager_imageUrl=.*|pn_statemachinemanager_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-statemachinemanager-update-pipeline"
-                  fi
-                - 'cat desired-commit-ids-env.sh'
-                - 'echo "Upload commit configuration file"'
-                - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
-                - 'echo ""'
-                - 'echo ""'
-                - |
-                  if ( [ "$PIPELINE_NAME" != "" ] ) then
-                    echo "Launch pipeline ${PIPELINE_NAME}"
-                    aws codepipeline  start-pipeline-execution --name ${PIPELINE_NAME}
-                  fi
-          artifacts:
-            files:
-              - '**/*'
-      Artifacts:
-        Type: NO_ARTIFACTS
-      Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
-        Type: LINUX_CONTAINER
-        Image: "aws/codebuild/standard:6.0"
-        EnvironmentVariables:
-          - Name: CdArtifactBucketName
-            Type: PLAINTEXT
-            Value: !Ref CdArtifactBucket
-          - Name: CiArtifactBucketName
-            Type: PLAINTEXT
-            Value: !Ref CiArtifactBucketNameParam
-
 
   # CodeBuild Role used during the choose of right codepipeline
   ChooseAndLaunchPipelineCodeBuildRole:
@@ -374,15 +172,13 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateInfraCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -397,7 +193,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -405,7 +201,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
@@ -422,7 +218,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -430,7 +226,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
@@ -461,30 +257,7 @@ Resources:
                 - Name: PostDeployScriptsOutput
               RunOrder: 5
 
-            # List versions if the environment is dev
-            - Fn::If:
-                - IsContinuosDeliveryCondition
-                - Name: List_Versions
-                  ActionTypeId:
-                    Category: Build
-                    Owner: AWS
-                    Version: 1
-                    Provider: CodeBuild
-                  Configuration:
-                    ProjectName: !Ref ListDeployedVersionsCodebuildProject
-                    EnvironmentVariables: !Sub '[
-                        {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
-                        {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                        {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                        {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"}
-                      ]'
-                  InputArtifacts:
-                    - Name: EmptyZip
-                  RunOrder: 6
-                - !Ref AWS::NoValue
-
   PnSsDeployPipeline:
-    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -557,7 +330,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -565,7 +338,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
@@ -575,7 +348,6 @@ Resources:
               RunOrder: 3
 
   PnStateMachineManagerDeployPipeline:
-    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -648,7 +420,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -656,7 +428,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
@@ -667,7 +439,6 @@ Resources:
 
 
   PnInfraDeployPipeline:
-    Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
@@ -740,15 +511,13 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateInfraCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
-                    {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -828,7 +597,7 @@ Resources:
         EnvironmentVariables:
           - Name: PnConfigurationEnabled
             Type: PLAINTEXT
-            Value: !If [ IsNewConfiguration, 'main', '' ]
+            Value: 'main'
           - Name: CiAccountId
             Type: PLAINTEXT
             Value: !Ref CiAccountId
@@ -836,10 +605,10 @@ Resources:
 
   # CODEBUILD used to update an ecs microservice
   ###################################################
-  UpdateMicroserviceCodeBuildProject:
+  UpdateInfraCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProject
+      Name: !Sub ${ProjectName}-UpdateInfraCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source: 
         Type: CODEPIPELINE
@@ -869,23 +638,11 @@ Resources:
                 - |
                   if ( [ ! -z "$pn_infra_confinfo_commitId"  ] ) then
                     echo "########################################################"
-                    echo "###                   UPDATE NETWORKING              ###"
+                    echo "###                UPDATE NETWORKING                 ###"
                     echo "########################################################"
                     echo ""
                     (cd scripts/cd-cli && ./deployNetworkingBB.sh -r $AwsRegion -e $EnvName -i $pn_infra_confinfo_commitId -a confinfo -w /tmp -c $custom_config_dir )
                   fi
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo "########################################################"'
-                - 'echo "###       UPDATE INFRA    "'
-                - 'echo "########################################################"'
-                - 'echo ""'
-                - 'echo "./deployInfraBB.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployInfraBB.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
@@ -898,10 +655,10 @@ Resources:
   
   # CODEBUILD used to update an external microservice (logsaver-be)
   #################################################################
-  UpdateExternalMicroserviceCodeBuildProject:
+  UpdateMicroserviceCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${ProjectName}-UpdateExternalMicroserviceCodeBuildProject
+      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source: 
         Type: CODEPIPELINE
@@ -2310,8 +2067,4 @@ Outputs:
     Value: !Ref CdArtifactBucket
 
   CdEventBusArn:
-    Value: 
-      Fn::If:
-        - IsContinuosDeliveryCondition
-        - !GetAtt CdEventBus.Arn
-        - ''
+    Value: ''
