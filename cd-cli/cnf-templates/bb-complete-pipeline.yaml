@@ -24,6 +24,10 @@ Parameters:
   CdArtifactBucket:
     Description: 'Bucket name containing lambda and frontend artifacts'
     Type: String
+    
+  TerraformEnv:
+    Description: 'Terraform env name'
+    Type: String
 
 Resources:
 
@@ -176,6 +180,7 @@ Resources:
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"TerraformEnv", "value":"${TerraformEnv}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
@@ -515,6 +520,7 @@ Resources:
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"TerraformEnv", "value":"${TerraformEnv}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
@@ -636,12 +642,12 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - |
-                  if ( [ ! -z "$pn_infra_confinfo_commitId"  ] ) then
+                  if ( [ ! -z "$pn_infra_confinfo_bb_commitId"  ] ) then
                     echo "########################################################"
                     echo "###                UPDATE NETWORKING                 ###"
                     echo "########################################################"
                     echo ""
-                    (cd scripts/cd-cli && ./deployNetworkingBB.sh -r $AwsRegion -e $EnvName -i $pn_infra_confinfo_commitId -m $pn_infra_commitId -a confinfo -w /tmp -c $custom_config_dir )
+                    (cd scripts/cd-cli && ./deployNetworkingBB.sh -r $AwsRegion -e $EnvName -t $TerraformEnv -i $pn_infra_confinfo_bb_commitId -m $pn_infra_commitId -a confinfo -w /tmp -c $custom_config_dir )
                   fi
           artifacts:
             files:

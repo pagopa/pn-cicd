@@ -13,13 +13,14 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-pn-confinfo-bb-commitid> -m <github-pn-infra-commitid> -a <account-type> [-c <custom_config_dir>]
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -t <terraform-env> -i <github-pn-confinfo-bb-commitid> -m <github-pn-infra-commitid> -a <account-type> [-c <custom_config_dir>]
 
     [-h]                                     : this help message
     [-v]                                     : verbose mode
     [-p <aws-profile>]                       : aws cli profile (optional)
     -r <aws-region>                          : aws region as eu-south-1
     -e <env-type>                            : one of dev / uat / svil / coll / cert / prod
+    -t <terraform-env>                       : terraform env name
     -i <github-pn-confinfo-bb-commitid>      : commitId for github repository pagopa/pn-infra-confinfo-bb
     -m <github-pn-infra-commitid>            : commitId for github repository pagopa/pn-infra
     [-c <custom_config_dir>]                 : where tor read additional env-type configurations
@@ -56,6 +57,10 @@ parse_params() {
       env_type="${2-}"
       shift
       ;;
+    -t| --terraform-env) 
+      terraform_env="${2-}"
+      shift
+      ;;
     -a | --account-type) 
       account_type="${2-}"
       shift
@@ -86,6 +91,7 @@ parse_params() {
 
   # check required params and arguments
   [[ -z "${env_type-}" ]] && usage 
+  [[ -z "${terraform_env-}" ]] && usage 
   [[ -z "${pn_confinfo_bb_commitid-}" ]] && usage
   [[ -z "${pn_infra_commitid-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
@@ -104,6 +110,7 @@ dump_params(){
   echo "Infra CommitId:                ${pn_infra_commitid}"
   echo "Account Type:                  ${account_type}"
   echo "Env Name:                      ${env_type}"
+  echo "Terraform Env Name:            ${terraform_env}"
   echo "AWS region:                    ${aws_region}"
   echo "AWS profile:                   ${aws_profile}"
 }
@@ -172,7 +179,7 @@ if ( [ -f ${infra_confinfo_bb_repo}/functions/build_lambda.sh ] ) then
 fi
 
 ## Apply tf
-(cd ${infra_confinfo_bb_repo}/src/main && ./terraform.sh init ${env_type} && ./terraform.sh apply ${env_type} --auto-approve)
+cd ${infra_confinfo_bb_repo}/src/main && ./terraform.sh init ${terraform_env} && ./terraform.sh apply ${terraform_env} --auto-approve)
 
 terraformOutputPath=terraform-${env_type}-cfg.json
 
