@@ -61,6 +61,7 @@ Resources:
         - !Ref CodeBuildPolicyEventLogs
         - !Ref CodeBuildPolicyIAM
         - !Ref CodeBuildNetworking
+        - !Ref CodeBuildEfs
       
   ###########################################################################
   ###             EFFECTIVE CONTINUOS INTEGRATIONS PIPELINES              ###
@@ -2003,6 +2004,20 @@ Resources:
               - ec2:UpdateSecurityGroupRuleDescriptionsEgress
               - ec2:UpdateSecurityGroupRuleDescriptionsIngress
               - ec2:*Tag*
+            Resource: "*"
+            Effect: Allow
+
+  CodeBuildEfs:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-Efs
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - elasticfilesystem:DescribeLifecycleConfiguration
             Resource: "*"
             Effect: Allow
 
