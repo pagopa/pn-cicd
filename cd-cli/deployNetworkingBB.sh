@@ -179,7 +179,7 @@ if ( [ -f ${infra_confinfo_bb_repo}/functions/build_lambda.sh ] ) then
 fi
 
 ## Apply tf
-cd ${infra_confinfo_bb_repo}/src/main && ./terraform.sh init ${terraform_env} && ./terraform.sh apply ${terraform_env} --auto-approve)
+(cd ${infra_confinfo_bb_repo}/src/main && ./terraform.sh init ${terraform_env} && ./terraform.sh apply ${terraform_env} --auto-approve)
 
 terraformOutputPath=terraform-${env_type}-cfg.json
 
