@@ -350,25 +350,9 @@ echo "Load all outputs in a single file for next stack deployments"
 INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
 TmpFilePath=terraform-merge-${env_type}-cfg.json
 
-echo "Getting output of lambda-cloudwatch-dashboard-transform-$env_type"
-StackOutputFilePath=${microcvs_name}-stack-${env_type}-out.json
-aws ${aws_command_base_args}  \
-      cloudformation describe-stacks \
-        --stack-name lambda-cloudwatch-dashboard-transform-$env_type \
-        --query "Stacks[0].Outputs" \
-        --output json \
-        | jq 'map({ (.OutputKey): .OutputValue}) | add' \
-        | tee ${StackOutputFilePath}
-
-echo ${StackOutputFilePath}
-
-echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} with stacks"
-
 echo ""
 echo "= Enanched Terraform parameters file for pn-infra-storage"
-jq -s ".[0] * .[1]" ${StackOutputFilePath} ${terraformOutputPath} > ${TmpFilePath}
-cat ${TmpFilePath}
-mv ${TmpFilePath} ${INFRA_ALL_OUTPUTS_FILE}
+mv ${terraformOutputPath} ${INFRA_ALL_OUTPUTS_FILE}
 
 echo "## start merge all ##"
 cat $INFRA_ALL_OUTPUTS_FILE
