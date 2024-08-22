@@ -212,7 +212,7 @@ echo ${aws_command_base_args}
 
 echo ""
 echo "=== Deploy lambda-cloudwatch-dashboard-transform FOR $env_type ACCOUNT"
-CLOUDWATCH_DASHBOARD_STACK_FILE=pn-infra/runtime-infra/fragments/lambda-cloudwatch-dashboard-transform 
+CLOUDWATCH_DASHBOARD_STACK_FILE=pn-infra/runtime-infra/fragments/lambda-cloudwatch-dashboard-transform.yaml 
 
 if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
     echo "$CLOUDWATCH_DASHBOARD_STACK_FILE exists, updating monitoring stack"
@@ -221,15 +221,12 @@ if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
     echo "= Read Parameters file"
     cat ${ParamFilePath} 
 
-    echo ""
-    echo "= Enanched parameters file"
-
     aws ${aws_command_base_args} \
         cloudformation deploy \
           --stack-name lambda-cloudwatch-dashboard-transform-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${CLOUDWATCH_DASHBOARD_STACK_FILE} \
-          --tags Microservice=pn-infra-monitoring \
+          --tags Microservice=lambda-cloudwatch-dashboard-transform \
           --parameter-overrides file://$( realpath ${ParamFilePath} )
 
 else
