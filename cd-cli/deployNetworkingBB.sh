@@ -185,7 +185,7 @@ terraformOutputPath=terraform-${env_type}-cfg.json
 
 ## Output tf
 (cd ${infra_confinfo_bb_repo}/src/main && terraform output --json ) | jq 'to_entries[]' > $terraformOutputPath
-jq $terraformOutputPath | jq '{ (.key | sub("'${terraform_output_prefix}'" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | jq -s 'reduce .[] as $item ({}; . *= $item )' | jq -s '{ Parameters: .[0] }' > $terraformOutputPath
+jq . $terraformOutputPath | jq '{ (.key | sub("'${terraform_output_prefix}'" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | jq -s 'reduce .[] as $item ({}; . *= $item )' | jq -s '{ Parameters: .[0] }' > $terraformOutputPath
 
 echo ""
 echo "= Read Terraform Output file"
