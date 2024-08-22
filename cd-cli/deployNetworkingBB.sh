@@ -121,7 +121,7 @@ dump_params(){
   echo "Terraform Env Name:            ${terraform_env}"
   echo "AWS region:                    ${aws_region}"
   echo "AWS profile:                   ${aws_profile}"
-  echo "Artifact Bucket Name:          ${artifact_bucket_name}"
+  echo "Artifact Bucket Name:          ${cd_artifact_bucket_name}"
 }
 
 
