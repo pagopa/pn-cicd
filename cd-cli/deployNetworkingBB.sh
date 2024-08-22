@@ -206,13 +206,13 @@ if ( [ ! -z "${aws_profile}" ] ) then
   aws_command_base_args="${aws_command_base_args} --profile $aws_profile"
 fi
 if ( [ ! -z "${aws_region}" ] ) then
-  aws_command_base_args="${aws_command_base_args} --region  $aws_region"
+  aws_command_base_args="${aws_command_base_args} --region $aws_region"
 fi
 echo ${aws_command_base_args}
 
 echo ""
-echo "=== Deploy microservice-cloudwatch-dashboard FOR $env_type ACCOUNT"
-CLOUDWATCH_DASHBOARD_STACK_FILE=pn-infra/runtime-infra/fragments/microservice-cloudwatch-dashboard.yaml 
+echo "=== Deploy lambda-cloudwatch-dashboard-transform FOR $env_type ACCOUNT"
+CLOUDWATCH_DASHBOARD_STACK_FILE=pn-infra/runtime-infra/fragments/lambda-cloudwatch-dashboard-transform 
 
 if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
     echo "$CLOUDWATCH_DASHBOARD_STACK_FILE exists, updating monitoring stack"
@@ -223,16 +223,14 @@ if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
 
     echo ""
     echo "= Enanched parameters file"
-    jq -r '.Parameters | to_entries[] | "\(.key)=\"\(.value)\""' ${ParamFilePath} > ${EnanchedParamFilePath}
-    cat ${EnanchedParamFilePath}
 
     aws ${aws_command_base_args} \
         cloudformation deploy \
-          --stack-name pn-cloudwatch-dashboard-$env_type \
+          --stack-name lambda-cloudwatch-dashboard-transform-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${CLOUDWATCH_DASHBOARD_STACK_FILE} \
           --tags Microservice=pn-infra-monitoring \
-          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+          --parameter-overrides file://$( realpath ${ParamFilePath} )
 
 else
   echo "microservice-cloudwatch-dashboard file doesn't exist, stack update skipped"
