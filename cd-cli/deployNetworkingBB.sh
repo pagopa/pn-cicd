@@ -223,13 +223,13 @@ if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
 
     echo ""
     echo "= Enanched parameters file"
-    jq -r '.Parameters | to_entries[] | "\(.key)=\(.value)"' ${ParamFilePath} | sed 's/"//g' > ${EnanchedParamFilePath}
+    jq -r '.Parameters | to_entries[] | "\(.key)=\"\(.value)\""' ${ParamFilePath} | sed 's/"//g' > ${EnanchedParamFilePath}
     cat ${EnanchedParamFilePath}
 
     aws ${aws_command_base_args} \
         cloudformation deploy \
           --stack-name pn-cloudwatch-dashboard-$env_type \
-          --capabilities CAPABILITY_NAMED_IAM \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${CLOUDWATCH_DASHBOARD_STACK_FILE} \
           --tags Microservice=pn-infra-monitoring \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
