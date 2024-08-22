@@ -206,7 +206,6 @@ mkdir -p $custom_config_dir/${infra_confinfo_bb_repo}
 cp -p ${terraformOutputPath} $custom_config_dir/${infra_confinfo_bb_repo}/
 
 ParamFilePath=$custom_config_dir/${infra_confinfo_bb_repo}/${terraformOutputPath}
-EnanchedParamFilePath=pn-infra-${env_type}-cfg-enanched.json
 
 echo ""
 echo "=== Base AWS command parameters"
