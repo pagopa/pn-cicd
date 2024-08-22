@@ -197,7 +197,7 @@ mkdir -p $custom_config_dir/${infra_confinfo_bb_repo}
 cp -p ${terraformOutputPath} $custom_config_dir/${infra_confinfo_bb_repo}/
 
 ParamFilePath=$custom_config_dir/${infra_confinfo_bb_repo}/${terraformOutputPath}
-
+EnanchedParamFilePath=pn-infra-${env_type}-cfg-enanched.json
 echo ""
 echo "=== Deploy microservice-cloudwatch-dashboard FOR $env_type ACCOUNT"
 CLOUDWATCH_DASHBOARD_STACK_FILE=pn-infra/runtime-infra/fragments/microservice-cloudwatch-dashboard.yaml 
@@ -211,10 +211,7 @@ if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
 
     echo ""
     echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${ParamFilePath} \
-      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
-      > ${EnanchedParamFilePath}
-    echo "${ParamFilePath} ]" >> ${EnanchedParamFilePath}
+    jq -r '.Parameters | to_entries[] | "\(.key)=\(.value)"' ${ParamFilePath} | sed 's/"//g' > ${EnanchedParamFilePath}
     cat ${EnanchedParamFilePath}
 
     aws ${aws_command_base_args} \
