@@ -223,7 +223,7 @@ if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
 
     echo ""
     echo "= Enanched parameters file"
-    jq -r '.Parameters | to_entries[] | "\(.key)=\"\(.value)\""' ${ParamFilePath} | sed 's/"//g' > ${EnanchedParamFilePath}
+    jq -r '.Parameters | to_entries[] | "\(.key)=\"\(.value)\""' ${ParamFilePath} > ${EnanchedParamFilePath}
     cat ${EnanchedParamFilePath}
 
     aws ${aws_command_base_args} \
