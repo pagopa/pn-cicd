@@ -200,7 +200,7 @@ ParamFilePath=$custom_config_dir/${infra_confinfo_bb_repo}/${terraformOutputPath
 
 echo ""
 echo "=== Deploy microservice-cloudwatch-dashboard FOR $env_type ACCOUNT"
-CLOUDWATCH_DASHBOARD_STACK_FILE=pn-infra/runtime-infra/microservice-cloudwatch-dashboard.yaml 
+CLOUDWATCH_DASHBOARD_STACK_FILE=pn-infra/runtime-infra/fragments/microservice-cloudwatch-dashboard.yaml 
 
 if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
     echo "$CLOUDWATCH_DASHBOARD_STACK_FILE exists, updating monitoring stack"
