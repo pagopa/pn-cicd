@@ -13,24 +13,25 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] -n <microcvs-name> -N <microcvs-idx> [-p <aws-profile>] -r <aws-region> -e <env-type> -d <cicd-github-commitid> -i <pn-infra-github-commitid> -m <pn-microsvc-github-commitid> -I <countainer-image-uri> -b <artifactBucketName> -B <lambdaArtifactBucketName> [-w <work_dir>] [-c <custom_config_dir>]
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] -n <microcvs-name> -N <microcvs-idx> [-p <aws-profile>] -r <aws-region> -e <env-type> -d <cicd-github-commitid> -i <pn-infra-github-commitid> -g <github-pn-confinfo-bb-commitid> -m <pn-microsvc-github-commitid> -I <countainer-image-uri> -b <artifactBucketName> -B <lambdaArtifactBucketName> [-w <work_dir>] [-c <custom_config_dir>]
     
-    [-h]                             : this help message
-    [-v]                             : verbose mode
-    [-p <aws-profile>]               : aws cli profile (optional)
-    -r <aws-region>                  : aws region as eu-south-1
-    -e <env-type>                    : one of dev / uat / svil / coll / cert / prod
-    -d <cicd-github-commitid>        : commitId for github repository pagopa/pn-cicd
-    -i <infra-github-commitid>       : commitId for github repository pagopa/pn-infra
-    -m <pn-microsvc-github-commitid> : commitId for github repository del microservizio
-    [-c <custom_config_dir>]         : where tor read additional env-type configurations
-    -b <artifactBucketName>          : bucket name to use as temporary artifacts storage
-    -B <lambdaArtifactBucketName>    : bucket name where lambda artifact are memorized    
-    -n <microcvs-name>               : nome del microservizio
-    -N <microcvs-idx>                : id del microservizio
-    -I <image-uri>                   : url immagine docker microservizio
-    -w <work-dir>                    : working directory used by the script to download artifacts (default $HOME/tmp/deploy)
-    
+    [-h]                                     : this help message
+    [-v]                                     : verbose mode
+    [-p <aws-profile>]                       : aws cli profile (optional)
+    -r <aws-region>                          : aws region as eu-south-1
+    -e <env-type>                            : one of dev / uat / svil / coll / cert / prod
+    -d <cicd-github-commitid>                : commitId for github repository pagopa/pn-cicd
+    -i <infra-github-commitid>               : commitId for github repository pagopa/pn-infra
+    -m <pn-microsvc-github-commitid>         : commitId for github repository del microservizio
+    [-c <custom_config_dir>]                 : where tor read additional env-type configurations
+    -b <artifactBucketName>                  : bucket name to use as temporary artifacts storage
+    -B <lambdaArtifactBucketName>            : bucket name where lambda artifact are memorized    
+    -n <microcvs-name>                       : nome del microservizio
+    -N <microcvs-idx>                        : id del microservizio
+    -I <image-uri>                           : url immagine docker microservizio
+    -w <work-dir>                            : working directory used by the script to download artifacts (default $HOME/tmp/deploy)
+    -g <github-pn-confinfo-bb-commitid>      : commitId for github repository pagopa/pn-infra-confinfo-bb
+
 EOF
   exit 1
 }
@@ -70,6 +71,10 @@ parse_params() {
       ;;
     -i | --infra-commitid) 
       pn_infra_commitid="${2-}"
+      shift
+      ;;
+    -g | --pn-confinfo-bb-commitid) 
+      pn_confinfo_bb_commitid="${2-}"
       shift
       ;;
     -m | --ms-commitid) 
@@ -123,6 +128,7 @@ parse_params() {
   [[ -z "${ContainerImageUri-}" ]] && usage
   [[ -z "${microcvs_name-}" ]] && usage
   [[ -z "${MicroserviceNumber-}" ]] && usage
+  [[ -z "${pn_confinfo_bb_commitid-}" ]] && usage
   return 0
 }
 
@@ -144,6 +150,8 @@ dump_params(){
   echo "Bucket Name:         ${bucketName}"
   echo "Lambda Bucket Name:  ${LambdasBucketName}"
   echo "Container image URL: ${ContainerImageUri}"
+  echo "Infra Confinfo bb CommitId:    ${pn_confinfo_bb_commitid}"
+
 }
 
 _clone_repository(){
