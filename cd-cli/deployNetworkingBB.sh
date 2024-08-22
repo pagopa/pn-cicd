@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -t <terraform-env> -i <github-pn-confinfo-bb-commitid> -m <github-pn-infra-commitid> -a <account-type> [-c <custom_config_dir>]
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -t <terraform-env> -i <github-pn-confinfo-bb-commitid> -m <github-pn-infra-commitid> -a <account-type> -b <cd-artifact-bucket-name> [-c <custom_config_dir>]
 
     [-h]                                     : this help message
     [-v]                                     : verbose mode
@@ -25,7 +25,9 @@ usage() {
     -m <github-pn-infra-commitid>            : commitId for github repository pagopa/pn-infra
     [-c <custom_config_dir>]                 : where tor read additional env-type configurations
     -a <account-type>                        : account type, can be core or confinfo
-    
+    -b <cd-artifact-bucket-name>             : bucket name to use as temporary artifacts storage
+
+
 EOF
   exit 1
 }
@@ -40,6 +42,7 @@ parse_params() {
   env_type=""
   pn_infra_commitid=""
   account_type=""
+  cd_artifact_bucket_name=""
 
   while :; do
     case "${1-}" in
@@ -81,6 +84,10 @@ parse_params() {
       work_dir="${2-}"
       shift
       ;;
+    -b | --cd-artifact-bucket-name) 
+      cd_artifact_bucket_name="${2-}"
+      shift
+      ;;
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -96,6 +103,7 @@ parse_params() {
   [[ -z "${pn_infra_commitid-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
   [[ -z "${account_type-}" ]] && usage 
+  [[ -z "${cd_artifact_bucket_name-}" ]] && usage 
   return 0
 }
 
@@ -113,6 +121,7 @@ dump_params(){
   echo "Terraform Env Name:            ${terraform_env}"
   echo "AWS region:                    ${aws_region}"
   echo "AWS profile:                   ${aws_profile}"
+  echo "Artifact Bucket Name:          ${artifact_bucket_name}"
 }
 
 
@@ -225,6 +234,7 @@ if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
         cloudformation deploy \
           --stack-name lambda-cloudwatch-dashboard-transform-$env_type \
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --s3-bucket $cd_artifact_bucket_name \
           --template-file ${CLOUDWATCH_DASHBOARD_STACK_FILE} \
           --tags Microservice=lambda-cloudwatch-dashboard-transform \
           --parameter-overrides file://$( realpath ${ParamFilePath} )

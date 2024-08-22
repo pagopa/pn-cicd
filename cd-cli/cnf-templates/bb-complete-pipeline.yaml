@@ -648,7 +648,7 @@ Resources:
                     echo "###                UPDATE NETWORKING                 ###"
                     echo "########################################################"
                     echo ""
-                    (cd scripts/cd-cli && ./deployNetworkingBB.sh -r $AwsRegion -e $EnvName -t $TerraformEnv -i $pn_infra_confinfo_bb_commitId -m $pn_infra_commitId -a confinfo -w /tmp -c $custom_config_dir )
+                    (cd scripts/cd-cli && ./deployNetworkingBB.sh -r $AwsRegion -e $EnvName -t $TerraformEnv -i $pn_infra_confinfo_bb_commitId -m $pn_infra_commitId -a confinfo -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
                   fi
           artifacts:
             files:
