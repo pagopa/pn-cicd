@@ -198,6 +198,18 @@ cp -p ${terraformOutputPath} $custom_config_dir/${infra_confinfo_bb_repo}/
 
 ParamFilePath=$custom_config_dir/${infra_confinfo_bb_repo}/${terraformOutputPath}
 EnanchedParamFilePath=pn-infra-${env_type}-cfg-enanched.json
+
+echo ""
+echo "=== Base AWS command parameters"
+aws_command_base_args=""
+if ( [ ! -z "${aws_profile}" ] ) then
+  aws_command_base_args="${aws_command_base_args} --profile $aws_profile"
+fi
+if ( [ ! -z "${aws_region}" ] ) then
+  aws_command_base_args="${aws_command_base_args} --region  $aws_region"
+fi
+echo ${aws_command_base_args}
+
 echo ""
 echo "=== Deploy microservice-cloudwatch-dashboard FOR $env_type ACCOUNT"
 CLOUDWATCH_DASHBOARD_STACK_FILE=pn-infra/runtime-infra/fragments/microservice-cloudwatch-dashboard.yaml 
