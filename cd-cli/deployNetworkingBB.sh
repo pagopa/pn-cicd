@@ -229,7 +229,7 @@ if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
     aws ${aws_command_base_args} \
         cloudformation deploy \
           --stack-name pn-cloudwatch-dashboard-$env_type \
-          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --capabilities CAPABILITY_NAMED_IAM \
           --template-file ${CLOUDWATCH_DASHBOARD_STACK_FILE} \
           --tags Microservice=pn-infra-monitoring \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
