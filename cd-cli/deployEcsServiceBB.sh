@@ -469,7 +469,7 @@ cat ${ParamFilePath}
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * .[1] * .[2] }" \
+jq -s "{ \"Parameters\": .[0] } * .[1] * .[2]" \
    ${PreviousOutputFilePath} ${ParamFilePath} ${INFRA_ALL_OUTPUTS_FILE} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
