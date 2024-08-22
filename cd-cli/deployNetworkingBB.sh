@@ -151,7 +151,7 @@ export PATH="/usr/local/tfenv/bin:$PATH"
 echo "=== Repository switch according to account type " 
 infra_confinfo_bb_repo="pn-infra-confinfo-bb"
 infra_repo="pn-infra"
-terraform_output_prefix="Core_"
+terraform_output_prefix="ConfInfo_"
 
 ## Download pn-infra
 echo "=== Download ${infra_repo}" 
@@ -209,10 +209,10 @@ if [[ -f "$CLOUDWATCH_DASHBOARD_STACK_FILE" ]]; then
 
     echo ""
     echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${PARAM_FILE_PATH} \
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${ParamFilePath} \
       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
       > ${EnanchedParamFilePath}
-    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    echo "${ParamFilePath} ]" >> ${EnanchedParamFilePath}
     cat ${EnanchedParamFilePath}
 
     aws ${aws_command_base_args} \
