@@ -249,12 +249,6 @@ echo ""
 echo "= Read Terraform Output file"
 cat ${terraformOutputPath} 
 
-## Download pn-infra
-echo "=== Download ${infra_repo}" 
-if ( [ ! -e ${infra_repo} ] ) then 
-  git clone https://github.com/pagopa/${infra_repo}.git
-fi
-
 
 echo "=== Download pn-infra" 
 if ( [ ! -e pn-infra ] ) then 

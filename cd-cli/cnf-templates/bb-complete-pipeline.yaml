@@ -208,7 +208,8 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"},
+                    {"name":"TerraformEnv", "value":"${TerraformEnv}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -233,7 +234,8 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"},
+                    {"name":"TerraformEnv", "value":"${TerraformEnv}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -345,7 +347,8 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"},
+                    {"name":"TerraformEnv", "value":"${TerraformEnv}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -435,7 +438,8 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"},
+                    {"name":"TerraformEnv", "value":"${TerraformEnv}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -697,8 +701,8 @@ Resources:
                 - 'echo "###       UPDATE MICROSERVICE $MsName    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployEcsServiceBB.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -g $pn_infra_confinfo_bb_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployEcsServiceBB.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -g $pn_infra_confinfo_bb_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployEcsServiceBB.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -g $pn_infra_confinfo_bb_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir -t $TerraformEnv"'
+                - '(cd scripts/cd-cli && ./deployEcsServiceBB.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -g $pn_infra_confinfo_bb_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir -t $TerraformEnv )'
           artifacts:
             files:
               - '**/*'
