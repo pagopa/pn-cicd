@@ -235,14 +235,11 @@ echo ""
 echo "=== Checkout ${infra_confinfo_bb_repo} commitId=${pn_confinfo_bb_commitid}"
 ( cd ${infra_confinfo_bb_repo} && git fetch && git checkout $pn_confinfo_bb_commitid )
 
-## Apply tf
-(cd ${infra_confinfo_bb_repo}/src/main && ./terraform.sh init ${terraform_env} && ./terraform.sh apply ${terraform_env} --auto-approve)
-
 terraformOutputPath=terraform-${env_type}-cfg.json
 terraformTmpOutputPath=terraform-${env_type}-tmp-cfg.json
 
 ## Output tf
-(cd ${infra_confinfo_bb_repo}/src/main && terraform output --json ) | jq 'to_entries[]' > $terraformTmpOutputPath
+(cd ${infra_confinfo_bb_repo}/src/main && ./terraform.sh init ${terraform_env} && terraform output --json ) | jq 'to_entries[]' > $terraformTmpOutputPath
 jq . $terraformTmpOutputPath | jq '{ (.key | sub("'${terraform_output_prefix}'" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | jq -s 'reduce .[] as $item ({}; . *= $item )' | jq -s '{ Parameters: .[0] }' > $terraformOutputPath
 
 echo ""
