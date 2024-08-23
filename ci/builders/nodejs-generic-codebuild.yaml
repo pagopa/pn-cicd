@@ -4,8 +4,8 @@ Parameters:
   GitHubProjectName:
     Description: Name of pagopa project name pattern = [A-Za-z0-9][A-Za-z0-9\-_]{1,122}
     Type: String
-  BaseDir:
-    Description: Base directory of the project pattern = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
+  NodeProjectDir:
+    Description: base directory of the node project = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
   CiArtifactBucket:
     Description: CI Artifact bucket name
@@ -24,7 +24,7 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${GitHubProjectName}-${BaseDir}-CodeBuild"
+      Name: !Sub "${GitHubProjectName}-${NodeProjectDir}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       BadgeEnabled: true
       Environment:
@@ -35,9 +35,9 @@ Resources:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
             Value: !Sub "${GitHubProjectName}"
-          - Name: SUB_PRJ_NAME
+          - Name: NODE_PRJ_DIR
             Type: PLAINTEXT
-            Value: !Sub "${BaseDir}"
+            Value: !Sub "${NodeProjectDir}"
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
             Value: main
@@ -94,7 +94,7 @@ Resources:
             build:
               on-failure: ABORT
               commands:
-                - cd $SUB_PRJ_NAME
+                - cd $NODE_PRJ_DIR
                 - echo Build started on `date`
                 - npm ci
                 - npm run-script $OUTPUT_FILE
@@ -104,8 +104,8 @@ Resources:
                 - export COMMIT_ID=$(git rev-parse --verify HEAD)
                 - echo $COMMIT_ID > commitID.txt
                 - zip -u $OUTPUT_FILE commitID.txt
-                - aws s3 cp $OUTPUT_FILE "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/$SUB_PRJ_NAME.zip"
-                - aws s3 cp $OUTPUT_FILE "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/commits/$COMMIT_ID/$SUB_PRJ_NAME.zip"
+                - aws s3 cp $OUTPUT_FILE "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/$NODE_PRJ_DIR.zip"
+                - aws s3 cp $OUTPUT_FILE "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/commits/$COMMIT_ID/$NODE_PRJ_DIR.zip"
                 - |
                   if [[ "$BRANCH_NAME" =~ ^(main|develop)|release\/.* ]]; then
                     echo Generate build event
@@ -199,7 +199,7 @@ Resources:
     Type: AWS::CodeStarNotifications::NotificationRule
     Properties:
       DetailType: FULL
-      Name: !Sub '${GitHubProjectName}-${BaseDir}-CI'
+      Name: !Sub '${GitHubProjectName}-${NodeProjectDir}-CI'
       EventTypeIds:
         - codebuild-project-build-state-failed
       Resource: !Sub '${CodeBuildProject.Arn}'
