@@ -1519,6 +1519,19 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 10
 
+  # Progetto pn-tenders
+  PnTenders:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-generic-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-tenders"
+        NodeProjectDir: "scripts/build-tenders"
+        GitHubDefaultBranch: "main"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 20
+
   # Progetti WebApp
   PnPaWebapp:
     Type: AWS::CloudFormation::Stack
