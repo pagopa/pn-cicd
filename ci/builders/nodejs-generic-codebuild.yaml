@@ -4,6 +4,10 @@ Parameters:
   GitHubProjectName:
     Description: Name of pagopa project name pattern = [A-Za-z0-9][A-Za-z0-9\-_]{1,122}
     Type: String
+  GitHubDefaultBranch:
+    Description: GitHub default branch
+    Type: String
+    Default: main
   NodeProjectDir:
     Description: base directory of the node project = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
@@ -40,7 +44,7 @@ Resources:
             Value: !Sub "${NodeProjectDir}"
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
-            Value: main
+            Value: !Sub "${GitHubDefaultBranch}"
           - Name: CI_BUCKET_NAME
             Type: PLAINTEXT
             Value: !Sub "${CiArtifactBucket}"
@@ -97,7 +101,7 @@ Resources:
                 - cd $NODE_PRJ_DIR
                 - echo Build started on `date`
                 - npm ci
-                - npm run-script $OUTPUT_FILE
+                - npm run-script $PACKAGE_START_SCRIPT
             post_build:
               on-failure: ABORT
               commands:
