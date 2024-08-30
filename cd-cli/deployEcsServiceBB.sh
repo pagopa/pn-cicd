@@ -124,7 +124,18 @@ parse_params() {
   done
 
   args=("$@")
-
+  echo "${env_type}"
+  echo "${cd_scripts_commitId}"
+  echo "${pn_infra_commitid}"
+  echo "${pn_microsvc_commitid}"
+  echo "${bucketName}"
+  echo "${LambdasBucketName}"
+  echo "${aws_region}"
+  echo "${ContainerImageUri}"
+  echo "${microcvs_name}"
+  echo "${MicroserviceNumber}"
+  echo "${pn_confinfo_bb_commitid}"
+  echo "${terraform_env}"
   # check required params and arguments
   [[ -z "${env_type-}" ]] && usage 
   [[ -z "${cd_scripts_commitId-}" ]] && usage
