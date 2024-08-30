@@ -1,0 +1,2092 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Continuos Delivery pipeline for infrastructure deployment for Data Vault only'
+Parameters:
+  
+  ProjectName:
+    Description: Usually "pn", can be changed for feature branch deployment
+    Default: 'pn'
+    Type: String
+  
+  EnvName:
+    Description: 'dev, svil, test, coll, ...'
+    Type: String
+  
+  CiAccountId:
+    Default: '911845998067'
+    Description: 'AWS AccountID used for C.I. tasks'
+    Type: String
+
+  CiArtifactBucketNameParam:
+    Default: 'pn-ci-root-ciartifactbucket-k7htwr5id1op'
+    Description: 'Bucket name containing lambda and frontend artifacts'
+    Type: String
+  
+  CdArtifactBucket:
+    Description: 'Bucket name containing lambda and frontend artifacts'
+    Type: String
+
+Resources:
+
+  # CodeBuild Role used during the choose of right codepipeline
+  ChooseAndLaunchPipelineCodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - 
+            Effect: Allow
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+          - 
+            Effect: Allow
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"              
+      ManagedPolicyArns:
+        - !Ref CodeBuildManagedPolicy
+        - !Ref CodeBuildPolicyR53
+        - !Ref CodeBuildPolicyS3
+        - !Ref CodeBuildPolicyECS
+        - !Ref CodeBuildPolicyAPICloudfront
+        - !Ref CodeBuildPolicyEventLogs
+        - !Ref CodeBuildPolicyIAM
+        - !Ref CodeBuildNetworking
+        - !Ref CodeBuildEfs
+      
+  ###########################################################################
+  ###             EFFECTIVE CONTINUOS INTEGRATIONS PIPELINES              ###
+  ###########################################################################
+  # - Required by code-pipeline 
+  PipelineArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+  
+  # - The role used by all the pipelines
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: "Allow"
+            Action: "sts:AssumeRole"
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+      Path: "/"
+      Policies:
+        - PolicyName: PipelinePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - "s3:Get*"
+                - "s3:List*"
+                - "s3-object-lambda:Get*"
+                - "s3-object-lambda:List*"
+                - "*"
+              Resource: 
+                - !Sub "arn:aws:s3:::${CdArtifactBucket}"
+                - !Sub "arn:aws:s3:::${CdArtifactBucket}/*"
+                - "*"
+  
+  # PIPELINE DEFINITION
+  #######################
+  DeployPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-env-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-infra
+            - Name: Update_Infrastructure
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateInfraCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnInfraOutput
+              RunOrder: 3
+
+            - Name: Update_PnSS
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnSSOutput
+              RunOrder: 4
+
+
+            - Name: Update_PnStatemachinemanager
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnStatemachinemanagerOutput
+              RunOrder: 4
+             # Update logs and Usage Plans
+
+            - Name: Infrastructure_Post_Deploy
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref PostDeployScriptsCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PostDeployScriptsOutput
+              RunOrder: 5
+
+  PnSsDeployPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-ss-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-ss
+            - Name: Update_PnSS
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"2", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnSsOutput
+              RunOrder: 3
+
+  PnStateMachineManagerDeployPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-statemachinemanager-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-statemachinemanager
+            - Name: Update_StateMachineManager
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnStateMachineManagerOutput
+              RunOrder: 3
+
+
+  PnInfraDeployPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-infra-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update infra
+            - Name: Update_Infrastructure
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateInfraCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnInfraOutput
+              RunOrder: 3
+
+  # CODEBUILD used to download scripts
+  ###################################################
+  DownloadScriptsCodebuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-DownloadScriptsCodebuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - echo "### NO PRE_BUILD"
+            build:
+              commands:
+                - 'echo "### ENVIRONMENT ###"'
+                - 'echo "###################"'
+                - env
+                - 'echo ""'
+                - | 
+                  echo "### DOWNLOAD DESIRED COMMIT IDS ###"
+                  aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}
+                  cat desired-commit-ids-env.sh
+                  echo ""
+                  echo "### SOURCE DESIRED COMMIT IDS ###"
+                  . ./desired-commit-ids-env.sh
+                  echo ""
+                  echo "### UPDATED ENVIRONMENT ###"
+                  echo "###########################"
+                  env
+                  echo ""
+                  echo "### CLONE CICD SCRIPTS ###"
+                  echo ""
+                  git clone https://github.com/pagopa/pn-cicd.git
+                  ( cd pn-cicd && git checkout $cd_scripts_commitId )                
+                  if ( [ ! -z "$PnConfigurationEnabled" ] ) then
+                    echo ""
+                    echo "### Execute Download Custom Config ###"
+                    ( ./pn-cicd/cd-cli/downloadCustomConfigBB.sh -r $AwsRegion -e $EnvName -w $(pwd) -c main -i $CiAccountId )
+                    . ./desired-commit-ids-env.sh
+                    echo ""
+                    echo ""
+                    echo "### UPDATED ENVIRONMENT AFTER CUSTOM CONFIG ###"
+                    env
+                    echo ""
+                  else
+                    ( ./pn-cicd/cd-cli/downloadCustomConfigBB.sh -r $AwsRegion -e $EnvName -w $(pwd) )
+                  fi
+                  ( cp -r custom-config/* pn-cicd/cd-cli/custom-config )
+                  ls -l pn-cicd/cd-cli/custom-config
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "### PREPARE ARTIFACT ###"'
+                - 'echo "########################"'
+                - 'mkdir scripts'
+                - 'cp -r pn-cicd/cd-cli scripts'
+                - 'cp desired-commit-ids-env.sh scripts'
+                - 'find scripts'
+          artifacts:
+            files:
+              - 'scripts/**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:6.0"
+        EnvironmentVariables:
+          - Name: PnConfigurationEnabled
+            Type: PLAINTEXT
+            Value: 'main'
+          - Name: CiAccountId
+            Type: PLAINTEXT
+            Value: !Ref CiAccountId
+
+
+  # CODEBUILD used to update an ecs microservice
+  ###################################################
+  UpdateInfraCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateInfraCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
+                - 'terraformEnv=$EnvName'
+                - 'echo $terraformEnv'
+                - 'envName=$(echo "$EnvName" | cut -d''_'' -f2)'
+                - 'echo $envName'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - |
+                  if ( [ ! -z "$pn_infra_confinfo_bb_commitId"  ] ) then
+                    echo "########################################################"
+                    echo "###                UPDATE NETWORKING                 ###"
+                    echo "########################################################"
+                    echo ""
+                    (cd scripts/cd-cli && ./deployNetworkingBB.sh -r $AwsRegion -e $envName -t $terraformEnv -i $pn_infra_confinfo_bb_commitId -m $pn_infra_commitId -a confinfo -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
+                  fi
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:6.0"
+  
+  # CODEBUILD used to update an external microservice (logsaver-be)
+  #################################################################
+  UpdateMicroserviceCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'ms_image_url=$( env | grep "${VarPrefix}_imageUrl=" | sed -e "s/^[^=]*=//" )'
+                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
+                - 'terraformEnv=$EnvName'
+                - 'echo $terraformEnv'
+                - 'envName=$(echo "$EnvName" | cut -d''_'' -f2)'
+                - 'echo $envName'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo "./deployEcsServiceBB.sh -r $AwsRegion -e $envName -i $pn_infra_commitId -g $pn_infra_confinfo_bb_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir -t $terraformEnv"'
+                - '(cd scripts/cd-cli && ./deployEcsServiceBB.sh -r $AwsRegion -e $envName -i $pn_infra_commitId -g $pn_infra_confinfo_bb_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir -t $terraformEnv )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:6.0"
+
+  # CODEBUILD used to update a multilambda external service       #
+  #################################################################
+  UpdateMultilambdaMicroserviceCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-UpdateMultilambdaMicroserviceCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
+                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - 'echo "./deployConfinfoMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n $MsName -a $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployConfinfoMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n $MsName -a $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:6.0"
+
+  # CODEBUILD used to cleanup infrastructure after deploy #
+  #########################################################
+  PostDeployScriptsCodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-PostDeployScriptsCodeBuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - 'echo "### SCRIPTS ###"'
+                - 'find scripts'
+                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
+                - '. ./scripts/desired-commit-ids-env.sh'
+                - 'echo ""'
+                - 'echo "###     ENVIRONMENT     ###"'
+                - 'echo "###########################"'
+                - env
+            build:
+              commands:
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###                CLEANUP INFRASTRUCTURE            ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./cleanupInfrastructure.sh -w /tmp -r $AwsRegion)'
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:6.0"
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-cd-pipeline-CodeBuildRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - 
+            Effect: Allow
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+  
+  CodeBuildManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-General
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - cloudformation:GetTemplateSummary
+              - cloudformation:ListStacks
+              - cloudformation:CreateChangeSet
+              - cloudformation:DescribeChangeSet
+              - cloudformation:DescribeStacks
+              - cloudformation:ExecuteChangeSet
+              - cloudformation:RollbackStack
+              - cloudformation:ContinueUpdateRollback
+              - cloudformation:CancelUpdateStack
+            Resource: "*"
+          - Effect: Allow
+            Action: cloudwatch:PutDashboard
+            Resource: !Sub arn:aws:cloudwatch::${AWS::AccountId}:dashboard/*
+          - Effect: Allow
+            Action: elasticloadbalancing:ModifyRule
+            Resource: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener-rule/app/*
+          - Effect: Allow
+            Action: elasticloadbalancing:ModifyRule
+            Resource: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:listener-rule/net/*
+          - Effect: Allow
+            Action:
+              - ecr:DescribeImages
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - iam:DeleteRole
+              - iam:DeleteRolePolicy
+              - iam:GetRole
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*
+          - Effect: Allow
+            Action:
+              - kms:Decrypt
+              - kms:DescribeKey
+              - kms:GenerateDataKey
+              - kms:GetKeyPolicy
+              - kms:GetKeyRotationStatus
+              - kms:ListResourceTags
+            Resource: !Sub arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*
+          - Effect: Allow
+            Action:
+              - lambda:GetFunction
+              - lambda:GetFunctionCodeSigningConfig
+              - lambda:RemovePermission
+              - lambda:UpdateFunctionCode
+              - lambda:PutFunctionConcurrency
+            Resource: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*
+          - Effect: Allow
+            Action:
+              - lambda:Create*
+              - lambda:Get*
+              - lambda:List*
+              - lambda:Delete*
+              - lambda:TagResource
+              - lambda:UpdateEventSourceMapping
+              - lambda:AddPermission
+              - lambda:InvokeFunction
+              - lambda:GetEventSourceMapping
+              - lambda:ListEventSourceMappings
+              - lambda:DeleteFunction
+              - lambda:CreateEventSourceMapping
+              - lambda:DeleteEventSourceMapping
+              - lambda:UntagResource
+              - lambda:Update*
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:DeleteLogGroup
+              - logs:DeleteSubscriptionFilter
+              - logs:DescribeLogGroups
+              - logs:ListTagsLogGroup
+              - logs:PutLogEvents
+            Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
+          - Effect: Allow
+            Action:
+              - "cloudtrail:*"
+            Resource: "*"
+          - Effect: Allow
+            Action: secretsmanager:GetSecretValue
+            Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*
+          - Effect: Allow
+            Action: ssm:GetParameters
+            Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*
+          - Effect: Allow
+            Action:
+              - application-autoscaling:RegisterScalableTarget
+              - application-autoscaling:DescribeScalableTargets
+              - application-autoscaling:DescribeScalingPolicies
+              - application-autoscaling:PutScalingPolicy
+              - application-autoscaling:DeleteScalingPolicy
+              - application-autoscaling:DeregisterScalableTarget
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - cloudfront:Create*
+              - cloudfront:Delete*
+              - cloudfront:Get*
+              - cloudfront:Update*
+            Resource:
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:cache-policy/*
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:origin-request-policy/*
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:response-headers-policy/*
+          - Effect: Allow
+            Action:
+              - cloudfront:List*
+            Resource: "*"
+          - Effect: Allow
+            Resource:
+              - "*"
+            Action:
+              - codebuild:CreateReportGroup
+              - codebuild:CreateReport
+              - codebuild:UpdateReport
+              - codebuild:StartBuild              
+              - codebuild:BatchGetBuilds
+              - codebuild:StopBuild     
+              - codebuild:BatchPutTestCases
+              - codebuild:BatchPutCodeCoverages
+              - codebuild:CreateProject
+              - codebuild:UpdateProject
+              - codebuild:DeleteProject
+              - codebuild:BatchGetProjects
+              - codebuild:*Tag*
+
+          - Effect: Allow
+            Action:
+              - ecs:UpdateService
+              - ecs:CreateService
+              - ecs:DeleteService
+              - ecs:DescribeServices
+            Resource: !Sub arn:aws:ecs:*:${AWS::AccountId}:service/*/*
+          - Action:
+              - ecs:DescribeServices
+              - ecs:CreateTaskSet
+              - ecs:UpdateServicePrimaryTaskSet
+              - ecs:DeleteTaskSet
+              - lambda:InvokeFunction
+              - cloudwatch:DescribeAlarms
+              - sns:Publish
+              - s3:GetObject
+              - s3:GetObjectVersion
+            Resource: "*"
+            Effect: Allow
+          - Effect: Allow
+            Action:
+              - elasticloadbalancing:ModifyListener
+              - elasticloadbalancing:DescribeTags
+              - elasticloadbalancing:CreateTargetGroup
+              - elasticloadbalancing:SetRulePriorities
+              - elasticloadbalancing:DeleteTargetGroup
+              - elasticloadbalancing:RemoveTags
+              - elasticloadbalancing:DescribeTargetGroupAttributes
+              - elasticloadbalancing:ModifyRule
+              - elasticloadbalancing:AddTags
+              - elasticloadbalancing:CreateRule
+              - elasticloadbalancing:DescribeTargetHealth
+              - elasticloadbalancing:DescribeTargetGroups
+              - elasticloadbalancing:DescribeRules
+              - elasticloadbalancing:ModifyTargetGroupAttributes
+              - elasticloadbalancing:DeleteRule
+              - elasticloadbalancing:RegisterTargets
+              - elasticloadbalancing:DescribeLoadBalancerAttributes
+              - elasticloadbalancing:ModifyLoadBalancerAttributes
+              - elasticloadbalancing:SetIpAddressType
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "elasticloadbalancing:RegisterTargets"
+              - "elasticloadbalancing:CreateTargetGroup"
+              - "elasticloadbalancing:DeregisterTargets"
+              - "elasticloadbalancing:DeleteTargetGroup"
+              - "elasticloadbalancing:ModifyTargetGroupAttributes"
+              - "elasticloadbalancing:ModifyTargetGroup"
+            Resource: !Sub arn:aws:elasticloadbalancing:*:${AWS::AccountId}:targetgroup/*/*
+          - Effect: Allow
+            Action:
+              - "elasticloadbalancing:DescribeTargetGroupAttributes"
+              - "elasticloadbalancing:DescribeTargetHealth"
+              - "elasticloadbalancing:DescribeTargetGroups"
+            Resource: "*"
+          - Action:
+              - iam:PassRole
+            Effect: Allow
+            Resource: "*"
+            Condition:
+              StringLike:
+                iam:PassedToService:
+                  - ecs-tasks.amazonaws.com
+
+  CodeBuildPolicyR53:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-R53
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: VisualEditor0
+            Effect: Allow
+            Action:
+              - route53:ListTagsForResources
+              - route53:DisassociateVPCFromHostedZone
+              - route53:GetHostedZone
+              - route53:ChangeResourceRecordSets
+              - route53:ChangeTagsForResource
+              - route53:ListResourceRecordSets
+              - route53:DeleteHostedZone
+              - route53:AssociateVPCWithHostedZone
+              - route53:ListTagsForResource
+            Resource: arn:aws:route53:::hostedzone/*
+          - Sid: VisualEditor1
+            Effect: Allow
+            Action:
+              - route53:Delete*
+              - route53:Disable*
+              - route53:Create*
+              - route53:EnableHostedZoneDNSSEC
+              - route53:Update*
+              - route53:DeactivateKeySigningKey
+              - route53:ActivateKeySigningKey
+              - route53:ChangeCidrCollection
+              - route53:Get*
+              - route53:List*
+              - route53:DisassociateVPCFromHostedZone
+              - route53:ChangeResourceRecordSets
+              - route53:ChangeTagsForResource
+              - route53:AssociateVPCWithHostedZone
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - ecs:Describe*
+              - ecs:List*
+              - eks:DescribeCluster
+              - eks:ListClusters
+              - logs:Describe*
+              - logs:Get*
+              - logs:TestMetricFilter
+              - logs:FilterLogEvents
+              - iam:ListInstanceProfiles
+              - iam:ListRoles
+              - iam:UpdateAssumeRolePolicy
+              - iam:ListRolePolicies
+              - iam:ListInstanceProfilesForRole     
+              - iam:TagRole
+              - iam:UntagRole
+              - iam:ListRoleTags
+              - iam:ListTagsForResource         
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - iam:PassRole
+            Resource:
+              - arn:aws:iam::*:role/AWSBatchServiceRole
+              - arn:aws:iam::*:role/service-role/AWSBatchServiceRole
+              - arn:aws:iam::*:role/ecsInstanceRole
+              - arn:aws:iam::*:instance-profile/ecsInstanceRole
+              - arn:aws:iam::*:role/iaws-ec2-spot-fleet-role
+              - arn:aws:iam::*:role/aws-ec2-spot-fleet-role
+              - arn:aws:iam::*:role/AWSBatchJobRole*
+          - Effect: Allow
+            Action:
+              - iam:CreateServiceLinkedRole
+            Resource: arn:aws:iam::*:role/*Batch*
+            Condition:
+              StringEquals:
+                iam:AWSServiceName: batch.amazonaws.com
+          - Effect: Allow
+            Action:
+              - codepipeline:TagResource
+              - codepipeline:ListPipelineExecutions
+              - codepipeline:StartPipelineExecution
+              - codepipeline:ListActionExecutions
+              - codepipeline:GetPipeline
+              - codepipeline:UntagResource
+              - codepipeline:ListTagsForResource
+              - codepipeline:GetPipelineState
+              - codepipeline:GetPipelineExecution
+            Resource: !Sub arn:aws:codepipeline:*:${AWS::AccountId}:*
+          - Effect: Allow
+            Action:
+              - codepipeline:EnableStageTransition
+              - codepipeline:TagResource
+              - codepipeline:ListWebhooks
+              - codepipeline:RetryStageExecution
+              - codepipeline:UntagResource
+              - codepipeline:ListTagsForResource
+              - codepipeline:DisableStageTransition
+            Resource:
+              - !Sub arn:aws:codepipeline:*:${AWS::AccountId}:webhook:*
+              - !Sub arn:aws:codepipeline:*:${AWS::AccountId}:*/*
+          - Effect: Allow
+            Action:
+              - codepipeline:ListPipelines
+              - codepipeline:GetThirdPartyJobDetails
+              - codepipeline:GetJobDetails
+              - codepipeline:GetActionType
+              - codepipeline:ListActionTypes
+            Resource: "*"
+
+  CodeBuildPolicyS3:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-S3
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:*Object
+              - s3:GetObjectVersion
+              - s3:PutObject*
+              - "s3-object-lambda:Get*"
+              - "s3-object-lambda:List*"               
+            Resource: arn:aws:s3:::*/*
+          - Sid: VisualEditor1
+            Effect: Allow
+            Action:
+              - s3:Get*
+              - s3:Put*
+              - s3:Create*
+              - s3:List*
+              - s3:DeleteBucketPolicy
+              - s3:GetBucketLocation
+              - s3:DeleteBucket
+              - s3:*Tag*
+              - "s3-object-lambda:Get*"
+              - "s3-object-lambda:List*"               
+            Resource: arn:aws:s3:::*
+          - Effect: Allow
+            Action: s3:ListAllMyBuckets
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "kinesis:StopStreamEncryption"
+              - "kinesis:DeregisterStreamConsumer"
+              - "kinesis:SubscribeToShard"
+              - "kinesis:DecreaseStreamRetentionPeriod"
+              - "kinesis:PutRecords"
+              - "kinesis:DescribeStreamConsumer"
+              - "kinesis:CreateStream"
+              - "kinesis:GetShardIterator"
+              - "kinesis:DescribeStream"
+              - "kinesis:RegisterStreamConsumer"
+              - "kinesis:ListTagsForStream"
+              - "kinesis:PutRecord"
+              - "kinesis:RemoveTagsFromStream"
+              - "kinesis:DeleteStream"
+              - "kinesis:DescribeStreamSummary"
+              - "kinesis:SplitShard"
+              - "kinesis:MergeShards"
+              - "kinesis:AddTagsToStream"
+              - "kinesis:IncreaseStreamRetentionPeriod"
+              - "kinesis:GetRecords"
+              - "kinesis:ListStreamConsumers"
+              - "kinesis:StartStreamEncryption"
+            Resource:
+              - !Sub arn:aws:kms:*:${AWS::AccountId}:key/*
+              - !Sub arn:aws:kinesis:*:${AWS::AccountId}:*/*/consumer/*:*
+              - !Sub arn:aws:kinesis:*:${AWS::AccountId}:stream/*
+          - Effect: Allow
+            Action:
+              - "kinesis:UpdateStreamMode"
+              - "kinesis:ListStreams"
+              - "kinesis:EnableEnhancedMonitoring"
+              - "kinesis:ListShards"
+              - "kinesis:UpdateShardCount"
+              - "kinesis:DescribeLimits"
+              - "kinesis:DisableEnhancedMonitoring"
+              - "kinesis:*Tag*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - sqs:DeleteMessage
+              - sqs:GetQueueUrl
+              - sqs:ChangeMessageVisibility
+              - sqs:UntagQueue
+              - sqs:ReceiveMessage
+              - sqs:SendMessage
+              - sqs:GetQueueAttributes
+              - sqs:ListQueueTags
+              - sqs:TagQueue
+              - sqs:RemovePermission
+              - sqs:ListDeadLetterSourceQueues
+              - sqs:AddPermission
+              - sqs:PurgeQueue
+              - sqs:DeleteQueue
+              - sqs:CreateQueue
+              - sqs:SetQueueAttributes
+              - sqs:*Tag*
+            Resource: !Sub arn:aws:sqs:*:${AWS::AccountId}:*
+          - Effect: Allow
+            Action: sqs:ListQueues
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "sns:TagResource"
+              - "sns:ListTagsForResource"
+              - "sns:PutDataProtectionPolicy"
+              - "sns:ListSubscriptionsByTopic"
+              - "sns:GetTopicAttributes"
+              - "sns:DeleteTopic"
+              - "sns:CreateTopic"
+              - "sns:SetTopicAttributes"
+              - "sns:UntagResource"
+              - "sns:AddPermission"
+              - "sns:GetDataProtectionPolicy"
+              - "sns:Publish"
+              - "sns:Subscribe"
+              - "sns:ConfirmSubscription"
+              - "sns:RemovePermission"
+            Resource: !Sub arn:aws:sns:*:${AWS::AccountId}:*
+          - Effect: Allow
+            Action:
+              - "sns:List*"
+              - "sns:Unsubscribe"
+              - "sns:Create*"
+              - "sns:OptInPhoneNumber"
+              - "sns:CheckIfPhoneNumberIsOptedOut"
+              - "sns:Set*"
+              - "sns:DeletePlatformApplication"
+              - "sns:DeleteSMSSandboxPhoneNumber"
+              - "sns:Get*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "cloudtrail:*"
+            Resource: !Sub arn:aws:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/pn-ss-presigned-url-usage
+
+  CodeBuildPolicyData:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-Data
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:Describe*
+              - dynamodb:Scan
+              - dynamodb:UpdateContributorInsights
+              - dynamodb:Query
+              - dynamodb:UpdateGlobalTable
+              - dynamodb:UpdateGlobalTableSettings
+              - dynamodb:PartiQLSelect
+              - dynamodb:Get*
+              - dynamodb:RestoreTableFromBackup
+              - dynamodb:UpdateGlobalTableVersion
+              - dynamodb:CreateGlobalTable
+              - dynamodb:DeleteBackup
+              - dynamodb:*Tag*
+            Resource:
+              - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/backup/*
+              - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/import/*
+              - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/index/*
+              - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/export/*
+              - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*/stream/*
+              - !Sub arn:aws:dynamodb::${AWS::AccountId}:global-table/*
+          - Effect: Allow
+            Action:
+              - dynamodb:DeleteItem
+              - dynamodb:Describe*
+              - dynamodb:RestoreTableToPointInTime
+              - dynamodb:ListTagsOfResource
+              - dynamodb:CreateTableReplica
+              - dynamodb:UpdateContributorInsights
+              - dynamodb:UpdateGlobalTable
+              - dynamodb:CreateBackup
+              - dynamodb:DeleteTable
+              - dynamodb:UpdateTableReplicaAutoScaling
+              - dynamodb:UpdateContinuousBackups
+              - dynamodb:TagResource
+              - dynamodb:PartiQLSelect
+              - dynamodb:PartiQLInsert
+              - dynamodb:GetItem
+              - dynamodb:UpdateGlobalTableVersion
+              - dynamodb:CreateGlobalTable
+              - dynamodb:EnableKinesisStreamingDestination
+              - dynamodb:ImportTable
+              - dynamodb:BatchGetItem
+              - dynamodb:DisableKinesisStreamingDestination
+              - dynamodb:UpdateTimeToLive
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:UntagResource
+              - dynamodb:PutItem
+              - dynamodb:PartiQLUpdate
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:StartAwsBackupJob
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteTableReplica
+              - dynamodb:CreateTable
+              - dynamodb:UpdateGlobalTableSettings
+              - dynamodb:RestoreTableFromAwsBackup
+              - dynamodb:RestoreTableFromBackup
+              - dynamodb:ExportTableToPointInTime
+              - dynamodb:UpdateTable
+              - dynamodb:PartiQLDelete
+            Resource: !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/*
+          - Effect: Allow
+            Action:
+              - dynamodb:List*
+              - dynamodb:DescribeReservedCapacityOfferings
+              - dynamodb:DescribeReservedCapacity
+              - dynamodb:PurchaseReservedCapacityOfferings
+              - dynamodb:DescribeLimits
+              - dynamodb:DescribeEndpoints
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - firehose:DescribeDeliveryStream
+              - firehose:DeleteDeliveryStream
+              - firehose:PutRecord
+              - firehose:StartDeliveryStreamEncryption
+              - firehose:CreateDeliveryStream
+              - firehose:PutRecordBatch
+              - firehose:StopDeliveryStreamEncryption
+              - firehose:ListTagsForDeliveryStream
+              - firehose:TagDeliveryStream
+              - firehose:UpdateDestination
+              - firehose:UntagDeliveryStream
+              - firehose:*Tag*
+            Resource: !Sub arn:aws:firehose:*:${AWS::AccountId}:deliverystream/*
+          - Effect: Allow
+            Action: firehose:ListDeliveryStreams
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - backup:CreateBackupPlan            
+              - backup:CreateBackupSelection               
+              - backup:CreateBackupVault               
+              - backup:DeleteBackupPlan             
+              - backup:DeleteBackupSelection             
+              - backup:DeleteBackupVault*             
+              - backup:DescribeBackupVault             
+              - backup:GetBackupPlan
+              - backup:GetBackupVault*
+              - backup:GetBackupSelection
+              - backup:UpdateBackupPlan
+              - backup:PutBackupVault*
+              - backup:*Tag*
+              - backup-storage:*
+            Resource: "*"
+
+  CodeBuildPolicyECS:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-ECS
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - application-autoscaling:DeleteScalingPolicy
+              - application-autoscaling:DeregisterScalableTarget
+              - application-autoscaling:DescribeScalableTargets
+              - application-autoscaling:DescribeScalingActivities
+              - application-autoscaling:DescribeScalingPolicies
+              - application-autoscaling:PutScalingPolicy
+              - application-autoscaling:RegisterScalableTarget
+              - application-autoscaling:DescribeScheduledActions     
+              - application-autoscaling:*Tag*         
+              - autoscaling:CreateAutoScalingGroup
+              - autoscaling:CreateLaunchConfiguration
+              - autoscaling:DeleteAutoScalingGroup
+              - autoscaling:DeleteLaunchConfiguration
+              - autoscaling:Describe*
+              - autoscaling:UpdateAutoScalingGroup
+              - autoscaling:*Tag*
+              - batch:*
+              - cloudformation:CreateStack
+              - cloudformation:DeleteStack
+              - cloudformation:DescribeStack*
+              - cloudformation:UpdateStack
+              - cloudwatch:DeleteAlarms
+              - cloudwatch:DescribeAlarms
+              - cloudwatch:Get*
+              - cloudwatch:Put*
+              - codedeploy:BatchGetApplicationRevisions
+              - codedeploy:BatchGetApplications
+              - codedeploy:BatchGetDeploymentGroups
+              - codedeploy:BatchGetDeployments
+              - codedeploy:ContinueDeployment
+              - codedeploy:CreateApplication
+              - codedeploy:CreateDeployment
+              - codedeploy:CreateDeploymentGroup
+              - codedeploy:GetApplication
+              - codedeploy:GetApplicationRevision
+              - codedeploy:GetDeployment
+              - codedeploy:GetDeploymentConfig
+              - codedeploy:GetDeploymentGroup
+              - codedeploy:GetDeploymentTarget
+              - codedeploy:ListApplicationRevisions
+              - codedeploy:ListApplications
+              - codedeploy:ListDeploymentConfigs
+              - codedeploy:ListDeploymentGroups
+              - codedeploy:ListDeployments
+              - codedeploy:ListDeploymentTargets
+              - codedeploy:RegisterApplicationRevision
+              - codedeploy:StopDeployment
+              - codedeploy:*Tag*
+              - ec2:AssociateRouteTable
+              - ec2:AttachInternetGateway
+              - ec2:AuthorizeSecurityGroupIngress
+              - ec2:CancelSpotFleetRequests
+              - ec2:CreateInternetGateway
+              - ec2:CreateLaunchTemplate
+              - ec2:DeleteLaunchTemplate
+              - ec2:Describe*
+              - ec2:RequestSpotFleet
+              - ec2:RunInstances
+              - ecs:*
+              - elasticfilesystem:DescribeAccessPoints
+              - elasticfilesystem:DescribeFileSystems
+              - elasticfilesystem:CreateFileSystem
+              - elasticfilesystem:DeleteFileSystem
+              - elasticfilesystem:CreateAccessPoint
+              - elasticfilesystem:DeleteAccessPoint
+              - elasticfilesystem:CreateMountTarget
+              - elasticfilesystem:DescribeMountTargets
+              - elasticfilesystem:DescribeMountTargetSecurityGroups
+              - elasticfilesystem:DeleteMountTarget
+              - elasticfilesystem:ClientWrite
+              - elasticfilesystem:ClientMount
+              - elasticfilesystem:CreateTags
+              - elasticfilesystem:DeleteTags
+              - elasticfilesystem:DescribeTags
+              - elasticfilesystem:TagResource
+              - elasticfilesystem:UntagResource
+              - elasticfilesystem:ListTagsForResource
+              - elasticfilesystem:DescribeFileSystemPolicy
+              - elasticfilesystem:*Tag*
+              - elasticloadbalancing:CreateListener
+              - elasticloadbalancing:CreateLoadBalancer
+              - elasticloadbalancing:CreateRule
+              - elasticloadbalancing:CreateTargetGroup
+              - elasticloadbalancing:DeleteListener
+              - elasticloadbalancing:DeleteLoadBalancer
+              - elasticloadbalancing:DeleteRule
+              - elasticloadbalancing:DeleteTargetGroup
+              - elasticloadbalancing:DescribeListeners
+              - elasticloadbalancing:DescribeLoadBalancers
+              - elasticloadbalancing:DescribeRules
+              - elasticloadbalancing:DescribeTargetGroups
+              - events:DeleteRule
+              - events:DescribeRule
+              - events:ListRuleNamesByTarget
+              - events:ListTargetsByRule
+              - events:PutRule
+              - events:PutTargets
+              - events:RemoveTargets
+              - pipes:DeletePipe              
+              - pipes:CreatePipe 
+              - pipes:UpdatePipe               
+              - pipes:DescribePipe               
+              - pipes:ListPipes     
+              - pipes:*Tag*          
+              - fsx:DescribeFileSystems
+              - fsx:*Tag*
+              - iam:ListAttachedRolePolicies
+              - iam:ListInstanceProfiles
+              - iam:ListRoles
+              - iam:PassRole
+              - lambda:ListFunctions
+              - lambda:*Tag*
+              - logs:CreateLogGroup
+              - logs:DescribeLogGroups
+              - logs:FilterLogEvents
+              - route53:CreateHostedZone
+              - route53:DeleteHostedZone
+              - route53:GetHealthCheck
+              - route53:GetHostedZone
+              - route53:ListHostedZonesByName
+              - route53:*Tag*
+              - servicediscovery:CreatePrivateDnsNamespace
+              - servicediscovery:CreateService
+              - servicediscovery:DeleteService
+              - servicediscovery:GetNamespace
+              - servicediscovery:GetOperation
+              - servicediscovery:GetService
+              - servicediscovery:ListNamespaces
+              - servicediscovery:ListServices
+              - servicediscovery:UpdateService
+              - servicediscovery:*Tag*
+              - sns:ListTopics
+              - elasticloadbalancing:DescribeRules
+              - secretsmanager:ListSecrets
+              - secretsmanager:*Tag*
+              - events:Put*
+              - events:List*
+              - events:Remove*
+              - events:*Tag*
+              - events:*tag*
+            Resource:
+              - "*"
+          - Effect: Allow
+            Action:
+              - ssm:GetParameter
+              - ssm:GetParameters
+              - ssm:GetParametersByPath
+              - ssm:*Tag*
+            Resource: arn:aws:ssm:*:*:parameter/aws/service/ecs*
+          - Effect: Allow
+            Action:
+              - ec2:DeleteInternetGateway
+              - ec2:DeleteRoute
+              - ec2:DeleteRouteTable
+              - ec2:DeleteSecurityGroup
+            Resource:
+              - "*"
+            Condition:
+              StringLike:
+                ec2:ResourceTag/aws:cloudformation:stack-name: EC2ContainerService-*
+          - Action: iam:PassRole
+            Effect: Allow
+            Resource:
+              - "*"
+            Condition:
+              StringLike:
+                iam:PassedToService: ecs-tasks.amazonaws.com
+          - Action: iam:PassRole
+            Effect: Allow
+            Resource:
+              - arn:aws:iam::*:role/ecsInstanceRole*
+            Condition:
+              StringLike:
+                iam:PassedToService:
+                  - ec2.amazonaws.com
+                  - ec2.amazonaws.com.cn
+          - Action: iam:PassRole
+            Effect: Allow
+            Resource:
+              - arn:aws:iam::*:role/ecsAutoscaleRole*
+            Condition:
+              StringLike:
+                iam:PassedToService:
+                  - application-autoscaling.amazonaws.com
+                  - application-autoscaling.amazonaws.com.cn
+          - Effect: Allow
+            Action: iam:CreateServiceLinkedRole
+            Resource: "*"
+            Condition:
+              StringLike:
+                iam:AWSServiceName:
+                  - autoscaling.amazonaws.com
+                  - ecs.amazonaws.com
+                  - kinesisreplication.dynamodb.amazonaws.com      
+                  - ecs.application-autoscaling.amazonaws.com
+                  - spot.amazonaws.com
+                  - spotfleet.amazonaws.com
+          - Effect: Allow
+            Action:
+              - elasticloadbalancing:AddTags
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "events:DescribeEventBus"
+              - "events:CreateEventBus"
+              - "events:DeleteEventBus"
+            Resource: !Sub arn:aws:events:*:${AWS::AccountId}:event-bus/*
+          - Effect: Allow
+            Action: "events:ListEventBuses"
+            Resource: "*"
+
+  CodeBuildPolicyAPICloudfront:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-Cloudfront
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: Cloudfront
+            Effect: Allow
+            Action:
+              - waf:ListWebACLs
+              - cloudfront:ListCloudFrontOriginAccessIdentities
+              - cloudfront:GetFunction
+              - cloudfront:ListFunctions
+              - iam:ListServerCertificates
+              - cloudfront:DeleteCloudFrontOriginAccessIdentity
+              - cloudfront:CreateStreamingDistributionWithTags
+              - sns:ListTopics
+              - cloudfront:CreateFunction
+              - cloudfront:CreateCloudFrontOriginAccessIdentity
+              - elasticloadbalancing:DescribeLoadBalancers
+              - elasticloadbalancing:*Tag*
+              - cloudfront:GetDistribution
+              - cloudfront:UpdateFunction
+              - cloudfront:GetCloudFrontOriginAccessIdentity
+              - acm:ListCertificates
+              - acm:AddTagsToCertificate
+              - acm:DescribeCertificate	
+              - acm:GetCertificate
+              - acm:ListTagsForCertificate
+              - acm:RequestCertificate
+              - acm:DeleteCertificate	
+              - acm:RemoveTagsFromCertificate
+              - acm:*Tag*
+              - cloudfront:UpdateDistribution
+              - cloudfront:UpdateCloudFrontOriginAccessIdentity
+              - cloudfront:GetDistributionConfig
+              - cloudfront:CreateInvalidation
+              - waf:GetWebACL
+              - waf:*Tag*
+              - cloudfront:UntagResource
+              - cloudfront:GetCloudFrontOriginAccessIdentityConfig
+              - cloudfront:PublishFunction
+              - sns:ListSubscriptionsByTopic
+              - sns:*Tag*
+              - cloudfront:TagResource
+              - cloudfront:ListDistributionsByLambdaFunction
+              - cloudfront:CreateDistribution
+              - cloudfront:DescribeFunction
+              - cloudfront:ListTagsForResource
+              - cloudfront:ListDistributions
+              - cloudfront:DeleteDistribution
+              - cloudfront:DeleteFunction
+              - cloudfront:*Tag*
+            Resource: "*"
+          - Effect: Allow
+            Action: s3:PutBucketPolicy
+            Resource: arn:aws:s3:::*
+          - Effect: Allow
+            Action: s3:ListAllMyBuckets
+            Resource: arn:aws:s3:::*
+          - Effect: Allow
+            Action:
+              - apigateway:DELETE
+              - apigateway:SetWebACL
+              - apigateway:PUT
+              - apigateway:PATCH
+              - apigateway:AddCertificateToDomain
+              - apigateway:POST
+              - apigateway:GET
+              - apigateway:RemoveCertificateFromDomain
+              - apigateway:*Tag*
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - wafv2:TagResource
+              - wafv2:ListResourcesForWebACL
+              - wafv2:ListWebACLs
+              - wafv2:AssociateWebACL
+              - wafv2:ListTagsForResource
+              - wafv2:UntagResource
+              - wafv2:DisassociateWebACL
+              - wafv2:GetWebACLForResource
+              - wafv2:DeleteWebACL
+              - wafv2:UpdateWebACL
+              - wafv2:GetWebACL
+              - wafv2:CreateWebACL
+              - wafv2:*Tag*
+            Resource: "*"
+
+  CodeBuildPolicyEventLogs:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-Cloudwatch
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - cloudwatch:PutMetricAlarm
+              - cloudwatch:PutDashboard
+              - cloudwatch:DeleteDashboards
+              - cloudwatch:GetDashboard
+              - cloudwatch:*Tag*
+            Resource:
+              - !Sub arn:aws:cloudwatch:*:${AWS::AccountId}:alarm:*
+              - !Sub arn:aws:cloudwatch::${AWS::AccountId}:dashboard/*
+          - Effect: Allow
+            Action: cloudwatch:ListDashboards
+            Resource: "*"
+          - Effect: Allow
+            Action: 
+              - events:DescribeRule
+              - events:*Tag*
+              - events:*tag*
+            Resource: !Sub arn:aws:events:*:${AWS::AccountId}:rule/*/*
+          - Effect: Allow
+            Action: 
+              - events:DescribeRule
+              - events:*Tag*
+              - events:*tag*              
+            Resource: !Sub arn:aws:events:*:${AWS::AccountId}:rule/*
+          - Effect: Allow
+            Action:
+              - logs:Create*
+              - logs:DescribeLogStreams
+              - logs:DescribeSubscriptionFilters
+              - logs:TestMetricFilter
+              - logs:DescribeMetricFilters
+              - logs:CreateLogGroup
+              - logs:Put*
+              - logs:Delete*
+              - logs:*Tag*
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - dynamodb:Describe*
+              - dynamodb:List*
+              - dynamodb:UpdateTable
+              - dynamodb:UpdateContinuousBackups
+              - dynamodb:Create*
+              - dynamodb:Delete*
+              - dynamodb:Enable*
+              - dynamodb:DescribeKinesisStreamingDestination
+              - dynamodb:DisableKinesisStreamingDestination
+              - dybamodb:*Tag*
+            Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
+          - Effect: Allow
+            Action:
+              - ce:*
+            Resource: 
+              - !Sub "arn:aws:ce::${AWS::AccountId}:anomalymonitor/*"
+              - !Sub "arn:aws:ce::${AWS::AccountId}:anomalysubscription/*"
+
+  CodeBuildPolicyIAM:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-IAM
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: IAM
+            Effect: Allow
+            Action:
+              - iam:CreatePolicy
+              - iam:DetachRolePolicy
+              - iam:GetPolicy
+              - iam:DeletePolicy
+              - iam:CreateRole
+              - iam:UpdateRoleDescription
+              - iam:UpdateRole
+              - iam:AttachRolePolicy
+              - iam:PutRolePolicy
+              - iam:CreatePolicyVersion
+              - iam:GetRolePolicy
+            Resource:
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/*
+              - !Sub arn:aws:iam::${AWS::AccountId}:policy/*
+          - Effect: Allow
+            Action:
+              - iam:GetPolicyVersion
+              - iam:CreatePolicyVersion
+              - iam:DeletePolicyVersion
+              - iam:SetDefaultPolicyVersion
+              - iam:ListPolicyVersions
+              - iam:*Tag*
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:policy/*
+          - Effect: Allow
+            Action:
+              - "kms:EnableKey"
+              - "kms:Get*"
+              - "kms:ImportKeyMaterial"
+              - "kms:Decrypt"
+              - "kms:UntagResource"
+              - "kms:PutKeyPolicy"
+              - "kms:Generate*"
+              - "kms:Verify"
+              - "kms:List*"
+              - "kms:CancelKeyDeletion"
+              - "kms:ReplicateKey"
+              - "kms:SynchronizeMultiRegionKey"
+              - "kms:TagResource"
+              - "kms:UpdatePrimaryRegion"
+              - "kms:Encrypt"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:ReEncryptTo"
+              - "kms:DescribeKey"
+              - "kms:Sign"
+              - "kms:CreateGrant"
+              - "kms:EnableKeyRotation"
+              - "kms:UpdateKeyDescription"
+              - "kms:DeleteImportedKeyMaterial"
+              - "kms:DisableKey"
+              - "kms:ReEncryptFrom"
+              - "kms:RetireGrant"
+              - "kms:VerifyMac"
+              - "kms:UpdateAlias"
+              - "kms:RevokeGrant"
+              - "kms:CreateAlias"
+              - "kms:DeleteAlias"
+            Resource:
+              - !Sub arn:aws:kms:*:${AWS::AccountId}:key/*
+              - !Sub arn:aws:kms:*:${AWS::AccountId}:alias/*
+          - Sid: VisualEditor1
+            Effect: Allow
+            Action:
+              - "kms:DescribeCustomKeyStores"
+              - "kms:List*"
+              - "kms:DeleteCustomKeyStore"
+              - "kms:GenerateRandom"
+              - "kms:UpdateCustomKeyStore"
+              - "kms:DisconnectCustomKeyStore"
+              - "kms:CreateKey"
+              - "kms:ConnectCustomKeyStore"
+              - "kms:CreateCustomKeyStore"
+              - "kms:*Tag*"
+            Resource: "*"
+
+  CodeBuildNetworking:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-Networking
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - ec2:AcceptVpcPeeringConnection
+              - ec2:AcceptVpcEndpointConnections
+              - ec2:AllocateAddress
+              - ec2:AssignIpv6Addresses
+              - ec2:AssignPrivateIpAddresses
+              - ec2:AssociateAddress
+              - ec2:AssociateDhcpOptions
+              - ec2:AssociateRouteTable
+              - ec2:AssociateSubnetCidrBlock
+              - ec2:AssociateVpcCidrBlock
+              - ec2:AttachClassicLinkVpc
+              - ec2:AttachInternetGateway
+              - ec2:AttachNetworkInterface
+              - ec2:AttachVpnGateway
+              - ec2:AuthorizeSecurityGroupEgress
+              - ec2:AuthorizeSecurityGroupIngress
+              - ec2:CreateCarrierGateway
+              - ec2:CreateCustomerGateway
+              - ec2:CreateDefaultSubnet
+              - ec2:CreateDefaultVpc
+              - ec2:CreateDhcpOptions
+              - ec2:CreateEgressOnlyInternetGateway
+              - ec2:CreateFlowLogs
+              - ec2:CreateInternetGateway
+              - ec2:CreateLocalGatewayRouteTableVpcAssociation
+              - ec2:CreateNatGateway
+              - ec2:CreateNetworkAcl
+              - ec2:CreateNetworkAclEntry
+              - ec2:CreateNetworkInterface
+              - ec2:CreateNetworkInterfacePermission
+              - ec2:CreateRoute
+              - ec2:CreateRouteTable
+              - ec2:CreateSecurityGroup
+              - ec2:CreateSubnet
+              - ec2:CreateTags
+              - ec2:CreateVpc
+              - ec2:CreateVpcEndpoint
+              - ec2:CreateVpcEndpointConnectionNotification
+              - ec2:CreateVpcEndpointServiceConfiguration
+              - ec2:CreateVpcPeeringConnection
+              - ec2:CreateVpnConnection
+              - ec2:CreateVpnConnectionRoute
+              - ec2:CreateVpnGateway
+              - ec2:DeleteCarrierGateway
+              - ec2:DeleteCustomerGateway
+              - ec2:DeleteDhcpOptions
+              - ec2:DeleteEgressOnlyInternetGateway
+              - ec2:DeleteFlowLogs
+              - ec2:DeleteInternetGateway
+              - ec2:DeleteLocalGatewayRouteTableVpcAssociation
+              - ec2:DeleteNatGateway
+              - ec2:DeleteNetworkAcl
+              - ec2:DeleteNetworkAclEntry
+              - ec2:DeleteNetworkInterface
+              - ec2:DeleteNetworkInterfacePermission
+              - ec2:DeleteRoute
+              - ec2:DeleteRouteTable
+              - ec2:DeleteSecurityGroup
+              - ec2:DeleteSubnet
+              - ec2:DeleteTags
+              - ec2:DeleteVpc
+              - ec2:DeleteVpcEndpoints
+              - ec2:DeleteVpcEndpointConnectionNotifications
+              - ec2:DeleteVpcEndpointServiceConfigurations
+              - ec2:DeleteVpcPeeringConnection
+              - ec2:DeleteVpnConnection
+              - ec2:DeleteVpnConnectionRoute
+              - ec2:DeleteVpnGateway
+              - ec2:DescribeAccountAttributes
+              - ec2:DescribeAddresses
+              - ec2:DescribeAvailabilityZones
+              - ec2:DescribeCarrierGateways
+              - ec2:DescribeClassicLinkInstances
+              - ec2:DescribeCustomerGateways
+              - ec2:DescribeDhcpOptions
+              - ec2:DescribeEgressOnlyInternetGateways
+              - ec2:DescribeFlowLogs
+              - ec2:DescribeInstances
+              - ec2:DescribeInternetGateways
+              - ec2:DescribeIpv6Pools
+              - ec2:DescribeLocalGatewayRouteTables
+              - ec2:DescribeLocalGatewayRouteTableVpcAssociations
+              - ec2:DescribeKeyPairs
+              - ec2:DescribeMovingAddresses
+              - ec2:DescribeNatGateways
+              - ec2:DescribeNetworkAcls
+              - ec2:DescribeNetworkInterfaceAttribute
+              - ec2:DescribeNetworkInterfacePermissions
+              - ec2:DescribeNetworkInterfaces
+              - ec2:DescribePrefixLists
+              - ec2:DescribeRouteTables
+              - ec2:DescribeSecurityGroupReferences
+              - ec2:DescribeSecurityGroupRules
+              - ec2:DescribeSecurityGroups
+              - ec2:DescribeStaleSecurityGroups
+              - ec2:DescribeSubnets
+              - ec2:DescribeTags
+              - ec2:DescribeVpcAttribute
+              - ec2:DescribeVpcClassicLink
+              - ec2:DescribeVpcClassicLinkDnsSupport
+              - ec2:DescribeVpcEndpointConnectionNotifications
+              - ec2:DescribeVpcEndpointConnections
+              - ec2:DescribeVpcEndpoints
+              - ec2:DescribeVpcEndpointServiceConfigurations
+              - ec2:DescribeVpcEndpointServicePermissions
+              - ec2:DescribeVpcEndpointServices
+              - ec2:DescribeVpcPeeringConnections
+              - ec2:DescribeVpcs
+              - ec2:DescribeVpnConnections
+              - ec2:DescribeVpnGateways
+              - ec2:DetachClassicLinkVpc
+              - ec2:DetachInternetGateway
+              - ec2:DetachNetworkInterface
+              - ec2:DetachVpnGateway
+              - ec2:DisableVgwRoutePropagation
+              - ec2:DisableVpcClassicLink
+              - ec2:DisableVpcClassicLinkDnsSupport
+              - ec2:DisassociateAddress
+              - ec2:DisassociateRouteTable
+              - ec2:DisassociateSubnetCidrBlock
+              - ec2:DisassociateVpcCidrBlock
+              - ec2:EnableVgwRoutePropagation
+              - ec2:EnableVpcClassicLink
+              - ec2:EnableVpcClassicLinkDnsSupport
+              - ec2:ModifyNetworkInterfaceAttribute
+              - ec2:ModifySecurityGroupRules
+              - ec2:ModifySubnetAttribute
+              - ec2:ModifyVpcAttribute
+              - ec2:ModifyVpcEndpoint
+              - ec2:ModifyVpcEndpointConnectionNotification
+              - ec2:ModifyVpcEndpointServiceConfiguration
+              - ec2:ModifyVpcEndpointServicePermissions
+              - ec2:ModifyVpcPeeringConnectionOptions
+              - ec2:ModifyVpcTenancy
+              - ec2:MoveAddressToVpc
+              - ec2:RejectVpcEndpointConnections
+              - ec2:RejectVpcPeeringConnection
+              - ec2:ReleaseAddress
+              - ec2:ReplaceNetworkAclAssociation
+              - ec2:ReplaceNetworkAclEntry
+              - ec2:ReplaceRoute
+              - ec2:ReplaceRouteTableAssociation
+              - ec2:ResetNetworkInterfaceAttribute
+              - ec2:RestoreAddressToClassic
+              - ec2:RevokeSecurityGroupEgress
+              - ec2:RevokeSecurityGroupIngress
+              - ec2:UnassignIpv6Addresses
+              - ec2:UnassignPrivateIpAddresses
+              - ec2:UpdateSecurityGroupRuleDescriptionsEgress
+              - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+              - ec2:*Tag*
+            Resource: "*"
+            Effect: Allow
+
+  CodeBuildEfs:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-Efs
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - elasticfilesystem:DescribeLifecycleConfiguration
+            Resource: "*"
+            Effect: Allow
+
+  ###########################################################################
+  ###  Utility codebuild used to list the deployed artifacts versions
+  ###########################################################################
+  ListDeployedVersionsCodebuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-ListDeployedVersionsCodebuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: NO_SOURCE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            pre_build:
+              commands:
+                - echo "### NO PRE_BUILD"
+            build:
+              commands:
+                - 'echo "### CLONE SCRIPTS ###"'
+                - 'echo "#####################"'
+                - 'git clone https://github.com/pagopa/pn-cicd.git'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "### EXECUTE READ ENV VERSIONS ###"'
+                - |
+                   ( cd pn-cicd/cd-cli && ./readEnv.sh -r ${REGION} -e ${ENV_NAME} \
+                        -s "pn-data-vault-microsvc-${ENV_NAME}" \
+                        -c "pn-confidential-ecs-cluster" \
+                        --no-fe \
+                   )
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "### DOWNLOAD DESIRED COMMIT IDS ###"'
+                - 'aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh '
+                - 'cat desired-commit-ids-env.sh'               
+          artifacts:
+            files:
+              - 'desired-commit-ids-env.sh'
+      Artifacts:
+        Type: S3
+        EncryptionDisabled: true
+        Location: !Ref PipelineArtifactBucket
+        Path: '/List_deployed_versions_codebuild_project/'
+        NamespaceType: BUILD_ID
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:6.0"
+        EnvironmentVariables:
+          - Name: REGION
+            Type: PLAINTEXT
+            Value: !Ref AWS::Region
+          - Name: ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref EnvName
+          - Name: DesiredCommitIdsBucketName
+            Type: PLAINTEXT
+            Value: !Ref CdArtifactBucket
+          - Name: DesiredCommitIdsPath
+            Type: PLAINTEXT
+            Value: 'config/desired-commit-ids-env.sh'
+
+Outputs:
+  CdArtifactBucketName:
+    Value: !Ref CdArtifactBucket
+
+  CdEventBusArn:
+    Value: ''
