@@ -112,7 +112,7 @@ parse_params() {
       ContainerImageUri="${2-}"
       shift
       ;;
-    -t| --terraform-env) 
+    -t | --terraform-env) 
       terraform_env="${2-}"
       shift
       ;;
