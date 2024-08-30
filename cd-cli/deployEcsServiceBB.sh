@@ -51,7 +51,8 @@ parse_params() {
   pn_microsvc_commitid=""
   bucketName=""
   LambdasBucketName=""
-
+  terraform_env=""
+  
   while :; do
     case "${1-}" in
     -h | --help) usage ;;
