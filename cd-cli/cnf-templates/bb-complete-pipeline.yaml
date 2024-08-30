@@ -695,7 +695,7 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "########################################################"'
-                - 'echo "###       UPDATE MICROSERVICE $MsName    "'
+                - 'echo "###             UPDATE MICROSERVICE $MsName             "'
                 - 'echo "########################################################"'
                 - 'echo ""'
                 - 'echo "./deployEcsServiceBB.sh -r $AwsRegion -e $envName -i $pn_infra_commitId -g $pn_infra_confinfo_bb_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -I $ms_image_url -n $MsName -N $MsNumber -w /tmp -c $custom_config_dir -t $terraformEnv"'
