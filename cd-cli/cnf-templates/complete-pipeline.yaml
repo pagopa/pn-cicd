@@ -1941,6 +1941,30 @@ Resources:
             Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*
           - Effect: Allow
             Action:
+              - iam:AttachUserPolicy
+              - iam:CreateUser
+              - iam:DeleteUserPolicy
+              - iam:DetachUserPolicy
+              - iam:ListAccessKeys
+              - iam:ListAttachedUserPolicies
+              - iam:ListUserPolicies
+              - iam:ListUserTags
+              - iam:ListUsers
+              - iam:PutUserPolicy
+              - iam:TagUser
+              - iam:UntagUser
+              - iam:UpdateUser
+              - iam:CreateAccessKey
+              - iam:DeleteAccessKey
+              - iam:DeleteUser
+              - iam:GetUserPolicy
+              - iam:GetUser
+              - iam:UpdateAccessKey
+            Resource: 
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:user'
+              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:user/*'
+          - Effect: Allow
+            Action:
               - kms:Decrypt
               - kms:DescribeKey
               - kms:GenerateDataKey
