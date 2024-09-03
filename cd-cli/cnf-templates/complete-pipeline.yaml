@@ -2906,7 +2906,14 @@ Resources:
               - iam:GetUser
               - iam:UpdateAccessKey
             Resource: 
-              - !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:user/*'
+              - '*'
+          - Sid: SecretxCelonis
+            Effect: Allow
+            Action: 
+              - secretsmanager:CreateSecret
+              - secretsmanager:DeleteSecret
+            Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*
+          
           - Sid: IAM
             Effect: Allow
             Action:
