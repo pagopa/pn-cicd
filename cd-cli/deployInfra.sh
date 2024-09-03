@@ -608,7 +608,7 @@ fi
 
 echo ""
 echo "=== Deploy PN-Celonis-Export FOR $env_type ACCOUNT ON FRANKFURT region"
-CELONIS_EXPORTS_STACK_FILE=pn-infra/runtime-infra/celonis_exporta.yaml
+CELONIS_EXPORTS_STACK_FILE=pn-infra/runtime-infra/celonis_exports.yaml
 
 if [[ -f "$CELONIS_EXPORTS_STACK_FILE" ]]; then
     echo "$CELONIS_EXPORTS_STACK_FILE exists, updating pn-celonis-exports stack"
