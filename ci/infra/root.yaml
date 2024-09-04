@@ -1527,7 +1527,6 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-paper-tenders"
         NodeProjectDir: "scripts/build_tenders"
-        NodeProjectDirEscaped: "scripts-build_tenders"
         NodeVersion: "20"
         GitHubDefaultBranch: "main"
         CiArtifactBucket: !Ref "CiArtifactBucket"

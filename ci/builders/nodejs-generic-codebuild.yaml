@@ -11,9 +11,6 @@ Parameters:
   NodeProjectDir:
     Description: base directory of the node project = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
     Type: String
-  NodeProjectDirEscaped:
-    Description: base directory of the node project escaped = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
-    Type: String
   CiArtifactBucket:
     Description: CI Artifact bucket name
     Type: String
@@ -35,7 +32,7 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${GitHubProjectName}-${NodeProjectDirEscaped}-CodeBuild"
+      Name: !Sub "${GitHubProjectName}-CodeBuild"
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       BadgeEnabled: true
       Environment:
