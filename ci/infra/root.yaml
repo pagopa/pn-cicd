@@ -1519,6 +1519,22 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 10
 
+  # Progetto pn-paper-tenders
+  PnPaperTenders:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-generic-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-paper-tenders"
+        NodeProjectDir: "scripts/build_tenders"
+        NodeVersion: "20"
+        GitHubDefaultBranch: "main"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        PackageStartScript: "start"
+        OutputFile: "out_tenders.zip"
+      TimeoutInMinutes: 10
+
   # Progetti WebApp
   PnPaWebapp:
     Type: AWS::CloudFormation::Stack
