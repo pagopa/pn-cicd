@@ -202,7 +202,7 @@ Resources:
     Type: AWS::CodeStarNotifications::NotificationRule
     Properties:
       DetailType: FULL
-      Name: !Sub '${GitHubProjectName}-${NodeProjectDir}-CI'
+      Name: !Sub '${GitHubProjectName}-CI'
       EventTypeIds:
         - codebuild-project-build-state-failed
       Resource: !Sub '${CodeBuildProject.Arn}'
