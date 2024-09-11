@@ -144,9 +144,13 @@ Conditions:
       - 'true'
   
   NeedMediumBuildEnv:
-    Fn::Equals:
-      - Ref: GitHubProjectName
-      - 'pn-delivery-push'
+    Fn::Or:
+      - Fn::Equals:
+          - Ref: GitHubProjectName
+          - 'pn-delivery-push'
+      - Fn::Equals:
+          - Ref: GitHubProjectName
+          - 'pn-paper-channel'
 
 Resources:
 
