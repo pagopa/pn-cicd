@@ -5529,7 +5529,7 @@ Resources:
                 - Name: PnPlatformUsageEstimatesOutput
               RunOrder: 3
 
-  # MICROSERVICE PN-SERVICE-DESK
+  # MICROSERVICE PN-PAPER_EVENT-ENRICHER
   ############################
   PnPaperEventEnricherDeployPipeline:
     Condition: RequiresSingleProjects
