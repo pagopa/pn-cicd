@@ -706,3 +706,32 @@ if [[ -f "$CN_STACK_FILE" ]]; then
 else
   echo "pn-cn file doesn't exist, stack update skipped"
 fi
+
+echo ""
+echo "=== Deploy PN-LOG-ANALYTICS FOR $env_type ACCOUNT"
+LOG_ANALYTICS_FILE=pn-infra/runtime-infra/pn-log-analytics.yaml
+
+if [[ -f "$LOG_ANALYTICS_FILE" ]]; then
+    echo "$LOG_ANALYTICS_FILE exists, updating $LOG_ANALYTICS_FILE stack"
+
+
+    LogsBucketName=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+        --stack-name "pn-infra-${env_type}" | jq -r \
+        ".Stacks[0].Outputs | .[] | select(.OutputKey==\"LogsBucketName\") | .OutputValue" \
+    )
+
+    LogsBucketKmsKeyArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+        --stack-name "pn-infra-${env_type}" | jq -r \
+        ".Stacks[0].Outputs | .[] | select(.OutputKey==\"LogsBucketKmsKeyArn\") | .OutputValue" \
+    )
+    
+
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name pn-log-analytics-$env_type \
+          --template-file ${LOG_ANALYTICS_FILE} \
+          --tags Microservice=pn-infra-logs \
+          --parameter-overrides "LogsBucketName=${LogsBucketName}" "LogsBucketKmsKeyArn=${LogsBucketKmsKeyArn}" 
+else
+  echo "$LOG_ANALYTICS_FILE file doesn't exist, stack update skipped"
+fi
