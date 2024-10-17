@@ -710,28 +710,29 @@ fi
 echo ""
 echo "=== Deploy PN-LOG-ANALYTICS FOR $env_type ACCOUNT"
 LOG_ANALYTICS_FILE=pn-infra/runtime-infra/pn-log-analytics.yaml
+ParamFilePath=pn-infra/runtime-infra/pn-log-analytics-${env_type}-cfg.json
 
 if [[ -f "$LOG_ANALYTICS_FILE" ]]; then
     echo "$LOG_ANALYTICS_FILE exists, updating $LOG_ANALYTICS_FILE stack"
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath} 
 
+    echo ""
+    echo "= Enanched parameters file"
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
+      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+      > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
 
-    LogsBucketName=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-        --stack-name "pn-infra-${env_type}" | jq -r \
-        ".Stacks[0].Outputs | .[] | select(.OutputKey==\"LogsBucketName\") | .OutputValue" \
-    )
-
-    LogsBucketKmsKeyArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
-        --stack-name "pn-infra-${env_type}" | jq -r \
-        ".Stacks[0].Outputs | .[] | select(.OutputKey==\"LogsBucketKmsKeyArn\") | .OutputValue" \
-    )
     
-
     aws ${aws_command_base_args} \
         cloudformation deploy \
           --stack-name pn-log-analytics-$env_type \
           --template-file ${LOG_ANALYTICS_FILE} \
           --tags Microservice=pn-infra-logs \
-          --parameter-overrides "LogsBucketName=${LogsBucketName}" "LogsBucketKmsKeyArn=${LogsBucketKmsKeyArn}" 
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 else
   echo "$LOG_ANALYTICS_FILE file doesn't exist, stack update skipped"
 fi
