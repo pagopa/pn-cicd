@@ -730,6 +730,7 @@ if [[ -f "$LOG_ANALYTICS_FILE" ]]; then
     aws ${aws_command_base_args} \
         cloudformation deploy \
           --stack-name pn-log-analytics-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${LOG_ANALYTICS_FILE} \
           --tags Microservice=pn-infra-logs \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
