@@ -2124,6 +2124,15 @@ Resources:
               StringLike:
                 iam:PassedToService:
                   - ecs-tasks.amazonaws.com
+          - Effect: Allow
+            Action:
+              - "glue:*Table*"
+              - "glue:*Database*"
+              - "glue:*Crawler*"
+              - "glue:*Tag*"              
+              - "athena:*WorkGroup*" 
+              - "athena:*Tag*"                     
+            Resource: "*"
 
   
   CodeBuildPolicyR53:
