@@ -394,6 +394,8 @@ echo "====================================================================="
 echo ""
 echo "===                          SITO VETRINA                         ==="
 echo "====================================================================="
+mkdir -p "deploy"
+cd "deploy"
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
       --bucket "$LambdasBucketName" --key "pn-showcase-site/commits/${pn_showcase_site_commitid}/pn-showcase-site.tar.gz" \
       "pn-showcase-site.tar.gz"
@@ -408,6 +410,6 @@ aws ${aws_command_base_args} \
     s3 cp "pn-showcase-site" "s3://${landingBucketName}/" --recursive 
 
 aws ${aws_command_base_args} \
-    s3 sync "pn-showcase-site" "s3://${landingBucketName}/" --delete --exclude "public/static/documents/*"
+    s3 sync "pn-showcase-site" "s3://${landingBucketName}/" --delete --exclude "static/documents/*"
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"

@@ -142,11 +142,21 @@ Conditions:
     Fn::Equals:
       - Ref: ShouldCreateEcrParam
       - 'true'
-  
-  NeedMediumBuildEnv:
+
+  PnDeliveryPushModule:
     Fn::Equals:
       - Ref: GitHubProjectName
       - 'pn-delivery-push'
+
+  PnPaperChannelModule:
+    Fn::Equals:
+      - Ref: GitHubProjectName
+      - 'pn-paper-channel'
+
+  NeedMediumBuildEnv:
+    Fn::Or:
+      - Condition: PnDeliveryPushModule
+      - Condition: PnPaperChannelModule
 
 Resources:
 

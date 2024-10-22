@@ -226,6 +226,8 @@ Resources:
               Service: [cloudformation.amazonaws.com]
         Version: '2012-10-17'
       Path: /
+      ManagedPolicyArns:
+        - !Ref CodePipelinePolicy
       Policies:
         - PolicyName: CloudFormationRole
           PolicyDocument:
