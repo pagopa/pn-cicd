@@ -205,14 +205,13 @@ echo " - Copy Lambdas zip"
 lambdasZip='functions.zip'
 lambdasLocalPath='functions'
 repo_name='pn-infra'
+infra_confinfo_path=${repo_name}/runtime-infra-confinfo
 
-if [ -d "/percorso/della/directory" ]; then
+if [ -d $infra_confinfo_path ]; then
   echo "Using runtime-infra-confinfo..."
-  infra_confinfo_path=${repo_name}/runtime-infra-confinfo
 else
   echo "Using pn-data-vault..."
   infra_confinfo_path=${microcvs_name}/scripts/aws/cfn
-
 fi
 
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
