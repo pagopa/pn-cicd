@@ -737,3 +737,34 @@ if [[ -f "$LOG_ANALYTICS_FILE" ]]; then
 else
   echo "$LOG_ANALYTICS_FILE file doesn't exist, stack update skipped"
 fi
+
+echo ""
+echo "=== Deploy PN-CDC-ANALYTICS FOR $env_type ACCOUNT"
+CDC_ANALYTICS_FILE=pn-infra/runtime-infra/pn-cdc-analytics.yaml
+ParamFilePath=pn-infra/runtime-infra/pn-cdc-analytics-${env_type}-cfg.json
+
+if [[ -f "$CDC_ANALYTICS_FILE" ]]; then
+    echo "$CDC_ANALYTICS_FILE exists, updating $CDC_ANALYTICS_FILE stack"
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath} 
+
+    echo ""
+    echo "= Enanched parameters file"
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
+      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+      > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
+    
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name pn-cdc-analytics-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --template-file ${CDC_ANALYTICS_FILE} \
+          --tags Microservice=pn-infra-logs \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+else
+  echo "$CDC_ANALYTICS_FILE file doesn't exist, stack update skipped"
+fi
