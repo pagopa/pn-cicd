@@ -214,7 +214,7 @@ Resources:
                   if ( [ "$PROJECT" = "pn-data-vault" ] ) then
                     sed -i -e "s|pn_data_vault_commitId=.*|pn_data_vault_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_data_vault_imageUrl=.*|pn_data_vault_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-env-update-pipeline"
+                    export PIPELINE_NAME="pn-data-vault-update-pipeline"
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-logsaver-be" ] ) then
@@ -439,7 +439,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateConfinfoInfraCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -1473,7 +1473,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateConfinfoInfraCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -1567,12 +1567,12 @@ Resources:
             Value: !Ref CiAccountId
 
 
-  # CODEBUILD used to update an ecs microservice
+  # CODEBUILD used to update infra confinfo
   ###################################################
-  UpdateMicroserviceCodeBuildProject:
+  UpdateConfinfoInfraCodeBuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${ProjectName}-UpdateMicroserviceCodeBuildProject
+      Name: !Sub ${ProjectName}-UpdateConfinfoInfraCodeBuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source: 
         Type: CODEPIPELINE
@@ -1617,8 +1617,8 @@ Resources:
                 - 'echo "###       UPDATE INFRA    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir "'
-                - '(cd scripts/cd-cli && ./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -n $MsName -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir -m $ms_commitId -n $MsName"'
+                - '(cd scripts/cd-cli && ./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir -m $ms_commitId -n $MsName)'
           artifacts:
             files:
               - '**/*'

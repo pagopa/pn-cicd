@@ -21,10 +21,12 @@ usage() {
     -r <aws-region>                  : aws region as eu-south-1
     -e <env-type>                    : one of dev / uat / svil / coll / cert / prod
     -i <infra-github-commitid>       : commitId for github repository pagopa/pn-infra
-    -m <pn-microsvc-github-commitid> : commitId for github repository del microservizio
     [-c <custom_config_dir>]         : where tor read additional env-type configurations
     -b <artifactBucketName>          : bucket name to use as temporary artifacts storage
+    ##__START
+    -m <pn-microsvc-github-commitid> : commitId for github repository del microservizio
     -n <microcvs-name>               : nome del microservizio
+    ##__END
 
 EOF
   exit 1
@@ -39,9 +41,11 @@ parse_params() {
   aws_region=""
   env_type=""
   pn_infra_commitid=""
-  pn_microsvc_commitid=""
   bucketName=""
   LambdasBucketName=""
+  ##__START
+  pn_microsvc_commitid=""
+  ##__END
 
   while :; do
     case "${1-}" in
@@ -63,14 +67,6 @@ parse_params() {
       pn_infra_commitid="${2-}"
       shift
       ;;
-    -m | --ms-commitid)
-      pn_microsvc_commitid="${2-}"
-      shift
-      ;;
-    -n | --ms-name)
-      microcvs_name="${2-}"
-      shift
-      ;;
     -c | --custom-config-dir)
       custom_config_dir="${2-}"
       shift
@@ -87,6 +83,16 @@ parse_params() {
       LambdasBucketName="${2-}"
       shift
       ;;
+    ##__START  
+    -m | --ms-commitid)
+      pn_microsvc_commitid="${2-}"
+      shift
+      ;;
+    -n | --ms-name)
+      microcvs_name="${2-}"
+      shift
+      ;;
+    ##__END  
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -98,11 +104,13 @@ parse_params() {
   # check required params and arguments
   [[ -z "${env_type-}" ]] && usage
   [[ -z "${pn_infra_commitid-}" ]] && usage
-  [[ -z "${pn_microsvc_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
-  [[ -z "${microcvs_name-}" ]] && usage
   [[ -z "${LambdasBucketName-}" ]] && usage
+  ##__START
+  [[ -z "${pn_microsvc_commitid-}" ]] && usage
+  [[ -z "${microcvs_name-}" ]] && usage
+  ##__END
   return 0
 }
 
@@ -114,13 +122,15 @@ dump_params(){
   echo "Work directory:      ${work_dir}"
   echo "Custom config dir:   ${custom_config_dir}"
   echo "Infra CommitId:      ${pn_infra_commitid}"
-  echo "Microsvc CommitId:   ${pn_microsvc_commitid}"
-  echo "Microsvc Name:       ${microcvs_name}"
   echo "Env Name:            ${env_type}"
   echo "AWS region:          ${aws_region}"
   echo "AWS profile:         ${aws_profile}"
   echo "Bucket Name:         ${bucketName}"
   echo "Lambdas Bucket Name: ${LambdasBucketName}"
+  ##__START
+  echo "Microsvc CommitId:   ${pn_microsvc_commitid}"
+  echo "Microsvc Name:       ${microcvs_name}"
+  ##__END 
 }
 
 
@@ -150,6 +160,7 @@ if ( [ -d "${custom_config_dir}/pn-infra-confinfo" ] ) then
   cp -r $custom_config_dir/pn-infra-confinfo .
 fi
 
+##__START
 echo "=== Download microservizio ${microcvs_name}"
 if ( [ ! -e ${microcvs_name} ] ) then
   git clone "https://github.com/pagopa/${microcvs_name}.git"
@@ -162,7 +173,7 @@ echo " - copy custom config"
 if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/${microcvs_name} .
 fi
-
+##__END
 
 echo ""
 echo "=== Base AWS command parameters"
@@ -194,6 +205,14 @@ echo " - Copy Lambdas zip"
 lambdasZip='functions.zip'
 lambdasLocalPath='functions'
 repo_name='pn-infra'
+infra_confinfo_path=${repo_name}/runtime-infra-confinfo
+
+if [ -d $infra_confinfo_path ]; then
+  echo "Using runtime-infra-confinfo..."
+else
+  echo "Using pn-data-vault..."
+  infra_confinfo_path=${microcvs_name}/scripts/aws/cfn
+fi
 
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
       --bucket "$LambdasBucketName" --key "${repo_name}/commits/${pn_infra_commitid}/${lambdasZip}" \
@@ -241,14 +260,14 @@ aws ${aws_command_base_args}  \
     cloudformation deploy \
       --stack-name once-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \
-      --template-file ${microcvs_name}/scripts/aws/cfn/once4account.yaml \
+      --template-file ${infra_confinfo_path}/once4account.yaml \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
         PnCoreAwsAccountId="$PnCoreAwsAccountId" \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
 
-STORAGE_STACK_FILE=${microcvs_name}/scripts/aws/cfn/infra-storage.yaml
+STORAGE_STACK_FILE=${infra_confinfo_path}/infra-storage.yaml
 
 INFRA_INPUT_STACK=once-${env_type}
 if [[ -f "$STORAGE_STACK_FILE" ]]; then
@@ -267,8 +286,8 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   echo ""
   echo "=== Prepare parameters for infra-storage.yaml deployment in $env_type ACCOUNT"
 
-  ## Merge pn_infra_confinfo output into EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
-  ParamFilePath=${microcvs_name}/scripts/aws/cfn/infra-storage-${env_type}-cfg.json
+  ## Merge pn_infra_confinfo output into EnanchedParamFilePath=confinfo-infra-${env_type}-cfg-enanched.json
+  ParamFilePath=${infra_confinfo_path}/infra-storage-${env_type}-cfg.json
 
   if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
     echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH}"
@@ -281,7 +300,7 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   fi
 
   PreviousOutputFilePath=once4account-${env_type}-out.json
-  TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra-storage.yaml
+  TemplateFilePath=${infra_confinfo_path}/infra-storage.yaml
   EnanchedParamFilePath=infra-storage-${env_type}-cfg-enanched.json
   PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
@@ -322,14 +341,14 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
         --stack-name infra-storage-$env_type \
         --capabilities CAPABILITY_NAMED_IAM \
         --tags Microservice=pn-infra-logs \
-        --template-file ${microcvs_name}/scripts/aws/cfn/infra-storage.yaml \
+        --template-file ${infra_confinfo_path}/infra-storage.yaml \
         --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
   INFRA_INPUT_STACK=infra-storage-${env_type}
 fi
 
-## Merge pn_infra_confinfo output into EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
-ParamFilePath=${microcvs_name}/scripts/aws/cfn/infra-${env_type}-cfg.json # infra cfg file, it is the target of merge from pn_infra_confinfo
+## Merge pn_infra_confinfo output into EnanchedParamFilePath=confinfo-infra-${env_type}-cfg-enanched.json
+ParamFilePath=${infra_confinfo_path}/infra-${env_type}-cfg.json # infra cfg file, it is the target of merge from pn_infra_confinfo
 
 if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH}"
@@ -356,8 +375,8 @@ echo ""
 echo "= Read Outputs from previous stack"
 
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
-TemplateFilePath=${microcvs_name}/scripts/aws/cfn/infra.yml
-EnanchedParamFilePath=${microcvs_name}-infra-${env_type}-cfg-enanched.json
+TemplateFilePath=${infra_confinfo_path}/infra.yml
+EnanchedParamFilePath=confinfo-infra-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"CdBucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
 aws ${aws_command_base_args} \
@@ -383,7 +402,7 @@ aws ${aws_command_base_args}  \
       --stack-name infra-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \
       --tags "Microservice=pn-infra-networking" \
-      --template-file ${microcvs_name}/scripts/aws/cfn/infra.yml \
+      --template-file ${infra_confinfo_path}/infra.yml \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 
@@ -480,7 +499,7 @@ else
   echo "${COST_SAVING_STACK_FILE} file doesn't exist, stack update skipped"
 fi
 
-MONITORING_STACK_FILE=${microcvs_name}/scripts/aws/cfn/infra-monitoring.yaml
+MONITORING_STACK_FILE=${infra_confinfo_path}/infra-monitoring.yaml
 if [[ -f "$MONITORING_STACK_FILE" ]]; then
     echo "$MONITORING_STACK_FILE exists, updating monitoring stack"
 
