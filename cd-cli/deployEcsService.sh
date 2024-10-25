@@ -410,8 +410,86 @@ aws ${aws_command_base_args} \
       --s3-prefix cfn \
       --tags "Microservice=${microcvs_name}" \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
-   
 
+if [[ -f "${microcvs_name}/scripts/aws/cfn/data-quality.yml" ]]; then
+    echo ""
+    echo ""
+    echo ""
+    echo "======================================================================="
+    echo "======================================================================="
+    echo "===                                                                 ==="
+    echo "===              $microcvs_name DATA QUALITY DEPLOYMENT            ==="
+    echo "===                                                                 ==="
+    echo "======================================================================="
+    echo "======================================================================="
+    echo ""
+    echo ""
+    echo ""
+    echo "=== Prepare parameters for $microcvs_name data quality deployment in $env_type ACCOUNT"
+    PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
+    CdcAnalyticsOutputFilePath=pn-cdc-analytics-${env_type}-out.json
+    InfraOutputFilePath=$INFRA_ALL_OUTPUTS_FILE
+    TemplateFilePath=${microcvs_name}/scripts/aws/cfn/data-quality.yml
+    ParamFilePath=${microcvs_name}/scripts/aws/cfn/data-quality-${env_type}-cfg.json
+    EnanchedParamFilePath=${microcvs_name}-data-quality-${env_type}-cfg-enanched.json
+    PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
+         \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
+         \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
+
+    echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
+    echo " - CdcAnalyticsOutputFilePath: ${CdcAnalyticsOutputFilePath}"
+    echo " - InfraOutputFilePath: ${InfraOutputFilePath}"
+    echo " - TemplateFilePath: ${TemplateFilePath}"
+    echo " - ParamFilePath: ${ParamFilePath}"
+    echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
+    echo " - PipelineParams: ${PipelineParams}"
+
+    echo ""
+    echo "= Read Outputs from Storage stack"
+    aws ${aws_command_base_args} \
+        cloudformation describe-stacks \
+          --stack-name ${microcvs_name}-storage-$env_type \
+          --query "Stacks[0].Outputs" \
+          --output json \
+          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+          | tee ${PreviousOutputFilePath}
+
+    echo ""
+    echo "= Read Outputs from CDC Analytics stack"
+    aws ${aws_command_base_args} \
+        cloudformation describe-stacks \
+          --stack-name pn-cdc-analytics-$env_type \
+          --query "Stacks[0].Outputs" \
+          --output json \
+          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+          | tee ${CdcAnalyticsOutputFilePath}
+
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath} 
+
+    echo ""
+    echo "= Enanched parameters file"
+    jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * { \"Parameters\": .[2] } * .[3]" \
+       ${InfraOutputFilePath} ${PreviousOutputFilePath} ${CdcAnalyticsOutputFilePath} ${ParamFilePath} \
+       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+       > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
+    echo ""
+    echo "=== Deploy $microcvs_name DATA QUALITY FOR $env_type ACCOUNT"
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name ${microcvs_name}-data-quality-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --template-file ${TemplateFilePath} \
+          --tags "Microservice=${microcvs_name}" \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+else
+    echo ""
+    echo "${microcvs_name}/scripts/aws/cfn/data-quality.yml file doesn't exist, data quality deployment skipped"
+fi
 
 
 
