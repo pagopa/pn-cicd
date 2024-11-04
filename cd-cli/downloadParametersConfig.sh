@@ -85,7 +85,7 @@ parse_params() {
   # check required params and arguments
   [[ -z "${env_type-}" ]] && usage 
   [[ -z "${configuration_repository_secret_name-}" ]] && usage
-  return 0
+  return 1
 }
 
 dump_params(){
@@ -239,10 +239,10 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
   #cloning git repository and change directory:
   _clone_repository
   
-echo "****   EXPORT COMPLETED   ****"
+  echo "****   EXPORT COMPLETED   ****"
 
   mkdir -p parameters
-  cp -r pn-configuration/${env_type}/_conf parameters/
+  cp -r pn-configuration/${env_type}/_conf parameters/${env_type}
 
 else
   echo "nothing to do"
