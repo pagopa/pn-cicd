@@ -66,6 +66,12 @@ async function getAWSParam(awsClient, param) {
   return tmp;
 }
 
+function appendResult(fileName, data){
+  if(!fs.existsSync(`results`))
+    fs.mkdirSync(`results`, { recursive: true });
+  fs.appendFileSync(`results/${fileName}`, data + "\n")
+}
+
 async function main() {
   const awsClient = new AwsClientsWrapper(profile);
   const path = `${parametersPath}/${envName}/_conf/${account}/system_params`
@@ -75,8 +81,8 @@ async function main() {
     const awsParam = await getAWSParam(awsClient, normalizedParameter)
     const localParam = getLocalParam(`${path}/${param}`)
     if(awsParam !== localParam) {
+      appendResult('output.log', `${normalizedParameter} KO`)
       console.log(`${normalizedParameter} KO`)
-      process.exit(1) 
     } else {
       console.log(`${normalizedParameter} OK`)
     }
