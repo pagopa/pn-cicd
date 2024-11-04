@@ -85,7 +85,7 @@ parse_params() {
   # check required params and arguments
   [[ -z "${env_type-}" ]] && usage 
   [[ -z "${configuration_repository_secret_name-}" ]] && usage
-  return 1
+  return 0
 }
 
 dump_params(){
