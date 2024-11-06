@@ -60,8 +60,7 @@ function getLocalParam(filePath) {
 }
 
 async function getAWSParam(awsClient, param) {
-  const normalizedParameter = normalizeParameter(param)
-  const res = await awsClient._getSSMParameter(normalizedParameter)
+  const res = await awsClient._getSSMParameter(param)
   const tmp = isJSON(res.Parameter.Value) ? JSON.parse(res.Parameter.Value) : `${res.Parameter.Value}`
   return tmp;
 }
@@ -75,16 +74,21 @@ function appendResult(fileName, data){
 async function main() {
   const awsClient = new AwsClientsWrapper(profile);
   const path = `${parametersPath}/${envName}/_conf/${account}/system_params`
-  const parameters = getParameterToCheck(path)
+  const manifestPath = `${path}/_manifest.json`
+  const parameters = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath)) : []
+  if(parameters.length > 0) {
+    console.log(`No manifest configured in ${envName} environment.`)
+  }
   for(const param of parameters) {
-    const normalizedParameter = normalizeParameter(param)
-    const awsParam = await getAWSParam(awsClient, normalizedParameter)
-    const localParam = getLocalParam(`${path}/${param}`)
+    const paramName = param.paramName
+    const localName = param.localName
+    const awsParam = await getAWSParam(awsClient, paramName)
+    const localParam = getLocalParam(`${path}/${localName}`)
     if(awsParam !== localParam) {
-      appendResult('output.log', `${normalizedParameter} KO`)
-      console.log(`${normalizedParameter} KO`)
+      appendResult('error.log', `${paramName} KO`)
+      console.log(`${paramName} KO`)
     } else {
-      console.log(`${normalizedParameter} OK`)
+      console.log(`${paramName} OK`)
     }
   }
 }
