@@ -1347,6 +1347,84 @@ Resources:
             Type: PLAINTEXT
             Value: !Ref CiAccountId
         
+  # CODEBUILD used to verify parameters 
+  ###################################################
+  CheckParametersCodebuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-CheckParametersCodebuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+
+          phases:
+            pre_build:
+              commands:
+                - echo "NO PRE_BUILD"
+            build:
+              commands:
+                - 'echo "### ENVIRONMENT ###"'
+                - 'echo "###################"'
+                - env
+                - 'echo ""'
+                - | 
+                  aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}
+                  cat desired-commit-ids-env.sh
+                  echo "### DOWNLOAD DESIRED COMMIT IDS ###"
+                  echo ""
+                  echo "### SOURCE DESIRED COMMIT IDS ###"
+                  . ./desired-commit-ids-env.sh  
+                  echo ""
+                  echo ""
+                  echo "### UPDATED ENVIRONMENT ###"
+                  echo "###########################"
+                  env
+                  echo "### CLONE CICD SCRIPTS ###"
+                  echo ""
+                  git clone https://github.com/pagopa/pn-cicd.git
+                  ( cd pn-cicd && git checkout $cd_scripts_commitId )
+                  if ( [ ! -z "$PnConfigurationEnabled" ] ) then
+                    echo "### Execute Download Custom Config ###"
+                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c main -i $CiAccountId || exit 1
+                    echo ""
+                  else
+                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) || exit 1
+                  fi                 
+                - 'echo ""'
+                - 'echo "INSTALLING node_modules"'
+                - '(cd ./pn-cicd/cd-cli/validateParameters/ && npm i )'
+                - 'echo "./pn-cicd/cd-cli/validateParameters/ && node index.js --envName ${EnvName} --account core --parametersPath ../../../parameters/"'
+                - '(cd ./pn-cicd/cd-cli/validateParameters/ && node index.js --envName $EnvName --account core --parametersPath ../../../parameters/) '
+                - |
+                  if [ -f ./pn-cicd/cd-cli/validateParameters/results/output.log ]; then
+                    echo "Error: Issues found in parameter validation."
+                    cat ./pn-cicd/cd-cli/validateParameters/results/output.log
+                    exit 1
+                  else
+                    echo "All parameters are syncs"
+                  fi
+          artifacts:
+            files:
+              - 'scripts/**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:7.0"
+        EnvironmentVariables:
+          - Name: PnConfigurationEnabled
+            Type: PLAINTEXT
+            Value: !If [ IsNewConfiguration, 'main', '' ]
+          - Name: CiAccountId
+            Type: PLAINTEXT
+            Value: !Ref CiAccountId
+          - Name: Account
+            Type: PLAINTEXT
+            Value: 'core'
+
   # CODEBUILD used to update infrastructure and authFleet
   ###################################################
   UpdateInfraCodeBuildProject:
@@ -6031,6 +6109,93 @@ Resources:
                 - Name: FrontEndOutput
               RunOrder: 2
 
+  VerifyParameterDeployPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-verify-env-parameters-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+
+            # Verify Parameters
+            - Name: Verify_Parameters
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref CheckParametersCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 2
 
   ###########################################################################
   ###  RUN E2E TESTS
@@ -6306,84 +6471,6 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsFeCodebuildProject}"
       RetentionInDays: 14
-
-    # CODEBUILD used to download scripts
-  ###################################################
-  CheckParametersCodebuildProject:
-    Type: 'AWS::CodeBuild::Project'
-    Properties:
-      Name: !Sub ${ProjectName}-CheckParametersCodebuildProject
-      ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
-        Type: CODEPIPELINE
-        BuildSpec: |
-          version: 0.2
-
-          phases:
-            pre_build:
-              commands:
-                - echo "NO PRE_BUILD"
-            build:
-              commands:
-                - 'echo "### ENVIRONMENT ###"'
-                - 'echo "###################"'
-                - env
-                - 'echo ""'
-                - | 
-                  aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}
-                  cat desired-commit-ids-env.sh
-                  echo "### DOWNLOAD DESIRED COMMIT IDS ###"
-                  echo ""
-                  echo "### SOURCE DESIRED COMMIT IDS ###"
-                  . ./desired-commit-ids-env.sh  
-                  echo ""
-                  echo ""
-                  echo "### UPDATED ENVIRONMENT ###"
-                  echo "###########################"
-                  env
-                  echo "### CLONE CICD SCRIPTS ###"
-                  echo ""
-                  git clone https://github.com/pagopa/pn-cicd.git
-                  ( cd pn-cicd && git checkout $cd_scripts_commitId )
-                  if ( [ ! -z "$PnConfigurationEnabled" ] ) then
-                    echo "### Execute Download Custom Config ###"
-                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c main -i $CiAccountId || exit 1
-                    echo ""
-                  else
-                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) || exit 1
-                  fi                 
-                - 'echo ""'
-                - 'echo "INSTALLING node_modules"'
-                - '(cd ./pn-cicd/cd-cli/validateParameters/ && npm i )'
-                - 'echo "./pn-cicd/cd-cli/validateParameters/ && node index.js --envName ${EnvName} --account core --parametersPath ../../../parameters/"'
-                - '(cd ./pn-cicd/cd-cli/validateParameters/ && node index.js --envName $EnvName --account core --parametersPath ../../../parameters/) '
-                - |
-                  if [ -f ./pn-cicd/cd-cli/validateParameters/results/output.log ]; then
-                    echo "Error: Issues found in parameter validation."
-                    cat ./pn-cicd/cd-cli/validateParameters/results/output.log
-                    exit 1
-                  else
-                    echo "All parameters are syncs"
-                  fi
-          artifacts:
-            files:
-              - 'scripts/**/*'
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
-        Type: LINUX_CONTAINER
-        Image: "aws/codebuild/standard:7.0"
-        EnvironmentVariables:
-          - Name: PnConfigurationEnabled
-            Type: PLAINTEXT
-            Value: !If [ IsNewConfiguration, 'main', '' ]
-          - Name: CiAccountId
-            Type: PLAINTEXT
-            Value: !Ref CiAccountId
-          - Name: Account
-            Type: PLAINTEXT
-            Value: 'core'
         
 Outputs:
   CdArtifactBucketName:
