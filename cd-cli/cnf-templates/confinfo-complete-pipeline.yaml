@@ -456,7 +456,7 @@ Resources:
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
-                - Name: DesiredCommitIdsAndScripts
+                - Name: ParameterOutput
               RunOrder: 2
 
             # Update pn-infra
@@ -1489,7 +1489,7 @@ Resources:
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
-                - Name: DesiredCommitIdsAndScripts
+                - Name: ParameterOutput
               RunOrder: 1
 
             # Verify Parameters

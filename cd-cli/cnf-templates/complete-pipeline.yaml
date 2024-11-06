@@ -639,7 +639,7 @@ Resources:
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
-                - Name: DesiredCommitIdsAndScripts
+                - Name: ParameterOutput
               RunOrder: 2
 
             # UpdateInfrastructure AND AuthFleet
@@ -6194,7 +6194,7 @@ Resources:
               InputArtifacts:
                 - Name: EmptyZip
               OutputArtifacts:
-                - Name: DesiredCommitIdsAndScripts
+                - Name: ParameterOutput
               RunOrder: 2
 
   ###########################################################################
