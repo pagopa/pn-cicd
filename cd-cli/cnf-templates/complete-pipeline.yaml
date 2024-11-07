@@ -619,15 +619,15 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
 
-            # Verify Parameters
-            - Name: Verify_Parameters
+            # Check System
+            - Name: Check_System
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref CheckParametersCodebuildProject
+                ProjectName: !Ref CheckSystemCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -1347,12 +1347,12 @@ Resources:
             Type: PLAINTEXT
             Value: !Ref CiAccountId
         
-  # CODEBUILD used to verify parameters 
+  # CODEBUILD used to check system env 
   ###################################################
-  CheckParametersCodebuildProject:
+  CheckSystemCodebuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${ProjectName}-CheckParametersCodebuildProject
+      Name: !Sub ${ProjectName}-CheckSystemCodebuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source: 
         Type: CODEPIPELINE
@@ -6109,11 +6109,11 @@ Resources:
                 - Name: FrontEndOutput
               RunOrder: 2
 
-  VerifyParameterDeployPipeline:
+  CheckSystemDeployPipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
-      Name: !Sub '${ProjectName}-verify-env-parameters-pipeline'
+      Name: !Sub '${ProjectName}-check-system-pipeline'
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -6174,15 +6174,15 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
 
-            # Verify Parameters
-            - Name: Verify_Parameters
+            # Check System
+            - Name: Check_System
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref CheckParametersCodebuildProject
+                ProjectName: !Ref CheckSystemCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},

@@ -436,15 +436,15 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
 
-            # Verify Parameters
-            - Name: Verify_Parameters
+            # Check System Env
+            - Name: Check_System
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref CheckParametersCodebuildProject
+                ProjectName: !Ref CheckSystemCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -1427,11 +1427,11 @@ Resources:
                 - Name: PnLogsaverBEOutput
               RunOrder: 3
 
-  VerifyParameterDeployPipeline:
+  CheckSystemDeployPipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
-      Name: !Sub '${ProjectName}-verify-env-parameters-pipeline'
+      Name: !Sub '${ProjectName}-check-system-pipeline'
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
@@ -1492,15 +1492,15 @@ Resources:
                 - Name: ParameterOutput
               RunOrder: 1
 
-            # Verify Parameters
-            - Name: Verify_Parameters
+            # Check System Env
+            - Name: Check_System
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref CheckParametersCodebuildProject
+                ProjectName: !Ref CheckSystemCodebuildProject
                 PrimarySource: EmptyZip
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -1887,10 +1887,10 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
 
-  CheckParametersCodebuildProject:
+  CheckSystemCodebuildProject:
     Type: 'AWS::CodeBuild::Project'
     Properties:
-      Name: !Sub ${ProjectName}-CheckParametersCodebuildProject
+      Name: !Sub ${ProjectName}-CheckSystemCodebuildProject
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Source: 
         Type: CODEPIPELINE
@@ -1932,13 +1932,13 @@ Resources:
                   fi                 
                 - 'echo ""'
                 - 'echo "INSTALLING node_modules"'
-                - '(cd ./pn-cicd/cd-cli/validateParameters/ && npm i )'
-                - 'echo "./pn-cicd/cd-cli/validateParameters/ && node index.js --envName ${EnvName} --account $Account --parametersPath ../../../parameters/"'
-                - '(cd ./pn-cicd/cd-cli/validateParameters/ && node index.js --envName $EnvName --account $Account --parametersPath ../../../parameters/) '
+                - '(cd ./pn-cicd/cd-cli/checkSystem/validateParameters/ && npm i )'
+                - 'echo "./pn-cicd/cd-cli/checkSystem/validateParameters/ && node index.js --envName ${EnvName} --account $Account --parametersPath ../../../parameters/"'
+                - '(cd ./pn-cicd/cd-cli/checkSystem/validateParameters/ && node index.js --envName $EnvName --account $Account --parametersPath ../../../parameters/) '
                 - |
-                  if [ -f ./pn-cicd/cd-cli/validateParameters/results/error.log ]; then
+                  if [ -f ./pn-cicd/cd-cli/checkSystem/validateParameters/results/error.log ]; then
                     echo "Error: Issues found in parameter validation."
-                    cat ./pn-cicd/cd-cli/validateParameters/results/error.log
+                    cat ./pn-cicd/cd-cli/checkSystem/validateParameters/results/error.log
                     exit 1
                   else
                     echo "All parameters are syncs"
