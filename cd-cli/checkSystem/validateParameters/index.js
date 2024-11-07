@@ -27,23 +27,6 @@ function _checkingParameters(args, values){
   })
 }
 
-function getParameterToCheck(path) {
-  if(fs.existsSync(path)){
-    const parametersToCheck = fs.readdirSync(`${parametersPath}/${envName}/_conf/${account}/system_params`)
-    return parametersToCheck
-  }
-  return []
-}
-
-function normalizeParameter(param) {
-  let tmp = param.split('.')[0];
-  if(param.indexOf('##A##') > 0) {
-    tmp = tmp.replace('##A##', '')
-  }
-  const normalizedParameter = tmp.replace(/#/g, '/')
-  return normalizedParameter;
-} 
-
 function isJSON(value) {
   try {
     JSON.parse(value)
