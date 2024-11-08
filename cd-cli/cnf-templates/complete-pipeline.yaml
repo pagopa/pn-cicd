@@ -6232,10 +6232,31 @@ Resources:
                   - rm /tmp/chrome.deb
               build:
                 commands:
-                  - echo CLONE E2E TEST REPOSITORY
-                  - echo #####################
-                  - git clone https://github.com/pagopa/pn-frontend-e2e.git pn-frontend-e2e
-                  - cd pn-frontend-e2e && ./mvnw clean test -Dcucumber.filter.tags=@TestSuite -Dbrowser=chrome -Dheadless=true -Denvironment=${ENV_NAME}
+                      - |
+                      TOKEN_PF_DELEGANTE=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenPFDelegante' )
+                      TOKEN_PF_DELEGATO=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenPFDelegato' )
+                      TOKEN_PG_DELEGANTE=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenPGDelegante' )
+                      TOKEN_PG_DELEGATO=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenPGDelegato' )
+                      TOKEN_MITTENTE=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenMittente' )
+                      TOKEN_PF_COLOMBO=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenPfColombo' )
+                      TOKEN_RADDISTA1=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTokenRaddista1' )
+                      USERNAME_CESARE=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eUsernameCesare' )
+                      PASSWORD_CESARE=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2ePasswordCesare' )
+                      USERNAME_LUCREZIA=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eUsernameLucrezia' )
+                      PASSWORD_LUCREZIA=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2ePasswordLucrezia' )
+                      USERNAME_DANTE=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eUsernameDante' )
+                      PASSWORD_DANTE=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2ePasswordDante' )
+                      USERNAME_PETRARCA=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eUsernamePetrarca' )
+                      PASSWORD_PETRARCA=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2ePasswordPetrarca' )
+                      USERNAME_MITTENTE=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eUsernameMittente' )
+                      PASSWORD_MITTENTE=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2ePasswordMittente' )
+                      USERNAME_HELPDESK=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eUsernameHelpDesk' )
+                      PASSWORD_HELPDESK=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2ePasswordHelpDesk' )
+                      - |
+                      echo "CLONE E2E TEST REPOSITORY"
+                      echo "#####################"
+                      git clone https://github.com/pagopa/pn-frontend-e2e.git pn-frontend-e2e
+                      ( cd pn-frontend-e2e && ./mvnw clean test -Dcucumber.filter.tags=@TestSuite -Dbrowser=chrome -Dheadless=true -Denvironment=${ENV_NAME} '-Dpn.bearer-token.tokentestPFDelegante=${TOKEN_PF_DELEGANTE}' '-Dpn.bearer-token.tokentestPFDelegato=${TOKEN_PF_DELEGATO}' '-Dpn.bearer-token.tokentestPGDelegante=${TOKEN_PG_DELEGANTE}' '-Dpn.bearer-token.tokentestPGDelegato=${TOKEN_PG_DELEGATO}' '-Dpn.bearer-token.tokentestMittente=${TOKEN_MITTENTE}' '-Dpn.bearer-token.tokentestPFColombo=${TOKEN_PF_COLOMBO}' '-Dpn.bearer-token.tokentestRaddista1=${TOKEN_RADDISTA1}' '-Dpn.user.cesare=${USERNAME_CESARE}' '-Dpn.pwd.cesare=${PASSWORD_CESARE}' '-Dpn.user.lucrezia=${USERNAME_LUCREZIA}' '-Dpn.pwd.lucrezia=${PASSWORD_LUCREZIA}' '-Dpn.user.dante=${USERNAME_DANTE}' '-Dpn.pwd.dante=${PASSWORD_DANTE}' '-Dpn.user.petrarca=${USERNAME_PETRARCA}' '-Dpn.pwd.petrarca=${PASSWORD_PETRARCA}' '-Dpn.user.mittente=${USERNAME_MITTENTE}' '-Dpn.pwd.mittente=${PASSWORD_MITTENTE}' '-Dpn.userTest.helpdesk=${USERNAME_HELPDESK}' '-Dpn.pwdTest.helpdesk=${PASSWORD_HELPDESK}' )
             reports:
               reportGroup: #Cucumber reports from json plugin
                 files:
