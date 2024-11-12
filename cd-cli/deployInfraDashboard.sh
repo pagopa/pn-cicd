@@ -237,7 +237,7 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
     )
   
   AdditionalParams=", \"OpenSearchClusterName=${OpenSearchClusterName}\""
-  AdditionalParams="${AdditionalParams}, \"OpenSearchEbsSizeValue=${OpenSearchEbsSizeValue}\""
+  AdditionalParams="${AdditionalParams}, OpenSearchEbsSizeValue=${OpenSearchEbsSizeValue}"
   AdditionalParams="${AdditionalParams}, \"RedisCurrentConnectionsAlarmArn=${RedisCurrentConnectionsAlarmArn}\""
   AdditionalParams="${AdditionalParams}, \"RedisMemoryUtilizationAlarm=${RedisMemoryUtilizationAlarm}\""
   AdditionalParams="${AdditionalParams}, \"RedisCPUUtilizationAlarm=${RedisCPUUtilizationAlarm}\""
