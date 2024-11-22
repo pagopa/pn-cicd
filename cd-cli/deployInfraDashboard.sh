@@ -211,6 +211,11 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"ClusterName\") | .OutputValue" \
     )
 
+  OpenSearchEbsSizeValue=$( aws ${aws_command_base_args} cloudformation describe-stacks \
+      --stack-name "pn-opensearch-${env_type}" | jq -r \
+      ".Stacks[0].Parameters | .[] | select(.ParameterKey==\"EbsVolumeSize\") | .ParameterValue" \
+    )
+
   RedisCurrentConnectionsAlarmArn=$( aws ${aws_command_base_args} cloudformation describe-stacks \
       --stack-name "pn-cache-${env_type}" | jq -r \
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"RedisCurrentConnectionsAlarmArn\") | .OutputValue" \
@@ -230,8 +235,9 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
       --stack-name "pn-cache-${env_type}" | jq -r \
       ".Stacks[0].Outputs | .[] | select(.OutputKey==\"RedisEngineCPUAlarm\") | .OutputValue" \
     )
-
+  
   AdditionalParams=", \"OpenSearchClusterName=${OpenSearchClusterName}\""
+  AdditionalParams="${AdditionalParams}, \"OpenSearchEbsSizeValue=${OpenSearchEbsSizeValue}\""
   AdditionalParams="${AdditionalParams}, \"RedisCurrentConnectionsAlarmArn=${RedisCurrentConnectionsAlarmArn}\""
   AdditionalParams="${AdditionalParams}, \"RedisMemoryUtilizationAlarm=${RedisMemoryUtilizationAlarm}\""
   AdditionalParams="${AdditionalParams}, \"RedisCPUUtilizationAlarm=${RedisCPUUtilizationAlarm}\""
