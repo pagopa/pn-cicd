@@ -1769,7 +1769,7 @@ Resources:
   PnInfra:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/multilambda-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-infra"
         GitHubDefaultBranch: "develop"
