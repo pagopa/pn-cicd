@@ -400,8 +400,8 @@ Resources:
                   fi           
                 - |
                   if ( [ "$PROJECT" = "pn-templates-engine" ] ) then
-                    sed -i -e "s|pn-templates-engine_commitId=.*|pn-templates-engine_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    sed -i -e "s|pn-templates-engine_imageUrl=.*|pn-templates-engine_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_templates_engine_commitId=.*|pn_templates_engine_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_templates_engine_imageUrl=.*|pn_templates_engine_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-pn-templates-engine-update-pipeline"
                   fi
                 - |
