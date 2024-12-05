@@ -349,3 +349,81 @@ aws ${aws_command_base_args} \
       --s3-prefix cfn \
       --tags "Microservice=${repo_name}" \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+
+if [[ -f "${repo_name}/scripts/aws/cfn/data-quality.yml" ]]; then
+    echo ""
+    echo ""
+    echo ""
+    echo "======================================================================="
+    echo "======================================================================="
+    echo "===                                                                 ==="
+    echo "===              $repo_name DATA QUALITY DEPLOYMENT                ==="
+    echo "===                                                                 ==="
+    echo "======================================================================="
+    echo "======================================================================="
+    echo ""
+    echo ""
+    echo ""
+    echo "=== Prepare parameters for $repo_name data quality deployment in $env_type ACCOUNT"
+    PreviousOutputFilePath=${repo_name}-storage-${env_type}-out.json
+    CdcAnalyticsOutputFilePath=pn-cdc-analytics-${env_type}-out.json
+    TemplateFilePath=${repo_name}/scripts/aws/cfn/data-quality.yml
+    ParamFilePath=${repo_name}/scripts/aws/cfn/data-quality-${env_type}-cfg.json
+    EnanchedParamFilePath=${repo_name}-data-quality-${env_type}-cfg-enanched.json
+    PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
+         \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
+         \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
+
+    echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
+    echo " - CdcAnalyticsOutputFilePath: ${CdcAnalyticsOutputFilePath}"
+    echo " - TemplateFilePath: ${TemplateFilePath}"
+    echo " - ParamFilePath: ${ParamFilePath}"
+    echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
+    echo " - PipelineParams: ${PipelineParams}"
+
+    echo ""
+    echo "= Read Outputs from Storage stack"
+    aws ${aws_command_base_args} \
+        cloudformation describe-stacks \
+          --stack-name ${repo_name}-storage-$env_type \
+          --query "Stacks[0].Outputs" \
+          --output json \
+          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+          | tee ${PreviousOutputFilePath}
+
+    echo ""
+    echo "= Read Outputs from CDC Analytics stack"
+    aws ${aws_command_base_args} \
+        cloudformation describe-stacks \
+          --stack-name pn-cdc-analytics-$env_type \
+          --query "Stacks[0].Outputs" \
+          --output json \
+          | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+          | tee ${CdcAnalyticsOutputFilePath}
+
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath} 
+
+    echo ""
+    echo "= Enanched parameters file"
+    jq -s "{ \"Parameters\": .[0] } * .[1] * { \"Parameters\": .[2] } * { \"Parameters\": .[3] }" \
+       ${PreviousOutputFilePath} ${ParamFilePath} ${CdcAnalyticsOutputFilePath} ${INFRA_ALL_OUTPUTS_FILE} \
+       | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+       > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
+    echo ""
+    echo "=== Deploy $repo_name DATA QUALITY FOR $env_type ACCOUNT"
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name ${repo_name}-data-quality-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --template-file ${TemplateFilePath} \
+          --tags "Microservice=${repo_name}" \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+else
+    echo ""
+    echo "${repo_name}/scripts/aws/cfn/data-quality.yml file doesn't exist, data quality deployment skipped"
+fi
