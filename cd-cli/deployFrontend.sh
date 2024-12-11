@@ -183,7 +183,7 @@ echo "Load all outputs in a single file for next stack deployments"
 INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
 (cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
 
-echo "## start merge all ##"
+echo "## start merge all ##"
 cat $INFRA_ALL_OUTPUTS_FILE
 echo "## end merge all ##"
 
@@ -235,9 +235,9 @@ replace_config() {
 
   # if persona fisica login, the configuration file is in the auth dir
   if ( [ $2 != 'pn-personafisica-login' ] ) then
-    jq -s ".[0] * .[1]" ./conf/env/config.$1.json ${LocalFilePath} > ./conf/config.json
+    jq -s ".[0] * .[1]" <(jq ".[\"pn-frontend\"][\"$2\"]" $INFRA_ALL_OUTPUTS_FILE) ${LocalFilePath} > ./conf/config.json
   else
-    jq -s ".[0] * .[1]" ./auth/conf/env/config.$1.json ${LocalFilePath} > ./auth/conf/config.json
+    jq -s ".[0] * .[1]" <(jq ".[\"pn-frontend\"][\"$2\"]" $INFRA_ALL_OUTPUTS_FILE) ${LocalFilePath} > ./auth/conf/config.json
   fi
 }
 
