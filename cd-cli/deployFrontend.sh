@@ -212,8 +212,8 @@ if ( [ $PortalePfLoginDomain != '-' ] ) then
 fi
 
 # replace config files in build artifact
+# when "replace_config" is executed, we are in folder $2 
 replace_config() {
-#  cp ./conf/env/config.$1.json ./conf/config.json
 
   LocalFilePath=/tmp/$2.json
   echo '{}' > $LocalFilePath
@@ -237,7 +237,7 @@ replace_config() {
   if ( [ $2 != 'pn-personafisica-login' ] ) then
     jq -s ".[0] * .[1]" ./conf/config-$1.json ${LocalFilePath} > ./conf/config.json
   else
-    jq -s ".[0] * .[1]" ./conf/config-$1.json ${LocalFilePath} > ./auth/conf/config.json
+    jq -s ".[0] * .[1]" ./auth/conf/config-$1.json ${LocalFilePath} > ./auth/conf/config.json
   fi
 }
 
