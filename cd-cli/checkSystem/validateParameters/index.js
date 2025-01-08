@@ -71,6 +71,7 @@ async function main() {
       appendResult('error.log', `${paramName} KO`)
       console.log(`${paramName} KO`)
     } else {
+      appendResult('success.log', `${paramName} OK`)
       console.log(`${paramName} OK`)
     }
   }
