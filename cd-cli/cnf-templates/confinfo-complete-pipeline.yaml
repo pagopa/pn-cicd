@@ -1969,7 +1969,7 @@ Resources:
                   fi
           artifacts:
             files:
-              - 'scripts/**/*'
+              - '**/*'
       Artifacts:
         Type: CODEPIPELINE
       Environment:
