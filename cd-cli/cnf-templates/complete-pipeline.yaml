@@ -1123,29 +1123,54 @@ Resources:
               RunOrder: 3
 
             # Update pn-templates-engine
-            # - Name: Update_PnTemplatesEngine
-            #   ActionTypeId:
-            #     Category: Build
-            #     Owner: AWS
-            #     Version: 1
-            #     Provider: CodeBuild
-            #   Configuration:
-            #     ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-            #     PrimarySource: DesiredCommitIdsAndScripts
-            #     EnvironmentVariables: !Sub '[
-            #         {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-            #         {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-            #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-            #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
-            #         {"name":"MsName", "value":"pn-templates-engine", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"23", "type":"PLAINTEXT"},
-            #         {"name":"VarPrefix", "value":"pn_templates_engine", "type":"PLAINTEXT"}
-            #       ]'
-            #   InputArtifacts:
-            #     - Name: DesiredCommitIdsAndScripts
-            #   OutputArtifacts:
-            #     - Name: PnTemplatesEngineOutput
-            #   RunOrder: 3
+            - Name: Update_PnTemplatesEngine
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[            
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-templates-engine", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"23", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_templates_engine", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnTemplatesEngineOutput
+              RunOrder: 3
+
+            # Update paper-event-enricher
+            - Name: Update_PnPaperEventEnricher
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-paper-event-enricher", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"22", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_paper_event_enricher", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnPaperEventEnricherOutput
+              RunOrder: 3
 
             # Update Frontend
             - Name: Update_Frontend
