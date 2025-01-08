@@ -12,3 +12,4 @@ buildNumber.properties
 .idea/
 /tool/dependency-check-report/
 .DS_Store
+cd-cli/checkSystem/validateParameters/node_modules

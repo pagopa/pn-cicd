@@ -624,7 +624,30 @@ Resources:
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-            
+
+            # Check System
+            - Name: Check_System
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref CheckSystemCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: ParameterOutput
+              RunOrder: 2
+
             # UpdateInfrastructure AND AuthFleet
             - Name: Update_Infrastructure
               ActionTypeId:
@@ -645,7 +668,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: InfraOutput
-              RunOrder: 2
+              RunOrder: 3
             
             # Update pn-delivery
             - Name: Update_PnDelivery
@@ -670,7 +693,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDeliveryOutput
-              RunOrder: 3
+              RunOrder: 4
             
             # Update pn-delivery-push
             - Name: Update_PnDeliveryPush
@@ -695,7 +718,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDeliveryPushOutput
-              RunOrder: 3
+              RunOrder: 4
             
             # Update pn-mandate
             - Name: Update_PnMandate
@@ -720,7 +743,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnMandateOutput
-              RunOrder: 3
+              RunOrder: 4
             
             # Update pn-external-registries
             - Name: Update_ExternalRegistries
@@ -745,7 +768,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnExternalRegistriesOutput
-              RunOrder: 3
+              RunOrder: 4
             
             # Update pn-UserAttributes
             - Name: Update_UserAttributes
@@ -770,7 +793,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnUserAttributesOutput
-              RunOrder: 3
+              RunOrder: 4
             
             # Update pn-downtime-logs
             - Name: Update_DowntimeLogs
@@ -795,7 +818,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDowntimeLogsOutput
-              RunOrder: 3
+              RunOrder: 4
             
             # # Update pn-radd-fsu
             # - Name: Update_RaddFsu
@@ -845,7 +868,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnLogsaverBeOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update pn-national-registries
             - Name: Update_NationalRegistries
@@ -870,7 +893,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnNationalRegistriesOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update pn-apikey-manager
             - Name: Update_ApiKeyManager
@@ -895,7 +918,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnApiKeyManagerOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update pn-paper-channel
             - Name: Update_PaperChannel
@@ -920,7 +943,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnPaperChannelOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update pn-kafka-bridge
             - Name: Update_KafkaBridge
@@ -945,7 +968,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnKafkaBridgeOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update pn-progression-sensor
             - Name: Update_ProgressionSensor
@@ -970,7 +993,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnProgressionSensorOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update pn-zendesk-auth
             - Name: Update_ZendeskAuth
@@ -995,7 +1018,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnZendeskAuthOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update pn-logextractor-be
             - Name: Update_LogextractorBe
@@ -1020,7 +1043,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnLogextractorBeOutput
-              RunOrder: 3
+              RunOrder: 4
               
             # Update pn-f24
             - Name: Update_PnF24
@@ -1045,7 +1068,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnF24Output
-              RunOrder: 3
+              RunOrder: 4
 
             # Update pn-service-desk
             - Name: Update_PnServiceDesk
@@ -1070,7 +1093,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnServiceDeskOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update pn-radd-alt
             - Name: Update_PnRaddAlt
@@ -1095,7 +1118,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnRaddAltOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update pn-bff
             - Name: Update_PnBff
@@ -1120,7 +1143,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnBffOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update pn-templates-engine
             - Name: Update_PnTemplatesEngine
@@ -1145,7 +1168,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnTemplatesEngineOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update paper-event-enricher
             - Name: Update_PnPaperEventEnricher
@@ -1170,7 +1193,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnPaperEventEnricherOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update Frontend
             - Name: Update_Frontend
@@ -1192,7 +1215,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: FrontEndOutput
-              RunOrder: 4
+              RunOrder: 5
             
             # Update Helpdesk FE
             - Name: Update_HelpdeskFE
@@ -1214,7 +1237,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: HelpdeskFeOutput
-              RunOrder: 4
+              RunOrder: 5
 
             # Update logs and Usage Plans
             - Name: Infrastructure_Post_Deploy
@@ -1236,7 +1259,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PostDeployScriptsOutput
-              RunOrder: 4
+              RunOrder: 5
 
             # Run test if the environment is dev
             - Fn::If:
@@ -1257,7 +1280,7 @@ Resources:
                       ]'
                   InputArtifacts:
                     - Name: EmptyZip
-                  RunOrder: 5
+                  RunOrder: 6
                 - !Ref AWS::NoValue
             
             - Fn::If:
@@ -1277,7 +1300,7 @@ Resources:
                       ]'
                   InputArtifacts:
                     - Name: EmptyZip
-                  RunOrder: 5
+                  RunOrder: 6
                 - !Ref AWS::NoValue
             
             # List versions if the environment is dev
@@ -1299,7 +1322,7 @@ Resources:
                       ]'
                   InputArtifacts:
                     - Name: EmptyZip
-                  RunOrder: 6
+                  RunOrder: 7
                 - !Ref AWS::NoValue
 
 
@@ -1380,6 +1403,84 @@ Resources:
             Type: PLAINTEXT
             Value: !Ref CiAccountId
         
+  # CODEBUILD used to check system env 
+  ###################################################
+  CheckSystemCodebuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Name: !Sub ${ProjectName}-CheckSystemCodebuildProject
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+
+          phases:
+            pre_build:
+              commands:
+                - echo "NO PRE_BUILD"
+            build:
+              commands:
+                - 'echo "### ENVIRONMENT ###"'
+                - 'echo "###################"'
+                - env
+                - 'echo ""'
+                - | 
+                  aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}
+                  cat desired-commit-ids-env.sh
+                  echo "### DOWNLOAD DESIRED COMMIT IDS ###"
+                  echo ""
+                  echo "### SOURCE DESIRED COMMIT IDS ###"
+                  . ./desired-commit-ids-env.sh  
+                  echo ""
+                  echo ""
+                  echo "### UPDATED ENVIRONMENT ###"
+                  echo "###########################"
+                  env
+                  echo "### CLONE CICD SCRIPTS ###"
+                  echo ""
+                  git clone https://github.com/pagopa/pn-cicd.git
+                  ( cd pn-cicd && git checkout $cd_scripts_commitId )
+                  if ( [ ! -z "$PnConfigurationEnabled" ] ) then
+                    echo "### Execute Download Custom Config ###"
+                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c main -i $CiAccountId || exit 1
+                    echo ""
+                  else
+                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) || exit 1
+                  fi                 
+                - 'echo ""'
+                - 'echo "INSTALLING node_modules"'
+                - '(cd ./pn-cicd/cd-cli/checkSystem/validateParameters/ && npm i )'
+                - 'echo "./pn-cicd/cd-cli/checkSystem/validateParameters/ && node index.js --envName ${EnvName} --account core --parametersPath ../../../parameters/"'
+                - '(cd ./pn-cicd/cd-cli/checkSystem/validateParameters/ && node index.js --envName $EnvName --account core --parametersPath ../../../parameters/) '
+                - |
+                  if [ -f ./pn-cicd/cd-cli/checkSystem/validateParameters/results/error.log ]; then
+                    echo "Error: Issues found in parameter validation."
+                    cat ./pn-cicd/cd-cli/checkSystem/validateParameters/results/error.log
+                    exit 1
+                  else
+                    echo "All parameters are syncs"
+                  fi
+          artifacts:
+            files:
+              - '**/*'
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: "aws/codebuild/standard:7.0"
+        EnvironmentVariables:
+          - Name: PnConfigurationEnabled
+            Type: PLAINTEXT
+            Value: !If [ IsNewConfiguration, 'main', '' ]
+          - Name: CiAccountId
+            Type: PLAINTEXT
+            Value: !Ref CiAccountId
+          - Name: Account
+            Type: PLAINTEXT
+            Value: 'core'
+
   # CODEBUILD used to update infrastructure and authFleet
   ###################################################
   UpdateInfraCodeBuildProject:
@@ -2051,7 +2152,9 @@ Resources:
             Action: secretsmanager:GetSecretValue
             Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*
           - Effect: Allow
-            Action: ssm:GetParameters
+            Action: 
+              - ssm:GetParameters
+              - ssm:GetParameter
             Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*
           - Effect: Allow
             Action:
@@ -6155,6 +6258,93 @@ Resources:
                 - Name: FrontEndOutput
               RunOrder: 2
 
+  CheckSystemDeployPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-check-system-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+
+            # Check System
+            - Name: Check_System
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref CheckSystemCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: ParameterOutput
+              RunOrder: 2
 
   ###########################################################################
   ###  RUN E2E TESTS
@@ -6466,7 +6656,7 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsFeCodebuildProject}"
       RetentionInDays: 14
-
+        
 Outputs:
   CdArtifactBucketName:
     Value: !Ref CdArtifactBucket
