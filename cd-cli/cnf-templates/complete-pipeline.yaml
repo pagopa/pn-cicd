@@ -1168,7 +1168,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnTemplatesEngineOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update paper-event-enricher
             - Name: Update_PnPaperEventEnricher
@@ -1193,7 +1193,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnPaperEventEnricherOutput
-              RunOrder: 3
+              RunOrder: 4
 
             # Update Frontend
             - Name: Update_Frontend
@@ -1450,7 +1450,7 @@ Resources:
                   fi                 
                 - 'echo ""'
                 - 'echo "INSTALLING node_modules"'
-                - '(cd ./pn-cicd/cd-cli/validateParameters/ && npm i )'
+                - '(ls && cd ./pn-cicd/cd-cli/validateParameters/ && npm i )'
                 - 'echo "./pn-cicd/cd-cli/validateParameters/ && node index.js --envName ${EnvName} --account core --parametersPath ../../../parameters/"'
                 - '(cd ./pn-cicd/cd-cli/validateParameters/ && node index.js --envName $EnvName --account core --parametersPath ../../../parameters/) '
                 - |
