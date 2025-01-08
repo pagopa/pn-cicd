@@ -654,6 +654,30 @@ Resources:
                 - Name: PnCnOutput
               RunOrder: 4
 
+            - Name: Update_PnPdfraster
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-pdfraster", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"14", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_pdfraster", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnPdfrasterOutput
+              RunOrder: 4
+
              # Update logs and Usage Plans
 
             - Name: Infrastructure_Post_Deploy

@@ -318,7 +318,7 @@ fi
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-infra.yaml
 EnanchedParamFilePath=pn-infra-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
