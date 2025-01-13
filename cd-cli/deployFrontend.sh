@@ -212,7 +212,8 @@ if ( [ $PortalePfLoginDomain != '-' ] ) then
 fi
 
 # replace config files in build artifact
-# when "replace_config" is executed, we are in folder $2 
+# when "replace_config" is executed, we are in folder $2
+# the $2 dir is the dir of the webapp (pn-pa-webapp, pn-personafisica-webapp...) 
 replace_config() {
 
   LocalFilePath=/tmp/$2.json
@@ -233,12 +234,21 @@ replace_config() {
     fi
   fi
 
+  if ( [ $1 == 'dev' ] ) then
+    configRootPath=.
+  else
+    configRootPath=../pn-frontend/$2
+  fi
+
+  # we have to get the configurations from pn-configurations
+  # the content of the pn-configurations is copied into the directory pn-frontend in the root of the project
+  # the $2 directory is at the same level of the pn-frontend directory
   # if persona fisica login, the configuration file is in the auth dir
   if ( [ $2 != 'pn-personafisica-login' ] ) then
-    jq -s ".[0] * .[1]" ../pn-frontend/$2/conf/config-$1.json ${LocalFilePath} > ./conf/config.json
+    jq -s ".[0] * .[1]" $configRootPath/conf/config-$1.json ${LocalFilePath} > ./conf/config.json
     rm -f ./conf/config-dev.json
   else
-    jq -s ".[0] * .[1]" ../pn-frontend/$2/auth/conf/config-$1.json ${LocalFilePath} > ./auth/conf/config.json
+    jq -s ".[0] * .[1]" $configRootPath/auth/conf/config-$1.json ${LocalFilePath} > ./auth/conf/config.json
     rm -f ./auth/conf/config-dev.json
   fi
 }
