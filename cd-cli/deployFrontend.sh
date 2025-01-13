@@ -625,7 +625,10 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
       "pn-pa-webapp.tar.gz"
 
 echo "-------------------------------TEST---------------------------------------"
+echo "---------------------------------CARTELLA FRONTEND-------------------------------------"
 ls -l ./pn-frontend
+echo "---------------------------------CARTELLA PA-------------------------------------"
+ls -l ./pn-frontend/pn-pa-webapp
 echo "---------------------------------TEST-------------------------------------"
 
 mkdir -p "pn-pa-webapp"
