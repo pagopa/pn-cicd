@@ -235,10 +235,10 @@ replace_config() {
 
   # if persona fisica login, the configuration file is in the auth dir
   if ( [ $2 != 'pn-personafisica-login' ] ) then
-    jq -s ".[0] * .[1]" ./conf/config-$1.json ${LocalFilePath} > ./conf/config.json
+    jq -s ".[0] * .[1]" ../pn-frontend/$2/conf/config-$1.json ${LocalFilePath} > ./conf/config.json
     rm -f ./conf/config-dev.json
   else
-    jq -s ".[0] * .[1]" ./auth/conf/config-$1.json ${LocalFilePath} > ./auth/conf/config.json
+    jq -s ".[0] * .[1]" ../pn-frontend/$2/auth/conf/config-$1.json ${LocalFilePath} > ./auth/conf/config.json
     rm -f ./auth/conf/config-dev.json
   fi
 }
@@ -623,13 +623,6 @@ echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
       --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-pa-webapp.tar.gz" \
       "pn-pa-webapp.tar.gz"
-
-echo "-------------------------------TEST---------------------------------------"
-echo "---------------------------------CARTELLA FRONTEND-------------------------------------"
-ls -l ./pn-frontend
-echo "---------------------------------CARTELLA PA-------------------------------------"
-ls -l ./pn-frontend/pn-pa-webapp
-echo "---------------------------------TEST-------------------------------------"
 
 mkdir -p "pn-pa-webapp"
 ( cd "pn-pa-webapp" \
