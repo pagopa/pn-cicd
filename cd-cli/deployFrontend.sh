@@ -624,9 +624,9 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
       --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-pa-webapp.tar.gz" \
       "pn-pa-webapp.tar.gz"
 
-echo "----------------------------------------------------------------------"
-pwd && ls -l .
-echo "----------------------------------------------------------------------"
+echo "-------------------------------TEST---------------------------------------"
+ls -l ./pn-frontend
+echo "---------------------------------TEST-------------------------------------"
 
 mkdir -p "pn-pa-webapp"
 ( cd "pn-pa-webapp" \
