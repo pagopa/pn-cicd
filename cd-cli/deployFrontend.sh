@@ -151,7 +151,6 @@ echo "=== Checkout pn-frontend commitId=${pn_frontend_commitid}"
 echo " - copy custom config"
 if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-frontend .
-  pwd && ls -l
 fi
 
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
@@ -624,6 +623,10 @@ echo "====================================================================="
 aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
       --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-pa-webapp.tar.gz" \
       "pn-pa-webapp.tar.gz"
+
+echo "----------------------------------------------------------------------"
+pwd && ls -l .
+echo "----------------------------------------------------------------------"
 
 mkdir -p "pn-pa-webapp"
 ( cd "pn-pa-webapp" \
