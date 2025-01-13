@@ -625,7 +625,7 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
       "pn-pa-webapp.tar.gz"
 
 mkdir -p "pn-pa-webapp"
-( pwd && ls -l && cd "pn-pa-webapp" \
+( pwd && ls -l tmp && cd "pn-pa-webapp" \
      && tar xvzf "../pn-pa-webapp.tar.gz" \
      && replace_config ${env_type} "pn-pa-webapp" \
 )
