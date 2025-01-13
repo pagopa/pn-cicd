@@ -151,6 +151,7 @@ echo "=== Checkout pn-frontend commitId=${pn_frontend_commitid}"
 echo " - copy custom config"
 if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-frontend .
+  pwd && ls -l
 fi
 
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
@@ -625,7 +626,7 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
       "pn-pa-webapp.tar.gz"
 
 mkdir -p "pn-pa-webapp"
-( pwd && ls -l tmp && cd "pn-pa-webapp" \
+( cd "pn-pa-webapp" \
      && tar xvzf "../pn-pa-webapp.tar.gz" \
      && replace_config ${env_type} "pn-pa-webapp" \
 )
