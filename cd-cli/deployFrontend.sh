@@ -234,15 +234,16 @@ replace_config() {
     fi
   fi
 
+  # we have to get the configurations from pn-configuration
+  # the content of the pn-configuration is copied into the directory pn-frontend in the root of the project
+  # the $2 directory is at the same level of the pn-frontend directory
+  # for the dev env we don't use pn-configuration but we have the config file into the tar.gz of the application (i.e. into $2 dir)
   if ( [ $1 == 'dev' ] ) then
     configRootPath=.
   else
     configRootPath=../pn-frontend/$2
   fi
 
-  # we have to get the configurations from pn-configurations
-  # the content of the pn-configurations is copied into the directory pn-frontend in the root of the project
-  # the $2 directory is at the same level of the pn-frontend directory
   # if persona fisica login, the configuration file is in the auth dir
   if ( [ $2 != 'pn-personafisica-login' ] ) then
     jq -s ".[0] * .[1]" $configRootPath/conf/config-$1.json ${LocalFilePath} > ./conf/config.json
