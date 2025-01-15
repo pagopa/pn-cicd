@@ -60,7 +60,7 @@ async function main() {
   const manifestPath = `${path}/_manifest.json`
   console.log(manifestPath)
   const parameters = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath)) : []
-  if(parameters.length > 0) {
+  if(parameters.length == 0) {
     console.log(`No manifest configured in ${envName} environment.`)
   }
   for(const param of parameters) {
@@ -68,9 +68,8 @@ async function main() {
     const localName = param.localName
     const awsParam = await getAWSParam(awsClient, paramName)
     const localParam = getLocalParam(`${path}/${localName}`)
-    console.log(awsParam !== localParam)
-    console.log(typeof awsParam)
-    console.log(typeof localParam)
+    console.log(localParam)
+    console.log(awsParam)
     if(awsParam !== localParam) {
       appendResult('error.log', `${paramName} KO`)
       console.log(`${paramName} KO`)
