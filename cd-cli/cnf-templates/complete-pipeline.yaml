@@ -1457,8 +1457,8 @@ Resources:
                 - 'echo ""'
                 - 'echo "INSTALLING node_modules"'
                 - '(cd ./pn-cicd/cd-cli/checkSystem/validateParameters/ && npm i )'
-                - 'echo "./pn-cicd/cd-cli/checkSystem/validateParameters/ && node index.js --envName ${EnvName} --account core --parametersPath ../../../parameters/"'
-                - '(cd ./pn-cicd/cd-cli/checkSystem/validateParameters/ && node index.js --envName $EnvName --account core --parametersPath ../../../parameters/) '
+                - 'echo "./pn-cicd/cd-cli/checkSystem/validateParameters/ && node index.js --envName ${EnvName} --account core --parametersPath ../../../../parameters"'
+                - '(cd ./pn-cicd/cd-cli/checkSystem/validateParameters/ && node index.js --envName $EnvName --account core --parametersPath ../../../../parameters) '
                 - |
                   if [ -f ./pn-cicd/cd-cli/checkSystem/validateParameters/results/error.log ]; then
                     echo "Error: Issues found in parameter validation."
