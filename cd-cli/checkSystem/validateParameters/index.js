@@ -58,7 +58,6 @@ async function main() {
   const awsClient = new AwsClientsWrapper(profile);
   const path = `${parametersPath}/${envName}/_conf/${account}/system_params`
   const manifestPath = `${path}/_manifest.json`
-  console.log(manifestPath)
   const parameters = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath)) : []
   if(parameters.length == 0) {
     console.log(`No manifest configured in ${envName} environment.`)
