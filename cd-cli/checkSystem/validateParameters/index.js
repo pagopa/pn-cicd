@@ -70,7 +70,9 @@ async function main() {
     const localParam = getLocalParam(`${path}/${localName}`)
     console.log(localParam)
     console.log(awsParam)
-    if(awsParam !== localParam) {
+    console.log(awsParam != localParam)
+    console.log(awsParam !== localParam)
+    if(awsParam != localParam) {
       appendResult('error.log', `${paramName} KO`)
       console.log(`${paramName} KO`)
     } else {
