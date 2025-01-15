@@ -70,9 +70,9 @@ async function main() {
     const localParam = getLocalParam(`${path}/${localName}`)
     console.log(localParam)
     console.log(awsParam)
-    console.log(awsParam != localParam)
-    console.log(awsParam !== localParam)
-    if(awsParam != localParam) {
+    console.log(JSON.stringify(awsParam) != JSON.stringify(localParam))
+    console.log(JSON.stringify(awsParam) !== JSON.stringify(localParam))
+    if(JSON.stringify(awsParam) != JSON.stringify(localParam)) {
       appendResult('error.log', `${paramName} KO`)
       console.log(`${paramName} KO`)
     } else {
