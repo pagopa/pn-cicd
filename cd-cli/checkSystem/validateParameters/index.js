@@ -68,8 +68,8 @@ async function main() {
     const awsParam = await getAWSParam(awsClient, paramName)
     const localParam = getLocalParam(`${path}/${localName}`)
     console.log(awsParam !== localParam)
-    console.log(awsParam)
-    console.log(localParam)
+    console.log(typeof awsParam)
+    console.log(typeof localParam)
     if(awsParam !== localParam) {
       appendResult('error.log', `${paramName} KO`)
       console.log(`${paramName} KO`)
