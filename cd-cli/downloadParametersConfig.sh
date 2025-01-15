@@ -242,6 +242,7 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
   echo "****   EXPORT COMPLETED   ****"
 
   mkdir -p parameters
+  echo $(pwd)
   cp -r pn-configuration/${env_type}/ parameters/${env_type}
 
 else
