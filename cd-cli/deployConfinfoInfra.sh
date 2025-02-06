@@ -260,7 +260,7 @@ aws ${aws_command_base_args}  \
     cloudformation deploy \
       --stack-name once-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \
-      --template-file  ${infra_confinfo_path}/once4account/${env_type}.yaml \
+      --template-file  ${infra_confinfo_path}/once4account/once4account.yaml \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
         PnCoreAwsAccountId="$PnCoreAwsAccountId" \
