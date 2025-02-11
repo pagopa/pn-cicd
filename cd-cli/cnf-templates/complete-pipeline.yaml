@@ -382,8 +382,8 @@ Resources:
                     export PIPELINE_NAME="pn-logextractor-be-update-pipeline"
                   fi    
                   if ( [ "$PROJECT" = "pn-emd-integration" ] ) then
-                    sed -i -e "s|pn-emd-integration_commitId=.*|pn-emd-integration_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    sed -i -e "s|pn-emd-integration_imageUrl=.*|pn-emd-integration_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_emd_integration_commitId=.*|pn_emd_integration_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_emd_integration_imageUrl=.*|pn_emd_integration_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-emd-integration-update-pipeline"
                   fi                 
                 - |
@@ -5158,7 +5158,7 @@ Resources:
 
   # MICROSERVICE PN-EMD-INTEGRATION
   ############################
-  PnLogextractorBeDeployPipeline:
+  PnEmdIntegrationDeployPipeline:
     Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -5240,7 +5240,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-emd-integration", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"24", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"25", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_emd_integration", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
