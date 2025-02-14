@@ -236,7 +236,7 @@ aws ${aws_command_base_args} \
       --recursive --exclude ".git/*"
 
 echo "Environment variables file creation"
-(cd ${cwdir}/commons && ./runtime-env-file-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
+(cd ${cwdir}/commons && ./environment-files-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
 
 echo ""
 echo "=== Upload microservice files to bucket"
@@ -398,6 +398,21 @@ jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * .[2]" \
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
 cat ${EnanchedParamFilePath}
 
+##Update environments variable for microservice
+echo "Update application.env for $microcvs_name microservice deployment in $env_type ACCOUNT"
+file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
+file_env_application_name="application.env"
+if [[ -f "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env" ]]; then
+  account_id=$(aws sts get-caller-identity --query Account --output text)
+  bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
+  s3 cp ${file_env_application_path} s3://${bucket_env_path}/${microcvs_name}/${file_env_application_name}
+  aws ${aws_command_base_args} \
+      s3 cp ${file_env_application_path} s3://${bucket_env_path}/${microcvs_name}/${file_env_application_name}
+  echo "environment variable updated for $microcvs_name microservice deployment in $env_type ACCOUNT"
+else
+  echo ""
+  echo "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env file doesn't exist, update application.env skipped"
+fi
 
 echo ""
 echo "=== Deploy $microcvs_name MICROSERVICE FOR $env_type ACCOUNT"
