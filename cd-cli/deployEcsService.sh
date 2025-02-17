@@ -363,6 +363,8 @@ echo "=== Prepare parameters for $microcvs_name microservice deployment in $env_
 echo "Update application.env for $microcvs_name microservice deployment in $env_type ACCOUNT"
 file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
 file_env_application_name="application.env"
+account_id=$(aws sts get-caller-identity --query Account --output text)
+bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
 app_env_file_sha="-"
 if [[ -f "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env" ]]; then
   account_id=$(aws sts get-caller-identity --query Account --output text)
