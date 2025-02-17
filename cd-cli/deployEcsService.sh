@@ -396,7 +396,8 @@ PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
      \"ContainerImageUri=${ContainerImageUri}\",\
      \"MicroserviceBucketName=${microserviceBucketName}\",\"MicroserviceBucketBaseKey=${microserviceBucketBaseKey}\",\
-     \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid},app_env_file_sha=${app_env_file_sha}\""
+     \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid},\
+     \"ApplicativeEnvFileChecksum=${app_env_file_sha}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - InfraIpcOutputFilePath: ${InfraIpcOutputFilePath}"
