@@ -363,7 +363,7 @@ echo "=== Prepare parameters for $microcvs_name microservice deployment in $env_
 echo "Update application.env for $microcvs_name microservice deployment in $env_type ACCOUNT"
 file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
 file_env_application_name="application.env"
-app_env_file_sha=""
+app_env_file_sha="-"
 if [[ -f "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env" ]]; then
   account_id=$(aws sts get-caller-identity --query Account --output text)
   bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
@@ -373,7 +373,12 @@ if [[ -f "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env" ]]; then
   app_env_file_sha=$(sha256sum ${file_env_application_path} | awk '{print $1}')
 else
   echo ""
-  echo "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env file doesn't exist, update application.env skipped"
+  echo "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env file doesn't exist, updating empty application.env..."
+  touch ./${file_env_application_name}
+  aws ${aws_command_base_args} \
+      s3 cp ${file_env_application_name} s3://${bucket_env_path}/${microcvs_name}/${file_env_application_name}
+  rm ./${file_env_application_name}
+  echo "Empty application.env updated"
 fi
 
 PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
