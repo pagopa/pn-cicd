@@ -240,7 +240,7 @@ echo "Environment variables file creation"
 
 echo ""
 echo "=== Upload microservice files to bucket"
-microserviceBucketName=$bucketNa
+microserviceBucketName=$bucketName
 microserviceBucketBaseKey="projects/${microcvs_name}/${pn_microsvc_commitid}"
 microserviceBucketS3BaseUrl="s3://${microserviceBucketName}/${microserviceBucketBaseKey}"
 aws ${aws_command_base_args} \
