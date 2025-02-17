@@ -236,7 +236,7 @@ aws ${aws_command_base_args} \
       --recursive --exclude ".git/*"
 
 echo "Environment variables file creation"
-(cd ${cwdir}/commons && ./runtime-env-file-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
+(cd ${cwdir}/commons && ./environment-files-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
 
 echo ""
 echo "=== Upload microservice files to bucket"
@@ -342,6 +342,8 @@ aws ${aws_command_base_args} \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
    
 
+
+
 echo ""
 echo ""
 echo ""
@@ -356,6 +358,35 @@ echo ""
 echo ""
 echo ""
 echo "=== Prepare parameters for $microcvs_name microservice deployment in $env_type ACCOUNT"
+
+##Update environments variable for microservice
+echo "Update application.env for $microcvs_name microservice deployment in $env_type ACCOUNT"
+file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
+file_env_application_name="application.env"
+account_id=$(aws sts get-caller-identity --query Account --output text)
+bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
+app_env_file_sha="-"
+if [[ -f "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env" ]]; then
+  account_id=$(aws sts get-caller-identity --query Account --output text)
+  bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
+  aws ${aws_command_base_args} \
+      s3 cp ${file_env_application_path} s3://${bucket_env_path}/${microcvs_name}/${file_env_application_name}
+  echo "environment variable updated for $microcvs_name microservice deployment in $env_type ACCOUNT"
+  app_env_file_sha=$(sha256sum ${file_env_application_path} | awk '{print $1}')
+  echo ""
+  echo ""
+else
+  echo ""
+  echo "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env file doesn't exist, updating empty application.env..."
+  touch ./${file_env_application_name}
+  aws ${aws_command_base_args} \
+      s3 cp ${file_env_application_name} s3://${bucket_env_path}/${microcvs_name}/${file_env_application_name}
+  rm ./${file_env_application_name}
+  echo "Empty application.env updated"
+  echo ""
+  echo ""
+fi
+
 PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
 InfraIpcOutputFilePath=$INFRA_ALL_OUTPUTS_FILE
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/microservice.yml
@@ -365,7 +396,7 @@ PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
      \"ContainerImageUri=${ContainerImageUri}\",\
      \"MicroserviceBucketName=${microserviceBucketName}\",\"MicroserviceBucketBaseKey=${microserviceBucketBaseKey}\",\
-     \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
+     \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid},app_env_file_sha=${app_env_file_sha}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - InfraIpcOutputFilePath: ${InfraIpcOutputFilePath}"

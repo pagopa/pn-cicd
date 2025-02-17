@@ -84,6 +84,7 @@ fi
 account_id=$(aws sts get-caller-identity --query Account --output text)
 bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
 file_env_name="runtime-variable.env"
+file_env_application_name="application.env"
 
 if aws s3api head-bucket --bucket ${bucket_env_path} 2>/dev/null; then 
   if aws s3api head-object --bucket ${bucket_env_path} --key ${microcvs_name}/${file_env_name} > /dev/null 2>&1; then
@@ -93,6 +94,14 @@ if aws s3api head-bucket --bucket ${bucket_env_path} 2>/dev/null; then
     echo "Generating ${file_env_name}"
     aws s3 cp ${file_env_name} s3://${bucket_env_path}/${microcvs_name}/
     rm ./${file_env_name}
+  fi
+  if aws s3api head-object --bucket ${bucket_env_path} --key ${microcvs_name}/${file_env_application_name} > /dev/null 2>&1; then
+      echo "File ${file_env_application_name} already exists."
+  else
+    touch ./${file_env_application_name}
+    echo "Generating ${file_env_application_name}"
+    aws s3 cp ${file_env_application_name} s3://${bucket_env_path}/${microcvs_name}/
+    rm ./${file_env_application_name}
   fi
 else
   echo "Bucket ${bucket_env_path} does not exists."
