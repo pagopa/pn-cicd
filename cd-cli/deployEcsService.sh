@@ -367,8 +367,6 @@ account_id=$(aws sts get-caller-identity --query Account --output text)
 bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
 app_env_file_sha="-"
 if [[ -f "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env" ]]; then
-  account_id=$(aws sts get-caller-identity --query Account --output text)
-  bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
   aws ${aws_command_base_args} \
       s3 cp ${file_env_application_path} s3://${bucket_env_path}/${microcvs_name}/${file_env_application_name}
   echo "environment variable updated for $microcvs_name microservice deployment in $env_type ACCOUNT"
@@ -396,7 +394,7 @@ PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
      \"ContainerImageUri=${ContainerImageUri}\",\
      \"MicroserviceBucketName=${microserviceBucketName}\",\"MicroserviceBucketBaseKey=${microserviceBucketBaseKey}\",\
-     \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid},\
+     \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\",\
      \"ApplicativeEnvFileChecksum=${app_env_file_sha}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
