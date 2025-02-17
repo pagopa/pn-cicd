@@ -236,11 +236,11 @@ aws ${aws_command_base_args} \
       --recursive --exclude ".git/*"
 
 echo "Environment variables file creation"
-(cd ${cwdir}/commons && ./environment-files-creation -p ${project_name} -r ${aws_region} -m ${microcvs_name})
+(cd ${cwdir}/commons && ./environment-files-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
 
 echo ""
 echo "=== Upload microservice files to bucket"
-microserviceBucketName=$bucketName
+microserviceBucketName=$bucketNa
 microserviceBucketBaseKey="projects/${microcvs_name}/${pn_microsvc_commitid}"
 microserviceBucketS3BaseUrl="s3://${microserviceBucketName}/${microserviceBucketBaseKey}"
 aws ${aws_command_base_args} \
