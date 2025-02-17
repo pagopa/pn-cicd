@@ -371,7 +371,6 @@ if [[ -f "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env" ]]; then
       s3 cp ${file_env_application_path} s3://${bucket_env_path}/${microcvs_name}/${file_env_application_name}
   echo "environment variable updated for $microcvs_name microservice deployment in $env_type ACCOUNT"
   app_env_file_sha=$(sha256sum ${file_env_application_path} | awk '{print $1}')
-  fi
 else
   echo ""
   echo "${microcvs_name}/scripts/aws/cfn/application-${env_type}.env file doesn't exist, update application.env skipped"
