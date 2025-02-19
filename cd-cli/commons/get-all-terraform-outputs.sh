@@ -147,16 +147,11 @@ echo "=== Checkout ${infra_repo} commitId=${infra_commitid}"
 if ( [ -f ${infra_repo}/functions/build_lambda.sh ] ) then
 	( cd ${infra_repo}/functions/ && ./build_lambda.sh )
 fi
-ls -l ${infra_repo}/src/main
-
 
 (cd ${infra_repo}/src/main && ./terraform.sh init ${env_type} && ./terraform.sh plan ${env_type} )
 
 # Initialize terraform and get outputs
 ( cd ${infra_repo}/src/main && terraform output --json ) | jq 'to_entries[] | { (.key | sub("'${terraform_output_prefix}'" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | jq -s 'reduce .[] as $item ({}; . *= $item )' | jq -s '{ Parameters: .[0] }' | tee $output_file
-  # jq 'to_entries[] | { (.key | sub("'${terraform_output_prefix}'" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | \
-  # jq -s 'reduce .[] as $item ({}; . *= $item )' | \
-  # jq -s '{ Parameters: .[0] }' > $output_file
 
 echo ""
 echo "= Terraform outputs written to ${output_file}"
