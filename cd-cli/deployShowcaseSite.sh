@@ -367,7 +367,6 @@ prepareOneCloudFront web-landing-cdn-${env_type} \
     "$LANDING_DOMAIN" \
     "$LANDING_CERTIFICATE_ARN" \
     "$ZONE_ID" \
-    "$REACT_APP_URL_API" \
     "$env_type"
 landingBucketName=${bucketName}
 landingDistributionId=${distributionId}
