@@ -124,7 +124,6 @@ tar -xzf ${terraform_tarball_path}
 mv ${terraform_local_folder} /usr/local/tfenv
 export PATH="/usr/local/tfenv/bin:$PATH" 
 
-## Repository switch according to account type
 echo "=== Repository switch according to account type " 
 infra_repo="pn-infra-core"
 terraform_output_prefix="Core_"
@@ -142,15 +141,14 @@ echo ""
 echo "=== Checkout ${infra_repo} commitId=${infra_commitid}"
 ( cd ${infra_repo} && git fetch && git checkout $infra_commitid )
 
-## Build diagnostic Lambda
-if ( [ -f ${infra_repo}/functions/build_lambda.sh ] ) then
-	( cd ${infra_repo}/functions/ && ./build_lambda.sh )
-fi
+# ## Build diagnostic Lambda
+# if ( [ -f ${infra_repo}/functions/build_lambda.sh ] ) then
+# 	( cd ${infra_repo}/functions/ && ./build_lambda.sh )
+# fi
 
 # Initialize terraform and get outputs
 ( cd ${infra_repo}/src/main && \
-  ./terraform.sh init ${env_type} && \
-  terraform output --json ) | \
+  ./terraform.sh output ${env_type} --json ) | \
   jq 'to_entries[] | { (.key | sub("'${terraform_output_prefix}'" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | \
   jq -s 'reduce .[] as $item ({}; . *= $item )' | \
   jq -s '{ Parameters: .[0] }' > $output_file
