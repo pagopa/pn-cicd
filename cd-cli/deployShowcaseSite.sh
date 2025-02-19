@@ -188,7 +188,6 @@ echo "## end merge all ##"
 LandingDomain=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingDomain' )
 # Extract new multi-domain-cert parameters
 LandingMultiDomainCertificateArn=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingMultiDomainCertificateArn // empty' )
-LandingMultiDomainCertDomains=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingMultiDomainCertDomains // empty' )
 LandingMultiDomainCertJoinedDomains=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingMultiDomainCertJoinedDomains // empty' )
 LandingMultiDomainCertInternalDomainsZonesMap=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingMultiDomainCertInternalDomainsZonesMap // empty' )
 LandingMultiDomainCertExternalDomainsZonesMap=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingMultiDomainCertExternalDomainsZonesMap // empty' )
@@ -234,15 +233,14 @@ function prepareOneCloudFront() {
   WebDomain=$2
   WebCertificateArn=$3
   HostedZoneId=$4
-  AlternateWebDomain=$5
-  Environment=$6   #added env parameter as pn-showcase does not use pn-configuration, useful for env based condition on cloudfromation
+  Environment=$5   #added env parameter as pn-showcase does not use pn-configuration, useful for env based condition on cloudfromation
   
   OptionalParameters=""
-  if ( [ ! -z "$AlternateWebDomain" ] ) then
-    OptionalParameters="${OptionalParameters} AlternateWebDomain=${AlternateWebDomain}"
-    OptionalParameters="${OptionalParameters} WebDomainReferenceToSite=false"
-    OptionalParameters="${OptionalParameters} AlternateWebDomainReferenceToSite=true"
-  fi
+  # if ( [ ! -z "$AlternateWebDomain" ] ) then
+  #   OptionalParameters="${OptionalParameters} AlternateWebDomain=${AlternateWebDomain}"
+  #   OptionalParameters="${OptionalParameters} WebDomainReferenceToSite=false"
+  #   OptionalParameters="${OptionalParameters} AlternateWebDomainReferenceToSite=true"
+  # fi
 
   if ( [ ! -z "$HAS_MONITORING" ]) then
     OptionalParameters="${OptionalParameters} AlarmSNSTopicArn=${AlarmSNSTopicArn}"
@@ -269,11 +267,10 @@ function prepareOneCloudFront() {
   # Parameters used for multi-domain setup, always override the value, also if empty
   MultiDomainParameters=""
   MultiDomainParameters="${MultiDomainParameters} MultiDomainCertificateArn='${LandingMultiDomainCertificateArn:-}'"
-  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertDomains='${LandingMultiDomainCertDomains:-}'"
-  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertJoinedDomains='${LandingMultiDomainCertJoinedDomains:-}'"
-  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertInternalDomainsZonesMap='${LandingMultiDomainCertInternalDomainsZonesMap:-}'"
-  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertExternalDomainsZonesMap='${LandingMultiDomainCertExternalDomainsZonesMap:-}'"
-  MultiDomainParameters="${MultiDomainParameters} DnsZoneName='${DnsZoneName:-}'"
+  MultiDomainParameters="${MultiDomainParameters} MultiDomainAliases='${LandingMultiDomainCertJoinedDomains:-}'"
+  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertInternalAliasesWithZones='${LandingMultiDomainCertInternalDomainsZonesMap:-}'"
+  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertExternalAliasesWithZones='${LandingMultiDomainCertExternalDomainsZonesMap:-}'"
+  MultiDomainParameters="${MultiDomainParameters} WebBaseDnsZoneName='${DnsZoneName:-}'"
   
   echo ""
   echo "=== Create CDN ${CdnName} with domain ${WebDomain} in zone ${HostedZoneId}"
@@ -356,7 +353,6 @@ prepareOneCloudFront web-landing-cdn-${env_type} \
     "$LANDING_CERTIFICATE_ARN" \
     "$ZONE_ID" \
     "$REACT_APP_URL_API" \
-    "${LANDING_SITE_ALTERNATE_DNS-}" \
     "${env_type}"
 landingBucketName=${bucketName}
 landingDistributionId=${distributionId}
