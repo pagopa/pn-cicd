@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}")  [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -f <pn-showcase-site-github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <webArtifactBucketName> 
+    Usage: $(basename "${BASH_SOURCE[0]}")  [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -I <pn-infra-core-commitid> -f <pn-showcase-site-github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <webArtifactBucketName> 
     
     [-h]                           : this help message
     [-v]                           : verbose mode
@@ -21,6 +21,7 @@ usage() {
     -r <aws-region>                : aws region as eu-south-1
     -e <env-type>                  : one of dev / uat / svil / coll / cert / prod
     -i <infra-github-commitid>     : commitId for github repository pagopa/pn-infra
+    -I <pn-infra-core-commitid>    : commitId for github repository pagopa/pn-infra-core
     -f <pn-showcase-site-github-commitid>  : commitId for github repository pagopa/pn-showcase-site
     [-c <custom_config_dir>]       : where tor read additional env-type configurations
     -b <artifactBucketName>        : bucket name to use as temporary artifacts storage
@@ -37,6 +38,7 @@ parse_params() {
   aws_region=""
   env_type=""
   pn_infra_commitid=""
+  pn_infra_core_commitid=""
   pn_showcase_site_commitid=""
   bucketName=""
   distributionId=""
@@ -62,6 +64,10 @@ parse_params() {
       ;;
     -i | --infra-commitid) 
       pn_infra_commitid="${2-}"
+      shift
+      ;;
+    -I |--infra-core-commitid)
+      pn_infra_core_commitid="${2-}"
       shift
       ;;
     -f | --showcase-site-commitid) 
@@ -95,6 +101,7 @@ parse_params() {
   # check required params and arguments
   [[ -z "${env_type-}" ]] && usage 
   [[ -z "${pn_infra_commitid-}" ]] && usage
+  [[ -z "${pn_infra_core_commitid-}" ]] && usage
   [[ -z "${pn_showcase_site_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
@@ -110,6 +117,7 @@ dump_params(){
   echo "Work directory:    ${work_dir}"
   echo "Custom config dir: ${custom_config_dir}"
   echo "Infra CommitId:    ${pn_infra_commitid}"
+  echo "Infra Core CommitId: ${pn_infra_core_commitid}"
   echo "Showcase site CommitId: ${pn_showcase_site_commitid}"
   echo "Env Name:          ${env_type}"
   echo "AWS region:        ${aws_region}"
@@ -119,7 +127,6 @@ dump_params(){
 }
 
 # START SCRIPT
-
 parse_params "$@"
 dump_params
 
@@ -185,13 +192,21 @@ echo "## start merge all ##"
 cat $INFRA_ALL_OUTPUTS_FILE
 echo "## end merge all ##"
 
+echo "Load all terraform outputs in a single file for"
+TERRAFORM_OUTPUTS_FILE=terraform_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./get-all-terraform-outputs.sh -r ${aws_region} -e ${env_type} -I ${pn_infra_core_commitid} -a core -o ${work_dir}/${TERRAFORM_OUTPUTS_FILE} )
+
+echo "## terraform outputss ##"
+cat $TERRAFORM_OUTPUTS_FILE
+echo "## end terraform outputs ##"
+
 LandingDomain=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingDomain' )
-# Extract new multi-domain-cert parameters
-LandingMultiDomainCertificateArn=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingMultiDomainCertificateArn // empty' )
-LandingMultiDomainCertJoinedDomains=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingMultiDomainCertJoinedDomains // empty' )
-LandingMultiDomainCertInternalDomainsZonesMap=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingMultiDomainCertInternalDomainsZonesMap // empty' )
-LandingMultiDomainCertExternalDomainsZonesMap=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingMultiDomainCertExternalDomainsZonesMap // empty' )
-DnsZoneName=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.DnsZoneName // empty' )
+# Extract multi-domain-cert parameters from terraform outputs
+LandingMultiDomainCertificateArn=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.LandingMultiDomainCertificateArn // empty' )
+LandingMultiDomainCertJoinedDomains=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.LandingMultiDomainCertJoinedDomains // empty' )
+LandingMultiDomainCertInternalDomainsZonesMap=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.LandingMultiDomainCertInternalDomainsZonesMap // empty' )
+LandingMultiDomainCertExternalDomainsZonesMap=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.LandingMultiDomainCertExternalDomainsZonesMap // empty' )
+DnsZoneName=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.DnsZoneName // empty' )
 
 LANDING_SITE_URL=""
 if ( [ $LandingDomain != '-' ] ) then

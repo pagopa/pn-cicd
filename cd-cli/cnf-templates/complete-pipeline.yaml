@@ -2043,8 +2043,8 @@ Resources:
                 - 'echo "###                  UPDATE SHOWCASE SITE                 ###"'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployShowcaseSite.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_showcase_site_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir"'
-                - '(cd scripts/cd-cli && ./deployShowcaseSite.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -f $pn_showcase_site_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - 'echo "./deployShowcaseSite.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -I $pn_infra_core_commitId -f $pn_showcase_site_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir"'
+                - '(cd scripts/cd-cli && ./deployShowcaseSite.sh -v -r $AwsRegion -e $EnvName -i $pn_infra_commitId -I $pn_infra_core_commitId -f $pn_showcase_site_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
           artifacts:
             files:
               - '**/*'
