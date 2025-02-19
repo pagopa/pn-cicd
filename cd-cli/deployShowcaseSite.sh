@@ -208,7 +208,7 @@ LandingMultiDomainCertInternalDomainsZonesMap=$( cat ${work_dir}/${TERRAFORM_OUT
 LandingMultiDomainCertExternalDomainsZonesMap=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.LandingMultiDomainCertExternalDomainsZonesMap // empty' )
 DnsZoneName=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.DnsZoneName // empty' )
 #test non existent param
-LandingTestMissingParam=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.LandingTestMissingParam // "''"' )
+LandingTestMissingParam=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.LandingTestMissingParam // empty )
 LANDING_SITE_URL=""
 if ( [ $LandingDomain != '-' ] ) then
   LANDING_SITE_URL="https://${LandingDomain}"
