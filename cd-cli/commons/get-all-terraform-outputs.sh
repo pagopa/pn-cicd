@@ -143,18 +143,20 @@ echo ""
 echo "=== Checkout ${infra_repo} commitId=${infra_commitid}"
 ( cd ${infra_repo} && git fetch && git checkout $infra_commitid )
 
-# ## Build diagnostic Lambda
-# if ( [ -f ${infra_repo}/functions/build_lambda.sh ] ) then
-# 	( cd ${infra_repo}/functions/ && ./build_lambda.sh )
-# fi
+## Build diagnostic Lambda
+if ( [ -f ${infra_repo}/functions/build_lambda.sh ] ) then
+	( cd ${infra_repo}/functions/ && ./build_lambda.sh )
+fi
 ls -l ${infra_repo}/src/main
 
+
+(cd ${infra_repo}/src/main && ./terraform.sh init ${env_type} && ./terraform.sh plan ${env_type} )
+
 # Initialize terraform and get outputs
-( cd ${infra_repo}/src/main && \
-  ./terraform.sh output ${env_type} --json ) | \
-  jq 'to_entries[] | { (.key | sub("'${terraform_output_prefix}'" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | \
-  jq -s 'reduce .[] as $item ({}; . *= $item )' | \
-  jq -s '{ Parameters: .[0] }' > $output_file
+( cd ${infra_repo}/src/main && terraform output --json ) | | jq 'to_entries[] | { (.key | sub("'${terraform_output_prefix}'" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | jq -s 'reduce .[] as $item ({}; . *= $item )' | jq -s '{ Parameters: .[0] }' | tee $output_file
+  # jq 'to_entries[] | { (.key | sub("'${terraform_output_prefix}'" ; "")): .value.value | (if type=="string" then . else join(",") end ) }' | \
+  # jq -s 'reduce .[] as $item ({}; . *= $item )' | \
+  # jq -s '{ Parameters: .[0] }' > $output_file
 
 echo ""
 echo "= Terraform outputs written to ${output_file}"
