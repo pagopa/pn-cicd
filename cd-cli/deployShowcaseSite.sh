@@ -281,11 +281,11 @@ function prepareOneCloudFront() {
 
   # Parameters used for multi-domain setup, always override the value, also if empty
   MultiDomainParameters=""
-  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertificateArn='${LandingMultiDomainCertificateArn:-}'"
-  MultiDomainParameters="${MultiDomainParameters} MultiDomainAliases='${LandingMultiDomainCertJoinedDomains:-}'"
-  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertInternalAliasesWithZones='${LandingMultiDomainCertInternalDomainsZonesMap:-}'"
-  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertExternalAliasesWithZones='${LandingMultiDomainCertExternalDomainsZonesMap:-}'"
-  MultiDomainParameters="${MultiDomainParameters} WebBaseDnsZoneName='${DnsZoneName:-}'"
+  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertificateArn=${LandingMultiDomainCertificateArn:-}"
+  MultiDomainParameters="${MultiDomainParameters} MultiDomainAliases=${LandingMultiDomainCertJoinedDomains:-}"
+  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertInternalAliasesWithZones=${LandingMultiDomainCertInternalDomainsZonesMap:-}"
+  MultiDomainParameters="${MultiDomainParameters} MultiDomainCertExternalAliasesWithZones=${LandingMultiDomainCertExternalDomainsZonesMap:-}"
+  MultiDomainParameters="${MultiDomainParameters} WebBaseDnsZoneName=${DnsZoneName:-}"
   
   echo ""
   echo "=== Create CDN ${CdnName} with domain ${WebDomain} in zone ${HostedZoneId}"
