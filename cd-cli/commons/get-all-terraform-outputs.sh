@@ -123,6 +123,8 @@ echo "=== Tfenv install "
 tar -xzf ${terraform_tarball_path}
 mv ${terraform_local_folder} /usr/local/tfenv
 export PATH="/usr/local/tfenv/bin:$PATH" 
+ls -lart /usr/local/tfenv/bin
+echo "$PATH"
 
 echo "=== Repository switch according to account type " 
 infra_repo="pn-infra-core"
@@ -145,6 +147,7 @@ echo "=== Checkout ${infra_repo} commitId=${infra_commitid}"
 # if ( [ -f ${infra_repo}/functions/build_lambda.sh ] ) then
 # 	( cd ${infra_repo}/functions/ && ./build_lambda.sh )
 # fi
+ls -l ${infra_repo}/src/main
 
 # Initialize terraform and get outputs
 ( cd ${infra_repo}/src/main && \
