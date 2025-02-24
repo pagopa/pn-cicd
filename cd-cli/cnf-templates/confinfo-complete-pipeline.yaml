@@ -2687,6 +2687,7 @@ Resources:
               - iam:PassRole
               - lambda:ListFunctions
               - lambda:*Tag*
+              - lambda:PutFunctionEventInvokeConfig
               - logs:CreateLogGroup
               - logs:DescribeLogGroups
               - logs:FilterLogEvents
