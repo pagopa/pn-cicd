@@ -425,6 +425,11 @@ Resources:
                     sed -i -e "s|pn_zendesk_auth_commitId=.*|pn_zendesk_auth_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-zendesk-auth-update-pipeline"
                   fi
+                - |
+                  if ( [ "$PROJECT" = "pn-portfat" ] ) then
+                    sed -i -e "s|pn_portfat_commitId=.*|pn_portfat_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-portfat-update-pipeline"
+                  fi
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
                 - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
@@ -1205,6 +1210,31 @@ Resources:
               OutputArtifacts:
                 - Name: PnPaperEventEnricherOutput
               RunOrder: 4
+
+            # Update portfat
+            #- Name: Update_PnPortfat
+            #  ActionTypeId:
+            #    Category: Build
+            #    Owner: AWS
+            #    Version: 1
+            #    Provider: CodeBuild
+            #  Configuration:
+            #    ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+            #    PrimarySource: DesiredCommitIdsAndScripts
+            #    EnvironmentVariables: !Sub '[
+            #        {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+            #        {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+            #        {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+            #        {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+            #        {"name":"MsName", "value":"pn-portfat", "type":"PLAINTEXT"},
+            #        {"name":"MsNumber", "value":"23", "type":"PLAINTEXT"},
+            #        {"name":"VarPrefix", "value":"pn_portfat", "type":"PLAINTEXT"}
+            #      ]'
+            #  InputArtifacts:
+            #    - Name: DesiredCommitIdsAndScripts
+            #  OutputArtifacts:
+            #    - Name: PnPortfatOutput
+            #  RunOrder: 4
 
             # Update Frontend
             - Name: Update_Frontend
@@ -3941,6 +3971,99 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDeliveryOutput
+              RunOrder: 2
+
+  # MICROSERVICE PN-PORTFAT
+  ############################
+  PnPortfatDeployPipeline:
+    Condition: RequiresSingleProjects
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-pn-portfat-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-portfat
+            - Name: Update_PnPortfat
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-portfat", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_portfat", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnPortfatOutput
               RunOrder: 2
             
   # POST-DEPLOY
