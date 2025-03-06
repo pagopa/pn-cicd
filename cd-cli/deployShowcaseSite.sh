@@ -207,6 +207,7 @@ LandingMultiDomainCertJoinedDomains=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE}
 LandingMultiDomainCertInternalDomainsZonesMap=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.LandingMultiDomainCertInternalDomainsZonesMap // empty' )
 LandingMultiDomainCertExternalDomainsZonesMap=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.LandingMultiDomainCertExternalDomainsZonesMap // empty' )
 DnsZoneName=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.DnsZoneName // empty' )
+EnableLandingCdnRedirectFunction=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.EnableLandingCdnRedirectFunction // empty' )
 
 LANDING_SITE_URL=""
 if ( [ $LandingDomain != '-' ] ) then
@@ -286,6 +287,7 @@ function prepareOneCloudFront() {
   MultiDomainParameters="${MultiDomainParameters} MultiDomainCertInternalAliasesWithZones=${LandingMultiDomainCertInternalDomainsZonesMap:-}"
   MultiDomainParameters="${MultiDomainParameters} MultiDomainCertExternalAliasesWithZones=${LandingMultiDomainCertExternalDomainsZonesMap:-}"
   MultiDomainParameters="${MultiDomainParameters} WebBaseDnsZoneName=${DnsZoneName:-}"
+  MultiDomainParameters="${MultiDomainParameters} EnableCdnRedirectFunction=${EnableLandingCdnRedirectFunction:-}"
   
   echo ""
   echo "=== Create CDN ${CdnName} with domain ${WebDomain} in zone ${HostedZoneId}"
