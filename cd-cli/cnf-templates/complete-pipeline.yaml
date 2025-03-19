@@ -1227,7 +1227,7 @@ Resources:
             #        {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
             #        {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
             #        {"name":"MsName", "value":"pn-portfat", "type":"PLAINTEXT"},
-            #        {"name":"MsNumber", "value":"23", "type":"PLAINTEXT"},
+            #        {"name":"MsNumber", "value":"26", "type":"PLAINTEXT"},
             #        {"name":"VarPrefix", "value":"pn_portfat", "type":"PLAINTEXT"}
             #      ]'
             #  InputArtifacts:
@@ -4057,7 +4057,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-portfat", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"26", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_portfat", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
