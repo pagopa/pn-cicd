@@ -428,7 +428,7 @@ Resources:
                 - |
                   if ( [ "$PROJECT" = "pn-portfat" ] ) then
                     sed -i -e "s|pn_portfat_commitId=.*|pn_portfat_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-portfat-update-pipeline"
+                    export PIPELINE_NAME="pn-pn-portfat-update-pipeline"
                   fi
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
@@ -1227,7 +1227,7 @@ Resources:
             #        {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
             #        {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
             #        {"name":"MsName", "value":"pn-portfat", "type":"PLAINTEXT"},
-            #        {"name":"MsNumber", "value":"23", "type":"PLAINTEXT"},
+            #        {"name":"MsNumber", "value":"26", "type":"PLAINTEXT"},
             #        {"name":"VarPrefix", "value":"pn_portfat", "type":"PLAINTEXT"}
             #      ]'
             #  InputArtifacts:
@@ -4057,7 +4057,7 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-portfat", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"1", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"26", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_portfat", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
