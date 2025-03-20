@@ -2741,7 +2741,7 @@ Resources:
           - Action: iam:PassRole
             Effect: Allow
             Resource:
-              - "*"
+              - arn:aws:iam::*:role/pn-*-TaskRole
             Condition:
               StringLike:
                 iam:PassedToService: ecs-tasks.amazonaws.com
