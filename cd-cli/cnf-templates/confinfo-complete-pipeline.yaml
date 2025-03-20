@@ -2740,8 +2740,7 @@ Resources:
                 ec2:ResourceTag/aws:cloudformation:stack-name: EC2ContainerService-*
           - Action: iam:PassRole
             Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/pn-*-TaskRole
+            Resource: !Sub "arn:aws:iam::{{AWS::AccountId}}:role/pn-*-TaskRole"
             Condition:
               StringLike:
                 iam:PassedToService: ecs-tasks.amazonaws.com
