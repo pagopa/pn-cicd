@@ -1662,7 +1662,6 @@ Resources:
                     echo ""
                     (cd scripts/cd-cli && ./deployNetworking.sh -r $AwsRegion -e $EnvName -i $pn_infra_core_commitId -a core -w /tmp -c $custom_config_dir )
                     (cd scripts/cd-cli && ./deployCognito.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
-                    (cd scripts/cd-cli && ./deployOpensearch.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
                     (cd scripts/cd-cli && ./deployCache.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
                   fi
                 - 'echo ""'
