@@ -368,7 +368,7 @@ echo "=== Prepare parameters for $microcvs_name microservice deployment in $env_
 app_env_file_sha="-"
 
 echo "Environment variables file creation"
-(sh ${cwdir}/commons/upload-files-runtime.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name} -e ${env_type})
+(cd ${cwdir}/commons && ./upload-files-runtime.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name} -e ${env_type})
 
 file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
 if [[ -f "${file_env_application_path}" ]]; then
