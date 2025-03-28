@@ -105,6 +105,8 @@ file_env_application_name="application.env"
 account_id=$(aws sts get-caller-identity --query Account --output text)
 bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
 
+app_env_file_sha="-"
+
 if [[ -f "${file_env_application_path}" ]]; then
   aws ${aws_command_base_args} \
       s3 cp ${file_env_application_path} s3://${bucket_env_path}/${runtime_microcvs_name}/${file_env_application_name}

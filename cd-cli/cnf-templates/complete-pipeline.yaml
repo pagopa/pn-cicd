@@ -428,6 +428,7 @@ Resources:
                 - |
                   if ( [ "$PROJECT" = "pn-portfat" ] ) then
                     sed -i -e "s|pn_portfat_commitId=.*|pn_portfat_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_portfat_imageUrl=.*|pn_portfat_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-pn-portfat-update-pipeline"
                   fi
                 - 'cat desired-commit-ids-env.sh'
