@@ -97,14 +97,13 @@ echo ${aws_command_base_args}
 if [[ -n ${components_map[${microcvs_name}]+_} ]]; then
     runtime_microcvs_name=${components_map[${microcvs_name}]}
 else 
-    microcvs_name=${microcvs_name}
+    runtime_microcvs_name=${microcvs_name}
 fi
 
 file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
 file_env_application_name="application.env"
 account_id=$(aws sts get-caller-identity --query Account --output text)
 bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
-app_env_file_sha="-"
 
 if [[ -f "${file_env_application_path}" ]]; then
   aws ${aws_command_base_args} \
