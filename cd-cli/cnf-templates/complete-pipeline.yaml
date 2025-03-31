@@ -2317,14 +2317,6 @@ Resources:
             Action:
               - "es:*"
             Resource: "*"            
-          - Action:
-              - iam:PassRole
-            Effect: Allow
-            Resource: "*"
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - ecs-tasks.amazonaws.com
           - Effect: Allow
             Action:
               - "glue:*Table*"
@@ -2407,13 +2399,8 @@ Resources:
             Action:
               - iam:PassRole
             Resource:
-              - arn:aws:iam::*:role/AWSBatchServiceRole
-              - arn:aws:iam::*:role/service-role/AWSBatchServiceRole
-              - arn:aws:iam::*:role/ecsInstanceRole
-              - arn:aws:iam::*:instance-profile/ecsInstanceRole
-              - arn:aws:iam::*:role/iaws-ec2-spot-fleet-role
-              - arn:aws:iam::*:role/aws-ec2-spot-fleet-role
-              - arn:aws:iam::*:role/AWSBatchJobRole*
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/BatchServiceRole*
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/service-role/AWSBatchServiceRole
           - Effect: Allow
             Action:
               - iam:CreateServiceLinkedRole
@@ -2820,7 +2807,6 @@ Resources:
               - iam:ListAttachedRolePolicies
               - iam:ListInstanceProfiles
               - iam:ListRoles
-              - iam:PassRole
               - lambda:ListFunctions
               - lambda:PutFunctionEventInvokeConfig
               - logs:CreateLogGroup
@@ -2878,28 +2864,10 @@ Resources:
           - Action: iam:PassRole
             Effect: Allow
             Resource:
-              - arn:aws:iam::*:role/pn-*-TaskRole
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/pn-*-TaskRole
             Condition:
               StringLike:
                 iam:PassedToService: ecs-tasks.amazonaws.com
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/ecsInstanceRole*
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - ec2.amazonaws.com
-                  - ec2.amazonaws.com.cn
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/ecsAutoscaleRole*
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - application-autoscaling.amazonaws.com
-                  - application-autoscaling.amazonaws.com.cn
           - Effect: Allow
             Action: iam:CreateServiceLinkedRole
             Resource: "*"
