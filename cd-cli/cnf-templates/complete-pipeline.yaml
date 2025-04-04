@@ -6528,7 +6528,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
-      Name: !Sub '${ProjectName}-pn-delayer-update-pipeline'
+      Name: !Sub '${ProjectName}-delayer-update-pipeline'
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
