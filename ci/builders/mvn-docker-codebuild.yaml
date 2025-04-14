@@ -35,6 +35,15 @@ Parameters:
     Default: 'false'
     Description: ECR creation is needed only the first time
 
+  JavaVersion:
+    Description: Java version
+    Type: String
+    Default: '17'
+    AllowedValues:
+      - '21'
+      - '17'
+
+    ConstraintDescription: Must be a valid Java version
   # Mutlilambda required parameters
   FunctionsDir:
     Description: base directory of the lambdas = [A-Za-z0-9][A-Za-z0-9\-_]{123,240}
@@ -216,7 +225,10 @@ Resources:
             Value: !Sub "${CiArtifactBucket}"
           - Name: FUNCTIONS_FOLDER_NAME
             Type: PLAINTEXT
-            Value: !Sub "${FunctionsDir}"                        
+            Value: !Sub "${FunctionsDir}"      
+          - Name: JAVA_VERSION
+            Type: PLAINTEXT
+            Value: !Sub "${JavaVersion}"                  
           - Name: SETTINGS
             Type: PLAINTEXT
             Value: |
@@ -332,6 +344,10 @@ Resources:
                 - echo "Maven Build"
                 - CUSTOM_BUILDER_IMAGE=public.ecr.aws/c7u1m8f9/paketobuildpacks/builder:0.3.192-base
                 - CUSTOM_RUN_IMAGE=public.ecr.aws/c7u1m8f9/paketobuildpacks/run:1.2.58-base-cnb
+                - if [ "$JAVA_VERSION" = "21" ]; then
+                    CUSTOM_BUILDER_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/builder-jammy-java-tiny:0.0.23
+                    CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/run-jammy-tiny:0.2.57
+                  fi
                 - ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
                 - echo "Functions Build"
                 - |
