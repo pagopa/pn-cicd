@@ -2139,18 +2139,7 @@ Resources:
               - codebuild:BatchGetProjects
               - codebuild:*Tag*
 
-          - Effect: Allow
-            Action:
-              - ecs:UpdateService
-              - ecs:CreateService
-              - ecs:DeleteService
-              - ecs:DescribeServices
-            Resource: !Sub arn:aws:ecs:*:${AWS::AccountId}:service/*/*
           - Action:
-              - ecs:DescribeServices
-              - ecs:CreateTaskSet
-              - ecs:UpdateServicePrimaryTaskSet
-              - ecs:DeleteTaskSet
               - lambda:InvokeFunction
               - cloudwatch:DescribeAlarms
               - sns:Publish
@@ -2238,10 +2227,6 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
-              - ecs:Describe*
-              - ecs:List*
-              - eks:DescribeCluster
-              - eks:ListClusters
               - logs:Describe*
               - logs:Get*
               - logs:TestMetricFilter
@@ -2704,7 +2689,7 @@ Resources:
               - events:List*
               - events:Remove*
               - events:*Tag*
-              - events:*tag*
+              - events:*
             Resource:
               - "*"
           - Effect: Allow
