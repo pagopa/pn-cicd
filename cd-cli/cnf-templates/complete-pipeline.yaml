@@ -431,9 +431,10 @@ Resources:
                     export PIPELINE_NAME="pn-stream-update-pipeline"
                   fi
                 - |
-                  if ( [ "$PROJECT" = "pn-emd-integration" ] ) then
-                    sed -i -e "s|pn_emd_integration_commitId=.*|pn_emd_integration_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-emd-integration-update-pipeline"
+                  if ( [ "$PROJECT" = "pn-delayer" ] ) then
+                    sed -i -e "s|pn_delayer_commitId=.*|pn_delayer_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_delayer_imageUrl=.*|pn_delayer_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-delayer-update-pipeline"
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-portfat" ] ) then
@@ -1271,6 +1272,31 @@ Resources:
             #  OutputArtifacts:
             #    - Name: PnPortfatOutput
             #  RunOrder: 4
+  
+            # Update pn-delayer
+            #- Name: Update_PnDelayer
+            #  ActionTypeId:
+            #    Category: Build
+            #    Owner: AWS
+            #    Version: 1
+            #    Provider: CodeBuild
+            #  Configuration:
+            #    ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+            #    PrimarySource: DesiredCommitIdsAndScripts
+            #    EnvironmentVariables: !Sub '[
+            #        {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+            #        {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+            #        {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+            #        {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+            #        {"name":"MsName", "value":"pn-delayer", "type":"PLAINTEXT"},
+            #        {"name":"MsNumber", "value":"27", "type":"PLAINTEXT"},
+            #        {"name":"VarPrefix", "value":"pn_delayer", "type":"PLAINTEXT"}
+            #      ]'
+            #  InputArtifacts:
+            #    - Name: DesiredCommitIdsAndScripts
+            #  OutputArtifacts:
+            #    - Name: PnDelayerOutput
+            #  RunOrder: 4
 
             # Update Frontend
             - Name: Update_Frontend
@@ -1293,7 +1319,7 @@ Resources:
               OutputArtifacts:
                 - Name: FrontEndOutput
               RunOrder: 5
-            
+
             # Update Helpdesk FE
             - Name: Update_HelpdeskFE
               ActionTypeId:
