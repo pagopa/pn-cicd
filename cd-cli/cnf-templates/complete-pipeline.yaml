@@ -867,7 +867,7 @@ Resources:
             #   OutputArtifacts:
             #     - Name: PnRaddFsuOutput
             #   RunOrder: 3
-            
+
             # Update pn-logsaver-be
             - Name: Update_LogsaverBe
               ActionTypeId:
@@ -1218,6 +1218,56 @@ Resources:
                 - Name: PnPaperEventEnricherOutput
               RunOrder: 4
 
+            # Update pn-emd-integration
+            - Name: Update_PnEmdIntegration
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-emd-integration", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"25", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_emd_integration", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnEmdIntegrationOutput
+              RunOrder: 4
+            
+            # Update pn-stream
+            - Name: Update_PnStream
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-stream", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"24", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_stream", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnStreamOutput
+              RunOrder: 4
+
             # Update portfat
             #- Name: Update_PnPortfat
             #  ActionTypeId:
@@ -1524,7 +1574,7 @@ Resources:
                 - 'echo ""'
                 - 'echo "INSTALLING node_modules"'
                 - '(cd ./pn-cicd/cd-cli/checkSystem/validateParameters/ && npm i )'
-                - 'echo "./pn-cicd/cd-cli/checkSystem/validateParameters/ && node index.js --envName ${EnvName} --account core --parametersPath ../../../../parameters"'
+                - 'echo "./pn-cicd/cd-cli/checkSystem/validateParameters/ && node index.js --envName $EnvName --account core --parametersPath ../../../../parameters"'
                 - '(cd ./pn-cicd/cd-cli/checkSystem/validateParameters/ && node index.js --envName $EnvName --account core --parametersPath ../../../../parameters) '
                 - |
                   if [ -f ./pn-cicd/cd-cli/checkSystem/validateParameters/results/error.log ]; then
@@ -2348,14 +2398,6 @@ Resources:
             Action:
               - "es:*"
             Resource: "*"            
-          - Action:
-              - iam:PassRole
-            Effect: Allow
-            Resource: "*"
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - ecs-tasks.amazonaws.com
           - Effect: Allow
             Action:
               - "glue:*Table*"
@@ -2438,13 +2480,8 @@ Resources:
             Action:
               - iam:PassRole
             Resource:
-              - arn:aws:iam::*:role/AWSBatchServiceRole
-              - arn:aws:iam::*:role/service-role/AWSBatchServiceRole
-              - arn:aws:iam::*:role/ecsInstanceRole
-              - arn:aws:iam::*:instance-profile/ecsInstanceRole
-              - arn:aws:iam::*:role/iaws-ec2-spot-fleet-role
-              - arn:aws:iam::*:role/aws-ec2-spot-fleet-role
-              - arn:aws:iam::*:role/AWSBatchJobRole*
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/BatchServiceRole*
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/service-role/AWSBatchServiceRole
           - Effect: Allow
             Action:
               - iam:CreateServiceLinkedRole
@@ -2909,7 +2946,7 @@ Resources:
           - Action: iam:PassRole
             Effect: Allow
             Resource:
-              - arn:aws:iam::*:role/pn-*-TaskRole
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/pn-*-TaskRole
             Condition:
               StringLike:
                 iam:PassedToService: ecs-tasks.amazonaws.com
