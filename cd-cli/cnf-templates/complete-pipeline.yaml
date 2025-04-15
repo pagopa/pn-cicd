@@ -426,16 +426,20 @@ Resources:
                     export PIPELINE_NAME="pn-zendesk-auth-update-pipeline"
                   fi
                 - |
+                  if ( [ "$PROJECT" = "pn-stream" ] ) then
+                    sed -i -e "s|pn_stream_commitId=.*|pn_stream_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-stream-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-emd-integration" ] ) then
+                    sed -i -e "s|pn_emd_integration_commitId=.*|pn_emd_integration_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-emd-integration-update-pipeline"
+                  fi
+                - |
                   if ( [ "$PROJECT" = "pn-portfat" ] ) then
                     sed -i -e "s|pn_portfat_commitId=.*|pn_portfat_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_portfat_imageUrl=.*|pn_portfat_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-pn-portfat-update-pipeline"
-                  fi
-                - |
-                  if ( [ "$PROJECT" = "pn-delayer" ] ) then
-                    sed -i -e "s|pn_delayer_commitId=.*|pn_delayer_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    sed -i -e "s|pn_delayer_imageUrl=.*|pn_delayer_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-delayer-update-pipeline"
                   fi
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
@@ -843,31 +847,6 @@ Resources:
                 - Name: PnDowntimeLogsOutput
               RunOrder: 4
             
-            # # Update pn-radd-fsu
-            # - Name: Update_RaddFsu
-            #   ActionTypeId:
-            #     Category: Build
-            #     Owner: AWS
-            #     Version: 1
-            #     Provider: CodeBuild
-            #   Configuration:
-            #     ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-            #     PrimarySource: DesiredCommitIdsAndScripts
-            #     EnvironmentVariables: !Sub '[
-            #         {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-            #         {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-            #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-            #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
-            #         {"name":"MsName", "value":"pn-radd-fsu", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"9", "type":"PLAINTEXT"},
-            #         {"name":"VarPrefix", "value":"pn_radd_fsu", "type":"PLAINTEXT"}
-            #       ]'
-            #   InputArtifacts:
-            #     - Name: DesiredCommitIdsAndScripts
-            #   OutputArtifacts:
-            #     - Name: PnRaddFsuOutput
-            #   RunOrder: 3
-            
             # Update pn-logsaver-be
             - Name: Update_LogsaverBe
               ActionTypeId:
@@ -1218,6 +1197,56 @@ Resources:
                 - Name: PnPaperEventEnricherOutput
               RunOrder: 4
 
+            # Update pn-stream
+            - Name: Update_PnStream
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-stream", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"24", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_stream", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnStreamOutput
+              RunOrder: 4
+
+            # Update pn-emd-integration
+            - Name: Update_PnEmdIntegration
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-emd-integration", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"25", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_emd_integration", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnEmdIntegrationOutput
+              RunOrder: 4
+
             # Update portfat
             #- Name: Update_PnPortfat
             #  ActionTypeId:
@@ -1241,31 +1270,6 @@ Resources:
             #    - Name: DesiredCommitIdsAndScripts
             #  OutputArtifacts:
             #    - Name: PnPortfatOutput
-            #  RunOrder: 4
-
-            # Update pn-delayer
-            #- Name: Update_PnDelayer
-            #  ActionTypeId:
-            #    Category: Build
-            #    Owner: AWS
-            #    Version: 1
-            #    Provider: CodeBuild
-            #  Configuration:
-            #    ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-            #    PrimarySource: DesiredCommitIdsAndScripts
-            #    EnvironmentVariables: !Sub '[
-            #        {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-            #        {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-            #        {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-            #        {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
-            #        {"name":"MsName", "value":"pn-delayer", "type":"PLAINTEXT"},
-            #        {"name":"MsNumber", "value":"27", "type":"PLAINTEXT"},
-            #        {"name":"VarPrefix", "value":"pn_delayer", "type":"PLAINTEXT"}
-            #      ]'
-            #  InputArtifacts:
-            #    - Name: DesiredCommitIdsAndScripts
-            #  OutputArtifacts:
-            #    - Name: PnDelayerOutput
             #  RunOrder: 4
 
             # Update Frontend
@@ -6489,99 +6493,6 @@ Resources:
                 - Name: PnStreamOutput
               RunOrder: 3
 
-  # MICROSERVICE PN-DELAYER
-  ############################
-  PnDelayerDeployPipeline:
-    Condition: RequiresSingleProjects
-    Type: AWS::CodePipeline::Pipeline
-    Properties:
-      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
-      Name: !Sub '${ProjectName}-delayer-update-pipeline'
-      ArtifactStore:
-        Type: S3
-        Location: !Ref PipelineArtifactBucket
-      Stages:
-        - Name: Download_Configurations
-          Actions:
-            # Trigger build when material set is changed
-            - Name: Read_CommitIds_And_ImageUrls_File
-              ActionTypeId:
-                Provider: S3
-                Owner: AWS
-                Version: 1
-                Category: Source
-              Configuration:
-                PollForSourceChanges: false
-                S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'config/desired-commit-ids-env.sh'
-              OutputArtifacts:
-                - Name: DesiredCommitIds
-              Namespace: 'DesiredCommitIdsNS'
-              RunOrder: 1
-            # CodePipeline CodeArtifact integration issue
-            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
-              ActionTypeId:
-                Provider: S3
-                Owner: AWS
-                Version: 1
-                Category: Source
-              Configuration:
-                PollForSourceChanges: false
-                S3Bucket: !Ref CdArtifactBucket
-                S3ObjectKey: 'empty.zip'
-              OutputArtifacts:
-                - Name: EmptyZip
-              RunOrder: 1
-        - Name: DeployAll
-          Actions:
-            # Download cd-cli scripts
-            - Name: Download_CLI_Scripts
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !Ref DownloadScriptsCodebuildProject
-                PrimarySource: EmptyZip
-                EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
-                  ]'
-              InputArtifacts:
-                - Name: EmptyZip
-              OutputArtifacts:
-                - Name: DesiredCommitIdsAndScripts
-              RunOrder: 1
-
-            # Update pn-delayer
-            - Name: Update_PnDelayer
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-                PrimarySource: DesiredCommitIdsAndScripts
-                EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
-                    {"name":"MsName", "value":"pn-delayer", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"27", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_delayer", "type":"PLAINTEXT"}
-                  ]'
-              InputArtifacts:
-                - Name: DesiredCommitIdsAndScripts
-              OutputArtifacts:
-                - Name: PnPaperChannelOutput
-              RunOrder: 3
-
   # HELPDESK FRONTEND
   #######################
   HelpdeskFeDeployPipeline:
@@ -7017,12 +6928,11 @@ Resources:
                       PASSWORD_HELPDESK=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2ePasswordHelpDesk' )
                       USERNAME_MITTENTE_VIGGIU=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eUsernameMittenteViggiu' ) 
                       PASSWORD_MITTENTE_VIGGIU=$( aws secretsmanager get-secret-value --secret-id secretsForTestsFE | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2ePasswordMittenteViggiu' )
-                      EXTERNAL_CHANNEL_URL=$(aws ssm get-parameters --names /pn-test-e2e/externalChannelsUrl --query "Parameters[*].Value" --output text)
                       - |
                       echo "CLONE E2E TEST REPOSITORY"
                       echo "#####################"
                       git clone -b ${BRANCH_NAME} https://github.com/pagopa/pn-frontend-e2e pn-frontend-e2e
-                      ( cd pn-frontend-e2e && ./mvnw clean test -Dcucumber.filter.tags=${TAG_TEST} -Dbrowser=chrome -Dheadless=true -Denvironment=${ENV_NAME} '-Dpn.bearer-token.tokentestPFDelegante=${TOKEN_PF_DELEGANTE}' '-Dpn.externalChannels.base-url=${EXTERNAL_CHANNEL_URL}' '-Dpn.user.mittenteViggiu=${USERNAME_MITTENTE_VIGGIU}' '-Dpn.pwd.mittenteViggiu=${PASSWORD_MITTENTE_VIGGIU}' '-Dpn.bearer-token.tokentestPFDelegato=${TOKEN_PF_DELEGATO}' '-Dpn.bearer-token.tokentestPGDelegante=${TOKEN_PG_DELEGANTE}' '-Dpn.bearer-token.tokentestPGDelegato=${TOKEN_PG_DELEGATO}' '-Dpn.bearer-token.tokentestMittente=${TOKEN_MITTENTE}' '-Dpn.bearer-token.tokentestPFColombo=${TOKEN_PF_COLOMBO}' '-Dpn.bearer-token.tokentestRaddista1=${TOKEN_RADDISTA1}' '-Dpn.user.cesare=${USERNAME_CESARE}' '-Dpn.pwd.cesare=${PASSWORD_CESARE}' '-Dpn.user.lucrezia=${USERNAME_LUCREZIA}' '-Dpn.pwd.lucrezia=${PASSWORD_LUCREZIA}' '-Dpn.user.dante=${USERNAME_DANTE}' '-Dpn.pwd.dante=${PASSWORD_DANTE}' '-Dpn.user.petrarca=${USERNAME_PETRARCA}' '-Dpn.pwd.petrarca=${PASSWORD_PETRARCA}' '-Dpn.user.mittente=${USERNAME_MITTENTE}' '-Dpn.pwd.mittente=${PASSWORD_MITTENTE}' '-Dpn.userTest.helpdesk=${USERNAME_HELPDESK}' '-Dpn.pwdTest.helpdesk=${PASSWORD_HELPDESK}' )
+                      ( cd pn-frontend-e2e && ./mvnw clean test -Dcucumber.filter.tags=${TAG_TEST} -Dbrowser=chrome -Dheadless=true -Denvironment=${ENV_NAME} '-Dpn.bearer-token.tokentestPFDelegante=${TOKEN_PF_DELEGANTE}' '-Dpn.user.mittenteViggiu=${USERNAME_MITTENTE_VIGGIU}' '-Dpn.pwd.mittenteViggiu=${PASSWORD_MITTENTE_VIGGIU}' '-Dpn.bearer-token.tokentestPFDelegato=${TOKEN_PF_DELEGATO}' '-Dpn.bearer-token.tokentestPGDelegante=${TOKEN_PG_DELEGANTE}' '-Dpn.bearer-token.tokentestPGDelegato=${TOKEN_PG_DELEGATO}' '-Dpn.bearer-token.tokentestMittente=${TOKEN_MITTENTE}' '-Dpn.bearer-token.tokentestPFColombo=${TOKEN_PF_COLOMBO}' '-Dpn.bearer-token.tokentestRaddista1=${TOKEN_RADDISTA1}' '-Dpn.user.cesare=${USERNAME_CESARE}' '-Dpn.pwd.cesare=${PASSWORD_CESARE}' '-Dpn.user.lucrezia=${USERNAME_LUCREZIA}' '-Dpn.pwd.lucrezia=${PASSWORD_LUCREZIA}' '-Dpn.user.dante=${USERNAME_DANTE}' '-Dpn.pwd.dante=${PASSWORD_DANTE}' '-Dpn.user.petrarca=${USERNAME_PETRARCA}' '-Dpn.pwd.petrarca=${PASSWORD_PETRARCA}' '-Dpn.user.mittente=${USERNAME_MITTENTE}' '-Dpn.pwd.mittente=${PASSWORD_MITTENTE}' '-Dpn.userTest.helpdesk=${USERNAME_HELPDESK}' '-Dpn.pwdTest.helpdesk=${PASSWORD_HELPDESK}' )
             reports:
               reportGroup: #Cucumber reports from json plugin
                 files:
@@ -7058,7 +6968,7 @@ Resources:
               Value: 'develop'
             - Name: TAG_TEST
               Type: PLAINTEXT
-              Value: '@NRT'
+              Value: '@TestSuite'
         VpcConfig:
           Fn::If:
             - HasE2EVPCConfig
