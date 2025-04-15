@@ -2319,18 +2319,7 @@ Resources:
               - codebuild:DeleteProject
               - codebuild:BatchGetProjects
               - codebuild:*Tag*
-          - Effect: Allow
-            Action:
-              - ecs:UpdateService
-              - ecs:CreateService
-              - ecs:DeleteService
-              - ecs:DescribeServices
-            Resource: !Sub arn:aws:ecs:*:${AWS::AccountId}:service/*/*
           - Action:
-              - ecs:DescribeServices
-              - ecs:CreateTaskSet
-              - ecs:UpdateServicePrimaryTaskSet
-              - ecs:DeleteTaskSet
               - lambda:InvokeFunction
               - cloudwatch:DescribeAlarms
               - sns:Publish
@@ -2869,13 +2858,6 @@ Resources:
               - elasticloadbalancing:DescribeLoadBalancers
               - elasticloadbalancing:DescribeRules
               - elasticloadbalancing:DescribeTargetGroups
-              - events:DeleteRule
-              - events:DescribeRule
-              - events:ListRuleNamesByTarget
-              - events:ListTargetsByRule
-              - events:PutRule
-              - events:PutTargets
-              - events:RemoveTargets
               - scheduler:*
               - pipes:DeletePipe              
               - pipes:CreatePipe 
@@ -2988,15 +2970,6 @@ Resources:
           - Effect: Allow
             Action:
               - elasticloadbalancing:AddTags
-            Resource: "*"
-          - Effect: Allow
-            Action:
-              - "events:DescribeEventBus"
-              - "events:CreateEventBus"
-              - "events:DeleteEventBus"
-            Resource: !Sub arn:aws:events:*:${AWS::AccountId}:event-bus/*
-          - Effect: Allow
-            Action: "events:ListEventBuses"
             Resource: "*"
 
   CodeBuildPolicyAPICloudfront:
@@ -3117,16 +3090,6 @@ Resources:
           - Effect: Allow
             Action: cloudwatch:ListDashboards
             Resource: "*"
-          - Effect: Allow
-            Action: 
-              - events:DescribeRule
-              - events:*Tag*
-            Resource: !Sub arn:aws:events:*:${AWS::AccountId}:rule/*/*
-          - Effect: Allow
-            Action: 
-              - events:DescribeRule
-              - events:*Tag*
-            Resource: !Sub arn:aws:events:*:${AWS::AccountId}:rule/*
           - Effect: Allow
             Action:
               - logs:Create*
