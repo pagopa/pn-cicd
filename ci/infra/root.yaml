@@ -1775,7 +1775,7 @@ Resources:
         NodeVersion: "18"
       TimeoutInMinutes: 5
   
-  # Progetto pn-normalizer-integration
+  # Progetto pn-pdf-normalizer-integration
   PnPdfNormalizerIntegrationLambda:
     Type: AWS::CloudFormation::Stack
     Properties:
