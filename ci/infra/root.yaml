@@ -1774,6 +1774,21 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         NodeVersion: "18"
       TimeoutInMinutes: 5
+  
+  # Progetto pn-normalizer-integration
+  PnPdfNormalizerIntegrationLambda:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-pdf-normalizer-integration"
+        BaseDir: "functions"
+        BaseDirEscaped: "functions"
+        GitHubDefaultBranch: "develop"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        NodeVersion: "18"
+      TimeoutInMinutes: 10
 
   # Progetto Auth Fleet con Multilambda
   PnAuthFleetLambdas:
