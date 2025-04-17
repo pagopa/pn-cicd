@@ -247,7 +247,7 @@ Resources:
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-cn" ] ) then 
-                    sed -i -e "s|pn_ec_commitId=.*|pn_ec_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_cn_commitId=.*|pn_cn_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-cn-update-pipeline"
                   fi
                 - |
