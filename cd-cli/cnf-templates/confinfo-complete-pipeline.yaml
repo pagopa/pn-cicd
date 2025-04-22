@@ -2202,6 +2202,7 @@ Resources:
               - rds:DeleteDBSubnetGroup
               - rds:CreateDBClusterParameterGroup
               - rds:DescribeDBClusterParameterGroups
+              - rds:DescribeDBClusterParameters
               - rds:ModifyDBClusterParameterGroup
               - rds:DeleteDBClusterParameterGroup
               - rds:AddTagsToResource
