@@ -2182,14 +2182,36 @@ Resources:
               - "cloudtrail:*"
             Resource: "*"
           - Effect: Allow
-            Action: secretsmanager:GetSecretValue
+            Action:
+              - secretsmanager:GetSecretValue
+              - secretsmanager:CreateSecret
             Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*
           - Effect: Allow
             Action:
               - secretsmanager:GetRandomPassword
             Resource: "*"
           - Effect: Allow
-            Action: 
+            Action:
+              - rds:CreateDBCluster
+              - rds:DescribeDBClusters
+              - rds:ModifyDBCluster
+              - rds:DeleteDBCluster
+              - rds:CreateDBSubnetGroup
+              - rds:DescribeDBSubnetGroups
+              - rds:ModifyDBSubnetGroup
+              - rds:DeleteDBSubnetGroup
+              - rds:CreateDBClusterParameterGroup
+              - rds:DescribeDBClusterParameterGroups
+              - rds:ModifyDBClusterParameterGroup
+              - rds:DeleteDBClusterParameterGroup
+              - rds:AddTagsToResource
+              - rds:ListTagsForResource
+              - rds:RemoveTagsFromResource
+              - rds:RebootDBCluster
+              - rds:FailoverDBCluster
+            Resource: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*
+          - Effect: Allow
+            Action:
               - ssm:GetParameters
               - ssm:GetParameter
             Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*
@@ -2223,9 +2245,9 @@ Resources:
               - codebuild:CreateReportGroup
               - codebuild:CreateReport
               - codebuild:UpdateReport
-              - codebuild:StartBuild              
+              - codebuild:StartBuild
               - codebuild:BatchGetBuilds
-              - codebuild:StopBuild     
+              - codebuild:StopBuild
               - codebuild:BatchPutTestCases
               - codebuild:BatchPutCodeCoverages
               - codebuild:CreateProject
@@ -2233,7 +2255,6 @@ Resources:
               - codebuild:DeleteProject
               - codebuild:BatchGetProjects
               - codebuild:*Tag*
-
           - Action:
               - lambda:InvokeFunction
               - cloudwatch:DescribeAlarms
