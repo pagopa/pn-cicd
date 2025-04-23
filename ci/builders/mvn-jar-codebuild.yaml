@@ -29,6 +29,14 @@ Parameters:
     Type: String
     Default: 'none'
     Description: Topic for build and pipeline notification
+  
+  JavaVersion:
+    Description: Java version
+    Type: String
+    Default: '17'
+    AllowedValues:
+      - '21'
+      - '17'
 
 Resources:
   CodeBuildProject:
@@ -71,6 +79,9 @@ Resources:
           - Name: GIT_DEFAULT_BRANCH
             Type: PLAINTEXT
             Value: !Sub "${GitHubDefaultBranch}"
+          - Name: JAVA_VERSION
+            Type: PLAINTEXT
+            Value: !Sub "${JavaVersion}"                
           - Name: SETTINGS
             Type: PLAINTEXT
             Value: |
@@ -123,7 +134,7 @@ Resources:
           phases:
             install:
               runtime-versions:
-                 java: corretto17
+                 java: corretto${JAVA_VERSION}
               commands:
                  - git config --global user.email "pn-pagopa-github-bot@pagopa.it"
                  - git config --global user.name "pn-pagopa-github-bot"
