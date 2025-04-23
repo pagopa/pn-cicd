@@ -281,7 +281,7 @@ Resources:
           phases:
             install:
               runtime-versions:
-                 java: corretto17
+                java: corretto${JAVA_VERSION}
             pre_build:
               on-failure: ABORT
               commands:
