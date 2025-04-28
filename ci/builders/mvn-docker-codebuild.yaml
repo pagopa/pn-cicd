@@ -349,6 +349,7 @@ Resources:
                     CUSTOM_BUILDER_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/builder-jammy-java-tiny:0.0.23
                     CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/run-jammy-tiny:0.2.57
                   fi
+                - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
                 - ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
                 - echo "Functions Build"
                 - |
