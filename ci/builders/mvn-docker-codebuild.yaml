@@ -337,7 +337,7 @@ Resources:
                     MAVEN_OPTS="$MAVEN_OPTS"
                   fi
                   MAVEN_OPTS="$MAVEN_OPTS $SONAR_OPTS"
-                  MAVEN_OPTS="$MAVEN_OPTS -Decr-token=$ECR_TOKEN"
+                  MAVEN_OPTS="$MAVEN_OPTS -Decr-username=AWS -Decr-token=$ECR_TOKEN"
                   export MAVEN_OPTS
                 - env
             build:
