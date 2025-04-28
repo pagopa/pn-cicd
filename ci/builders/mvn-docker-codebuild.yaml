@@ -286,7 +286,8 @@ Resources:
               on-failure: ABORT
               commands:
                 - echo Logging in to Amazon ECR...
-                - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+                - export ECR_TOKEN=$( aws ecr get-login-password --region $AWS_DEFAULT_REGION )
+                - echo $ECR_TOKEN | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
                 - echo $SETTINGS > maven-settings.xml
                 - export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
                 - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
@@ -336,13 +337,13 @@ Resources:
                     MAVEN_OPTS="$MAVEN_OPTS"
                   fi
                   MAVEN_OPTS="$MAVEN_OPTS $SONAR_OPTS"
+                  MAVEN_OPTS="$MAVEN_OPTS -Decr-token=$ECR_TOKEN"
                   export MAVEN_OPTS
                 - env
             build:
               on-failure: ABORT
               commands:
                 - echo "Maven Build"
-                - export ECR_TOKEN=$( aws ecr get-login-password --region $AWS_DEFAULT_REGION )
                 - CUSTOM_BUILDER_IMAGE=public.ecr.aws/c7u1m8f9/paketobuildpacks/builder:0.3.192-base
                 - CUSTOM_RUN_IMAGE=public.ecr.aws/c7u1m8f9/paketobuildpacks/run:1.2.58-base-cnb
                 - |
@@ -350,7 +351,7 @@ Resources:
                     CUSTOM_BUILDER_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/builder-jammy-java-tiny:0.0.23
                     CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/run-jammy-tiny:0.2.57
                   fi
-                - ./mvnw $MAVEN_OPTS -Decr-token=$ECR_TOKEN clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
+                - ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
                 - echo "Functions Build"
                 - |
                   if [ -d $FUNCTIONS_FOLDER_NAME ] && [ -n $CI_BUCKET_NAME ]; then
