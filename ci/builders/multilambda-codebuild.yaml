@@ -24,9 +24,9 @@ Parameters:
     Type: String
     Default: '22'
     AllowedValues:
+      - '18'
       - '20'
       - '22'
-      - '18'
     Description: Node.js runtime version to use 
   PythonVersion:
     Type: String
@@ -37,8 +37,14 @@ Parameters:
       Only Python 3.10.12 is supported as it's pre-installed in both standard:6.0/7.0 images 
       (see: https://docs.aws.amazon.com/codebuild/latest/userguide/available-runtimes.html)
 
-Conditions:
-  RequiresNode18: !Equals [ !Ref NodeVersion, '18' ]
+Mappings:
+  NodeImageMap:
+    '18':
+      Image: aws/codebuild/standard:7.0
+    '20':
+      Image: aws/codebuild/standard:7.0
+    '22':
+      Image: aws/codebuild/standard:7.0
 
 Resources:
   CodeBuildProject:
@@ -50,7 +56,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: !If [ RequiresNode18, aws/codebuild/standard:7.0, aws/codebuild/standard:6.0 ]
+        Image: !FindInMap [ NodeImageMap, !Ref NodeVersion, Image ]
         EnvironmentVariables:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
