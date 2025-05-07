@@ -21,11 +21,15 @@ Parameters:
     Type: String
     Description: Topic for build and pipeline notification
   NodeVersion:
-    Type: Number
-    Default: '16'
+    Type: String
+    Default: '22'
+    AllowedValues:
+      - '20'
+      - '22'
+    Description: Node.js runtime version to use
 
 Conditions:
-  RequiresNode18: !Equals [ !Ref NodeVersion, '18' ]
+  RequiresNode22: !Equals [ !Ref NodeVersion, '22' ]
 
 Resources:
   CodeBuildProject:
@@ -37,7 +41,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: !If [ RequiresNode18, aws/codebuild/standard:7.0, aws/codebuild/standard:6.0 ]
+        Image: !If [ RequiresNode22, aws/codebuild/standard:7.0, aws/codebuild/standard:6.0 ]
         EnvironmentVariables:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
