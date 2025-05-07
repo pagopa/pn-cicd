@@ -22,7 +22,7 @@ Parameters:
     Description: Topic for build and pipeline notification
   NodeVersion:
     Type: String
-    Default: '22'
+    Default: '18'
     AllowedValues:
       - '18'
       - '20'
