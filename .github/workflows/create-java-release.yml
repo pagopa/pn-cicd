@@ -11,15 +11,15 @@ on:
         description: 'Tag value (without v prefix)'
         required: true
         type: string
-      increment_snapshot:
-        description: 'Increment SNAPSHOT version in a branch next-release'
-        type: boolean
-        default: false
       base_branch:
         description: 'Base branch to create the RC TAG. Default is develop'
         type: string
         default: "develop"
         required: false
+      increment_snapshot:
+        description: 'Increment SNAPSHOT version in a branch next-release'
+        type: boolean
+        default: false
       merge_in_main:
         description: 'For RELEASE pipeline (not RC), merge in main. Default is true'
         type: boolean
