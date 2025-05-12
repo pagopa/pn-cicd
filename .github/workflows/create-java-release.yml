@@ -20,6 +20,10 @@ on:
         type: string
         default: "develop"
         required: false
+      merge_in_main:
+        description: 'For RELEASE pipeline (not RC), merge in main. Default is true'
+        type: boolean
+        default: true
 
 permissions: write-all
 
@@ -195,13 +199,20 @@ jobs:
           git add pom.xml
           git commit -m "[$tag] Create Release Version"
           git push origin release/$tag
-          git checkout main
-          git pull origin main
-          git merge release/$tag
-          git push origin main
-          # Crea il tag sul branch main (esempio v0.0.1)
-          echo "Creating tag v$tag"
-          gh release create v$tag --generate-notes --target main
+          merge_in_main=${{ inputs.merge_in_main }}
+          if [[ $merge_in_main ]]; then 
+            git checkout main
+            git pull origin main
+            git merge release/$tag
+            git push origin main
+            # Crea il tag sul branch main (esempio v0.0.1)
+            echo "Creating tag v$tag"
+            gh release create v$tag --generate-notes --target main
+          else
+            # Crea il tag sul branch sorgente release (esempio v0.0.1)
+            echo "Creating tag v$tag"
+            gh release create v$tag --generate-notes --target release/$tag
+          fi
 
       - name: run increment SNAPSHOT
         if: inputs.increment_snapshot
