@@ -200,7 +200,7 @@ jobs:
           git commit -m "[$tag] Create Release Version"
           git push origin release/$tag
           merge_in_main=${{ inputs.merge_in_main }}
-          if [[ $merge_in_main ]]; then 
+          if [[ $merge_in_main = true ]]; then 
             git checkout main
             git pull origin main
             git merge release/$tag
