@@ -1804,6 +1804,7 @@ Resources:
         GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        NodeVersion: '22'
       TimeoutInMinutes: 5
 
   # Progetti Progression Sensor
