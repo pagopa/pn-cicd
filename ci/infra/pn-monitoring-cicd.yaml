@@ -1,0 +1,509 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'This template deploys an EventBridge Rule and CloudWatch alarm to monitor vulnerabilities in ECR images'
+
+Parameters:
+
+  SlackChannelTemplate:
+    Type: String
+    Description: template format
+    Default: "slack_channel_template"
+
+  SlackAppToken:
+    Type: String
+    Description: template format
+    Default: "slack/app_token"
+  
+  CronExpressionScanEcrLambda:
+    Type: String
+    Default: "0 9 * * ? *"
+    Description: "Schedule rule for scan Ecr Lambda"
+  
+  StatusScheduleScanEcrLambdaRule:
+    Default: ENABLED
+    Type: String
+    AllowedValues:
+      - ENABLED
+      - DISABLED
+Resources:
+
+  # Rule triggered when a Critical Vulnerabilities is detected by the ECR Scan
+  EventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: "ECRCriticalVulnerabilitiesDetected"
+      Description: Triggered when Critical Vulnerabilities are detected when an ECR image is scanned
+      EventPattern: |
+        {
+          "source": ["aws.ecr"],
+          "detail-type": ["ECR Image Scan"],
+          "detail": {
+            "scan-status": ["COMPLETE"],
+            "finding-severity-counts": {
+              "CRITICAL": [{
+                "numeric": [">", 0]
+              }]
+            }
+          }
+        }
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt LogGroupRuleTarget.Arn
+          Id: LogTarget
+        - Arn: !GetAtt SlackNotificationLambda.Arn
+          Id: SlackNotificationLambda
+
+  # Log Group Target of the Event Bridge Rule
+  LogGroupRuleTarget:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/events/ecr-critical-vulnerabilities"
+      RetentionInDays: 14
+
+  SlackNotificationLambdaLogGroup:
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Retain
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/lambda/SlackMessageNotificationLambda"
+      RetentionInDays: 14
+  
+  LogGroupRuleTargetPolicy:
+    Type: AWS::Logs::ResourcePolicy
+    Properties:
+      PolicyName: "EventBridgeToCWLogsPolicy"
+      PolicyDocument: !Sub |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "EventBridgetoCWLogsCreateLogStreamPolicy",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "events.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "logs:CreateLogStream"
+              ],
+              "Resource": [
+                "${LogGroupRuleTarget.Arn}"
+              ]
+            },
+            {
+              "Sid": "EventBridgetoCWLogsPutLogEventsPolicy",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "events.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "logs:PutLogEvents"
+              ],
+              "Resource": [
+                "${LogGroupRuleTarget.Arn}"
+              ],
+              "Condition": {
+                "ArnEquals": {"AWS:SourceArn": "${EventRule.Arn}"}
+              }
+            }
+          ]
+        }
+
+  PermissionForEventsToInvokeKeyRotationLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SlackNotificationLambda
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt EventRule.Arn
+
+  # Metric based on logs arriving in the log group
+  LogsMetricFilter: 
+    Type: AWS::Logs::MetricFilter
+    Properties: 
+      LogGroupName: !Ref LogGroupRuleTarget
+      FilterPattern: "{ $.detail.finding-severity-counts.CRITICAL > 0 }"
+      MetricTransformations: 
+        - MetricValue: 1
+          MetricNamespace: ECRVulnerabilities
+          MetricName: ImageCriticalVulnerabilities
+
+  # Alarm based on the Metric Filter
+  ECRAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName:  "ECR-Critical-Vulnerabilities"
+      AlarmDescription: "CloudWatch alarm for ECR Critical Vulnerabilities detected"
+      TreatMissingData: notBreaching        
+      DatapointsToAlarm: 1            
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 5
+      Period: 60
+      Namespace: ECRVulnerabilities   
+      MetricName: ImageCriticalVulnerabilities
+      Statistic: Sum
+      Threshold: 1
+
+  SlackNotificationLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: SlackMessageNotificationLambda
+      Description: The lambda sends message to slack channel
+      Runtime: nodejs22.x
+      ReservedConcurrentExecutions: 1
+      Environment:
+        Variables:
+          SLACK_CHANNEL_TEMPLATE: !Ref SlackChannelTemplate
+          SLACK_APP_TOKEN: !Ref SlackAppToken
+      Handler: index.handler
+      Code: 
+        ZipFile: |
+          const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
+          const { SSMClient, GetParameterCommand } = require('@aws-sdk/client-ssm');
+          const https = require('https');
+          const util = require('util');
+
+          async function getSecretValue(awsClient, secret) {
+            const input = { // GetSecretValueRequest
+              SecretId: secret
+            };
+            const command = new GetSecretValueCommand(input);
+            const response = await awsClient.send(command);
+            return JSON.parse(response.SecretString);
+          }
+
+          async function getParamValue(awsClient, paramName) {
+            const input = {
+              Name: paramName,
+            }
+            const command = new GetParameterCommand(input);
+            const response = await awsClient.send(command);
+            const json = response.Parameter.Value;
+            return JSON.parse(json)
+          }
+
+          function prepareTagList(tagList){
+            return tagList.map(item => `- \`${item}\``).join('\n');
+          }
+
+
+          function prepareMessage(detailType, event, templateMap) {
+            const template = templateMap[detailType];
+
+            if (!template || !event.detail) return null;
+
+            if (detailType === "ECRImageScan") {
+              const repo = event.detail["repository-name"];
+              const tags = prepareTagList(event.detail["image-tags"]);
+              const critical = event.detail["finding-severity-counts"]?.CRITICAL || 0;
+              console.log(`${repo} ${tags} %{critical}`)
+              return util.format(JSON.stringify(template), event["detail-type"], repo, critical, tags)
+            }
+
+            return null;
+          }
+
+          async function postMessageToSlack(token, data) {
+            const response = await fetch('https://slack.com/api/chat.postMessage', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: data,
+            });
+
+            if (!response.ok) {
+              throw new Error(`Slack API error: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            return result;
+          }
+
+          exports.handler = async (event) => {
+            try {
+              const secretsManagerClient = new SecretsManagerClient();
+              const slackToken = await getSecretValue(secretsManagerClient, "slack/app_token");
+
+              const ssmClient = new SSMClient();
+              const channelTemplate = await getParamValue(ssmClient, "slack_channel_template");
+
+              const detailType = event["detail-type"].replace(/\s/g, "");
+
+              const body = prepareMessage(detailType, event, channelTemplate);
+              if (!body) {
+                console.error("Messaggio Slack non generato. Controlla il contenuto dell'evento:", JSON.stringify(event, null, 2));
+                return { statusCode: 400, body: "Messaggio non generato." };
+              }
+              
+              const result = await postMessageToSlack(slackToken[detailType], body);
+              console.log("Messaggio Slack inviato:", result);
+              return { statusCode: 200, body: "Messaggio inviato a Slack." };
+
+            } catch (err) {
+              console.error("Errore Lambda:", err);
+              return { statusCode: 500, body: "Errore interno" };
+            }
+          };
+      MemorySize: 128
+      Timeout: 120
+      Role: !GetAtt SlackNotificationLambdaRole.Arn
+
+
+  SlackNotificationLambdaRole:
+    DeletionPolicy: Delete
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SlackNotificationLambdaRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref "AWS::AccountId"
+      Path: /
+      Policies:
+        - PolicyName: "LambdaSlackNotificationPolicy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: AllowLambdaToCreateLogs
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Effect: Allow
+                Resource: !GetAtt SlackNotificationLambdaLogGroup.Arn
+              - Sid: AllowLambdaToGetSecret
+                Action:
+                  - secretsmanager:GetSecretValue
+                Effect: Allow
+                Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:slack/*"
+              - Sid: AllowLambdaToGetParameter
+                Action:
+                  - ssm:GetParameter
+                Effect: Allow
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*"
+
+  ScanEcrImagesLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: LambdaECRImagesScanStarter
+      Description: The lambda execute the scan of the latest versions of ECR repository images
+      Runtime: nodejs22.x
+      Handler: index.lambda_handler
+      Code: 
+        ZipFile: |
+          const { ECRClient, DescribeRepositoriesCommand, DescribeRegistryCommand, DescribeImagesCommand, StartImageScanCommand } = require("@aws-sdk/client-ecr");
+
+          const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+          async function getAllElements(func, param, ...args) {
+            let nextToken = undefined;
+            let first = true
+            let elements = []
+            while(first || nextToken) {
+              first = false;
+              let result = await func(...args, nextToken)
+              nextToken = result.nextToken
+              elements = elements.concat(result[param])
+            }
+            return elements
+          }
+
+          async function getRegistryId(awsClient) {
+            const input = {};
+            const command = new DescribeRegistryCommand(input);
+            const response = await awsClient.send(command);
+            return response.registryId;
+          }
+
+          async function getRepositoriesList(awsClient, registryId, nextToken){
+            const input = { // DescribeRepositoriesRequest
+              registryId: registryId,
+              maxResults:  100,
+            };
+            nextToken ? input.nextToken = nextToken : null
+            const command = new DescribeRepositoriesCommand(input);
+            const response = await awsClient.send(command);
+            return response
+          }
+
+
+          async function getRepositoryImagesDescription(awsClient, registryId, repositoryName, nextToken){
+            const input = { // ListImagesRequest
+              registryId: registryId,
+              repositoryName: repositoryName, // required
+              maxResults: 100,
+              filter: { // ListImagesFilter
+                tagStatus: "TAGGED"
+              },
+            };
+            nextToken ? input.nextToken = nextToken : null
+            const command = new DescribeImagesCommand(input);
+            const response = await awsClient.send(command);
+            return response
+          }
+
+          async function startImageScan(awsClient, registryId, repositoryName, imageId){
+            const input = { // StartImageScanRequest
+              registryId: registryId,
+              repositoryName: repositoryName, // required
+              imageId: imageId // ImageIdentifier
+            };
+            const command = new StartImageScanCommand(input);
+            const response = await awsClient.send(command);
+            return response
+          }
+
+          function extractLatestImages(images) {
+            const stable = [];
+            const rc = [];
+            const snapshot = [];
+
+            for (const img of images) {
+              const tags = img.imageTags || [];
+              for (const tag of tags) {
+                if (/(?:.*-)?\d+\.\d+\.\d+$/.test(tag)) {
+                  stable.push({ ...img, matchedTag: tag });
+                } else if (/(?:.*-)?\d+\.\d+\.\d+-RC\.\d+$/.test(tag)) {
+                  rc.push({ ...img, matchedTag: tag });
+                } else if (/(?:.*-)?\d+\.\d+\.\d+-SNAPSHOT$/.test(tag)) {
+                  snapshot.push({ ...img, matchedTag: tag });
+                }
+              }
+            }
+
+            const sortDesc = (a, b) => new Date(b.imagePushedAt) - new Date(a.imagePushedAt);
+
+            return [
+              ...stable.sort(sortDesc).slice(0, 2),
+              ...rc.sort(sortDesc).slice(0, 1),
+              ...snapshot.sort(sortDesc).slice(0, 1)
+            ];
+          }
+
+          exports.lambda_handler = async (event) => {
+
+            /**Initializing**/
+            const now = new Date();
+            now.setMonth(now.getMonth() - 6);
+            const startingScanDate = now.toISOString()
+            const ecrClient = new ECRClient();
+            
+            /**Retrieving registry id**/
+            const registryId = await getRegistryId(ecrClient);
+
+            /**Retrieving repositories*/
+            const repositoriesList = await getAllElements(getRepositoriesList, 'repositories', ecrClient, registryId)
+            for(const repository of repositoriesList) {
+              const repositoryName = repository.repositoryName
+                      
+              /**Retrieving images of repository*/
+              const imagesDescription = await getAllElements(getRepositoryImagesDescription, 'imageDetails', ecrClient, registryId, repositoryName)
+              const images = extractLatestImages(imagesDescription);
+              console.log(`${repositoryName} - ${images.length}`)
+              
+              sleep(1000)
+
+              for(const image of images) {
+                console.log(image.matchedTag)
+                /**Starting image scan**/
+                const response = await startImageScan(ecrClient, registryId, repositoryName, image)
+              }
+            }
+          }
+
+      MemorySize: 128
+      Timeout: 300
+      Role: !GetAtt LambdaECRImagesScanStarterRole.Arn
+
+  LambdaECRImagesScanStarterRole:
+    DeletionPolicy: Delete
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaECRImagesScanStarterRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref "AWS::AccountId"
+      Path: /
+      Policies:
+        - PolicyName: "LambdaECRImagesScanStarterPolicy"
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: AllowLambdaToCreateLogs
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Effect: Allow
+                Resource: !GetAtt LambdaScannerLogGroup.Arn
+              - Sid: AllowLambdaToCreateLogGroup
+                Action:
+                  - logs:CreateLogGroup
+                Effect: Allow
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+              - Sid: AllowLambdaToRegistry
+                Action:
+                  - ecr:DescribeRegistry
+                Effect: Allow
+                Resource: 
+                  - "*"
+              - Sid: AllowLambdaToEcrReadOnly
+                Action:
+                  - ecr:DescribeImages
+                  - ecr:DescribeRepositories
+                Effect: Allow
+                Resource: 
+                  - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:*"
+              - Sid: AllowLambdaToEcrExecuteScan
+                Action:
+                  - ecr:StartImageScan
+                Effect: Allow
+                Resource: 
+                  - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*"
+
+  # Log Group Target of the Event Bridge Rule
+  LambdaScannerLogGroup:
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Retain
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/lambda/LambdaECRImagesScanStarter"
+      RetentionInDays: 14
+
+  ScanLambdaEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Rule to trigger LambdaECRImagesScanStarter"
+      ScheduleExpression: !Sub "cron(${CronExpressionScanEcrLambda})"
+      State: !Ref StatusScheduleScanEcrLambdaRule
+      Targets:
+        - Arn: !GetAtt ScanEcrImagesLambda.Arn
+          Id: "LambdaECRImagesScanStarter"
+
+
+  PermissionForEventsToInvokeScanECRLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ScanEcrImagesLambda
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ScanLambdaEventRule.Arn
