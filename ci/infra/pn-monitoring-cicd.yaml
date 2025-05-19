@@ -3,16 +3,6 @@ Description: 'This template deploys an EventBridge Rule and CloudWatch alarm to 
 
 Parameters:
 
-  SlackChannelTemplate:
-    Type: String
-    Description: template format
-    Default: "slack_channel_template"
-
-  SlackAppToken:
-    Type: String
-    Description: template format
-    Default: "slack/app_token"
-  
   CronExpressionScanEcrLambda:
     Type: String
     Default: "0 9 * * ? *"
@@ -24,6 +14,7 @@ Parameters:
     AllowedValues:
       - ENABLED
       - DISABLED
+
 Resources:
 
   # Rule triggered when a Critical Vulnerabilities is detected by the ECR Scan
@@ -155,13 +146,12 @@ Resources:
       ReservedConcurrentExecutions: 1
       Environment:
         Variables:
-          SLACK_CHANNEL_TEMPLATE: !Ref SlackChannelTemplate
-          SLACK_APP_TOKEN: !Ref SlackAppToken
+          SLACK_CHANNEL_TEMPLATE: '{{resolve:ssm:slack_channel_template}}'
+          SLACK_APP_TOKEN: 'slack/app_token'
       Handler: index.handler
       Code: 
         ZipFile: |
           const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
-          const { SSMClient, GetParameterCommand } = require('@aws-sdk/client-ssm');
           const https = require('https');
           const util = require('util');
 
@@ -174,20 +164,9 @@ Resources:
             return JSON.parse(response.SecretString);
           }
 
-          async function getParamValue(awsClient, paramName) {
-            const input = {
-              Name: paramName,
-            }
-            const command = new GetParameterCommand(input);
-            const response = await awsClient.send(command);
-            const json = response.Parameter.Value;
-            return JSON.parse(json)
-          }
-
           function prepareTagList(tagList){
             return tagList.map(item => `- \`${item}\``).join('\n');
           }
-
 
           function prepareMessage(detailType, event, templateMap) {
             const template = templateMap[detailType];
@@ -228,8 +207,7 @@ Resources:
               const secretsManagerClient = new SecretsManagerClient();
               const slackToken = await getSecretValue(secretsManagerClient, "slack/app_token");
 
-              const ssmClient = new SSMClient();
-              const channelTemplate = await getParamValue(ssmClient, "slack_channel_template");
+              const channelTemplate = process.env.SLACK_CHANNEL_TEMPLATE;
 
               const detailType = event["detail-type"].replace(/\s/g, "");
 
