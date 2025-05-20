@@ -149,7 +149,7 @@ Resources:
           }
 
           function prepareTagList(tagList){
-            return tagList.map(item => `- \`${item.length > 10 ? item.slice(0, 25) + "..." : item}\``).join('\n');
+            return tagList.map(item => `- \`${item.length > 30 ? item.slice(0, 30) + "..." : item}\``).join('\n');
           }
 
           function prepareMessage(detailType, event, templateMap) {
@@ -271,9 +271,9 @@ Resources:
           const { ECRClient, DescribeRepositoriesCommand, DescribeRegistryCommand, DescribeImagesCommand, StartImageScanCommand } = require("@aws-sdk/client-ecr");
 
           const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-          const STABLE_REGEX = "/(?:.*-)?\d+\.\d+\.\d+$/";
-          const SNAPSHOT_REGEX = "/(?:.*-)?\d+\.\d+\.\d+-SNAPSHOT$/";
-          const RC_REGEX = "/(?:.*-)?\d+\.\d+\.\d+-RC\.\d+$/";
+          const STABLE_REGEX = /(?:.*-)?\d+\.\d+\.\d+$/;
+          const SNAPSHOT_REGEX = /(?:.*-)?\d+\.\d+\.\d+-SNAPSHOT$/;
+          const RC_REGEX = /(?:.*-)?\d+\.\d+\.\d+-RC\.\d+$/;
 
           async function getAllElements(func, param, ...args) {
             let nextToken = undefined;
@@ -433,10 +433,10 @@ Resources:
                   - ecr:DescribeRegistry
                 Effect: Allow
                 Resource: 
-                  - !Sub "*"
+                  - "*"
                 Condition:
                   StringEquals:
-                    aws:SourceAccount: !Ref "AWS::AccountId"
+                    aws:RequestedRegion: !Ref AWS::Region
               - Sid: AllowLambdaToEcrReadOnly
                 Action:
                   - ecr:DescribeImages
