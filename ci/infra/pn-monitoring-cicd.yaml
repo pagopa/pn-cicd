@@ -128,14 +128,11 @@ Resources:
       Description: The lambda sends message to slack channel
       Runtime: nodejs22.x
       ReservedConcurrentExecutions: 1
-      Environment:
-        Variables:
-          SLACK_CHANNEL_TEMPLATE: '{{resolve:ssm:slack_channel_template}}'
-          SLACK_APP_TOKEN: 'slack/app_token'
       Handler: index.handler
       Code: 
         ZipFile: |
           const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
+          const { SSMClient, GetParameterCommand } = require('@aws-sdk/client-ssm');
           const https = require('https');
           const util = require('util');
 
@@ -146,6 +143,16 @@ Resources:
             const command = new GetSecretValueCommand(input);
             const response = await awsClient.send(command);
             return JSON.parse(response.SecretString);
+          }
+
+          async function getParamValue(awsClient, paramName) {
+            const input = {
+              Name: paramName,
+            }
+            const command = new GetParameterCommand(input);
+            const response = await awsClient.send(command);
+            const json = response.Parameter.Value;
+            return JSON.parse(json)
           }
 
           function prepareTagList(tagList){
@@ -194,7 +201,8 @@ Resources:
               const secretsManagerClient = new SecretsManagerClient();
               const slackToken = await getSecretValue(secretsManagerClient, "slack/app_token");
 
-              const channelTemplate = JSON.parse(process.env.SLACK_CHANNEL_TEMPLATE);
+              const ssmClient = new SSMClient();
+              const channelTemplate = await getParamValue(ssmClient, "slack_channel_template")
 
               const detailType = event["detail-type"].replace(/\s/g, "");
             
