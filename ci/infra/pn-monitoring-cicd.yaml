@@ -128,24 +128,42 @@ Resources:
       Description: The lambda sends message to slack channel
       Runtime: nodejs22.x
       ReservedConcurrentExecutions: 1
-      Environment:
-        Variables:
-          SLACK_CHANNEL_TEMPLATE: '{{resolve:ssm:slack_channel_template}}'
-          SLACK_APP_TOKEN: 'slack/app_token'
       Handler: index.handler
       Code: 
         ZipFile: |
-          const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
           const https = require('https');
           const util = require('util');
 
-          async function getSecretValue(awsClient, secret) {
-            const input = { // GetSecretValueRequest
-              SecretId: secret
-            };
-            const command = new GetSecretValueCommand(input);
-            const response = await awsClient.send(command);
-            return JSON.parse(response.SecretString);
+          async function getParameterOrSecretFromStore(name, isSecret) {
+            let url;
+            if(isSecret) {
+              url = `http://localhost:2773/secretsmanager/get?secretId=${encodeURIComponent(name)}`
+            }
+            else {
+              url = `http://localhost:2773/systemsmanager/parameters/get?name=${encodeURIComponent(
+                name
+              )}`
+            }
+            try {
+              const response = await fetch(
+                url,
+                {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    "X-Aws-Parameters-Secrets-Token": process.env.AWS_SESSION_TOKEN,
+                  },
+                }
+              );
+              
+              const data = await response.json()
+              if(!isSecret)
+                return data.Parameter.Value;
+              return data.SecretString || JSON.stringify(data.SecretBinary);
+            } catch (err) {
+              console.error("Error in get parameter ", err);
+              return ''; // fallback to empty string
+              // throw new Error("Error in get parameter "+parameterName);
+            }
           }
 
           function prepareTagList(tagList){
@@ -191,21 +209,20 @@ Resources:
 
           exports.handler = async (event) => {
             try {
-              const secretsManagerClient = new SecretsManagerClient();
-              const slackToken = await getSecretValue(secretsManagerClient, "slack/app_token");
 
-              const channelTemplate = JSON.parse(process.env.SLACK_CHANNEL_TEMPLATE);
+              const channelTemplate = await getParameterOrSecretFromStore("slack_channel_template", false);
+              const slackToken = await getParameterOrSecretFromStore("slack/app_token", true);
 
               const detailType = event["detail-type"].replace(/\s/g, "");
             
-              const body = prepareMessage(detailType, event, channelTemplate);
+              const body = prepareMessage(detailType, event, JSON.parse(channelTemplate));
               console.log(body)
               if (!body) {
                 console.error("Messaggio Slack non generato. Controlla il contenuto dell'evento:", JSON.stringify(event, null, 2));
                 return { statusCode: 400, body: "Messaggio non generato." };
               }
               
-              const result = await postMessageToSlack(slackToken[detailType], body);
+              const result = await postMessageToSlack(JSON.parse(slackToken)[detailType], body);
               console.log("Messaggio Slack inviato:", result);
               return { statusCode: 200, body: "Messaggio inviato a Slack." };
 
@@ -218,7 +235,8 @@ Resources:
       MemorySize: 128
       Timeout: 120
       Role: !GetAtt SlackNotificationLambdaRole.Arn
-
+      Layers:
+        - !Sub "arn:aws:lambda:eu-central-1:187925254637:layer:AWS-Parameters-and-Secrets-Lambda-Extension:17"
 
   SlackNotificationLambdaRole:
     Type: AWS::IAM::Role
