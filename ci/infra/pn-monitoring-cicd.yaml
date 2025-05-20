@@ -433,7 +433,10 @@ Resources:
                   - ecr:DescribeRegistry
                 Effect: Allow
                 Resource: 
-                  - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:*"
+                  - !Sub "*"
+                Condition:
+                  StringEquals:
+                    aws:SourceAccount: !Ref "AWS::AccountId"
               - Sid: AllowLambdaToEcrReadOnly
                 Action:
                   - ecr:DescribeImages
