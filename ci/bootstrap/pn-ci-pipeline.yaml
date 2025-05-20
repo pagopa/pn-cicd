@@ -214,6 +214,22 @@ Resources:
                   }'
               OutputArtifacts: [ ]
               RunOrder: 2
+            - Name: CreateStack-cicd-monitoring
+              InputArtifacts:
+                - Name: TemplateSource
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              Configuration:
+                ActionMode: REPLACE_ON_FAILURE
+                StackName: pn-cicd-monitoring
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+                RoleArn: !GetAtt 'CFNRole.Arn'
+                TemplatePath: 'TemplateSource::ci/infra/pn-monitoring-cicd.yaml'
+                OutputArtifacts: [ ]
+              RunOrder: 3
 
   CFNRole:
     Type: AWS::IAM::Role
