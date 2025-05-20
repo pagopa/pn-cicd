@@ -1,20 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: 'This template deploys an EventBridge Rule and CloudWatch alarm to monitor vulnerabilities in ECR images'
 
-Parameters:
-
-  CronExpressionScanEcrLambda:
-    Type: String
-    Default: "0 9 * * ? *"
-    Description: "Schedule rule for scan Ecr Lambda"
-  
-  StatusScheduleScanEcrLambdaRule:
-    Default: ENABLED
-    Type: String
-    AllowedValues:
-      - ENABLED
-      - DISABLED
-
 Resources:
 
   # Rule triggered when a Critical Vulnerabilities is detected by the ECR Scan
@@ -163,19 +149,22 @@ Resources:
           }
 
           function prepareTagList(tagList){
-            return tagList.map(item => `- \`${item}\``).join('\n');
+            return tagList.map(item => `- \`${item.length > 10 ? item.slice(0, 25) + "..." : item}\``).join('\n');
           }
 
           function prepareMessage(detailType, event, templateMap) {
-            const template = templateMap[detailType];
+            
+            const template = templateMap[detailType]
 
             if (!template || !event.detail) return null;
-
+            console.log(detailType)
             if (detailType === "ECRImageScan") {
+              
               const repo = event.detail["repository-name"];
               const tags = prepareTagList(event.detail["image-tags"]);
               const critical = event.detail["finding-severity-counts"]?.CRITICAL || 0;
-              console.log(`${repo} ${tags} %{critical}`)
+              console.log(`${repo} ${tags} ${critical}`)
+              
               return util.format(JSON.stringify(template), event["detail-type"], repo, critical, tags)
             }
 
@@ -205,11 +194,12 @@ Resources:
               const secretsManagerClient = new SecretsManagerClient();
               const slackToken = await getSecretValue(secretsManagerClient, "slack/app_token");
 
-              const channelTemplate = process.env.SLACK_CHANNEL_TEMPLATE;
+              const channelTemplate = JSON.parse(process.env.SLACK_CHANNEL_TEMPLATE);
 
               const detailType = event["detail-type"].replace(/\s/g, "");
-
+            
               const body = prepareMessage(detailType, event, channelTemplate);
+              console.log(body)
               if (!body) {
                 console.error("Messaggio Slack non generato. Controlla il contenuto dell'evento:", JSON.stringify(event, null, 2));
                 return { statusCode: 400, body: "Messaggio non generato." };
@@ -224,6 +214,7 @@ Resources:
               return { statusCode: 500, body: "Errore interno" };
             }
           };
+
       MemorySize: 128
       Timeout: 120
       Role: !GetAtt SlackNotificationLambdaRole.Arn
@@ -280,6 +271,9 @@ Resources:
           const { ECRClient, DescribeRepositoriesCommand, DescribeRegistryCommand, DescribeImagesCommand, StartImageScanCommand } = require("@aws-sdk/client-ecr");
 
           const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+          const STABLE_REGEX = "/(?:.*-)?\d+\.\d+\.\d+$/";
+          const SNAPSHOT_REGEX = "/(?:.*-)?\d+\.\d+\.\d+-SNAPSHOT$/";
+          const RC_REGEX = "/(?:.*-)?\d+\.\d+\.\d+-RC\.\d+$/";
 
           async function getAllElements(func, param, ...args) {
             let nextToken = undefined;
@@ -347,11 +341,11 @@ Resources:
             for (const img of images) {
               const tags = img.imageTags || [];
               for (const tag of tags) {
-                if (/(?:.*-)?\d+\.\d+\.\d+$/.test(tag)) {
+                if (STABLE_REGEX.test(tag)) {
                   stable.push({ ...img, matchedTag: tag });
-                } else if (/(?:.*-)?\d+\.\d+\.\d+-RC\.\d+$/.test(tag)) {
+                } else if (RC_REGEX.test(tag)) {
                   rc.push({ ...img, matchedTag: tag });
-                } else if (/(?:.*-)?\d+\.\d+\.\d+-SNAPSHOT$/.test(tag)) {
+                } else if (SNAPSHOT_REGEX.test(tag)) {
                   snapshot.push({ ...img, matchedTag: tag });
                 }
               }
@@ -439,7 +433,7 @@ Resources:
                   - ecr:DescribeRegistry
                 Effect: Allow
                 Resource: 
-                  - "*"
+                  - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:*"
               - Sid: AllowLambdaToEcrReadOnly
                 Action:
                   - ecr:DescribeImages
@@ -456,7 +450,6 @@ Resources:
 
   # Log Group Target of the Event Bridge Rule
   LambdaScannerLogGroup:
-
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: "/aws/lambda/LambdaECRImagesScanStarter"
@@ -466,8 +459,8 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "Rule to trigger LambdaECRImagesScanStarter"
-      ScheduleExpression: !Sub "cron(${CronExpressionScanEcrLambda})"
-      State: !Ref StatusScheduleScanEcrLambdaRule
+      ScheduleExpression: "cron(0 9 * * ? *)"
+      State: ENABLED
       Targets:
         - Arn: !GetAtt ScanEcrImagesLambda.Arn
           Id: "LambdaECRImagesScanStarter"
