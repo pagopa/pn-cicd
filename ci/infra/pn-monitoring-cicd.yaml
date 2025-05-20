@@ -51,8 +51,6 @@ Resources:
       RetentionInDays: 14
 
   SlackNotificationLambdaLogGroup:
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Retain
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: "/aws/lambda/SlackMessageNotificationLambda"
@@ -232,7 +230,6 @@ Resources:
 
 
   SlackNotificationLambdaRole:
-    DeletionPolicy: Delete
     Type: AWS::IAM::Role
     Properties:
       RoleName: SlackNotificationLambdaRole
@@ -405,7 +402,6 @@ Resources:
       Role: !GetAtt LambdaECRImagesScanStarterRole.Arn
 
   LambdaECRImagesScanStarterRole:
-    DeletionPolicy: Delete
     Type: AWS::IAM::Role
     Properties:
       RoleName: LambdaECRImagesScanStarterRole
@@ -460,8 +456,7 @@ Resources:
 
   # Log Group Target of the Event Bridge Rule
   LambdaScannerLogGroup:
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Retain
+
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: "/aws/lambda/LambdaECRImagesScanStarter"
