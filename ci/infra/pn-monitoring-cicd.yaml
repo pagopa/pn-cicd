@@ -131,7 +131,7 @@ Resources:
       Handler: index.handler
       Environment:
         Variables:
-          STATEFULL_BUCKET: !Ref EcrMonitoringBucket
+          STATEFUL_BUCKET: !Ref EcrMonitoringBucket
       Code: 
         ZipFile: |
           const https = require('https');
@@ -285,7 +285,7 @@ Resources:
 
               const channelTemplate = await getParameterOrSecretFromStore("slack_channel_template", false);
               const slackToken = await getParameterOrSecretFromStore("slack/app_token", true);
-              const bucketName = process.env.STATEFULL_BUCKET;
+              const bucketName = process.env.STATEFUL_BUCKET;
               const s3Client = new S3Client();
 
               const fileName = `${event.detail['repository-name']}-${(event.detail['image-digest']).split(':')[1]}.json`
@@ -625,15 +625,7 @@ Resources:
   EcrMonitoringBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub
-        - "pn-ecr-monitoring-${RandomPart}"
-        - RandomPart: !Select
-            - 4
-            - !Split
-              - "-"
-              - !Select
-                  - 2
-                  - !Split ["/", !Ref "AWS::StackId"]
+      BucketName: !Sub pn-ecr-monitoring-${AWS::Region}-${AWS::AccountId}
       LifecycleConfiguration:
         Rules:
           - Id: ExpireAfter3Months
