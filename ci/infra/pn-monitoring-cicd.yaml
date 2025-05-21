@@ -331,7 +331,7 @@ Resources:
       Timeout: 120
       Role: !GetAtt SlackNotificationLambdaRole.Arn
       Layers:
-        - !Sub "arn:aws:lambda:eu-central-1:187925254637:layer:AWS-Parameters-and-Secrets-Lambda-Extension:17"
+        - arn:aws:lambda:eu-central-1:187925254637:layer:AWS-Parameters-and-Secrets-Lambda-Extension:17
 
   SlackNotificationLambdaRole:
     Type: AWS::IAM::Role
