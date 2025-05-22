@@ -34,36 +34,36 @@ aws --profile $CiCdAccountProfile --region $AWSRegion cloudformation deploy \
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides \
       NotificationSNSTopic=$sns_topic_arn \
-      AllowedDeployAccount1=558518206506 \
-      AllowedDeployAccount2=498209326947 \
-      AllowedDeployAccount3=946373734005 \
+      AllowedDeployAccount1=911845998067 \
+      AllowedDeployAccount2=644374009812 \
+      AllowedDeployAccount3=151559006927 \
       \
-      AllowedDeployAccount4=748275689270 \
-      AllowedDeployAccount5=153517439884 \
-      AllowedDeployAccount6=648024184569 \
+      AllowedDeployAccount4=510769970275 \
+      AllowedDeployAccount5=207905393513 \
+      AllowedDeployAccount6=830192246553 \
       \
-      AllowedDeployAccount7=615714398925 \
-      AllowedDeployAccount8=648535372866 \
-      AllowedDeployAccount9=205069730074 \
+      AllowedDeployAccount7=956319218727 \
+      AllowedDeployAccount8=771887334808 \
+      AllowedDeployAccount9=350578575906 \
       \
-      AllowedDeployAccount10=734487133479 \
-      AllowedDeployAccount11=603228414473 \
-      AllowedDeployAccount12=354805605941 \
+      AllowedDeployAccount10=839620963891 \
+      AllowedDeployAccount11=089813480515 \
+      AllowedDeployAccount12=170533023216 \
       \
-      AllowedDeployAccount13=207905393513 \
-      AllowedDeployAccount14=063295570123 \
-      AllowedDeployAccount15=839620963891 \
+      AllowedDeployAccount13=891377202032 \
+      AllowedDeployAccount14=730335668132 \
+      AllowedDeployAccount15=911845998067 \
       \
       AllowedDeployAccount16=911845998067 \
       AllowedDeployAccount17=911845998067 \
       AllowedDeployAccount18=911845998067 \
       \
-      AllowedDeployAccount19=830192246553 \
-      AllowedDeployAccount20=089813480515 \
-      AllowedDeployAccount21=644374009812 \
-      AllowedDeployAccount22=956319218727 \
-      AllowedDeployAccount23=510769970275 \
-      AllowedDeployAccount24=350578575906 \
+      AllowedDeployAccount19=911845998067 \
+      AllowedDeployAccount20=911845998067 \
+      AllowedDeployAccount21=911845998067 \
+      AllowedDeployAccount22=911845998067 \
+      AllowedDeployAccount23=911845998067 \
+      AllowedDeployAccount24=911845998067 \
       \
       AllowedDeployAccount25=911845998067 \
       AllowedDeployAccount26=911845998067 \
