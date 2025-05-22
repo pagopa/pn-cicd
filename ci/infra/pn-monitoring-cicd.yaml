@@ -129,10 +129,72 @@ Resources:
       Runtime: nodejs22.x
       ReservedConcurrentExecutions: 1
       Handler: index.handler
+      Environment:
+        Variables:
+          STATEFUL_BUCKET: !Ref EcrMonitoringBucket
       Code: 
         ZipFile: |
           const https = require('https');
           const util = require('util');
+          const { S3Client, GetObjectCommand, PutObjectCommand } = require("@aws-sdk/client-s3");
+          const { ECRClient, DescribeRegistryCommand, DescribeImageScanFindingsCommand } = require("@aws-sdk/client-ecr");
+
+          async function getJsonFromS3(awsClient, bucket, key) {
+            const s3 = new S3Client();
+            const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+
+            try {
+              const response = await awsClient.send(command);
+
+              const streamToString = (stream) =>
+                new Promise((resolve, reject) => {
+                  const chunks = [];
+                  stream.on("data", (chunk) => chunks.push(chunk));
+                  stream.on("error", reject);
+                  stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+                });
+
+              const data = await streamToString(response.Body);
+              return JSON.parse(data);
+
+            } catch (err) {
+              if (err.name === "NoSuchKey" || err.$metadata?.httpStatusCode === 404) {
+                console.warn(`File non trovato: s3://${bucket}/${key}`);
+                return {}; // ← fallback: oggetto vuoto
+              } else {
+                console.error("Errore nel recupero da S3:", err);
+                throw err; // altri errori li rilancio
+              }
+            }
+          }
+
+          async function putJsonToS3(awsClient, bucketName, key, data) {
+            const fileContent = JSON.stringify(data, null, 2);
+
+            const params = {
+              Bucket: bucketName,
+              Key: key,
+              Body: fileContent,
+              ContentType: "application/json"
+            };
+            await awsClient.send(new PutObjectCommand(params));
+            console.log(`File caricato su S3: s3://${bucketName}/${key}`);
+          }
+
+          async function describeImageScanFindings(awsClient, registryId, event) {
+            const input = { // DescribeImageScanFindingsRequest
+              registryId: registryId,
+              repositoryName: event['repository-name'], // required
+              imageId: {
+                imageDigest: event['image-digest'],
+                imageTag: event['image-tags'][0],
+              },
+              maxResults: 100,
+            };
+            const command = new DescribeImageScanFindingsCommand(input);
+            const response = await awsClient.send(command);
+            return response
+          }
 
           async function getParameterOrSecretFromStore(name, isSecret) {
             let url;
@@ -166,11 +228,22 @@ Resources:
             }
           }
 
+          async function getRegistryId(awsClient) {
+            const input = {};
+            const command = new DescribeRegistryCommand(input);
+            const response = await awsClient.send(command);
+            return response.registryId;
+          }
+
           function prepareTagList(tagList){
             return tagList.map(item => `- \`${item.length > 30 ? item.slice(0, 30) + "..." : item}\``).join('\n');
           }
 
-          function prepareMessage(detailType, event, templateMap) {
+          function prepareFindingList(findingsList){
+            return findingsList.map(item => `- <${item.uri}|${item.name}>`).join('\n');
+          }
+
+          function prepareMessage(detailType, event, vulnerabilities ,templateMap) {
             
             const template = templateMap[detailType]
 
@@ -180,7 +253,7 @@ Resources:
               
               const repo = event.detail["repository-name"];
               const tags = prepareTagList(event.detail["image-tags"]);
-              const critical = event.detail["finding-severity-counts"]?.CRITICAL || 0;
+              const critical = vulnerabilities;
               console.log(`${repo} ${tags} ${critical}`)
               
               return util.format(JSON.stringify(template), event["detail-type"], repo, critical, tags)
@@ -212,10 +285,32 @@ Resources:
 
               const channelTemplate = await getParameterOrSecretFromStore("slack_channel_template", false);
               const slackToken = await getParameterOrSecretFromStore("slack/app_token", true);
+              const bucketName = process.env.STATEFUL_BUCKET;
+              const s3Client = new S3Client();
 
+              const fileName = `${event.detail['repository-name']}-${(event.detail['image-digest']).split(':')[1]}.json`
+              const lastState = await getJsonFromS3(s3Client, bucketName, fileName)
+              
               const detailType = event["detail-type"].replace(/\s/g, "");
+
+              const ecrClient = new ECRClient();
             
-              const body = prepareMessage(detailType, event, JSON.parse(channelTemplate));
+              /**Retrieving registry id**/
+              const registryId = await getRegistryId(ecrClient);
+
+              const { imageScanFindings } = await describeImageScanFindings(ecrClient, registryId, event.detail)
+              const criticalFindings = prepareFindingList(imageScanFindings.findings.filter(x => {
+                return x.severity === 'CRITICAL'
+              }))
+
+              if(criticalFindings === lastState) {
+                return { statusCode: 200, body: "Messaggio non inviato a Slack. Criticità già note." };
+              }
+              else {
+                await putJsonToS3(s3Client, bucketName, fileName, criticalFindings)
+              }
+
+              const body = prepareMessage(detailType, event, criticalFindings, JSON.parse(channelTemplate));
               console.log(body)
               if (!body) {
                 console.error("Messaggio Slack non generato. Controlla il contenuto dell'evento:", JSON.stringify(event, null, 2));
@@ -236,7 +331,7 @@ Resources:
       Timeout: 120
       Role: !GetAtt SlackNotificationLambdaRole.Arn
       Layers:
-        - !Sub "arn:aws:lambda:eu-central-1:187925254637:layer:AWS-Parameters-and-Secrets-Lambda-Extension:17"
+        - arn:aws:lambda:eu-central-1:187925254637:layer:AWS-Parameters-and-Secrets-Lambda-Extension:17
 
   SlackNotificationLambdaRole:
     Type: AWS::IAM::Role
@@ -276,6 +371,33 @@ Resources:
                   - ssm:GetParameter
                 Effect: Allow
                 Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*"
+              - Sid: AllowLambdaToS3
+                Effect: Allow
+                Action:
+                  - s3:GetReplicationConfiguration
+                  - s3:ListBucket
+                  - s3:GetObjectVersion
+                  - s3:GetObjectVersionAcl
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource:
+                  - !Sub ${EcrMonitoringBucket.Arn}
+                  - !Sub ${EcrMonitoringBucket.Arn}/*
+              - Sid: AllowLambdaToRegistry
+                Action:
+                  - ecr:DescribeRegistry
+                Effect: Allow
+                Resource: 
+                  - "*"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+              - Sid: AllowLambdaToDescribeEcrScan
+                Action:
+                  - ecr:DescribeImageScanFindings
+                Effect: Allow
+                Resource: 
+                  - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*"
 
   ScanEcrImagesLambda:
     Type: AWS::Lambda::Function
@@ -404,7 +526,12 @@ Resources:
               for(const image of images) {
                 console.log(image.matchedTag)
                 /**Starting image scan**/
-                const response = await startImageScan(ecrClient, registryId, repositoryName, image)
+                try {
+                  const response = await startImageScan(ecrClient, registryId, repositoryName, image)
+                }
+                catch (err) {
+                  console.error("Scan error:", err);
+                }
               }
             }
           }
@@ -494,3 +621,13 @@ Resources:
       FunctionName: !Ref ScanEcrImagesLambda
       Principal: events.amazonaws.com
       SourceArn: !GetAtt ScanLambdaEventRule.Arn
+
+  EcrMonitoringBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub pn-ecr-monitoring-${AWS::Region}-${AWS::AccountId}
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireAfter3Months
+            Status: Enabled
+            ExpirationInDays: 90
