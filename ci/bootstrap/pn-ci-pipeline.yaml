@@ -257,6 +257,8 @@ Resources:
                   - 's3:*'
                   - 'codeartifact:*'
                   - 'events:*'
+                  - 'logs:*'
+                  - 'lambda:*'
                 Effect: Allow
                 Resource: '*'
 
