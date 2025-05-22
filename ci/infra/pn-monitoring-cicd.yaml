@@ -240,7 +240,9 @@ Resources:
           }
 
           function prepareFindingList(findingsList){
-            return findingsList.map(item => `- <${item.uri}|${item.name}>`).join('\n');
+            return findingsList.sort((a, b) => a.name.localeCompare(b.name))
+                  .map(item => `- <${item.uri}|${item.name}>`)
+                  .join('\n');
           }
 
           function prepareMessage(detailType, event, vulnerabilities ,templateMap) {
