@@ -6633,7 +6633,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
-      Name: !Sub '${ProjectName}-action-manager-update-pipeline'
+      Name: !Sub '${ProjectName}-timeline-service-update-pipeline'
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
