@@ -2196,6 +2196,10 @@ Resources:
               - rds:DescribeDBClusters
               - rds:ModifyDBCluster
               - rds:DeleteDBCluster
+              - rds:CreateDBInstance"
+              - rds:DescribeDBInstances
+              - rds:ModifyDBInstance
+              - rds:DeleteDBInstance 
               - rds:CreateDBSubnetGroup
               - rds:DescribeDBSubnetGroups
               - rds:ModifyDBSubnetGroup
