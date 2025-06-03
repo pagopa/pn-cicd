@@ -2199,7 +2199,8 @@ Resources:
               - rds:CreateDBInstance
               - rds:DescribeDBInstances
               - rds:ModifyDBInstance
-              - rds:DeleteDBInstance 
+              - rds:DeleteDBInstance
+              - rds:RebootDBInstance 
               - rds:CreateDBSubnetGroup
               - rds:DescribeDBSubnetGroups
               - rds:ModifyDBSubnetGroup
