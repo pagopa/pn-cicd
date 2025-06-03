@@ -516,6 +516,8 @@ echo ""
 echo "=== Deploy PN-Monitoring FOR $env_type ACCOUNT"
 MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-monitoring.yaml 
 
+ParamFilePath=pn-infra/runtime-infra/pn-monitoring-${env_type}-cfg.json
+
 if [[ -f "$MONITORING_STACK_FILE" ]]; then
     echo "$MONITORING_STACK_FILE exists, updating monitoring stack"
 
