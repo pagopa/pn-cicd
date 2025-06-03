@@ -1280,30 +1280,29 @@ Resources:
                 - Name: PnStreamOutput
               RunOrder: 4
 
-            # Update portfat
-            #- Name: Update_PnPortfat
-            #  ActionTypeId:
-            #    Category: Build
-            #    Owner: AWS
-            #    Version: 1
-            #    Provider: CodeBuild
-            #  Configuration:
-            #    ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-            #    PrimarySource: DesiredCommitIdsAndScripts
-            #    EnvironmentVariables: !Sub '[
-            #        {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-            #        {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-            #        {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-            #        {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
-            #        {"name":"MsName", "value":"pn-portfat", "type":"PLAINTEXT"},
-            #        {"name":"MsNumber", "value":"26", "type":"PLAINTEXT"},
-            #        {"name":"VarPrefix", "value":"pn_portfat", "type":"PLAINTEXT"}
-            #      ]'
-            #  InputArtifacts:
-            #    - Name: DesiredCommitIdsAndScripts
-            #  OutputArtifacts:
-            #    - Name: PnPortfatOutput
-            #  RunOrder: 4
+            - Name: Update_PnPortfat
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-portfat", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"26", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_portfat", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnPortfatOutput
+              RunOrder: 4
 
             # Update pn-delayer
             #- Name: Update_PnDelayer
