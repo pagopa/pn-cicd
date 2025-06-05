@@ -2818,6 +2818,7 @@ Resources:
               - events:Remove*
               - events:*Tag*
               - events:*
+              - scheduler:*
             Resource:
               - "*"
           - Effect: Allow
