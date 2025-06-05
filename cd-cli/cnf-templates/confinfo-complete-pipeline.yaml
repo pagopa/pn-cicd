@@ -2217,6 +2217,12 @@ Resources:
               - rds:FailoverDBCluster
             Resource: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*
           - Effect: Allow
+            Action: "iam:CreateServiceLinkedRole"
+            Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
+            Condition:
+              StringLike:
+                "iam:AWSServiceName": "rds.amazonaws.com"
+          - Effect: Allow
             Action:
               - ssm:GetParameters
               - ssm:GetParameter
