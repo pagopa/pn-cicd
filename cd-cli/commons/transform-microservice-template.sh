@@ -53,7 +53,7 @@ dump_params(){
   echo "Template File Path:          ${template_file_path}"
 }
 
-transformations=("InjectEnvTypeTransform")
+transformations=("CfTransform")
 
 parse_params "$@"
 dump_params
