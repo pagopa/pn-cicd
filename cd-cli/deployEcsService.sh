@@ -414,6 +414,9 @@ jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * .[2]" \
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
 cat ${EnanchedParamFilePath}
 
+##Add transform in microservice template
+echo "Add transform in microservice template"
+(sh ${cwdir}/commons/transform-microservice-improvement.sh -f ${TemplateFilePath})
 
 echo ""
 echo "=== Deploy $microcvs_name MICROSERVICE FOR $env_type ACCOUNT"
