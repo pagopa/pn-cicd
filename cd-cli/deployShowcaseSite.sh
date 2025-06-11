@@ -381,7 +381,7 @@ replace_config() {
   echo '{}' > $LocalFilePath
   
   jq -s ".[0] * .[1]" ./conf/config-$1.json ${LocalFilePath} > ./conf/config.json
-  rm -f ./conf/config-$1.json
+  rm -f ./conf/config-dev.json
 }
 
 
