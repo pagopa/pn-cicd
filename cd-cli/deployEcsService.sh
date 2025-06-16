@@ -416,7 +416,7 @@ cat ${EnanchedParamFilePath}
 
 ##Add transform in microservice template
 echo "Add transform in microservice template"
-(bash ${cwdir}/commons/transform-microservice-template.sh -f ${TemplateFilePath})
+bash ${cwdir}/commons/transform-microservice-template.sh -f ${TemplateFilePath}
 
 echo ""
 echo "=== Deploy $microcvs_name MICROSERVICE FOR $env_type ACCOUNT"
