@@ -318,7 +318,7 @@ fi
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-infra.yaml
 EnanchedParamFilePath=pn-infra-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\",\"ProjectName=$project_name\",\"EnvironmentType=$env_type\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
@@ -435,7 +435,7 @@ echo "=== Prepare parameters for pn-ipc.yaml deployment in $env_type ACCOUNT"
 PreviousOutputFilePath=pn-infra-${env_type}-out.json
 TemplateFilePath=pn-infra/runtime-infra/pn-ipc.yaml
 EnanchedParamFilePath=pn-ipc-${env_type}-cfg-enanched.json
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\",\"EnvironmentType=$env_type\"${OptionalParams}"
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\"${OptionalParams}"
 
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
@@ -683,7 +683,7 @@ CN_STACK_FILE=pn-infra/runtime-infra/pn-cn.yaml
 if [[ -f "$CN_STACK_FILE" ]]; then
     echo "$CN_STACK_FILE exists, updating backup stack"
 
-    PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"BucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",\"EnvironmentType=$env_type\"${OptionalParams}"
+    PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"BucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\"${OptionalParams}"
     
     echo ""
     echo "= Read Parameters file"
