@@ -375,6 +375,14 @@ landingDistributionId=${distributionId}
 landingTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 landingTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
+# replace config files in build artifact
+replace_config() {
+  LocalFilePath=/tmp/config.json
+  echo '{}' > $LocalFilePath
+  
+  jq -s ".[0] * .[1]" ./conf/config-$1.json ${LocalFilePath} > ./conf/config.json
+  rm -f ./conf/config-dev.json
+}
 
 
 echo ""
@@ -433,10 +441,10 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
       --bucket "$LambdasBucketName" --key "pn-showcase-site/commits/${pn_showcase_site_commitid}/pn-showcase-site.tar.gz" \
       "pn-showcase-site.tar.gz"
 
-# showcase site has a different config management - we use env variables but they are the same for each env
 mkdir -p "pn-showcase-site"
 ( cd "pn-showcase-site" \
      && tar xvzf "../pn-showcase-site.tar.gz" \
+     && replace_config ${env_type}
 )
 
 aws ${aws_command_base_args} \
