@@ -2407,6 +2407,10 @@ Resources:
               - "athena:*WorkGroup*" 
               - "athena:*Tag*"                     
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - "synthetics:*"                  
+            Resource: "*"
 
   
   CodeBuildPolicyR53:
