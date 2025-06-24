@@ -378,16 +378,18 @@ landingTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 # replace config files in build artifact
 replace_config() {
   echo " === replace_config for env_type=$1"
-  
+  pwd
+
   LocalFilePath=/tmp/config.json
   echo '{}' > $LocalFilePath
 
   if ( [ $1 == 'dev' ] ) then
     configRootPath=.
   else
-    configRootPath=../pn-showcase-site
+    configRootPath=../../pn-showcase-site
   fi
 
+  ls ../../pn-showcase-site
   
   jq -s ".[0] * .[1]" $configRootPath/conf/config-$1.json ${LocalFilePath} > ./conf/config.json
   rm -f ./conf/config-dev.json
