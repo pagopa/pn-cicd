@@ -453,7 +453,7 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 mkdir -p "pn-showcase-site"
 ( cd "pn-showcase-site" \
      && tar xvzf "../pn-showcase-site.tar.gz" \
-     && ls ../
+     && ls ../ \
      && replace_config ${env_type}
 )
 
