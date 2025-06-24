@@ -377,10 +377,19 @@ landingTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
 # replace config files in build artifact
 replace_config() {
+  echo " === replace_config for env_type=$1"
+  
   LocalFilePath=/tmp/config.json
   echo '{}' > $LocalFilePath
+
+  if ( [ $1 == 'dev' ] ) then
+    configRootPath=.
+  else
+    configRootPath=../pn-showcase-site
+  fi
+
   
-  jq -s ".[0] * .[1]" ./conf/config-$1.json ${LocalFilePath} > ./conf/config.json
+  jq -s ".[0] * .[1]" $configRootPath/conf/config-$1.json ${LocalFilePath} > ./conf/config.json
   rm -f ./conf/config-dev.json
 }
 
@@ -444,6 +453,7 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 mkdir -p "pn-showcase-site"
 ( cd "pn-showcase-site" \
      && tar xvzf "../pn-showcase-site.tar.gz" \
+     && ls ../
      && replace_config ${env_type}
 )
 
