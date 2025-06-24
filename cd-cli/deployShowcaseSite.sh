@@ -409,7 +409,7 @@ echo "====================================================================="
 MAPS_DOMAIN=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.Core_MapsDomain' )
 MAPS_CERTIFICATE_ARN=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.Core_MapsCertificateArn' )
 
-LOCATION_PROXY_STACK_NAME="${project_name}-location-proxy-${env_type}"
+LOCATION_PROXY_STACK_NAME="${project_name}-showcase-maps-proxy-${env_type}"
 
 deployLocationProxyStack \
   "$LOCATION_PROXY_STACK_NAME" \
