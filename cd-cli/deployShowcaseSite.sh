@@ -406,8 +406,9 @@ echo "====================================================================="
 echo "===           DEPLOY LOCATION SERVICE PROXY                       ==="
 echo "====================================================================="
 
-MAPS_DOMAIN=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.Core_MapsDomain' )
-MAPS_CERTIFICATE_ARN=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.Core_MapsCertificateArn' )
+MAPS_DOMAIN=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.MapsDomain' )
+MAPS_CERTIFICATE_ARN=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.MapsCertificateArn' )
+
 
 LOCATION_PROXY_STACK_NAME="${project_name}-showcase-maps-proxy-${env_type}"
 
