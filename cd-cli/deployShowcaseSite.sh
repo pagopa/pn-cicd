@@ -336,6 +336,32 @@ function prepareOneCloudFront() {
   echo " - Created bucket name: ${bucketName}"
 }
 
+function deployLocationProxyStack() {
+  local stackName=$1
+  local mapsDomain=$2
+  local mapsCertArn=$3
+  local hostedZoneId=$4
+  local environment=$5
+  local templateUrl=$6
+  local alarmsSnsTopicArn=$7
+
+  echo "=== Deploying Location Service Proxy Stack: ${stackName}"
+  
+  aws ${aws_command_base_args} \
+    cloudformation deploy \
+      --stack-name "${stackName}" \
+      --template-file pn-showcase-site/aws-cdn-templates/location-maps-proxy.yaml \
+      --capabilities CAPABILITY_NAMED_IAM \
+      --parameter-overrides \
+        Name="${stackName}" \
+        MapsWebDomain="${mapsDomain}" \
+        MapsWebCertificateArn="${mapsCertArn}" \
+        HostedZoneId="${hostedZoneId}" \
+        Environment="${environment}" \
+        TemplateBucketBaseUrl="${templateUrl}" \
+        AlarmSNSTopicArn="${alarmsSnsTopicArn}"
+}
+
 
 ZONE_ID=""
 SHOWCASE_SITE_CERTIFICATE_ARN=""
@@ -374,6 +400,39 @@ landingBucketName=${bucketName}
 landingDistributionId=${distributionId}
 landingTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 landingTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
+
+echo ""
+echo "====================================================================="
+echo "===           DEPLOY LOCATION SERVICE PROXY                       ==="
+echo "====================================================================="
+
+MAPS_DOMAIN=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.Core_MapsDomain' )
+MAPS_CERTIFICATE_ARN=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.Core_MapsCertificateArn' )
+
+LOCATION_PROXY_STACK_NAME="${project_name}-location-proxy-${env_type}"
+
+deployLocationProxyStack \
+  "$LOCATION_PROXY_STACK_NAME" \
+  "$MAPS_DOMAIN" \
+  "$MAPS_CERTIFICATE_ARN" \
+  "$ZONE_ID" \
+  "$env_type" \
+  "$templateBucketHttpsBaseUrl" \
+  "$AlarmSNSTopicArn"
+
+apiId=$( aws ${aws_command_base_args} \
+  cloudformation describe-stacks \
+    --stack-name "$LOCATION_PROXY_STACK_NAME" \
+    --output json \
+| jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"ApiId\") | .OutputValue" )
+
+aws ${aws_command_base_args} \
+  apigateway create-deployment \
+    --rest-api-id "${apiId}" \
+    --stage-name "unique" \
+    --description "Auto-deployment from CI/CD"
+
+
 
 # replace config files in build artifact
 replace_config() {
