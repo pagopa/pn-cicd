@@ -407,7 +407,7 @@ EnhancedParamFilePath="location-maps-proxy-${env_type}-cfg-enhanced.json"
 PipelineParams="\"TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}\",\"Name=${LOCATION_PROXY_STACK_NAME}\""
 
 echo "= Enhanced parameters file"
-jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * .[2]" \
+jq -s "{ \"Parameters\": .[0] } * .[1] * .[2]" \
    ${INFRA_ALL_OUTPUTS_FILE} ${TERRAFORM_OUTPUTS_FILE} ${LocationProxyConfigFile} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnhancedParamFilePath}
