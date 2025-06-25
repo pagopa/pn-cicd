@@ -338,13 +338,8 @@ function prepareOneCloudFront() {
 
 function deployLocationProxyStack() {
   local stackName=$1
-  local mapsDomain=$2
-  local mapsCertArn=$3
-  local hostedZoneId=$4
-  local environment=$5
-  local templateUrl=$6
-  local alarmsSnsTopicArn=$7
-
+  local enhancedParamsFile=$2
+  
   echo "=== Deploying Location Service Proxy Stack: ${stackName}"
   
   aws ${aws_command_base_args} \
@@ -352,14 +347,7 @@ function deployLocationProxyStack() {
       --stack-name "${stackName}" \
       --template-file pn-showcase-site/aws-cdn-templates/location-maps-proxy.yaml \
       --capabilities CAPABILITY_NAMED_IAM \
-      --parameter-overrides \
-        Name="${stackName}" \
-        MapsWebDomain="${mapsDomain}" \
-        MapsWebCertificateArn="${mapsCertArn}" \
-        HostedZoneId="${hostedZoneId}" \
-        Environment="${environment}" \
-        TemplateBucketBaseUrl="${templateUrl}" \
-        AlarmSNSTopicArn="${alarmsSnsTopicArn}"
+      --parameter-overrides file://${enhancedParamsFile}
 }
 
 
@@ -406,20 +394,27 @@ echo "====================================================================="
 echo "===           DEPLOY LOCATION SERVICE PROXY                       ==="
 echo "====================================================================="
 
-MAPS_DOMAIN=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.MapsDomain' )
-MAPS_CERTIFICATE_ARN=$( cat ${work_dir}/${TERRAFORM_OUTPUTS_FILE} | jq -r '.Parameters.MapsCertificateArn' )
+echo "=== Prepare enhanced parameters for location proxy deployment"
+LocationProxyConfigFile="pn-showcase-site/aws-cdn-templates/location-maps-proxy-${env_type}-cfg.json"
 
+if [ ! -f ${LocationProxyConfigFile} ]; then
+  echo "{ \"Parameters\": {} }" > ${LocationProxyConfigFile}
+fi
 
-LOCATION_PROXY_STACK_NAME="${project_name}-showcase-maps-proxy-${env_type}"
+LOCATION_PROXY_STACK_NAME="${project_name}-location-proxy-${env_type}"
 
-deployLocationProxyStack \
-  "$LOCATION_PROXY_STACK_NAME" \
-  "$MAPS_DOMAIN" \
-  "$MAPS_CERTIFICATE_ARN" \
-  "$ZONE_ID" \
-  "$env_type" \
-  "$templateBucketHttpsBaseUrl" \
-  "$AlarmSNSTopicArn"
+EnhancedParamFilePath="location-maps-proxy-${env_type}-cfg-enhanced.json"
+PipelineParams="\"TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}\",\"Name=${LOCATION_PROXY_STACK_NAME}\""
+
+echo "= Enhanced parameters file"
+jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * .[2]" \
+   ${INFRA_ALL_OUTPUTS_FILE} ${TERRAFORM_OUTPUTS_FILE} ${LocationProxyConfigFile} \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnhancedParamFilePath}
+echo "${PipelineParams} ]" >> ${EnhancedParamFilePath}
+cat ${EnhancedParamFilePath}
+
+deployLocationProxyStack "${LOCATION_PROXY_STACK_NAME}" "${EnhancedParamFilePath}"
 
 apiId=$( aws ${aws_command_base_args} \
   cloudformation describe-stacks \
