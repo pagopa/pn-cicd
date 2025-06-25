@@ -409,7 +409,7 @@ PipelineParams="\"TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}\",\"Name=$
 echo "= Enhanced parameters file"
 jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * .[2]" \
    ${INFRA_ALL_OUTPUTS_FILE} ${TERRAFORM_OUTPUTS_FILE} ${LocationProxyConfigFile} \
-   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$//' \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnhancedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnhancedParamFilePath}
 cat ${EnhancedParamFilePath}
