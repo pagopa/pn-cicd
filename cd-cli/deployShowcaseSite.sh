@@ -345,7 +345,7 @@ function deployLocationProxyStack() {
   aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name "${stackName}" \
-      --template-file pn-showcase-site/aws-cdn-templates/location-maps-proxy.yaml \
+      --template-file "${work_dir}/pn-showcase-site/aws-cdn-templates/location-maps-proxy.yaml" \
       --capabilities CAPABILITY_NAMED_IAM \
       --parameter-overrides file://${enhancedParamsFile}
 }
