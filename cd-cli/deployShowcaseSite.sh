@@ -401,7 +401,7 @@ if [ ! -f ${LocationProxyConfigFile} ]; then
   echo "{ \"Parameters\": {} }" > ${LocationProxyConfigFile}
 fi
 
-LOCATION_PROXY_STACK_NAME="${project_name}-location-proxy-${env_type}"
+LOCATION_PROXY_STACK_NAME="${project_name}-showcase-location-proxy-${env_type}"
 
 EnhancedParamFilePath="location-maps-proxy-${env_type}-cfg-enhanced.json"
 PipelineParams="\"TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}\",\"Name=${LOCATION_PROXY_STACK_NAME}\""
