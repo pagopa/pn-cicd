@@ -432,10 +432,19 @@ aws ${aws_command_base_args} \
 
 # replace config files in build artifact
 replace_config() {
+  echo " === replace_config for env_type=$1"
+
   LocalFilePath=/tmp/config.json
   echo '{}' > $LocalFilePath
+
+  if ( [ $1 == 'dev' ] ) then
+    configRootPath=.
+  else
+    # relative path from "deploy" dir
+    configRootPath=../../pn-showcase-site
+  fi
   
-  jq -s ".[0] * .[1]" ./conf/config-$1.json ${LocalFilePath} > ./conf/config.json
+  jq -s ".[0] * .[1]" $configRootPath/conf/config-$1.json ${LocalFilePath} > ./conf/config.json
   rm -f ./conf/config-dev.json
 }
 
