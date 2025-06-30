@@ -252,6 +252,26 @@ echo "====================================================================="
 echo "===           DEPLOY LOCATION SERVICE PROXY                       ==="
 echo "====================================================================="
 
+LOCATION_PROXY_STACK_NAME="${project_name}-showcase-maps-proxy-${env_type}"
+mapsProxyLogBucketName="-"
+
+if [ -f "pn-showcase-site/aws-cdn-templates/one-logging.yaml" ]; then
+  echo ""
+  echo "=== Create Logs Bucket for Maps Proxy on ${aws_region}"
+  mapsProxyLogStackName="${LOCATION_PROXY_STACK_NAME}-logging"
+  aws ${aws_command_base_args} \
+    cloudformation deploy \
+      --no-fail-on-empty-changeset \
+      --stack-name "${mapsProxyLogStackName}" \
+      --template-file pn-showcase-site/aws-cdn-templates/one-logging.yaml
+
+  mapsProxyLogBucketName=$( aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name "${mapsProxyLogStackName}" \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LogsBucketName\") | .OutputValue" )
+fi
+
 echo "=== Prepare enhanced parameters for location proxy deployment"
 LocationProxyConfigFile="pn-showcase-site/aws-cdn-templates/location-maps-proxy-${env_type}-cfg.json"
 
@@ -259,10 +279,8 @@ if [ ! -f ${LocationProxyConfigFile} ]; then
   echo "{ \"Parameters\": {} }" > ${LocationProxyConfigFile}
 fi
 
-LOCATION_PROXY_STACK_NAME="${project_name}-showcase-maps-proxy-${env_type}"
-
 EnhancedParamFilePath="location-maps-proxy-${env_type}-cfg-enhanced.json"
-PipelineParams="\"TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}\",\"Name=${LOCATION_PROXY_STACK_NAME}\""
+PipelineParams="\"TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}\",\"ProjectName=${LOCATION_PROXY_STACK_NAME}\",\"AccessLogsBucket=${mapsProxyLogBucketName}\""
 
 echo "= Enhanced parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1] * .[2]" \
