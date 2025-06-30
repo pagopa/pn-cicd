@@ -259,7 +259,7 @@ if [ -f "pn-showcase-site/aws-cdn-templates/one-logging.yaml" ]; then
   echo ""
   echo "=== Create Logs Bucket for Maps Proxy on ${aws_region}"
   mapsProxyLogStackName="${LOCATION_PROXY_STACK_NAME}-logging"
-  aws ${aws_command_base_args} \
+  aws ${aws_log_base_args} \
     cloudformation deploy \
       --no-fail-on-empty-changeset \
       --stack-name "${mapsProxyLogStackName}" \
