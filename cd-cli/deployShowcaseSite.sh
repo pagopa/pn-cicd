@@ -257,7 +257,7 @@ mapsProxyLogBucketName="-"
 
 if [ -f "pn-showcase-site/aws-cdn-templates/one-logging.yaml" ]; then
   echo ""
-  echo "=== Create Logs Bucket for Maps Proxy on ${aws_region}"
+  echo "=== Create Logs Bucket for Maps Proxy on eu-central-1"
   mapsProxyLogStackName="${LOCATION_PROXY_STACK_NAME}-logging"
   aws ${aws_log_base_args} \
     cloudformation deploy \
@@ -280,7 +280,7 @@ if [ ! -f ${LocationProxyConfigFile} ]; then
 fi
 
 EnhancedParamFilePath="location-maps-proxy-${env_type}-cfg-enhanced.json"
-PipelineParams="\"TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}\",\"ProjectName=${LOCATION_PROXY_STACK_NAME}\",\"AccessLogsBucket=${mapsProxyLogBucketName}\""
+PipelineParams="\"TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}\",\"AccessLogsBucket=${mapsProxyLogBucketName}\""
 
 echo "= Enhanced parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1] * .[2]" \
