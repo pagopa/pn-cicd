@@ -265,7 +265,7 @@ if [ -f "pn-showcase-site/aws-cdn-templates/one-logging.yaml" ]; then
       --stack-name "${mapsProxyLogStackName}" \
       --template-file pn-showcase-site/aws-cdn-templates/one-logging.yaml
 
-  mapsProxyLogBucketName=$( aws ${aws_command_base_args} \
+  mapsProxyLogBucketName=$( aws ${aws_log_base_args} \
     cloudformation describe-stacks \
       --stack-name "${mapsProxyLogStackName}" \
       --output json \
