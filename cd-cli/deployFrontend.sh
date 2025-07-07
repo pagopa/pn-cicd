@@ -142,7 +142,7 @@ fi
 
 INFRA_FRONTEND_BASE_PATH=pn-infra/runtime-infra/frontend/pn-frontend/aws-cdn-templates
 
-if [! -e $INFRA_FRONTEND_BASE_PATH ]; then
+if [ ! -e $INFRA_FRONTEND_BASE_PATH ]; then
   INFRA_FRONTEND_BASE_PATH=pn-frontend/aws-cdn-templates
 fi
 
