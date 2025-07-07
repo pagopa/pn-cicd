@@ -235,6 +235,65 @@ if ( [ -f "${INFRA_SHOWCASE_SITE_BASE_PATH}/one-monitoring.yaml" ] ) then
   HAS_MONITORING="true"
 fi
 
+function deployLocationProxyStack() {
+  local stackName=$1
+  local enhancedParamsFile=$2
+  
+  echo "=== Deploying Location Service Proxy Stack: ${stackName}"
+  
+  aws ${aws_command_base_args} \
+    cloudformation deploy \
+      --stack-name "${stackName}" \
+      --template-file "${work_dir}/pn-showcase-site/aws-cdn-templates/location-maps-proxy.yaml" \
+      --capabilities CAPABILITY_NAMED_IAM \
+      --parameter-overrides file://${enhancedParamsFile}
+}
+
+echo ""
+echo "====================================================================="
+echo "===           DEPLOY LOCATION SERVICE PROXY                       ==="
+echo "====================================================================="
+
+LOCATION_PROXY_STACK_NAME="${project_name}-showcase-maps-proxy-${env_type}"
+mapsProxyLogBucketName="-"
+
+if [ -f "pn-showcase-site/aws-cdn-templates/one-logging.yaml" ]; then
+  echo ""
+  echo "=== Create Logs Bucket for Maps Proxy on eu-central-1"
+  mapsProxyLogStackName="${LOCATION_PROXY_STACK_NAME}-logging"
+  aws ${aws_log_base_args} \
+    cloudformation deploy \
+      --no-fail-on-empty-changeset \
+      --stack-name "${mapsProxyLogStackName}" \
+      --template-file pn-showcase-site/aws-cdn-templates/one-logging.yaml
+
+  mapsProxyLogBucketName=$( aws ${aws_log_base_args} \
+    cloudformation describe-stacks \
+      --stack-name "${mapsProxyLogStackName}" \
+      --output json \
+  | jq -r ".Stacks[0].Outputs | .[] | select( .OutputKey==\"LogsBucketName\") | .OutputValue" )
+fi
+
+echo "=== Prepare enhanced parameters for location proxy deployment"
+LocationProxyConfigFile="pn-showcase-site/aws-cdn-templates/location-maps-proxy-${env_type}-cfg.json"
+
+if [ ! -f ${LocationProxyConfigFile} ]; then
+  echo "{ \"Parameters\": {} }" > ${LocationProxyConfigFile}
+fi
+
+EnhancedParamFilePath="location-maps-proxy-${env_type}-cfg-enhanced.json"
+PipelineParams="\"TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}\",\"AccessLogsBucket=${mapsProxyLogBucketName}\""
+
+echo "= Enhanced parameters file"
+jq -s "{ \"Parameters\": .[0] } * .[1] * .[2]" \
+   ${INFRA_ALL_OUTPUTS_FILE} ${TERRAFORM_OUTPUTS_FILE} ${LocationProxyConfigFile} \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnhancedParamFilePath}
+echo "${PipelineParams} ]" >> ${EnhancedParamFilePath}
+cat ${EnhancedParamFilePath}
+
+deployLocationProxyStack "${LOCATION_PROXY_STACK_NAME}" "${EnhancedParamFilePath}"
+
 echo ""
 echo ""
 echo ""
@@ -338,7 +397,6 @@ function prepareOneCloudFront() {
   echo " - Created bucket name: ${bucketName}"
 }
 
-
 ZONE_ID=""
 SHOWCASE_SITE_CERTIFICATE_ARN=""
 
@@ -372,6 +430,23 @@ landingDistributionId=${distributionId}
 landingTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 landingTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
 
+# replace config files in build artifact
+replace_config() {
+  echo " === replace_config for env_type=$1"
+
+  LocalFilePath=/tmp/config.json
+  echo '{}' > $LocalFilePath
+
+  if ( [ $1 == 'dev' ] ) then
+    configRootPath=.
+  else
+    # relative path from "deploy" dir
+    configRootPath=../../pn-showcase-site
+  fi
+  
+  jq -s ".[0] * .[1]" $configRootPath/conf/config-$1.json ${LocalFilePath} > ./conf/config.json
+  rm -f ./conf/config-dev.json
+}
 
 
 echo ""
@@ -430,10 +505,10 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
       --bucket "$LambdasBucketName" --key "pn-showcase-site/commits/${pn_showcase_site_commitid}/pn-showcase-site.tar.gz" \
       "pn-showcase-site.tar.gz"
 
-# showcase site has a different config management - we use env variables but they are the same for each env
 mkdir -p "pn-showcase-site"
 ( cd "pn-showcase-site" \
      && tar xvzf "../pn-showcase-site.tar.gz" \
+     && replace_config ${env_type}
 )
 
 aws ${aws_command_base_args} \

@@ -2196,6 +2196,11 @@ Resources:
               - rds:DescribeDBClusters
               - rds:ModifyDBCluster
               - rds:DeleteDBCluster
+              - rds:CreateDBInstance
+              - rds:DescribeDBInstances
+              - rds:ModifyDBInstance
+              - rds:DeleteDBInstance
+              - rds:RebootDBInstance 
               - rds:CreateDBSubnetGroup
               - rds:DescribeDBSubnetGroups
               - rds:ModifyDBSubnetGroup
@@ -2211,6 +2216,12 @@ Resources:
               - rds:RebootDBCluster
               - rds:FailoverDBCluster
             Resource: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*
+          - Effect: Allow
+            Action: "iam:CreateServiceLinkedRole"
+            Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
+            Condition:
+              StringLike:
+                "iam:AWSServiceName": "rds.amazonaws.com"
           - Effect: Allow
             Action:
               - ssm:GetParameters
@@ -2807,6 +2818,7 @@ Resources:
               - events:Remove*
               - events:*Tag*
               - events:*
+              - scheduler:*
             Resource:
               - "*"
           - Effect: Allow
