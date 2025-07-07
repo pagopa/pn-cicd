@@ -244,7 +244,7 @@ function deployLocationProxyStack() {
   aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name "${stackName}" \
-      --template-file "${work_dir}/pn-showcase-site/aws-cdn-templates/location-maps-proxy.yaml" \
+      --template-file "${INFRA_SHOWCASE_SITE_BASE_PATH}/location-maps-proxy.yaml" \
       --capabilities CAPABILITY_NAMED_IAM \
       --parameter-overrides file://${enhancedParamsFile}
 }
@@ -257,7 +257,7 @@ echo "====================================================================="
 LOCATION_PROXY_STACK_NAME="${project_name}-showcase-maps-proxy-${env_type}"
 mapsProxyLogBucketName="-"
 
-if [ -f "pn-showcase-site/aws-cdn-templates/one-logging.yaml" ]; then
+if [ -f "${INFRA_SHOWCASE_SITE_BASE_PATH}/one-logging.yaml" ]; then
   echo ""
   echo "=== Create Logs Bucket for Maps Proxy on eu-central-1"
   mapsProxyLogStackName="${LOCATION_PROXY_STACK_NAME}-logging"
@@ -265,7 +265,7 @@ if [ -f "pn-showcase-site/aws-cdn-templates/one-logging.yaml" ]; then
     cloudformation deploy \
       --no-fail-on-empty-changeset \
       --stack-name "${mapsProxyLogStackName}" \
-      --template-file pn-showcase-site/aws-cdn-templates/one-logging.yaml
+      --template-file ${INFRA_SHOWCASE_SITE_BASE_PATH}/one-logging.yaml
 
   mapsProxyLogBucketName=$( aws ${aws_log_base_args} \
     cloudformation describe-stacks \
@@ -275,7 +275,7 @@ if [ -f "pn-showcase-site/aws-cdn-templates/one-logging.yaml" ]; then
 fi
 
 echo "=== Prepare enhanced parameters for location proxy deployment"
-LocationProxyConfigFile="pn-showcase-site/aws-cdn-templates/location-maps-proxy-${env_type}-cfg.json"
+LocationProxyConfigFile="${INFRA_SHOWCASE_SITE_BASE_PATH}/location-maps-proxy-${env_type}-cfg.json"
 
 if [ ! -f ${LocationProxyConfigFile} ]; then
   echo "{ \"Parameters\": {} }" > ${LocationProxyConfigFile}
