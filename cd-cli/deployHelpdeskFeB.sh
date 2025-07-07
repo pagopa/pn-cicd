@@ -275,7 +275,7 @@ function prepareOneCloudFront() {
       cloudformation deploy \
         --no-fail-on-empty-changeset \
         --stack-name $CdnName-logging \
-        --template-file ${INFRA_FRONTEND_BASE_PATH}/one-logging.yaml
+        --template-file ${INFRA_HELPDESKFE_BASE_PATH}/one-logging.yaml
 
     logBucketName=$( aws ${aws_log_base_args} \
       cloudformation describe-stacks \
@@ -292,7 +292,7 @@ function prepareOneCloudFront() {
   aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name $CdnName \
-      --template-file ${INFRA_FRONTEND_BASE_PATH}/one-cdn.yaml \
+      --template-file ${INFRA_HELPDESKFE_BASE_PATH}/one-cdn.yaml \
       --parameter-overrides \
         Name="${CdnName}" \
         WebDomain="${WebDomain}" \
