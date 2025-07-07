@@ -263,7 +263,7 @@ function prepareOneCloudFront() {
   
   INFRA_HELPDESKFE_BASE_PATH=pn-infra/runtime-infra/frontend/pn-helpdesk-fe/aws-cdn-templates
 
-  if [ ! -e $INFRA_FRONTEND_BASE_PATH ]; then
+  if [ ! -e $INFRA_HELPDESKFE_BASE_PATH ]; then
     INFRA_HELPDESKFE_BASE_PATH=pn-helpdesk-fe/aws-cdn-templates
   fi
 
