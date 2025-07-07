@@ -147,6 +147,9 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
 fi
 
 INFRA_SHOWCASE_SITE_BASE_PATH=pn-infra/runtime-infra/frontend/pn-showcase-site/aws-cdn-templates
+if [ ! -e $INFRA_SHOWCASE_SITE_BASE_PATH ]; then
+  INFRA_SHOWCASE_SITE_BASE_PATH=pn-helpdesk-fe/aws-cdn-templates
+fi
 
 echo "=== Download pn-showcase-site" 
 if ( [ ! -e pn-showcase-site ] ) then 

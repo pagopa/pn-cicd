@@ -260,7 +260,12 @@ function prepareOneCloudFront() {
   WebCertificateArn=$3
   HostedZoneId=$4
   AlternateWebDomain=$5
+  
   INFRA_HELPDESKFE_BASE_PATH=pn-infra/runtime-infra/frontend/pn-helpdesk-fe/aws-cdn-templates
+
+  if [ ! -e $INFRA_FRONTEND_BASE_PATH ]; then
+    INFRA_HELPDESKFE_BASE_PATH=pn-helpdesk-fe/aws-cdn-templates
+  fi
 
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
