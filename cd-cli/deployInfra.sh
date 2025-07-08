@@ -685,7 +685,7 @@ if [[ -f "$CN_STACK_FILE" ]]; then
     
     ##Add transform in microservice template
     echo "Add transform in microservice template"
-    bash ${cwdir}/commons/transform-template.sh -f ${CN_STACK_FILE}
+    bash ${cwdir}/commons/transform-microservice-template.sh -f ${CN_STACK_FILE}
     
     PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"BucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\"${OptionalParams}"
     
