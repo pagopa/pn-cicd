@@ -12,11 +12,9 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] -p <project-name> -r <aws-region> -m <microcvs-name>
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] -f <template-file-path>
     [-h]                      : this help message
-    -p <project-name>         : project name
-    -r <aws-region>           : aws region
-    -m <microcvs-name>        : microcvs name
+    -f <template-file-path>   : template file path
 
 EOF
   exit 1
@@ -102,7 +100,7 @@ else
   inserted=0
   lines=()  # array per buffering
 
-  while IFS= read -r line; do
+  while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ $inserted -eq 0 && "$line" =~ ^[[:space:]]*Parameters:[[:space:]]*$ ]]; then
       lines+=("$line")  # mantieni la riga "Parameters:"
       
@@ -140,3 +138,4 @@ fi
 echo "Tranform Added Successfull"
 echo ""
 echo ""
+exit 0
