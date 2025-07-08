@@ -140,6 +140,12 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .
 fi
 
+INFRA_FRONTEND_BASE_PATH=pn-infra/runtime-infra/frontend/pn-frontend/aws-cdn-templates
+
+if [ ! -e $INFRA_FRONTEND_BASE_PATH ]; then
+  INFRA_FRONTEND_BASE_PATH=pn-frontend/aws-cdn-templates
+fi
+
 echo "=== Download pn-frontend" 
 if ( [ ! -e pn-frontend ] ) then 
   git clone https://github.com/pagopa/pn-frontend.git
@@ -255,7 +261,6 @@ replace_config() {
 }
 
 
-
 echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
@@ -271,7 +276,7 @@ AlarmSNSTopicArn=$( aws ${aws_command_base_args} \
 echo "AlarmSNSTopicArn : ${AlarmSNSTopicArn}"
 
 HAS_MONITORING=""
-if ( [ -f "pn-frontend/aws-cdn-templates/one-monitoring.yaml" ] ) then
+if ( [ -f "${INFRA_FRONTEND_BASE_PATH}/one-monitoring.yaml" ] ) then
   HAS_MONITORING="true"
 fi
 
@@ -307,14 +312,14 @@ function prepareOneCloudFront() {
     OptionalParameters="${OptionalParameters} AlarmSNSTopicArn=${AlarmSNSTopicArn}"
   fi
 
-  if ( [ -f "pn-frontend/aws-cdn-templates/one-logging.yaml" ] ) then
+  if ( [ -f "${INFRA_FRONTEND_BASE_PATH}/one-logging.yaml" ] ) then
     echo ""
     echo "=== Create Logs Bucket ${CdnName}"
     aws ${aws_log_base_args} \
       cloudformation deploy \
         --no-fail-on-empty-changeset \
         --stack-name $CdnName-logging \
-        --template-file pn-frontend/aws-cdn-templates/one-logging.yaml
+        --template-file ${INFRA_FRONTEND_BASE_PATH}/one-logging.yaml
 
     logBucketName=$( aws ${aws_log_base_args} \
       cloudformation describe-stacks \
@@ -331,7 +336,7 @@ function prepareOneCloudFront() {
   aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name $CdnName \
-      --template-file pn-frontend/aws-cdn-templates/one-cdn.yaml \
+      --template-file ${INFRA_FRONTEND_BASE_PATH}/one-cdn.yaml \
       --parameter-overrides \
         Name="${CdnName}" \
         WebDomain="${WebDomain}" \
@@ -394,7 +399,7 @@ PORTALE_STATUS_DOMAIN="status.${env_type}.pn.pagopa.it"
 
 REACT_APP_URL_API=""
 
-ENV_FILE_PATH="pn-frontend/aws-cdn-templates/${env_type}/env-cdn.sh" 
+ENV_FILE_PATH="${INFRA_FRONTEND_BASE_PATH}/${env_type}/env-cdn.sh" 
 if ( [ -f $ENV_FILE_PATH ] ) then
   source $ENV_FILE_PATH
 fi
@@ -599,7 +604,7 @@ if ( [ ! -z "$HAS_MONITORING" ]) then
   aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name frontend-monitoring-${env_type} \
-      --template-file pn-frontend/aws-cdn-templates/one-monitoring.yaml \
+      --template-file ${INFRA_FRONTEND_BASE_PATH}/one-monitoring.yaml \
       --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
       --parameter-overrides \
         ProjectName="${project_name}" \

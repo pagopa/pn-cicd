@@ -260,6 +260,12 @@ function prepareOneCloudFront() {
   WebCertificateArn=$3
   HostedZoneId=$4
   AlternateWebDomain=$5
+  
+  INFRA_HELPDESKFE_BASE_PATH=pn-infra/runtime-infra/frontend/pn-helpdesk-fe/aws-cdn-templates
+
+  if [ ! -e $INFRA_HELPDESKFE_BASE_PATH ]; then
+    INFRA_HELPDESKFE_BASE_PATH=pn-helpdesk-fe/aws-cdn-templates
+  fi
 
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
@@ -267,15 +273,14 @@ function prepareOneCloudFront() {
     OptionalParameters="${OptionalParameters} WebDomainReferenceToSite=false"
     OptionalParameters="${OptionalParameters} AlternateWebDomainReferenceToSite=true"
   fi
-  
-  if ( [ -f "pn-helpdesk-fe/aws-cdn-templates/one-logging.yaml" ] ) then
+  if ( [ -f "${INFRA_HELPDESKFE_BASE_PATH}/one-logging.yaml" ] ) then
     echo ""
     echo "=== Create Logs Bucket ${CdnName}"
     aws ${aws_log_base_args} \
       cloudformation deploy \
         --no-fail-on-empty-changeset \
         --stack-name $CdnName-logging \
-        --template-file pn-helpdesk-fe/aws-cdn-templates/one-logging.yaml
+        --template-file ${INFRA_HELPDESKFE_BASE_PATH}/one-logging.yaml
 
     logBucketName=$( aws ${aws_log_base_args} \
       cloudformation describe-stacks \
@@ -292,7 +297,7 @@ function prepareOneCloudFront() {
   aws ${aws_command_base_args} \
     cloudformation deploy \
       --stack-name $CdnName \
-      --template-file pn-helpdesk-fe/aws-cdn-templates/one-cdn.yaml \
+      --template-file ${INFRA_HELPDESKFE_BASE_PATH}/one-cdn.yaml \
       --parameter-overrides \
         Name="${CdnName}" \
         WebDomain="${WebDomain}" \
