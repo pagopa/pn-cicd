@@ -2311,6 +2311,7 @@ Resources:
               - "elasticloadbalancing:DescribeTargetGroupAttributes"
               - "elasticloadbalancing:DescribeTargetHealth"
               - "elasticloadbalancing:DescribeTargetGroups"
+              - "elasticloadbalancing:DescribeListenerAttributes"
             Resource: "*"
 
   CodeBuildPolicyR53:
