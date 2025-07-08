@@ -682,7 +682,7 @@ CN_STACK_FILE=pn-infra/runtime-infra/pn-cn.yaml
 
 if [[ -f "$CN_STACK_FILE" ]]; then
     echo "$CN_STACK_FILE exists, updating backup stack"
-
+    
     PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"BucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\"${OptionalParams}"
     
     echo ""
