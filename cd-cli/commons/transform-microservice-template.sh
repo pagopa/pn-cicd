@@ -72,7 +72,7 @@ fi
 
 if grep -qE '^\s*Transform:\s*$' "$template_file_path"; then
   echo "Transform: found"
-  while IFS= read -r line; do
+  while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ $flag -eq 1 ]]; then
 
       indent=$(echo "$line" | grep -o '^[[:space:]]*')
