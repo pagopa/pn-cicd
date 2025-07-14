@@ -2309,6 +2309,7 @@ Resources:
               - !Sub arn:aws:cloudfront::${AWS::AccountId}:cache-policy/*
               - !Sub arn:aws:cloudfront::${AWS::AccountId}:origin-request-policy/*
               - !Sub arn:aws:cloudfront::${AWS::AccountId}:response-headers-policy/*
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:origin-access-control/*
           - Effect: Allow
             Action:
               - cloudfront:List*
@@ -2374,6 +2375,7 @@ Resources:
               - "elasticloadbalancing:DescribeTargetGroupAttributes"
               - "elasticloadbalancing:DescribeTargetHealth"
               - "elasticloadbalancing:DescribeTargetGroups"
+              - "elasticloadbalancing:DescribeListenerAttributes"
             Resource: "*"
           - Effect: Allow
             Action:
