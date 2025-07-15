@@ -267,6 +267,14 @@ function prepareOneCloudFront() {
     INFRA_HELPDESKFE_BASE_PATH=pn-helpdesk-fe/aws-cdn-templates
   fi
 
+  
+  echo "=== Prepare enhanced parameters for logging deployment"
+  OneLoggingConfigFile="${INFRA_HELPDESKFE_BASE_PATH}/one-logging-${env_type}-cfg.json"
+
+  if [ ! -f ${OneLoggingConfigFile} ]; then
+    echo "{ \"Parameters\": {} }" > ${OneLoggingConfigFile}
+  fi
+
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
     OptionalParameters="${OptionalParameters} AlternateWebDomain=${AlternateWebDomain}"
@@ -280,7 +288,8 @@ function prepareOneCloudFront() {
       cloudformation deploy \
         --no-fail-on-empty-changeset \
         --stack-name $CdnName-logging \
-        --template-file ${INFRA_HELPDESKFE_BASE_PATH}/one-logging.yaml
+        --template-file ${INFRA_HELPDESKFE_BASE_PATH}/one-logging.yaml \
+        --parameter-overrides file://${OneLoggingConfigFile}
 
     logBucketName=$( aws ${aws_log_base_args} \
       cloudformation describe-stacks \

@@ -312,6 +312,14 @@ function prepareOneCloudFront() {
     OptionalParameters="${OptionalParameters} AlarmSNSTopicArn=${AlarmSNSTopicArn}"
   fi
 
+
+  echo "=== Prepare enhanced parameters for logging deployment"
+  OneLoggingConfigFile="${INFRA_FRONTEND_BASE_PATH}/one-logging-${env_type}-cfg.json"
+
+  if [ ! -f ${OneLoggingConfigFile} ]; then
+    echo "{ \"Parameters\": {} }" > ${OneLoggingConfigFile}
+  fi
+
   if ( [ -f "${INFRA_FRONTEND_BASE_PATH}/one-logging.yaml" ] ) then
     echo ""
     echo "=== Create Logs Bucket ${CdnName}"
@@ -319,7 +327,8 @@ function prepareOneCloudFront() {
       cloudformation deploy \
         --no-fail-on-empty-changeset \
         --stack-name $CdnName-logging \
-        --template-file ${INFRA_FRONTEND_BASE_PATH}/one-logging.yaml
+        --template-file ${INFRA_FRONTEND_BASE_PATH}/one-logging.yaml \
+        --parameter-overrides file://${OneLoggingConfigFile}
 
     logBucketName=$( aws ${aws_log_base_args} \
       cloudformation describe-stacks \
