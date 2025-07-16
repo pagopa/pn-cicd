@@ -364,7 +364,7 @@ function prepareOneCloudFront() {
       cloudformation deploy \
         --no-fail-on-empty-changeset \
         --stack-name $CdnName-logging \
-        --template-file ${INFRA_SHOWCASE_SITE_BASE_PATH}/one-logging.yaml
+        --template-file ${INFRA_SHOWCASE_SITE_BASE_PATH}/one-logging.yaml \
         --parameter-overrides file://${EnhancedParamFilePath}
 
     logBucketName=$( aws ${aws_log_base_args} \
