@@ -278,7 +278,7 @@ function prepareOneCloudFront() {
   EnhancedParamFilePath="one-logging-${env_type}-cfg-enhanced.json"
 
   echo "= Enhanced parameters file"
-  jq -s "{ \"Parameters\": .[0] } * .[1] * .[2]" \
+  jq -s "{ \"Parameters\": .[0] } * .[1]" \
     ${INFRA_ALL_OUTPUTS_FILE} ${OneLoggingConfigFile} \
     | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
     > ${EnhancedParamFilePath}
