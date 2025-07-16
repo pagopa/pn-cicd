@@ -282,7 +282,8 @@ function prepareOneCloudFront() {
     ${INFRA_ALL_OUTPUTS_FILE} ${OneLoggingConfigFile} \
     | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
     > ${EnhancedParamFilePath}
-  echo " ]" >> ${EnhancedParamFilePath}
+  sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
+  echo "]" >> "$EnhancedParamFilePath"
   cat ${EnhancedParamFilePath}
 
   OptionalParameters=""
