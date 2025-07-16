@@ -275,6 +275,16 @@ function prepareOneCloudFront() {
     echo "{ \"Parameters\": {} }" > ${OneLoggingConfigFile}
   fi
 
+  EnhancedParamFilePath="one-logging-${env_type}-cfg-enhanced.json"
+
+  echo "= Enhanced parameters file"
+  jq -s "{ \"Parameters\": .[0] } * .[1] * .[2]" \
+    ${INFRA_ALL_OUTPUTS_FILE} ${OneLoggingConfigFile} \
+    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+    > ${EnhancedParamFilePath}
+  echo " ]" >> ${EnhancedParamFilePath}
+  cat ${EnhancedParamFilePath}
+
   OptionalParameters=""
   if ( [ ! -z "$AlternateWebDomain" ] ) then
     OptionalParameters="${OptionalParameters} AlternateWebDomain=${AlternateWebDomain}"
@@ -289,7 +299,7 @@ function prepareOneCloudFront() {
         --no-fail-on-empty-changeset \
         --stack-name $CdnName-logging \
         --template-file ${INFRA_HELPDESKFE_BASE_PATH}/one-logging.yaml \
-        --parameter-overrides file://${OneLoggingConfigFile}
+        --parameter-overrides file://${EnhancedParamFilePath}
 
     logBucketName=$( aws ${aws_log_base_args} \
       cloudformation describe-stacks \
