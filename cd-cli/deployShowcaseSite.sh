@@ -268,6 +268,17 @@ if [ ! -f ${OneLoggingConfigFile} ]; then
 fi
 
 
+EnhancedParamFilePath="one-logging-${env_type}-cfg-enhanced.json"
+
+echo "= Enhanced parameters file"
+jq -s "{ \"Parameters\": .[0] } * .[1]" \
+  ${INFRA_ALL_OUTPUTS_FILE} ${OneLoggingConfigFile} \
+  | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+  > ${EnhancedParamFilePath}
+sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
+echo "]" >> "$EnhancedParamFilePath"
+cat ${EnhancedParamFilePath}
+
 if [ -f "${INFRA_SHOWCASE_SITE_BASE_PATH}/one-logging.yaml" ]; then
   echo ""
   echo "=== Create Logs Bucket for Maps Proxy on eu-central-1"
@@ -277,7 +288,7 @@ if [ -f "${INFRA_SHOWCASE_SITE_BASE_PATH}/one-logging.yaml" ]; then
       --no-fail-on-empty-changeset \
       --stack-name "${mapsProxyLogStackName}" \
       --template-file ${INFRA_SHOWCASE_SITE_BASE_PATH}/one-logging.yaml \
-      --parameter-overrides file://${OneLoggingConfigFile}
+      --parameter-overrides file://${EnhancedParamFilePath}
 
   mapsProxyLogBucketName=$( aws ${aws_log_base_args} \
     cloudformation describe-stacks \
