@@ -6845,7 +6845,7 @@ Resources:
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
-                - Name: PnPaperTrackerOutput
+                - Name: PnDelayerOutput
               RunOrder: 3
 
   # MICROSERVICE PN-PAPER-TRACKER
@@ -6938,7 +6938,7 @@ Resources:
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
-                - Name: PnPaperChannelOutput
+                - Name: PnPaperTrackerOutput
               RunOrder: 3
 
   # HELPDESK FRONTEND
