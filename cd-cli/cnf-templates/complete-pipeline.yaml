@@ -2444,6 +2444,13 @@ Resources:
             Action:
               - "synthetics:*"                  
             Resource: "*"
+          - Effect: Allow
+            Action:
+              - "states:CreateStateMachine"
+              - "states:TagResource"  
+              - "states:DescribeStateMachine" 
+              - "states:DeleteStateMachine"             
+            Resource: "*"
 
   
   CodeBuildPolicyR53:
