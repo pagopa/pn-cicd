@@ -5381,7 +5381,7 @@ Resources:
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
-                - Name: PnPaperChannelOutput
+                - Name: PnLogextractorBeOutput
               RunOrder: 3
 
   # MICROSERVICE PN-EMD-INTEGRATION
@@ -6869,7 +6869,7 @@ Resources:
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
-                - Name: PnPaperChannelOutput
+                - Name: PnDelayerOutput
               RunOrder: 3
 
   # MICROSERVICE PN-DELIVERY-PUSH-WORKFLOW
@@ -7055,7 +7055,7 @@ Resources:
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
-                - Name: PnPaperChannelOutput
+                - Name: PnDeliveryPushValidatorOutput
               RunOrder: 3
 
   # HELPDESK FRONTEND
