@@ -2309,6 +2309,7 @@ Resources:
               - !Sub arn:aws:cloudfront::${AWS::AccountId}:cache-policy/*
               - !Sub arn:aws:cloudfront::${AWS::AccountId}:origin-request-policy/*
               - !Sub arn:aws:cloudfront::${AWS::AccountId}:response-headers-policy/*
+              - !Sub arn:aws:cloudfront::${AWS::AccountId}:origin-access-control/*
           - Effect: Allow
             Action:
               - cloudfront:List*
@@ -2407,6 +2408,17 @@ Resources:
               - "glue:*Tag*"              
               - "athena:*WorkGroup*" 
               - "athena:*Tag*"                     
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "synthetics:*"                  
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "states:CreateStateMachine"
+              - "states:TagResource"  
+              - "states:DescribeStateMachine" 
+              - "states:DeleteStateMachine"             
             Resource: "*"
 
   
