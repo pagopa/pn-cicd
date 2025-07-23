@@ -165,13 +165,19 @@ echo "###########################################################"
 
 AlarmSNSTopicArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.AlarmSNSTopicArn') 
 
-aws ${aws_command_base_args} cloudformation deploy \
-      --stack-name pn-infra-advanced-monitoring-${env_type} \
-      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-      --template-file pn-infra/runtime-infra/pn-infra-advanced-monitoring.yaml \
-      --tags Microservice=pn-infra-advanced-monitoring \
-      --parameter-overrides \
-        TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
-        AlarmSNSTopicArn="$AlarmSNSTopicArn" \
-        ProjectName=${project_name} \
-        Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
+ADVANCED_MONITORING_TEMPLATE_PATH=pn-infra/runtime-infra/pn-infra-advanced-monitoring.yaml
+
+if ( [ -f "${ADVANCED_MONITORING_TEMPLATE_PATH}" ] ) then
+  aws ${aws_command_base_args} cloudformation deploy \
+        --stack-name pn-infra-advanced-monitoring-${env_type} \
+        --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+        --template-file $ADVANCED_MONITORING_TEMPLATE_PATH \
+        --tags Microservice=pn-infra-advanced-monitoring \
+        --parameter-overrides \
+          TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
+          AlarmSNSTopicArn="$AlarmSNSTopicArn" \
+          ProjectName=${project_name} \
+          Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
+else 
+  echo "No ${ADVANCED_MONITORING_TEMPLATE_PATH} provided"
+fi

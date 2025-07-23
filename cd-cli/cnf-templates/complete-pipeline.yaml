@@ -7002,6 +7002,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnPaperTrackerOutput
+              RunOrder: 3
 
  # MICROSERVICE PN-DELIVERY-PUSH-WORKFLOW
   ############################
