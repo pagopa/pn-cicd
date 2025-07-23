@@ -43,6 +43,14 @@ Parameters:
       - '21'
       - '17'
 
+  ARMEnvironment:
+    Description: Codebuild with ARM architecture
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
   NativeComp:
     Description: Java version
     Type: String
@@ -174,6 +182,11 @@ Conditions:
     Fn::Or:
       - Condition: PnDeliveryPushModule
       - Condition: PnPaperChannelModule
+  
+  NeedARMEnvironment:
+     Fn::Equals:
+      - !Ref ARMEnvironment
+      - 'true'
 
 Resources:
 
@@ -192,7 +205,11 @@ Resources:
             - NeedMediumBuildEnv
             - BUILD_GENERAL1_MEDIUM
             - BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:6.0
+        Image: 
+          Fn::If:
+            - NeedARMEnvironment
+            - aws/codebuild/standard:6.0
+            - aws/codebuild/amazonlinux-aarch64-standard:3.0
         EnvironmentVariables:
           - Name: IS_PUBLIC_PROJECT
             Type: PLAINTEXT
