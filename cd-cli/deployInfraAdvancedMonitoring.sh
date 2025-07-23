@@ -167,6 +167,24 @@ AlarmSNSTopicArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.AlarmSNSTopicArn')
 
 ADVANCED_MONITORING_TEMPLATE_PATH=pn-infra/runtime-infra/pn-infra-advanced-monitoring.yaml
 
+echo "=== Prepare enhanced parameters for infra advanced monitoring"
+ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH="pn-infra/runtime-infra/pn-infra-advanced-monitoring-${env_type}-cfg.json"
+
+if [ ! -f ${ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH} ]; then
+  echo "{ \"Parameters\": {} }" > ${ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH}
+fi
+
+EnhancedParamFilePath="pn-infra-advanced-monitoring-${env_type}-cfg-enhanced.json"
+
+echo "= Enhanced parameters file"
+jq -s "{ \"Parameters\": .[0] } * .[2]" \
+   ${INFRA_ALL_OUTPUTS_FILE} ${ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH} \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnhancedParamFilePath}
+sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
+echo "]" >> "$EnhancedParamFilePath"
+cat ${EnhancedParamFilePath}
+
 if ( [ -f "${ADVANCED_MONITORING_TEMPLATE_PATH}" ] ) then
   aws ${aws_command_base_args} cloudformation deploy \
         --stack-name pn-infra-advanced-monitoring-${env_type} \
@@ -174,10 +192,7 @@ if ( [ -f "${ADVANCED_MONITORING_TEMPLATE_PATH}" ] ) then
         --template-file $ADVANCED_MONITORING_TEMPLATE_PATH \
         --tags Microservice=pn-infra-advanced-monitoring \
         --parameter-overrides \
-          TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
-          AlarmSNSTopicArn="$AlarmSNSTopicArn" \
-          ProjectName=${project_name} \
-          Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
+            file://$( realpath ${EnanchedParamFilePath} )
 else 
   echo "No ${ADVANCED_MONITORING_TEMPLATE_PATH} provided"
 fi
