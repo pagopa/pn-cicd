@@ -163,8 +163,6 @@ echo ""
 echo "###            BUILD ADVANCED MONITORING                ###"
 echo "###########################################################"
 
-AlarmSNSTopicArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.AlarmSNSTopicArn') 
-
 ADVANCED_MONITORING_TEMPLATE_PATH=pn-infra/runtime-infra/pn-infra-advanced-monitoring.yaml
 
 echo "=== Prepare enhanced parameters for infra advanced monitoring"
@@ -191,8 +189,7 @@ if ( [ -f "${ADVANCED_MONITORING_TEMPLATE_PATH}" ] ) then
         --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
         --template-file $ADVANCED_MONITORING_TEMPLATE_PATH \
         --tags Microservice=pn-infra-advanced-monitoring \
-        --parameter-overrides \
-            file://$( realpath ${EnanchedParamFilePath} )
+        --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 else 
   echo "No ${ADVANCED_MONITORING_TEMPLATE_PATH} provided"
 fi
