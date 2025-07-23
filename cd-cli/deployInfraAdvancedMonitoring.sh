@@ -177,7 +177,7 @@ fi
 EnhancedParamFilePath="pn-infra-advanced-monitoring-${env_type}-cfg-enhanced.json"
 
 echo "= Enhanced parameters file"
-jq -s "{ \"Parameters\": .[0] } * .[2]" \
+jq -s "{ \"Parameters\": .[0] } * .[1]" \
    ${INFRA_ALL_OUTPUTS_FILE} ${ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnhancedParamFilePath}
