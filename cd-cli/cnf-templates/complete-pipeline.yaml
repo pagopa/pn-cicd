@@ -2505,7 +2505,8 @@ Resources:
               - "states:CreateStateMachine"
               - "states:TagResource"  
               - "states:DescribeStateMachine" 
-              - "states:DeleteStateMachine"             
+              - "states:DeleteStateMachine"
+              - "states:UpdateStateMachine"        
             Resource: "*"
 
   
