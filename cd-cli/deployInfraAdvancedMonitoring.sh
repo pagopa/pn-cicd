@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> [-c <custom_config_dir>] -b <artifactBucketName>
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -a <account> [-c <custom_config_dir>] -b <artifactBucketName>
 
     [-h]                      : this help message
     [-v]                      : verbose mode
@@ -23,6 +23,7 @@ usage() {
     -i <github-commitid>      : commitId for github repository pagopa/pn-infra
     [-c <custom_config_dir>]  : where tor read additional env-type configurations
     -b <artifactBucketName>   : bucket name to use as temporary artifacts storage
+    -a <account>              : one of core / confinfo
     
 EOF
   exit 1
