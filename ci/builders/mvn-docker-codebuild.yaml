@@ -208,8 +208,8 @@ Resources:
         Image: 
           Fn::If:
             - NeedARMEnvironment
-            - aws/codebuild/standard:6.0
             - aws/codebuild/amazonlinux-aarch64-standard:3.0
+            - aws/codebuild/standard:6.0
         EnvironmentVariables:
           - Name: IS_PUBLIC_PROJECT
             Type: PLAINTEXT
