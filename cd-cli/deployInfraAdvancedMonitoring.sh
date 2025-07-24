@@ -38,6 +38,7 @@ parse_params() {
   env_type=""
   pn_infra_commitid=""
   bucketName=""
+  account=""
 
   while :; do
     case "${1-}" in
@@ -71,6 +72,10 @@ parse_params() {
       bucketName="${2-}"
       shift
       ;;
+    -a | --account) 
+      account="${2-}"
+      shift
+      ;;
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -99,6 +104,7 @@ dump_params(){
   echo "AWS region:         ${aws_region}"
   echo "AWS profile:        ${aws_profile}"
   echo "Bucket Name:        ${bucketName}"
+  echo "Account:            ${account}"
 }
 
 
@@ -137,10 +143,8 @@ echo ${aws_command_base_args}
 
 
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
-templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
 echo " - Bucket Name: ${bucketName}"
 echo " - Bucket Template S3 Url: ${templateBucketS3BaseUrl}"
-echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
 
 
 echo ""
@@ -163,10 +167,16 @@ echo ""
 echo "###            BUILD ADVANCED MONITORING                ###"
 echo "###########################################################"
 
-ADVANCED_MONITORING_TEMPLATE_PATH=pn-infra/runtime-infra/pn-infra-advanced-monitoring.yaml
+if [[ "$account" == "core" ]]; then
+  runtime_path="runtime-infra"
+elif [[ "$account" == "confinfo" ]];
+  runtime_path="runtime-infra-confinfo"
+fi
+
+ADVANCED_MONITORING_TEMPLATE_PATH=pn-infra/$runtime_path/pn-infra-advanced-monitoring.yaml
 
 echo "=== Prepare enhanced parameters for infra advanced monitoring"
-ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH="pn-infra/runtime-infra/pn-infra-advanced-monitoring-${env_type}-cfg.json"
+ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH="pn-infra/$runtime_path/pn-infra-advanced-monitoring-${env_type}-cfg.json"
 
 if [ ! -f ${ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH} ]; then
   echo "{ \"Parameters\": {} }" > ${ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH}
