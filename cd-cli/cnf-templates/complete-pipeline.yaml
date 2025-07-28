@@ -2508,8 +2508,10 @@ Resources:
               - "states:CreateStateMachine"
               - "states:TagResource"  
               - "states:DescribeStateMachine" 
+              - "states:UpdateStateMachine"         
               - "states:DeleteStateMachine"             
             Resource: "*"
+
 
   
   CodeBuildPolicyR53:
@@ -7005,6 +7007,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnPaperTrackerOutput
+              RunOrder: 3
 
  # MICROSERVICE PN-DELIVERY-PUSH-WORKFLOW
   ############################
