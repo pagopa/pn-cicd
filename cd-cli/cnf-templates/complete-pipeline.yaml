@@ -455,6 +455,18 @@ Resources:
                     sed -i -e "s|pn_paper_tracker_imageUrl=.*|pn_paper_tracker_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-paper-tracker-update-pipeline"
                   fi
+                - |
+                  if ( [ "$PROJECT" = "pn-delivery-push-workflow" ] ) then
+                    sed -i -e "s|pn_delivery_push_workflow_commitId=.*|pn_delivery_push_workflow_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_delivery_push_workflow_imageUrl=.*|pn_delivery_push_workflow_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-delivery-push-workflow-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-delivery-push-validator" ] ) then
+                    sed -i -e "s|pn_delivery_push_validator_commitId=.*|pn_delivery_push_validator_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_delivery_push_validator_imageUrl=.*|pn_delivery_push_validator_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-delivery-push-validator-update-pipeline"
+                  fi
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
                 - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
