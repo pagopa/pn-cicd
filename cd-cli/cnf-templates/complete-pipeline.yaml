@@ -455,6 +455,18 @@ Resources:
                     sed -i -e "s|pn_paper_tracker_imageUrl=.*|pn_paper_tracker_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-paper-tracker-update-pipeline"
                   fi
+                - |
+                  if ( [ "$PROJECT" = "pn-delivery-push-workflow" ] ) then
+                    sed -i -e "s|pn_delivery_push_workflow_commitId=.*|pn_delivery_push_workflow_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_delivery_push_workflow_imageUrl=.*|pn_delivery_push_workflow_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-delivery-push-workflow-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-delivery-push-validator" ] ) then
+                    sed -i -e "s|pn_delivery_push_validator_commitId=.*|pn_delivery_push_validator_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_delivery_push_validator_imageUrl=.*|pn_delivery_push_validator_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-delivery-push-validator-update-pipeline"
+                  fi
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
                 - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
@@ -2508,6 +2520,7 @@ Resources:
               - "states:DeleteStateMachine"
               - "states:UpdateStateMachine"        
             Resource: "*"
+
 
   
   CodeBuildPolicyR53:
@@ -7595,7 +7608,7 @@ Resources:
                   - curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
                   - echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list
                   - apt-get update
-                  - wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_126.0.6478.61-1_amd64.deb
+                  - wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_138.0.7204.168-1_amd64.deb
                   - apt-get install -y /tmp/chrome.deb --fix-missing
                   - rm /tmp/chrome.deb
                   - echo "Configuro il locale per CodeBuild"
