@@ -1462,7 +1462,7 @@ Resources:
               OutputArtifacts:
                 - Name: HelpdeskFeOutput
               RunOrder: 5
-
+            
             # Update logs and Usage Plans
             - Name: Infrastructure_Post_Deploy
               ActionTypeId:
@@ -2047,6 +2047,7 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
 
+
   # CODEBUILD used for post microservices deployment scripts
   ###################################################
   PostDeployScriptsCodeBuildProject:
@@ -2083,6 +2084,14 @@ Resources:
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - '(cd scripts/cd-cli && ./deployCompositeAlarms.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###        UPDATE INFRA ADVANCED MONITORING           ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./deployInfraAdvancedMonitoring.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a core -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
@@ -2508,8 +2517,8 @@ Resources:
               - "states:CreateStateMachine"
               - "states:TagResource"  
               - "states:DescribeStateMachine" 
-              - "states:UpdateStateMachine"         
-              - "states:DeleteStateMachine"             
+              - "states:DeleteStateMachine"
+              - "states:UpdateStateMachine"        
             Resource: "*"
 
 
@@ -7372,6 +7381,7 @@ Resources:
               OutputArtifacts:
                 - Name: ParameterOutput
               RunOrder: 2
+
 
   ###########################################################################
   ###  RUN E2E TESTS
