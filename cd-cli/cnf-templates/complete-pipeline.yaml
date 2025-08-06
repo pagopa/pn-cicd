@@ -7607,7 +7607,7 @@ Resources:
                   - echo "Installing Chrome"
                   - apt-get update && apt-get install -y awscli
                   - |
-                    aws s3 cp s3://${CiArtifactBucketNameParam}/chrome/google-chrome-stable_138.0.7204.168-1_amd64.deb /tmp/chrome.deb
+                  - aws s3 cp s3://$CHROME_BUCKET_NAME/chrome/google-chrome-stable_138.0.7204.168-1_amd64.deb /tmp/chrome.deb
                   - apt-get install -y /tmp/chrome.deb --fix-missing
                   - rm /tmp/chrome.deb
                   - echo "Configuro il locale per CodeBuild"
@@ -7682,6 +7682,9 @@ Resources:
             - Name: TAG_TEST
               Type: PLAINTEXT
               Value: '@NRT'
+            - Name: CHROME_BUCKET_NAME
+              Type: PLAINTEXT
+              Value: !Ref CiArtifactBucketNameParam
         VpcConfig:
           Fn::If:
             - HasE2EVPCConfig
