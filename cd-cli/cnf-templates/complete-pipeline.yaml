@@ -7302,6 +7302,9 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Tags:
+        - Key: GoAllowed
+          Value: True
       Stages:
         - Name: Download_Configurations
           Actions:
