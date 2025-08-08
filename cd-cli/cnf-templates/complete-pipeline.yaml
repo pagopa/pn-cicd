@@ -1363,7 +1363,7 @@ Resources:
             #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
             #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
             #         {"name":"MsName", "value":"pn-paper-tracker", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"30", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"32", "type":"PLAINTEXT"},
             #         {"name":"VarPrefix", "value":"pn_paper_tracker", "type":"PLAINTEXT"}
             #       ]'
             #   InputArtifacts:
