@@ -1550,6 +1550,9 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Tags:
+        - Key: goallowed
+          Value: true
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -1985,6 +1988,12 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###        UPDATE INFRA ADVANCED MONITORING           ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./deployInfraAdvancedMonitoring.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a confinfo -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'

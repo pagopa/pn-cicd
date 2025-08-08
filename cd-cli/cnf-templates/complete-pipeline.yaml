@@ -1462,7 +1462,7 @@ Resources:
               OutputArtifacts:
                 - Name: HelpdeskFeOutput
               RunOrder: 5
-
+            
             # Update logs and Usage Plans
             - Name: Infrastructure_Post_Deploy
               ActionTypeId:
@@ -2047,6 +2047,7 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
 
+
   # CODEBUILD used for post microservices deployment scripts
   ###################################################
   PostDeployScriptsCodeBuildProject:
@@ -2083,6 +2084,14 @@ Resources:
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - '(cd scripts/cd-cli && ./deployCompositeAlarms.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###        UPDATE INFRA ADVANCED MONITORING           ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./deployInfraAdvancedMonitoring.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a core -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
@@ -2508,8 +2517,8 @@ Resources:
               - "states:CreateStateMachine"
               - "states:TagResource"  
               - "states:DescribeStateMachine" 
-              - "states:UpdateStateMachine"         
-              - "states:DeleteStateMachine"             
+              - "states:DeleteStateMachine"
+              - "states:UpdateStateMachine"        
             Resource: "*"
 
 
@@ -7293,6 +7302,9 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Tags:
+        - Key: goallowed
+          Value: true
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7372,6 +7384,7 @@ Resources:
               OutputArtifacts:
                 - Name: ParameterOutput
               RunOrder: 2
+
 
   ###########################################################################
   ###  RUN E2E TESTS
@@ -7595,10 +7608,9 @@ Resources:
                 on-failure: ABORT
                 commands:
                   - echo "Installing Chrome"
-                  - curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-                  - echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list
-                  - apt-get update
-                  - wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_138.0.7204.168-1_amd64.deb
+                  - apt-get update && apt-get install -y awscli
+                  - |
+                  - aws s3 cp s3://$CHROME_BUCKET_NAME/chrome/google-chrome-stable_138.0.7204.168-1_amd64.deb /tmp/chrome.deb
                   - apt-get install -y /tmp/chrome.deb --fix-missing
                   - rm /tmp/chrome.deb
                   - echo "Configuro il locale per CodeBuild"
@@ -7673,6 +7685,9 @@ Resources:
             - Name: TAG_TEST
               Type: PLAINTEXT
               Value: '@NRT'
+            - Name: CHROME_BUCKET_NAME
+              Type: PLAINTEXT
+              Value: !Ref CiArtifactBucketNameParam
         VpcConfig:
           Fn::If:
             - HasE2EVPCConfig
