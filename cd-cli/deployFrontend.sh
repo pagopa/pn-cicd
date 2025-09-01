@@ -690,6 +690,17 @@ mkdir -p "pn-personafisica-webapp"
 aws ${aws_command_base_args} \
     s3 cp "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --recursive 
 
+# Force apple universal link with content-type=application/json
+appleFileKey=".well-known/apple-app-site-association"
+
+if aws ${aws_command_base_args} s3api head-object --bucket "$webappPfBucketName" --key "$appleFileKey"; then
+  aws ${aws_command_base_args} \
+    s3 cp "s3://${webappPfBucketName}/${appleFileKey}" \
+          "s3://${webappPfBucketName}/${appleFileKey}" \
+          --metadata-directive REPLACE \
+          --content-type application/json
+fi
+
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPfDistributionId} --paths "/*"
 
 aws ${aws_command_base_args} \
