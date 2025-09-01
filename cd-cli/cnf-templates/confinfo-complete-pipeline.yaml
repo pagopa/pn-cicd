@@ -1550,6 +1550,9 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Tags:
+        - Key: goallowed
+          Value: true
       Stages:
         - Name: Download_Configurations
           Actions:
