@@ -196,9 +196,6 @@ sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
 echo ",\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\"]" >> "$EnhancedParamFilePath"
 cat ${EnhancedParamFilePath}
 
-EnhancedParamFilePath=$(jq -r '.[]' "$(realpath ${EnhancedParamFilePath})")
-cat ${EnhancedParamFilePath}
-
 if ( [ -f "${ADVANCED_MONITORING_TEMPLATE_PATH}" ] ) then
   aws ${aws_command_base_args} cloudformation deploy \
         --stack-name pn-infra-advanced-monitoring-${env_type} \
