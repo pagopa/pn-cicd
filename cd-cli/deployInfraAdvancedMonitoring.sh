@@ -193,7 +193,7 @@ jq -s "{ \"Parameters\": .[0] } * .[1]" \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnhancedParamFilePath}
 sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
-echo "\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\"]" >> "$EnhancedParamFilePath"
+echo ",\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\"]" >> "$EnhancedParamFilePath"
 cat ${EnhancedParamFilePath}
 
 EnhancedParamFilePath=$(jq -r '.[]' "$(realpath ${EnhancedParamFilePath})")
