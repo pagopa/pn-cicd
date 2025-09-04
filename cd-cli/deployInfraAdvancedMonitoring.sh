@@ -157,7 +157,14 @@ aws ${aws_command_base_args} \
 
 echo "Load all outputs in a single file for next stack deployments"
 INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
-(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+
+if [[ "$account" == "core" ]]; then
+  runtime_path="runtime-infra"
+  (cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+elif [[ "$account" == "confinfo" ]]; then
+  runtime_path="runtime-infra-confinfo"
+  (cd ${cwdir}/commons && ./merge-infra-outputs-confinfo.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+fi
 
 echo "## start merge all ##"
 cat $INFRA_ALL_OUTPUTS_FILE
@@ -167,12 +174,6 @@ echo "## end merge all ##"
 echo ""
 echo "###            BUILD ADVANCED MONITORING                ###"
 echo "###########################################################"
-
-if [[ "$account" == "core" ]]; then
-  runtime_path="runtime-infra"
-elif [[ "$account" == "confinfo" ]]; then
-  runtime_path="runtime-infra-confinfo"
-fi
 
 ADVANCED_MONITORING_TEMPLATE_PATH=pn-infra/$runtime_path/pn-infra-advanced-monitoring.yaml
 
