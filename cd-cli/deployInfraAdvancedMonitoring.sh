@@ -170,7 +170,7 @@ echo "###########################################################"
 
 if [[ "$account" == "core" ]]; then
   runtime_path="runtime-infra"
-elif [[ "$account" == "confinfo" ]];
+elif [[ "$account" == "confinfo" ]]; then
   runtime_path="runtime-infra-confinfo"
 fi
 

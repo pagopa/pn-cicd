@@ -1993,6 +1993,7 @@ Resources:
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - 'echo ""'
+                - 'echo "./deployInfraAdvancedMonitoring.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a confinfo -c $custom_config_dir "'
                 - '(cd scripts/cd-cli && ./deployInfraAdvancedMonitoring.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a confinfo -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
