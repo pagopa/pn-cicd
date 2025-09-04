@@ -201,7 +201,10 @@ if ( [ -f "${ADVANCED_MONITORING_TEMPLATE_PATH}" ] ) then
         --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
         --template-file $ADVANCED_MONITORING_TEMPLATE_PATH \
         --tags Microservice=pn-infra-advanced-monitoring \
-        --parameter-overrides file://$( realpath ${EnhancedParamFilePath} )
+        --parameter-overrides $(jq -r '.[]' "$(realpath ${EnhancedParamFilePath})") \
+                              TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
+                              ProjectName=${project_name} \
+                              
 else 
   echo "No ${ADVANCED_MONITORING_TEMPLATE_PATH} provided"
 fi
