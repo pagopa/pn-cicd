@@ -182,27 +182,33 @@ echo "=== Prepare enhanced parameters for infra advanced monitoring"
 ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH="pn-infra/$runtime_path/pn-infra-advanced-monitoring-${env_type}-cfg.json"
 
 if [ ! -f ${ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH} ]; then
-  echo '{ "Parameters": {} }' > ${ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH}
+  echo "{ \"Parameters\": {} }" > ${ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH}
 fi
 
-EnhancedParamFilePath="pn-infra-advanced-monitoring-${env_type}-cfg-enhanced.txt"
+EnhancedParamFilePath="pn-infra-advanced-monitoring-${env_type}-cfg-enhanced.json"
 
 echo "= Enhanced parameters file"
-jq -s '{ "Parameters": .[0] } * .[1] | .Parameters | to_entries | map("\(.key)=\(.value)") | .[]' \
+jq -s "{ \"Parameters\": .[0] } * .[1]" \
    ${INFRA_ALL_OUTPUTS_FILE} ${ADVANCED_MONITORING_TEMPLATE_CONFIG_PATH} \
-   -r > ${EnhancedParamFilePath}
-
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnhancedParamFilePath}
+sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
+echo "]" >> "$EnhancedParamFilePath"
 cat ${EnhancedParamFilePath}
 
-if [ -f "${ADVANCED_MONITORING_TEMPLATE_PATH}" ]; then
+EnhancedParamFilePath=$(jq -r '.[]' "$(realpath ${EnhancedParamFilePath})")
+cat ${EnhancedParamFilePath}
+
+if ( [ -f "${ADVANCED_MONITORING_TEMPLATE_PATH}" ] ) then
   aws ${aws_command_base_args} cloudformation deploy \
         --stack-name pn-infra-advanced-monitoring-${env_type} \
         --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
         --template-file $ADVANCED_MONITORING_TEMPLATE_PATH \
         --tags Microservice=pn-infra-advanced-monitoring \
-        --parameter-overrides $(cat "${EnhancedParamFilePath}") \
+        --parameter-overrides $(cat $EnhancedParamFilePath) \
                               TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
-                              ProjectName=${project_name}
+                              ProjectName=${project_name} \
+                              
 else 
   echo "No ${ADVANCED_MONITORING_TEMPLATE_PATH} provided"
 fi
