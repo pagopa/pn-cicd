@@ -1323,29 +1323,79 @@ Resources:
               RunOrder: 4
 
             # Update pn-delayer
-            #- Name: Update_PnDelayer
-            #  ActionTypeId:
-            #    Category: Build
-            #    Owner: AWS
-            #    Version: 1
-            #    Provider: CodeBuild
-            #  Configuration:
-            #    ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-            #    PrimarySource: DesiredCommitIdsAndScripts
-            #    EnvironmentVariables: !Sub '[
-            #        {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-            #        {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-            #        {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-            #        {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
-            #        {"name":"MsName", "value":"pn-delayer", "type":"PLAINTEXT"},
-            #        {"name":"MsNumber", "value":"27", "type":"PLAINTEXT"},
-            #        {"name":"VarPrefix", "value":"pn_delayer", "type":"PLAINTEXT"}
-            #      ]'
-            #  InputArtifacts:
-            #    - Name: DesiredCommitIdsAndScripts
-            #  OutputArtifacts:
-            #    - Name: PnDelayerOutput
-            #  RunOrder: 4
+            - Name: Update_PnDelayer
+              ActionTypeId:
+               Category: Build
+               Owner: AWS
+               Version: 1
+               Provider: CodeBuild
+              Configuration:
+               ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+               PrimarySource: DesiredCommitIdsAndScripts
+               EnvironmentVariables: !Sub '[
+                   {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                   {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                   {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                   {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                   {"name":"MsName", "value":"pn-delayer", "type":"PLAINTEXT"},
+                   {"name":"MsNumber", "value":"27", "type":"PLAINTEXT"},
+                   {"name":"VarPrefix", "value":"pn_delayer", "type":"PLAINTEXT"}
+                 ]'
+              InputArtifacts:
+               - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+               - Name: PnDelayerOutput
+              RunOrder: 4
+
+            # Update pn-action-manager
+            - Name: Update_PnActionManager
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-action-manager", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"28", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_action_manager", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnActionManagerOutput
+              RunOrder: 4
+
+            # Update pn-timeline-service
+            - Name: Update_PnTimelineService
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-timeline-service", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"29", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_timeline_service", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnTimelineServiceOutput
+              RunOrder: 4
 
             # Update pn-paper-tracker
             # - Name: Update_PnPaperTracker
@@ -1386,7 +1436,7 @@ Resources:
             #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
             #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
             #         {"name":"MsName", "value":"pn-delivery-push-workflow", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"28", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"30", "type":"PLAINTEXT"},
             #         {"name":"VarPrefix", "value":"pn_delivery_push_workflow", "type":"PLAINTEXT"}
             #       ]'
             #   InputArtifacts:
@@ -1410,7 +1460,7 @@ Resources:
             #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
             #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
             #         {"name":"MsName", "value":"pn-delivery-push-validator", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"29", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"31", "type":"PLAINTEXT"},
             #         {"name":"VarPrefix", "value":"pn_delivery_push_validator", "type":"PLAINTEXT"}
             #       ]'
             #   InputArtifacts:
