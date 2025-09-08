@@ -1436,7 +1436,7 @@ Resources:
             #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
             #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
             #         {"name":"MsName", "value":"pn-delivery-push-workflow", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"28", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"30", "type":"PLAINTEXT"},
             #         {"name":"VarPrefix", "value":"pn_delivery_push_workflow", "type":"PLAINTEXT"}
             #       ]'
             #   InputArtifacts:
@@ -1460,7 +1460,7 @@ Resources:
             #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
             #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
             #         {"name":"MsName", "value":"pn-delivery-push-validator", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"29", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"31", "type":"PLAINTEXT"},
             #         {"name":"VarPrefix", "value":"pn_delivery_push_validator", "type":"PLAINTEXT"}
             #       ]'
             #   InputArtifacts:
