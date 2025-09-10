@@ -7728,7 +7728,7 @@ Resources:
           Location: !Ref FeE2eArtifactOutputTest
           OverrideArtifactName: true
         Environment:
-          ComputeType: BUILD_GENERAL1_SMALL
+          ComputeType: BUILD_GENERAL1_LARGE
           Type: LINUX_CONTAINER
           Image: "aws/codebuild/standard:6.0"
           EnvironmentVariables:
