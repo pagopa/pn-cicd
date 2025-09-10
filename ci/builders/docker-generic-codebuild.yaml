@@ -175,6 +175,11 @@ Resources:
                 - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
                 - if echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/ ; then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); export PR_NUM; fi;
                 - export CI_PROFILE="$CODEBUILD_CI"
+                - |
+                  if ( [ -z "${VERSION}" ] ) then
+                    export VERSION=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+                  fi
+                - |
                 - export IMAGE_TAG=$VERSION
                 - export IMAGE_REPO_NAME=$GITHUB_PRJ_NAME
                 - export SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}
