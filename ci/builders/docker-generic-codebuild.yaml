@@ -158,9 +158,6 @@ Resources:
           - Name: AWS_ACCOUNT_ID
             Type: PLAINTEXT
             Value: !Sub "${AWS::AccountId}"
-          - Name: CI_BUCKET_NAME
-            Type: PLAINTEXT
-            Value: !Sub "${CiArtifactBucket}"                 
 
       Source:
         Type: GITHUB
@@ -179,8 +176,6 @@ Resources:
                 - echo Logging in to Amazon ECR...
                 - export ECR_TOKEN=$( aws ecr get-login-password --region $AWS_DEFAULT_REGION )
                 - echo $ECR_TOKEN | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-                - echo $SETTINGS > maven-settings.xml
-                - export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
                 - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
                 - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
                 - if echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/ ; then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); export PR_NUM; fi;
@@ -209,10 +204,11 @@ Resources:
               on-failure: ABORT
               commands:
                 - echo "Starting Docker build..."
-                - docker build -t .
+                - docker build .
             post_build:
               on-failure: ABORT
               commands:
+                - |
                   echo "Ensure different image for each commit"
                   DOCKER_FILE=$(mktemp)
                   echo "FROM ${GITHUB_PRJ_NAME}:$VERSION" >$DOCKER_FILE
