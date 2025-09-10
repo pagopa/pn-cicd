@@ -23,11 +23,6 @@ Parameters:
     Default: 'false'
     Description: ECR creation is needed only the first time
 
-  CiArtifactBucket:
-    Description: Ci Artifact bucket name
-    Default: ''
-    Type: String
-
   AllowedDeployAccount1:
     Type: Number
     Description: Account number allowed to read the artifacts
