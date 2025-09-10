@@ -1979,7 +1979,6 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-simulatore-recapiti"
         GitHubDefaultBranch: "develop"
-        DisableIntegrationTest: "false"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
