@@ -338,33 +338,6 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                 Resource: "arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM"
-              - Sid: CodeArtifactGetAuthorizationTokenPolicy
-                Effect: Allow
-                Action:
-                  - codeartifact:GetAuthorizationToken
-                Resource: !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}'
-              - Sid: CodeArtifactRepository
-                Effect: Allow
-                Action:
-                  - codeartifact:ReadFromRepository
-                  - codeartifact:GetRepositoryEndpoint
-                  - codeartifact:ListPackages
-                Resource:
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}'
-              - Sid: CodeArtifactPackage
-                Effect: Allow
-                Action:
-                  - codeartifact:PublishPackageVersion
-                  - codeartifact:PutPackageMetadata
-                  - codeartifact:ReadFromRepository
-                  - codeartifact:DescribePackageVersion
-                  - 'codeartifact:List*'
-                  - 'codeartifact:Get*'
-                  - 'codeartifact:Read*'
-                Resource:
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:package/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}/*'
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/${CodeArtifactDomainName}'
-                  - !Sub 'arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/${CodeArtifactDomainName}/${CodeArtifactRepositoryName}'
               - Sid: ElasticContainerReistry
                 Effect: Allow
                 Action:
@@ -386,21 +359,6 @@ Resources:
                   - ecr:UploadLayerPart
                 Resource:
                   - "*"
-              - Sid: CiArtifactBucket
-                Effect: Allow
-                Action:
-                  - s3:GetReplicationConfiguration
-                  - s3:ListBucket
-                Resource:
-                  - !Sub 'arn:aws:s3:::${CiArtifactBucket}'
-              - Sid: CiArtifactBucketObjects
-                Effect: Allow
-                Action:
-                  - s3:GetObjectVersion
-                  - s3:GetObjectVersionAcl
-                  - 's3:PutObject*'
-                Resource:
-                  - !Sub 'arn:aws:s3:::${CiArtifactBucket}/*'
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
