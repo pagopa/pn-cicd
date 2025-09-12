@@ -175,6 +175,8 @@ Resources:
                 - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
                 - if echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/ ; then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); export PR_NUM; fi;
                 - export CI_PROFILE="$CODEBUILD_CI"
+                - export VERSION=$(cat VERSION)
+                - echo $VERSION
                 - |
                   if ( [ -z "${VERSION}" ] ) then
                     export VERSION=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
