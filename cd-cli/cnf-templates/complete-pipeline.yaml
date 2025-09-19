@@ -2385,8 +2385,11 @@ Resources:
               - iam:DeleteRole
               - iam:DeleteRolePolicy
               - iam:GetRole
-              - iam:GetSAMLProvider
             Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*
+          - Effect: Allow
+            Action:
+              - iam:GetSAMLProvider
+            Resource: arn:aws:iam::${AWS::AccountId}:saml-provider/*
           - Effect: Allow
             Action:
               - kms:Decrypt
