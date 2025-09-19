@@ -2389,7 +2389,7 @@ Resources:
           - Effect: Allow
             Action:
               - iam:GetSAMLProvider
-            Resource: arn:aws:iam::${AWS::AccountId}:saml-provider/*
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:saml-provider/*
           - Effect: Allow
             Action:
               - kms:Decrypt
