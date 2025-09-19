@@ -3329,7 +3329,6 @@ Resources:
               - iam:GetUserPolicy
               - iam:GetUser
               - iam:UpdateAccessKey
-              - iam:GetSAMLProvider
             Resource: 
               - '*'
           - Sid: SecretxCelonis
@@ -3351,6 +3350,7 @@ Resources:
               - iam:PutRolePolicy
               - iam:CreatePolicyVersion
               - iam:GetRolePolicy
+              - iam:GetSAMLProvider
             Resource:
               - !Sub arn:aws:iam::${AWS::AccountId}:role/*
               - !Sub arn:aws:iam::${AWS::AccountId}:policy/*
