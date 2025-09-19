@@ -2385,7 +2385,6 @@ Resources:
               - iam:DeleteRole
               - iam:DeleteRolePolicy
               - iam:GetRole
-              - iam:GetSAMLProvider
             Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*
           - Effect: Allow
             Action:
@@ -3330,6 +3329,7 @@ Resources:
               - iam:GetUserPolicy
               - iam:GetUser
               - iam:UpdateAccessKey
+              - iam:GetSAMLProvider
             Resource: 
               - '*'
           - Sid: SecretxCelonis
