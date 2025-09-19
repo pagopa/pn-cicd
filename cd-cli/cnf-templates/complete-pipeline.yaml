@@ -2385,6 +2385,7 @@ Resources:
               - iam:DeleteRole
               - iam:DeleteRolePolicy
               - iam:GetRole
+              - iam:GetSAMLProvider
             Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*
           - Effect: Allow
             Action:
@@ -3350,7 +3351,6 @@ Resources:
               - iam:PutRolePolicy
               - iam:CreatePolicyVersion
               - iam:GetRolePolicy
-              - iam:GetSAMLProvider
             Resource:
               - !Sub arn:aws:iam::${AWS::AccountId}:role/*
               - !Sub arn:aws:iam::${AWS::AccountId}:policy/*
