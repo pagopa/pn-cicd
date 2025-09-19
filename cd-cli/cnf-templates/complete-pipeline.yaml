@@ -2388,10 +2388,6 @@ Resources:
             Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/*
           - Effect: Allow
             Action:
-              - iam:GetSAMLProvider
-            Resource: !Sub arn:aws:iam::${AWS::AccountId}:saml-provider/*
-          - Effect: Allow
-            Action:
               - kms:Decrypt
               - kms:DescribeKey
               - kms:GenerateDataKey
@@ -3354,9 +3350,11 @@ Resources:
               - iam:PutRolePolicy
               - iam:CreatePolicyVersion
               - iam:GetRolePolicy
+              - iam:GetSAMLProvider
             Resource:
               - !Sub arn:aws:iam::${AWS::AccountId}:role/*
               - !Sub arn:aws:iam::${AWS::AccountId}:policy/*
+              - !Sub arn:aws:iam::${AWS::AccountId}:saml-provider/*
           - Effect: Allow
             Action:
               - iam:GetPolicyVersion
