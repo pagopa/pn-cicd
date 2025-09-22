@@ -1009,14 +1009,6 @@ Resources:
               - "elasticloadbalancing:DescribeTargetHealth"
               - "elasticloadbalancing:DescribeTargetGroups"
             Resource: "*"
-          - Action:
-              - iam:PassRole
-            Effect: Allow
-            Resource: "*"
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - ecs-tasks.amazonaws.com
 
   CodeBuildPolicyR53:
     Type: AWS::IAM::ManagedPolicy
@@ -1498,7 +1490,6 @@ Resources:
               - iam:ListAttachedRolePolicies
               - iam:ListInstanceProfiles
               - iam:ListRoles
-              - iam:PassRole
               - lambda:ListFunctions
               - lambda:*Tag*
               - logs:CreateLogGroup
@@ -1552,7 +1543,7 @@ Resources:
           - Action: iam:PassRole
             Effect: Allow
             Resource:
-              - "*"
+              - arn:aws:iam::*:role/pn-*-TaskRole
             Condition:
               StringLike:
                 iam:PassedToService: ecs-tasks.amazonaws.com
