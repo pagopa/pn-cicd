@@ -2643,12 +2643,6 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
-              - iam:PassRole
-            Resource:
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/BatchServiceRole*
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/service-role/AWSBatchServiceRole
-          - Effect: Allow
-            Action:
               - iam:CreateServiceLinkedRole
             Resource: arn:aws:iam::*:role/*Batch*
             Condition:
@@ -3051,7 +3045,6 @@ Resources:
               - iam:ListAttachedRolePolicies
               - iam:ListInstanceProfiles
               - iam:ListRoles
-              - iam:PassRole
               - lambda:ListFunctions
               - lambda:PutFunctionEventInvokeConfig
               - logs:CreateLogGroup
@@ -3106,31 +3099,6 @@ Resources:
             Condition:
               StringLike:
                 ec2:ResourceTag/aws:cloudformation:stack-name: EC2ContainerService-*
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/pn-*-TaskRole
-            Condition:
-              StringLike:
-                iam:PassedToService: ecs-tasks.amazonaws.com
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/ecsInstanceRole*
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - ec2.amazonaws.com
-                  - ec2.amazonaws.com.cn
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/ecsAutoscaleRole*
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - application-autoscaling.amazonaws.com
-                  - application-autoscaling.amazonaws.com.cn
           - Effect: Allow
             Action: iam:CreateServiceLinkedRole
             Resource: "*"
@@ -3145,6 +3113,10 @@ Resources:
                   - ecs.application-autoscaling.amazonaws.com
                   - spot.amazonaws.com
                   - spotfleet.amazonaws.com
+          - Effect: Allow
+            Action: iam:PassRole
+            Resource:
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/*
           - Effect: Allow
             Action: iam:CreateServiceLinkedRole
             Resource: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/management.chatbot.amazonaws.com/AWSServiceRoleForAWSChatbot"
