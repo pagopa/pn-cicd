@@ -1071,16 +1071,9 @@ Resources:
               - iam:ListTagsForResource         
             Resource: "*"
           - Effect: Allow
-            Action:
-              - iam:PassRole
+            Action: iam:PassRole
             Resource:
-              - arn:aws:iam::*:role/AWSBatchServiceRole
-              - arn:aws:iam::*:role/service-role/AWSBatchServiceRole
-              - arn:aws:iam::*:role/ecsInstanceRole
-              - arn:aws:iam::*:instance-profile/ecsInstanceRole
-              - arn:aws:iam::*:role/iaws-ec2-spot-fleet-role
-              - arn:aws:iam::*:role/aws-ec2-spot-fleet-role
-              - arn:aws:iam::*:role/AWSBatchJobRole*
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/*
           - Effect: Allow
             Action:
               - iam:CreateServiceLinkedRole
@@ -1540,31 +1533,6 @@ Resources:
             Condition:
               StringLike:
                 ec2:ResourceTag/aws:cloudformation:stack-name: EC2ContainerService-*
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/pn-*-TaskRole
-            Condition:
-              StringLike:
-                iam:PassedToService: ecs-tasks.amazonaws.com
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/ecsInstanceRole*
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - ec2.amazonaws.com
-                  - ec2.amazonaws.com.cn
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/ecsAutoscaleRole*
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - application-autoscaling.amazonaws.com
-                  - application-autoscaling.amazonaws.com.cn
           - Effect: Allow
             Action: iam:CreateServiceLinkedRole
             Resource: "*"
