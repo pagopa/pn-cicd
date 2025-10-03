@@ -3332,6 +3332,7 @@ Resources:
               - iam:GetRolePolicy
               - iam:GetSAMLProvider
               - iam:DeleteSAMLProvider
+              - iam:CreateSAMLProvider
             Resource:
               - !Sub arn:aws:iam::${AWS::AccountId}:role/*
               - !Sub arn:aws:iam::${AWS::AccountId}:policy/*
@@ -3412,6 +3413,7 @@ Resources:
               - ec2:AssignIpv6Addresses
               - ec2:AssignPrivateIpAddresses
               - ec2:AssociateAddress
+              - ec2:AssociateClientVpnTargetNetwork
               - ec2:AssociateDhcpOptions
               - ec2:AssociateRouteTable
               - ec2:AssociateSubnetCidrBlock
@@ -3420,6 +3422,7 @@ Resources:
               - ec2:AttachInternetGateway
               - ec2:AttachNetworkInterface
               - ec2:AttachVpnGateway
+              - ec2:AuthorizeClientVpnIngress
               - ec2:AuthorizeSecurityGroupEgress
               - ec2:AuthorizeSecurityGroupIngress
               - ec2:CreateCarrierGateway
@@ -3442,6 +3445,7 @@ Resources:
               - ec2:CreateSubnet
               - ec2:CreateTags
               - ec2:CreateVpc
+              - ec2:CreateClientVpnEndpoint
               - ec2:CreateVpcEndpoint
               - ec2:CreateVpcEndpointConnectionNotification
               - ec2:CreateVpcEndpointServiceConfiguration
