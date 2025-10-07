@@ -2961,6 +2961,35 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
+              - rds:CreateDBCluster
+              - rds:DescribeDBClusters
+              - rds:ModifyDBCluster
+              - rds:DeleteDBCluster
+              - rds:CreateDBInstance
+              - rds:DescribeDBInstances
+              - rds:ModifyDBInstance
+              - rds:DeleteDBInstance
+              - rds:RebootDBInstance 
+              - rds:CreateDBSubnetGroup
+              - rds:DescribeDBSubnetGroups
+              - rds:ModifyDBSubnetGroup
+              - rds:DeleteDBSubnetGroup
+              - rds:CreateDBClusterParameterGroup
+              - rds:DescribeDBClusterParameterGroups
+              - rds:DescribeDBClusterParameters
+              - rds:ModifyDBClusterParameterGroup
+              - rds:DeleteDBClusterParameterGroup
+              - rds:AddTagsToResource
+              - rds:ListTagsForResource
+              - rds:RemoveTagsFromResource
+              - rds:RebootDBCluster
+              - rds:FailoverDBCluster
+            Resource: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*
+          - Effect: Allow
+            Action: "iam:CreateServiceLinkedRole"
+            Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
+          - Effect: Allow
+            Action:
               - elasticache:*
             Resource: '*'
 
@@ -3144,39 +3173,6 @@ Resources:
                   - ecs.application-autoscaling.amazonaws.com
                   - spot.amazonaws.com
                   - spotfleet.amazonaws.com
-          - Effect: Allow
-            Action:
-              - secretsmanager:GetRandomPassword
-            Resource: "*"
-          - Effect: Allow
-            Action:
-              - rds:CreateDBCluster
-              - rds:DescribeDBClusters
-              - rds:ModifyDBCluster
-              - rds:DeleteDBCluster
-              - rds:CreateDBInstance
-              - rds:DescribeDBInstances
-              - rds:ModifyDBInstance
-              - rds:DeleteDBInstance
-              - rds:RebootDBInstance 
-              - rds:CreateDBSubnetGroup
-              - rds:DescribeDBSubnetGroups
-              - rds:ModifyDBSubnetGroup
-              - rds:DeleteDBSubnetGroup
-              - rds:CreateDBClusterParameterGroup
-              - rds:DescribeDBClusterParameterGroups
-              - rds:DescribeDBClusterParameters
-              - rds:ModifyDBClusterParameterGroup
-              - rds:DeleteDBClusterParameterGroup
-              - rds:AddTagsToResource
-              - rds:ListTagsForResource
-              - rds:RemoveTagsFromResource
-              - rds:RebootDBCluster
-              - rds:FailoverDBCluster
-            Resource: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*
-          - Effect: Allow
-            Action: "iam:CreateServiceLinkedRole"
-            Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
           - Effect: Allow
             Action: iam:PassRole
             Resource:
@@ -3375,6 +3371,10 @@ Resources:
               - iam:UpdateAccessKey
             Resource: 
               - '*'
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetRandomPassword
+            Resource: "*"
           - Sid: SecretxCelonis
             Effect: Allow
             Action: 
