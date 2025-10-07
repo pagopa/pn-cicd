@@ -456,9 +456,10 @@ Resources:
                     export PIPELINE_NAME="pn-paper-tracker-update-pipeline"
                   fi
                 - |
-                  if ( [ "$PROJECT" = "pn-simulatore-recapiti-integration" ] ) then
-                    sed -i -e "s|pn_simulatore_recapiti_integration_commitId=.*|pn_simulatore_recapiti_integration_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-simulatore-recapiti-integration-update-pipeline"
+                  if ( [ "$PROJECT" = "pn-simulatore-recapiti" ] ) then
+                    sed -i -e "s|pn_simulatore_recapiti_commitId=.*|pn_simulatore_recapiti_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_simulatore_recapiti_imageUrl=.*|pn_simulatore_recapiti_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-simulatore-recapiti-update-pipeline"
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-delivery-push-workflow" ] ) then
@@ -7343,7 +7344,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMultiLambdaServiceCodeBuildProject
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
