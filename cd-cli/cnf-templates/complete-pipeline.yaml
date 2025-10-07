@@ -7343,7 +7343,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMultilambdaMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateMultiLambdaServiceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
