@@ -2315,7 +2315,7 @@ Resources:
               - rds:ListTagsForResource
               - rds:RemoveTagsFromResource
               - rds:RebootDBCluster
-              - rds:FailoverDBCluster
+              - rds:CreateDBClusterSnapshot
             Resource: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*
           - Effect: Allow
             Action: "iam:CreateServiceLinkedRole"
