@@ -7286,7 +7286,6 @@ Resources:
       Stages:
         - Name: Download_Configurations
           Actions:
-            # Trigger build when material set is changed
             - Name: Read_CommitIds_And_ImageUrls_File
               ActionTypeId:
                 Provider: S3
@@ -7301,7 +7300,6 @@ Resources:
                 - Name: DesiredCommitIds
               Namespace: 'DesiredCommitIdsNS'
               RunOrder: 1
-            # CodePipeline CodeArtifact integration issue
             - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
               ActionTypeId:
                 Provider: S3
@@ -7317,7 +7315,6 @@ Resources:
               RunOrder: 1
         - Name: DeployAll
           Actions:
-            # Download cd-cli scripts
             - Name: Download_CLI_Scripts
               ActionTypeId:
                 Category: Build
@@ -7339,16 +7336,14 @@ Resources:
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
-
-            # Update pn-simulatore-recapiti
-            - Name: Update_PnSimulartoreRecapiti
+            - Name: Update_PnSimulatoreRecapiti
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateMultilambdaMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
