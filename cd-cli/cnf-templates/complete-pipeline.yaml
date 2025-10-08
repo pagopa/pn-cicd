@@ -456,6 +456,12 @@ Resources:
                     export PIPELINE_NAME="pn-paper-tracker-update-pipeline"
                   fi
                 - |
+                  if ( [ "$PROJECT" = "pn-simulatore-recapiti" ] ) then
+                    sed -i -e "s|pn_simulatore_recapiti_commitId=.*|pn_simulatore_recapiti_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_simulatore_recapiti_imageUrl=.*|pn_simulatore_recapiti_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-simulatore-recapiti-update-pipeline"
+                  fi
+                - |
                   if ( [ "$PROJECT" = "pn-delivery-push-workflow" ] ) then
                     sed -i -e "s|pn_delivery_push_workflow_commitId=.*|pn_delivery_push_workflow_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_delivery_push_workflow_imageUrl=.*|pn_delivery_push_workflow_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
@@ -1396,6 +1402,31 @@ Resources:
               OutputArtifacts:
                 - Name: PnTimelineServiceOutput
               RunOrder: 4
+
+            # Update pn-simulatore-recapiti
+            # - Name: Update_PnSimulatoreRecapiti
+            #   ActionTypeId:
+            #     Category: Build
+            #     Owner: AWS
+            #     Version: 1
+            #     Provider: CodeBuild
+            #   Configuration:
+            #     ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+            #     PrimarySource: DesiredCommitIdsAndScripts
+            #     EnvironmentVariables: !Sub '[
+            #         {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+            #         {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+            #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+            #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+            #         {"name":"MsName", "value":"pn-simulatore-recapiti", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"33", "type":"PLAINTEXT"},
+            #         {"name":"VarPrefix", "value":"pn_simulatore_recapiti", "type":"PLAINTEXT"}
+            #       ]'
+            #   InputArtifacts:
+            #     - Name: DesiredCommitIdsAndScripts
+            #   OutputArtifacts:
+            #     - Name: PnSimulatoreRecapitiOutput
+            #   RunOrder: 4
 
             # Update pn-paper-tracker
             # - Name: Update_PnPaperTracker
@@ -2930,6 +2961,36 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
+              - rds:CreateDBCluster
+              - rds:DescribeDBClusters
+              - rds:ModifyDBCluster
+              - rds:DeleteDBCluster
+              - rds:CreateDBInstance
+              - rds:DescribeDBInstances
+              - rds:ModifyDBInstance
+              - rds:DeleteDBInstance
+              - rds:RebootDBInstance 
+              - rds:CreateDBSubnetGroup
+              - rds:DescribeDBSubnetGroups
+              - rds:ModifyDBSubnetGroup
+              - rds:DeleteDBSubnetGroup
+              - rds:CreateDBClusterParameterGroup
+              - rds:DescribeDBClusterParameterGroups
+              - rds:DescribeDBClusterParameters
+              - rds:ModifyDBClusterParameterGroup
+              - rds:DeleteDBClusterParameterGroup
+              - rds:AddTagsToResource
+              - rds:ListTagsForResource
+              - rds:RemoveTagsFromResource
+              - rds:RebootDBCluster
+              - rds:FailoverDBCluster
+              - rds:CreateDBClusterSnapshot
+            Resource: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*
+          - Effect: Allow
+            Action: "iam:CreateServiceLinkedRole"
+            Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
+          - Effect: Allow
+            Action:
               - elasticache:*
             Resource: '*'
 
@@ -3311,6 +3372,10 @@ Resources:
               - iam:UpdateAccessKey
             Resource: 
               - '*'
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetRandomPassword
+            Resource: "*"
           - Sid: SecretxCelonis
             Effect: Allow
             Action: 
@@ -7240,6 +7305,94 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnDeliveryPushValidatorOutput
+              RunOrder: 3
+
+  # MICROSERVICE PN-SIMULATORE-RECAPITI
+  ######################################
+  PnSimulatoreRecapitiDeployPipeline:
+    Condition: RequiresSingleProjects
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-simulatore-recapiti-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            - Name: Update_PnSimulatoreRecapiti
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-simulatore-recapiti", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"33", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_simulatore_recapiti", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnSimulatoreRecapitiOutput
               RunOrder: 3
 
   # HELPDESK FRONTEND
