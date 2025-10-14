@@ -2203,6 +2203,20 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
+                - 'echo "###           RADD DIGITALE DASHBOARD                ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - |
+                  existsDashboardPnCloudwatch=$(find ./scripts/cd-cli -name deployPnCloudwatchDashboards.sh | wc -l)
+                  if ( [ $existsDashboardPnCloudwatch = "1" ] ) then
+                    (cd scripts/cd-cli && ./deployPnCloudwatchDashboards.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
+                  fi
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
                 - 'echo "###                CLEANUP INFRASTRUCTURE            ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
