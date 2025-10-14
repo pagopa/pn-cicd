@@ -2203,7 +2203,7 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
-                - 'echo "###           RADD DIGITALE DASHBOARD                ###"'
+                - 'echo "###           CLOUDWATCH DASHBOARD                ### "'
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - 'echo ""'
