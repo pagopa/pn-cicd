@@ -213,7 +213,7 @@ Resources:
                 - |
                   echo "Ensure different image for each commit"
                   DOCKER_FILE=$(mktemp)
-                  echo "FROM $ECR_URL/${GITHUB_PRJ_NAME}:$VERSION" >$DOCKER_FILE
+                  echo "FROM ${GITHUB_PRJ_NAME}:$VERSION" >$DOCKER_FILE
                   echo "LABEL VCS_COMMIT_ID=${CODEBUILD_RESOLVED_SOURCE_VERSION}" >>$DOCKER_FILE
                   echo "ENV VCS_COMMIT_ID=${CODEBUILD_RESOLVED_SOURCE_VERSION}" >>$DOCKER_FILE
                   cat $DOCKER_FILE
