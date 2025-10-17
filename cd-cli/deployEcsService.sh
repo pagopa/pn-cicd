@@ -307,6 +307,10 @@ ParamFilePath=${microcvs_name}/scripts/aws/cfn/storage-${env_type}-cfg.json
 EnanchedParamFilePath=${microcvs_name}-storage-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\""
 
+##Add transform in microservice template
+echo "Add transform in microservice template"
+bash ${cwdir}/commons/transform-microservice-template.sh -f ${TemplateFilePath}
+
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
