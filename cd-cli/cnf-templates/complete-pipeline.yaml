@@ -455,6 +455,24 @@ Resources:
                     sed -i -e "s|pn_paper_tracker_imageUrl=.*|pn_paper_tracker_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-paper-tracker-update-pipeline"
                   fi
+                - |
+                  if ( [ "$PROJECT" = "pn-simulatore-recapiti" ] ) then
+                    sed -i -e "s|pn_simulatore_recapiti_commitId=.*|pn_simulatore_recapiti_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_simulatore_recapiti_imageUrl=.*|pn_simulatore_recapiti_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-simulatore-recapiti-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-delivery-push-workflow" ] ) then
+                    sed -i -e "s|pn_delivery_push_workflow_commitId=.*|pn_delivery_push_workflow_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_delivery_push_workflow_imageUrl=.*|pn_delivery_push_workflow_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-delivery-push-workflow-update-pipeline"
+                  fi
+                - |
+                  if ( [ "$PROJECT" = "pn-delivery-push-validator" ] ) then
+                    sed -i -e "s|pn_delivery_push_validator_commitId=.*|pn_delivery_push_validator_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_delivery_push_validator_imageUrl=.*|pn_delivery_push_validator_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-delivery-push-validator-update-pipeline"
+                  fi
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
                 - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
@@ -1311,29 +1329,104 @@ Resources:
               RunOrder: 4
 
             # Update pn-delayer
-            #- Name: Update_PnDelayer
-            #  ActionTypeId:
-            #    Category: Build
-            #    Owner: AWS
-            #    Version: 1
-            #    Provider: CodeBuild
-            #  Configuration:
-            #    ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-            #    PrimarySource: DesiredCommitIdsAndScripts
-            #    EnvironmentVariables: !Sub '[
-            #        {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-            #        {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-            #        {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-            #        {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
-            #        {"name":"MsName", "value":"pn-delayer", "type":"PLAINTEXT"},
-            #        {"name":"MsNumber", "value":"27", "type":"PLAINTEXT"},
-            #        {"name":"VarPrefix", "value":"pn_delayer", "type":"PLAINTEXT"}
-            #      ]'
-            #  InputArtifacts:
-            #    - Name: DesiredCommitIdsAndScripts
-            #  OutputArtifacts:
-            #    - Name: PnDelayerOutput
-            #  RunOrder: 4
+            - Name: Update_PnDelayer
+              ActionTypeId:
+               Category: Build
+               Owner: AWS
+               Version: 1
+               Provider: CodeBuild
+              Configuration:
+               ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+               PrimarySource: DesiredCommitIdsAndScripts
+               EnvironmentVariables: !Sub '[
+                   {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                   {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                   {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                   {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                   {"name":"MsName", "value":"pn-delayer", "type":"PLAINTEXT"},
+                   {"name":"MsNumber", "value":"27", "type":"PLAINTEXT"},
+                   {"name":"VarPrefix", "value":"pn_delayer", "type":"PLAINTEXT"}
+                 ]'
+              InputArtifacts:
+               - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+               - Name: PnDelayerOutput
+              RunOrder: 4
+
+            # Update pn-action-manager
+            - Name: Update_PnActionManager
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-action-manager", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"28", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_action_manager", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnActionManagerOutput
+              RunOrder: 4
+
+            # Update pn-timeline-service
+            - Name: Update_PnTimelineService
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-timeline-service", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"29", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_timeline_service", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnTimelineServiceOutput
+              RunOrder: 4
+
+            # Update pn-simulatore-recapiti
+            # - Name: Update_PnSimulatoreRecapiti
+            #   ActionTypeId:
+            #     Category: Build
+            #     Owner: AWS
+            #     Version: 1
+            #     Provider: CodeBuild
+            #   Configuration:
+            #     ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+            #     PrimarySource: DesiredCommitIdsAndScripts
+            #     EnvironmentVariables: !Sub '[
+            #         {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+            #         {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+            #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+            #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+            #         {"name":"MsName", "value":"pn-simulatore-recapiti", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"33", "type":"PLAINTEXT"},
+            #         {"name":"VarPrefix", "value":"pn_simulatore_recapiti", "type":"PLAINTEXT"}
+            #       ]'
+            #   InputArtifacts:
+            #     - Name: DesiredCommitIdsAndScripts
+            #   OutputArtifacts:
+            #     - Name: PnSimulatoreRecapitiOutput
+            #   RunOrder: 4
 
             # Update pn-paper-tracker
             # - Name: Update_PnPaperTracker
@@ -1351,7 +1444,7 @@ Resources:
             #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
             #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
             #         {"name":"MsName", "value":"pn-paper-tracker", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"30", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"32", "type":"PLAINTEXT"},
             #         {"name":"VarPrefix", "value":"pn_paper_tracker", "type":"PLAINTEXT"}
             #       ]'
             #   InputArtifacts:
@@ -1374,7 +1467,7 @@ Resources:
             #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
             #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
             #         {"name":"MsName", "value":"pn-delivery-push-workflow", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"28", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"30", "type":"PLAINTEXT"},
             #         {"name":"VarPrefix", "value":"pn_delivery_push_workflow", "type":"PLAINTEXT"}
             #       ]'
             #   InputArtifacts:
@@ -1398,7 +1491,7 @@ Resources:
             #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
             #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
             #         {"name":"MsName", "value":"pn-delivery-push-validator", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"29", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"31", "type":"PLAINTEXT"},
             #         {"name":"VarPrefix", "value":"pn_delivery_push_validator", "type":"PLAINTEXT"}
             #       ]'
             #   InputArtifacts:
@@ -1450,7 +1543,7 @@ Resources:
               OutputArtifacts:
                 - Name: HelpdeskFeOutput
               RunOrder: 5
-
+            
             # Update logs and Usage Plans
             - Name: Infrastructure_Post_Deploy
               ActionTypeId:
@@ -2035,6 +2128,7 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
 
+
   # CODEBUILD used for post microservices deployment scripts
   ###################################################
   PostDeployScriptsCodeBuildProject:
@@ -2074,6 +2168,15 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
+                - 'echo "###        UPDATE INFRA ADVANCED MONITORING           ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "./deployInfraAdvancedMonitoring.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a core -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployInfraAdvancedMonitoring.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a core -c $custom_config_dir )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
                 - 'echo "###                UPDATE APIGW USAGE PLAN            ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
@@ -2095,6 +2198,20 @@ Resources:
                   existsDashboardOer=$(find ./scripts/cd-cli -name deployOerDashboard.sh | wc -l)
                   if ( [ $existsDashboardOer = "1" ] ) then
                     (cd scripts/cd-cli && ./deployOerDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
+                  fi
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###           CLOUDWATCH DASHBOARD                ### "'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - |
+                  existsDashboardPnCloudwatch=$(find ./scripts/cd-cli -name deployPnCloudwatchDashboards.sh | wc -l)
+                  if ( [ $existsDashboardPnCloudwatch = "1" ] ) then
+                    (cd scripts/cd-cli && ./deployPnCloudwatchDashboards.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
                   fi
                 - 'echo ""'
                 - 'echo ""'
@@ -2496,8 +2613,10 @@ Resources:
               - "states:CreateStateMachine"
               - "states:TagResource"  
               - "states:DescribeStateMachine" 
-              - "states:DeleteStateMachine"             
+              - "states:DeleteStateMachine"
+              - "states:UpdateStateMachine"        
             Resource: "*"
+
 
   
   CodeBuildPolicyR53:
@@ -2567,12 +2686,6 @@ Resources:
               - iam:AddRoleToInstanceProfile
               - iam:ListInstanceProfilesForRole
             Resource: "*"
-          - Effect: Allow
-            Action:
-              - iam:PassRole
-            Resource:
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/BatchServiceRole*
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/service-role/AWSBatchServiceRole
           - Effect: Allow
             Action:
               - iam:CreateServiceLinkedRole
@@ -2862,6 +2975,36 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
+              - rds:CreateDBCluster
+              - rds:DescribeDBClusters
+              - rds:ModifyDBCluster
+              - rds:DeleteDBCluster
+              - rds:CreateDBInstance
+              - rds:DescribeDBInstances
+              - rds:ModifyDBInstance
+              - rds:DeleteDBInstance
+              - rds:RebootDBInstance 
+              - rds:CreateDBSubnetGroup
+              - rds:DescribeDBSubnetGroups
+              - rds:ModifyDBSubnetGroup
+              - rds:DeleteDBSubnetGroup
+              - rds:CreateDBClusterParameterGroup
+              - rds:DescribeDBClusterParameterGroups
+              - rds:DescribeDBClusterParameters
+              - rds:ModifyDBClusterParameterGroup
+              - rds:DeleteDBClusterParameterGroup
+              - rds:AddTagsToResource
+              - rds:ListTagsForResource
+              - rds:RemoveTagsFromResource
+              - rds:RebootDBCluster
+              - rds:FailoverDBCluster
+              - rds:CreateDBClusterSnapshot
+            Resource: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*
+          - Effect: Allow
+            Action: "iam:CreateServiceLinkedRole"
+            Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
+          - Effect: Allow
+            Action:
               - elasticache:*
             Resource: '*'
 
@@ -2917,6 +3060,7 @@ Resources:
               - codedeploy:RegisterApplicationRevision
               - codedeploy:StopDeployment
               - codedeploy:*Tag*
+              - ec2:DisassociateClientVpnTargetNetwork
               - ec2:AssociateRouteTable
               - ec2:AttachInternetGateway
               - ec2:AuthorizeSecurityGroupIngress
@@ -2927,6 +3071,10 @@ Resources:
               - ec2:Describe*
               - ec2:RequestSpotFleet
               - ec2:RunInstances
+              - ec2:RevokeClientVpnIngress
+              - ec2:DeleteClientVpnEndpoint
+              - ec2:DeleteClientVpnRoute
+              - ec2:TerminateClientVpnConnections
               - ecs:*
               - elasticfilesystem:DescribeAccessPoints
               - elasticfilesystem:DescribeFileSystems
@@ -2972,7 +3120,6 @@ Resources:
               - iam:ListAttachedRolePolicies
               - iam:ListInstanceProfiles
               - iam:ListRoles
-              - iam:PassRole
               - lambda:ListFunctions
               - lambda:PutFunctionEventInvokeConfig
               - logs:CreateLogGroup
@@ -3027,31 +3174,6 @@ Resources:
             Condition:
               StringLike:
                 ec2:ResourceTag/aws:cloudformation:stack-name: EC2ContainerService-*
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/pn-*-TaskRole
-            Condition:
-              StringLike:
-                iam:PassedToService: ecs-tasks.amazonaws.com
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/ecsInstanceRole*
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - ec2.amazonaws.com
-                  - ec2.amazonaws.com.cn
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/ecsAutoscaleRole*
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - application-autoscaling.amazonaws.com
-                  - application-autoscaling.amazonaws.com.cn
           - Effect: Allow
             Action: iam:CreateServiceLinkedRole
             Resource: "*"
@@ -3066,6 +3188,10 @@ Resources:
                   - ecs.application-autoscaling.amazonaws.com
                   - spot.amazonaws.com
                   - spotfleet.amazonaws.com
+          - Effect: Allow
+            Action: iam:PassRole
+            Resource:
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/*
           - Effect: Allow
             Action: iam:CreateServiceLinkedRole
             Resource: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/management.chatbot.amazonaws.com/AWSServiceRoleForAWSChatbot"
@@ -3128,6 +3254,9 @@ Resources:
               - cloudfront:DeleteFunction
               - cloudfromt:*Tag*
             Resource: "*"
+          - Effect: Allow
+            Action: acm:DeleteCertificate
+            Resource: !Sub arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
           - Effect: Allow
             Action: s3:PutBucketPolicy
             Resource: arn:aws:s3:::*
@@ -3257,6 +3386,10 @@ Resources:
               - iam:UpdateAccessKey
             Resource: 
               - '*'
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetRandomPassword
+            Resource: "*"
           - Sid: SecretxCelonis
             Effect: Allow
             Action: 
@@ -3276,9 +3409,13 @@ Resources:
               - iam:PutRolePolicy
               - iam:CreatePolicyVersion
               - iam:GetRolePolicy
+              - iam:GetSAMLProvider
+              - iam:DeleteSAMLProvider
+              - iam:CreateSAMLProvider
             Resource:
               - !Sub arn:aws:iam::${AWS::AccountId}:role/*
               - !Sub arn:aws:iam::${AWS::AccountId}:policy/*
+              - !Sub arn:aws:iam::${AWS::AccountId}:saml-provider/*
           - Effect: Allow
             Action:
               - iam:GetPolicyVersion
@@ -3355,6 +3492,7 @@ Resources:
               - ec2:AssignIpv6Addresses
               - ec2:AssignPrivateIpAddresses
               - ec2:AssociateAddress
+              - ec2:AssociateClientVpnTargetNetwork
               - ec2:AssociateDhcpOptions
               - ec2:AssociateRouteTable
               - ec2:AssociateSubnetCidrBlock
@@ -3363,6 +3501,7 @@ Resources:
               - ec2:AttachInternetGateway
               - ec2:AttachNetworkInterface
               - ec2:AttachVpnGateway
+              - ec2:AuthorizeClientVpnIngress
               - ec2:AuthorizeSecurityGroupEgress
               - ec2:AuthorizeSecurityGroupIngress
               - ec2:CreateCarrierGateway
@@ -3385,6 +3524,7 @@ Resources:
               - ec2:CreateSubnet
               - ec2:CreateTags
               - ec2:CreateVpc
+              - ec2:CreateClientVpnEndpoint
               - ec2:CreateVpcEndpoint
               - ec2:CreateVpcEndpointConnectionNotification
               - ec2:CreateVpcEndpointServiceConfiguration
@@ -6986,13 +7126,14 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-paper-tracker", "type":"PLAINTEXT"},
-                    {"name":"MsNumber", "value":"30", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"32", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_paper_tracker", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnPaperTrackerOutput
+              RunOrder: 3
 
  # MICROSERVICE PN-DELIVERY-PUSH-WORKFLOW
   ############################
@@ -7180,6 +7321,94 @@ Resources:
                 - Name: PnDeliveryPushValidatorOutput
               RunOrder: 3
 
+  # MICROSERVICE PN-SIMULATORE-RECAPITI
+  ######################################
+  PnSimulatoreRecapitiDeployPipeline:
+    Condition: RequiresSingleProjects
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-simulatore-recapiti-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            - Name: Update_PnSimulatoreRecapiti
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-simulatore-recapiti", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"33", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_simulatore_recapiti", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnSimulatoreRecapitiOutput
+              RunOrder: 3
+
   # HELPDESK FRONTEND
   #######################
   HelpdeskFeDeployPipeline:
@@ -7278,6 +7507,9 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Tags:
+        - Key: goallowed
+          Value: true
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7357,6 +7589,7 @@ Resources:
               OutputArtifacts:
                 - Name: ParameterOutput
               RunOrder: 2
+
 
   ###########################################################################
   ###  RUN E2E TESTS
@@ -7506,11 +7739,19 @@ Resources:
                       IUN_WITHOUT_PAYMENT=$(aws ssm get-parameters --names /pn-test-e2e/iunWithoutPayment --query "Parameters[*].Value" --output text)
                       BLACK_LIST_CF=$(aws ssm get-parameters --names MapTaxIdBlackList --query "Parameters[*].Value" --output text)
                       GITHUB_TOKEN=$( aws secretsmanager get-secret-value --secret-id github-token --query "SecretString" --output text)
+                      COGNITO_USER_1=$(aws ssm get-parameters --names /pn-test-e2e/cognitoUser1 --query "Parameters[*].Value" --output text)
+                      COGNITO_PASSWORD_USER_1=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestCognitoPasswordUser1' )
+                      COGNITO_CLIENTID_USER_1=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestCognitoClientIdUser1' )
+                      COGNITO_USER_2=$(aws ssm get-parameters --names /pn-test-e2e/cognitoUser2 --query "Parameters[*].Value" --output text)
+                      COGNITO_PASSWORD_USER_2=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestCognitoPasswordUser2' )
+                      COGNITO_CLIENTID_USER_2=$( aws secretsmanager get-secret-value --secret-id secretsForTests | jq '.SecretString' | sed -e 's/^"//' -e 's/"$//' -e 's/\\"/"/g' | jq -r '.e2eTestCognitoClientIdUser2' )
+                      DELAYER_LAMBDA_ARN=$(aws ssm get-parameters --names /pn-test-e2e/pnDelayerLambdaArn --query "Parameters[*].Value" --output text)
+                      APPIO_QRCODE_URL=$(aws ssm get-parameters --names /pn-test-e2e/appIOQrCodeUrl --query "Parameters[*].Value" --output text)
                       - |
                       echo "### CLONE E2E TEST REPOSITORY ###"
                       echo "#####################"
                       git clone --depth 1 --branch ${ENV_NAME} https://github.com/pagopa/pn-b2b-client pn-b2b-client
-                      ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.cucumber.${TEST_SUITE:-NrtTest_${ENV_NAME}} -Dpn.external.base-url=https://api.${ENV_NAME}.${DOMAIN} '-Dpn.interop.enable=${INTEROP_ENABLED:-false}' '-Dpn.iun.120gg.fieramosca=${IUN_120GG_USER_1}' '-Db2b.mail.password=${EMAIL_PASSWORD}' '-Db2b.sender.mail=${SENDER_EMAIL}' '-Dpn.blacklist.tax-ids=${BLACK_LIST_CF}' '-Dpn.iun.120gg.lucio=${IUN_120GG_USER_2}' '-Dpn.external.bearer-token-radd-1=${TOKEN_RADD_1}' '-Dpn.external.bearer-token-radd-2=${TOKEN_RADD_2}' '-Dpn.paper-channel.base-url=${DELIVERY_URL}' '-Dpn.external.bearer-token-radd-non-censito=${TOKEN_RADD_NON_CENSITO}' '-Dpn.external.bearer-token-radd-dati-errati=${TOKEN_RADD_DATI_ERRATI}' '-Dpn.external.bearer-token-radd-3=${TOKEN_RADD_3}' '-Dpn.iun.withf24Payment.colombo=${IUN_PAYMENT_WITH_F24}' '-Dpn.iun.withPagoPaPayment.colombo=${IUN_PAYMENT_WITH_PAGOPA}' '-Dpn.iun.withoutPayment.colombo=${IUN_WITHOUT_PAYMENT}' '-Dpn.external.bearer-token-radd-jwt-scaduto=${TOKEN_RADD_JWT_SCADUTO}' '-Dpn.external.bearer-token-radd-kid-diverso=${TOKEN_RADD_KID_DIVERSO}' '-Dpn.external.bearer-token-radd-aud-erratto=${TOKEN_RADD_AUD_ERRATO}' '-Dpn.external.bearer-token-radd-privateKey-diverso=${TOKEN_RADD_PRIVATEKEY_DIVERSO}' '-Dpn.safeStorage.apikey=${SAFE_STORAGE_APIKEY}' '-Dpn.safeStorage.clientId=${SAFE_STORAGE_CLIENT_ID}' '-Dpn.bearer-token.scaduto=${TOKEN_USER_SCADUTO}' '-Dpn.external.bearer-token-radd-over-50KB=${TOKEN_RADD_OVER_50KB}' '-Dpn.external.api-keys.pagopa-dev-false=${API_KEY}' '-Dpn.external.api-keys.pagopa-dev-2-false=${API_KEY_2}' '-Dpn.external.api-keys.pagopa-dev-GA-false=${API_KEY_GA}' '-Dpn.external.api-keys.pagopa-dev-SON-false=${API_KEY_SON}' '-Dpn.external.api-keys.pagopa-dev-ROOT-false=${API_KEY_ROOT}' '-Dpn.external.api-keys.pagopa-dev-true=${API_KEY_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-2-true=${API_KEY_2_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-GA-true=${API_KEY_GA_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-SON-true=${API_KEY_SON_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-ROOT-true=${API_KEY_ROOT_INTEROP}' '-Dpn.interop.token-oauth2.path=${INTEROP_TOKEN_PATH}' '-Dpn.interop.base-url=${INTEROP_BASE_URL}' '-Dpn.interop.token-oauth2.client-assertion=${INTEROP_TOKEN_ASSERTION}' '-Dpn.interop.clientId=${INTEROP_CLIENT_ID}' '-Dpn.OpenSearch.base-url=${OPERN_SEARCH_URL}' '-Dpn.retention.videotime.preload=${PRE_RETENTION_VIDEOTIME}' '-Dpn.OpenSearch.password=${OPEN_SEARCH_PASSWORD}' '-Dpn.OpenSearch.username=${OPEN_SEARCH_USERNAME}' '-Dpn.external.api-keys.service-desk=${SERVICE_DESK_KEY}' '-Dpn.external.bearer-token-pg2.id=${PG2_ORGANIZATION_ID}' '-Dpn.external.bearer-token-pg1.id=${PG1_ORGANIZATION_ID}' '-Dpn.external.costo_base_notifica=${COSTO_BASE_NOTIFICA}' '-Dpn.external.digitalDomicile.address=${DIGITAL_DOMICILIO}' '-Dpn.external.digitalDomicile.address.alt=${DIGITAL_DOMICILIO_ALT}' '-Dpn.internal.gpd-base-url=${GPD_URL}' '-Dspring.profiles.active=${ENV_NAME}' '-Dpn.external.bearer-token-pa-1=${TOKEN_PA_1}' '-Dpn.external.bearer-token-pa-2=${TOKEN_PA_2}' '-Dpn.external.bearer-token-pa-GA=${TOKEN_PA_GA}' '-Dpn.external.bearer-token-pa-SON=${TOKEN_PA_SON}' '-Dpn.external.bearer-token-pa-ROOT=${TOKEN_PA_ROOT}' '-Dpn.bearer-token.user3=${TOKEN_USER_3}' '-Dpn.bearer-token.user4=${TOKEN_USER_4}' '-Dpn.bearer-token.user5=${TOKEN_USER_5}' '-Dpn.bearer-token.pg1=${TOKEN_USER_PG_1}' '-Dpn.bearer-token.pg2=${TOKEN_USER_PG_2}' '-Dpn.external.api-key-taxID=${PA_TAX_ID_1}' '-Dpn.external.api-key-2-taxID=${PA_TAX_ID_2}' '-Dpn.external.api-key-GA-taxID=${PA_TAX_ID_GA}' '-Dpn.external.api-key-SON-taxID=${PA_TAX_ID_SON}' '-Dpn.external.api-key-ROOT-taxID=${PA_TAX_ID_ROOT}' '-Dpn.bearer-token.user1.taxID=${USER_TAX_ID_1}' '-Dpn.bearer-token.user2.taxID=${USER_TAX_ID_2}'  '-Dpn.external.senderId=${SENDER_ID_1}' '-Dpn.external.senderId-2=${SENDER_ID_2}' '-Dpn.external.senderId-GA=${SENDER_ID_GA}' '-Dpn.external.senderId-SON=${SENDER_ID_SON}' '-Dpn.external.senderId-ROOT=${SENDER_ID_ROOT}'  '-Dpn.external.appio.api-key=${API_KEY_APPIO}' '-Dpn.radd.alt.external.base-url=https://api.radd.${ENV_NAME}.${DOMAIN}' '-Dpn.webapi.external.base-url=https://webapi.${ENV_NAME}.${DOMAIN}' '-Dpn.appio.externa.base-url=https://api-io.${ENV_NAME}.${DOMAIN}' '-Dpn.bearer-token.user2=${CRISTOFORO_C}' '-Dpn.bearer-token.user1=${FIERAMOSCA_E}' '-Dpn.retention.time.preload=${PRE_RETENTION_TIME}' '-Dpn.retention.time.load=${LOAD_RETENTION_TIME}' '-Dpn.safeStorage.base-url=${SAFE_STORAGE_URL}' '-Dpn.internal.delivery-push-base-url=${DELIVERY_PUSH_URL}' '-Dpn.externalChannels.base-url=${EXTERNAL_CHANNEL_URL}' '-Dpn.external.api-subscription-key=${SUBSCRIPTION_KEY}' '-Dpn.bearer-token-payinfo=${TOKEN_PAY_INFO}' '-Dpn.dataVault.base-url=${DATA_VAULT_URL}' '-Dpn.consolidatore.api.key=${CONSOLIDATORE_API_KEY}' '-Dpn.radd.base-url=${DELIVERY_PUSH_URL}' '-Dpn.consolidatore.requestId=${REQUEST_ID}' '-Dpn.delivery.base-url=${DELIVERY_URL}' '-Dpn.external.dest.base-url=https://api.dest.${ENV_NAME}.${DOMAIN}' '-Dpn.bearer-token-b2b.pg2=${TOKEN_B2B_PG_2}' '-Dpn.bearer-token.pg3=${TOKEN_USER_PG_3}' '-Dpn.bearer-token.pg4=${TOKEN_USER_PG_4}'  '-Dpn.bearer-token.pg5=${TOKEN_USER_PG_5}' '-Dpn.authentication.pg.public.key=https://api.dest.${PUBLIC_KEY}' '-Dpn.authentication.pg.public.key.rotation=${PUBLIC_KEY_ROTATION}' '-Dgithub.token=${GITHUB_TOKEN}' clean verify )
+                      ( cd pn-b2b-client && ./mvnw -Dtest=it.pagopa.pn.cucumber.${TEST_SUITE:-NrtTest_${ENV_NAME}} -Dpn.external.base-url=https://api.${ENV_NAME}.${DOMAIN} '-Dpn.interop.enable=${INTEROP_ENABLED:-false}' '-Dpn.iun.120gg.fieramosca=${IUN_120GG_USER_1}' '-Db2b.mail.password=${EMAIL_PASSWORD}' '-Db2b.sender.mail=${SENDER_EMAIL}' '-Dpn.blacklist.tax-ids=${BLACK_LIST_CF}' '-Dpn.iun.120gg.lucio=${IUN_120GG_USER_2}' '-Dpn.external.bearer-token-radd-1=${TOKEN_RADD_1}' '-Dpn.external.bearer-token-radd-2=${TOKEN_RADD_2}' '-Dpn.paper-channel.base-url=${DELIVERY_URL}' '-Dpn.external.bearer-token-radd-non-censito=${TOKEN_RADD_NON_CENSITO}' '-Dpn.external.bearer-token-radd-dati-errati=${TOKEN_RADD_DATI_ERRATI}' '-Dpn.external.bearer-token-radd-3=${TOKEN_RADD_3}' '-Dpn.iun.withf24Payment.colombo=${IUN_PAYMENT_WITH_F24}' '-Dpn.iun.withPagoPaPayment.colombo=${IUN_PAYMENT_WITH_PAGOPA}' '-Dpn.iun.withoutPayment.colombo=${IUN_WITHOUT_PAYMENT}' '-Dpn.external.bearer-token-radd-jwt-scaduto=${TOKEN_RADD_JWT_SCADUTO}' '-Dpn.external.bearer-token-radd-kid-diverso=${TOKEN_RADD_KID_DIVERSO}' '-Dpn.external.bearer-token-radd-aud-erratto=${TOKEN_RADD_AUD_ERRATO}' '-Dpn.external.bearer-token-radd-privateKey-diverso=${TOKEN_RADD_PRIVATEKEY_DIVERSO}' '-Dpn.safeStorage.apikey=${SAFE_STORAGE_APIKEY}' '-Dpn.safeStorage.clientId=${SAFE_STORAGE_CLIENT_ID}' '-Dpn.bearer-token.scaduto=${TOKEN_USER_SCADUTO}' '-Dpn.external.bearer-token-radd-over-50KB=${TOKEN_RADD_OVER_50KB}' '-Dpn.external.api-keys.pagopa-dev-false=${API_KEY}' '-Dpn.external.api-keys.pagopa-dev-2-false=${API_KEY_2}' '-Dpn.external.api-keys.pagopa-dev-GA-false=${API_KEY_GA}' '-Dpn.external.api-keys.pagopa-dev-SON-false=${API_KEY_SON}' '-Dpn.external.api-keys.pagopa-dev-ROOT-false=${API_KEY_ROOT}' '-Dpn.external.api-keys.pagopa-dev-true=${API_KEY_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-2-true=${API_KEY_2_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-GA-true=${API_KEY_GA_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-SON-true=${API_KEY_SON_INTEROP}' '-Dpn.external.api-keys.pagopa-dev-ROOT-true=${API_KEY_ROOT_INTEROP}' '-Dpn.interop.token-oauth2.path=${INTEROP_TOKEN_PATH}' '-Dpn.interop.base-url=${INTEROP_BASE_URL}' '-Dpn.interop.token-oauth2.client-assertion=${INTEROP_TOKEN_ASSERTION}' '-Dpn.interop.clientId=${INTEROP_CLIENT_ID}' '-Dpn.OpenSearch.base-url=${OPERN_SEARCH_URL}' '-Dpn.retention.videotime.preload=${PRE_RETENTION_VIDEOTIME}' '-Dpn.OpenSearch.password=${OPEN_SEARCH_PASSWORD}' '-Dpn.OpenSearch.username=${OPEN_SEARCH_USERNAME}' '-Dpn.external.api-keys.service-desk=${SERVICE_DESK_KEY}' '-Dpn.external.bearer-token-pg2.id=${PG2_ORGANIZATION_ID}' '-Dpn.external.bearer-token-pg1.id=${PG1_ORGANIZATION_ID}' '-Dpn.external.costo_base_notifica=${COSTO_BASE_NOTIFICA}' '-Dpn.external.digitalDomicile.address=${DIGITAL_DOMICILIO}' '-Dpn.external.digitalDomicile.address.alt=${DIGITAL_DOMICILIO_ALT}' '-Dpn.internal.gpd-base-url=${GPD_URL}' '-Dspring.profiles.active=${ENV_NAME}' '-Dpn.external.bearer-token-pa-1=${TOKEN_PA_1}' '-Dpn.external.bearer-token-pa-2=${TOKEN_PA_2}' '-Dpn.external.bearer-token-pa-GA=${TOKEN_PA_GA}' '-Dpn.external.bearer-token-pa-SON=${TOKEN_PA_SON}' '-Dpn.external.bearer-token-pa-ROOT=${TOKEN_PA_ROOT}' '-Dpn.bearer-token.user3=${TOKEN_USER_3}' '-Dpn.bearer-token.user4=${TOKEN_USER_4}' '-Dpn.bearer-token.user5=${TOKEN_USER_5}' '-Dpn.bearer-token.pg1=${TOKEN_USER_PG_1}' '-Dpn.bearer-token.pg2=${TOKEN_USER_PG_2}' '-Dpn.external.api-key-taxID=${PA_TAX_ID_1}' '-Dpn.external.api-key-2-taxID=${PA_TAX_ID_2}' '-Dpn.external.api-key-GA-taxID=${PA_TAX_ID_GA}' '-Dpn.external.api-key-SON-taxID=${PA_TAX_ID_SON}' '-Dpn.external.api-key-ROOT-taxID=${PA_TAX_ID_ROOT}' '-Dpn.bearer-token.user1.taxID=${USER_TAX_ID_1}' '-Dpn.bearer-token.user2.taxID=${USER_TAX_ID_2}'  '-Dpn.external.senderId=${SENDER_ID_1}' '-Dpn.external.senderId-2=${SENDER_ID_2}' '-Dpn.external.senderId-GA=${SENDER_ID_GA}' '-Dpn.external.senderId-SON=${SENDER_ID_SON}' '-Dpn.external.senderId-ROOT=${SENDER_ID_ROOT}'  '-Dpn.external.appio.api-key=${API_KEY_APPIO}' '-Dpn.radd.alt.external.base-url=https://api.radd.${ENV_NAME}.${DOMAIN}' '-Dpn.webapi.external.base-url=https://webapi.${ENV_NAME}.${DOMAIN}' '-Dpn.appio.externa.base-url=https://api-io.${ENV_NAME}.${DOMAIN}' '-Dpn.bearer-token.user2=${CRISTOFORO_C}' '-Dpn.bearer-token.user1=${FIERAMOSCA_E}' '-Dpn.retention.time.preload=${PRE_RETENTION_TIME}' '-Dpn.retention.time.load=${LOAD_RETENTION_TIME}' '-Dpn.safeStorage.base-url=${SAFE_STORAGE_URL}' '-Dpn.internal.delivery-push-base-url=${DELIVERY_PUSH_URL}' '-Dpn.externalChannels.base-url=${EXTERNAL_CHANNEL_URL}' '-Dpn.external.api-subscription-key=${SUBSCRIPTION_KEY}' '-Dpn.bearer-token-payinfo=${TOKEN_PAY_INFO}' '-Dpn.dataVault.base-url=${DATA_VAULT_URL}' '-Dpn.consolidatore.api.key=${CONSOLIDATORE_API_KEY}' '-Dpn.radd.base-url=${DELIVERY_PUSH_URL}' '-Dpn.consolidatore.requestId=${REQUEST_ID}' '-Dpn.delivery.base-url=${DELIVERY_URL}' '-Dpn.external.dest.base-url=https://api.dest.${ENV_NAME}.${DOMAIN}' '-Dpn.bearer-token-b2b.pg2=${TOKEN_B2B_PG_2}' '-Dpn.bearer-token.pg3=${TOKEN_USER_PG_3}' '-Dpn.bearer-token.pg4=${TOKEN_USER_PG_4}'  '-Dpn.bearer-token.pg5=${TOKEN_USER_PG_5}' '-Dpn.authentication.pg.public.key=https://api.dest.${PUBLIC_KEY}' '-Dpn.authentication.pg.public.key.rotation=${PUBLIC_KEY_ROTATION}' '-Dpn.external.radd-cognito-user-1=${COGNITO_USER_1}' '-Dpn.external.radd-cognito-password-user-1=${COGNITO_PASSWORD_USER_1}' '-Dpn.external.radd-cognito-clientid-user-1=${COGNITO_CLIENTID_USER_1}' '-Dpn.external.radd-cognito-user-2=${COGNITO_USER_2}' '-Dpn.external.radd-cognito-password-user-2=${COGNITO_PASSWORD_USER_2}' '-Dpn.external.radd-cognito-clientid-user-2=${COGNITO_CLIENTID_USER_2}' '-Dgithub.token=${GITHUB_TOKEN}' '-Dpn.appIO.checkQrCode-bodyUrl=${APPIO_QRCODE_URL}' '-Dpn.delayer.lambda.arn=${DELAYER_LAMBDA_ARN}' clean verify )
           reports:
             reportGroup: #Cucumber reports from json plugin
               files:
@@ -7580,10 +7821,9 @@ Resources:
                 on-failure: ABORT
                 commands:
                   - echo "Installing Chrome"
-                  - curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-                  - echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list
-                  - apt-get update
-                  - wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_126.0.6478.61-1_amd64.deb
+                  - apt-get update && apt-get install -y awscli
+                  - |
+                  - aws s3 cp s3://$CHROME_BUCKET_NAME/chrome/google-chrome-stable_138.0.7204.168-1_amd64.deb /tmp/chrome.deb
                   - apt-get install -y /tmp/chrome.deb --fix-missing
                   - rm /tmp/chrome.deb
                   - echo "Configuro il locale per CodeBuild"
@@ -7642,7 +7882,7 @@ Resources:
           Location: !Ref FeE2eArtifactOutputTest
           OverrideArtifactName: true
         Environment:
-          ComputeType: BUILD_GENERAL1_SMALL
+          ComputeType: BUILD_GENERAL1_LARGE
           Type: LINUX_CONTAINER
           Image: "aws/codebuild/standard:6.0"
           EnvironmentVariables:
@@ -7658,6 +7898,9 @@ Resources:
             - Name: TAG_TEST
               Type: PLAINTEXT
               Value: '@NRT'
+            - Name: CHROME_BUCKET_NAME
+              Type: PLAINTEXT
+              Value: !Ref CiArtifactBucketNameParam
         VpcConfig:
           Fn::If:
             - HasE2EVPCConfig

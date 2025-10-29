@@ -1550,6 +1550,9 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Tags:
+        - Key: goallowed
+          Value: true
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -1909,6 +1912,96 @@ Resources:
         Type: LINUX_CONTAINER
         Image: "aws/codebuild/standard:6.0"
 
+    # POST-DEPLOY
+  ############################
+  InfrastructurePostDeployPipeline:
+    Condition: RequiresSingleProjects
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-infrastructure-post-deploy-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update infrastructure-post-deploy
+            - Name: Update_InfrastructurePostDeploy
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref PostDeployScriptsCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PostDeployScriptsOutput
+              RunOrder: 2     
+
   # CODEBUILD used to update a multilambda external service       #
   #################################################################
   UpdateMultilambdaMicroserviceCodeBuildProject:
@@ -1981,10 +2074,18 @@ Resources:
                 - env
             build:
               commands:
+                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###        UPDATE INFRA ADVANCED MONITORING           ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "./deployInfraAdvancedMonitoring.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a confinfo -c $custom_config_dir "'
+                - '(cd scripts/cd-cli && ./deployInfraAdvancedMonitoring.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a confinfo -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
@@ -2214,7 +2315,7 @@ Resources:
               - rds:ListTagsForResource
               - rds:RemoveTagsFromResource
               - rds:RebootDBCluster
-              - rds:FailoverDBCluster
+              - rds:CreateDBClusterSnapshot
             Resource: !Sub arn:aws:rds:${AWS::Region}:${AWS::AccountId}:*
           - Effect: Allow
             Action: "iam:CreateServiceLinkedRole"
@@ -2370,12 +2471,6 @@ Resources:
               - iam:ListRoleTags
               - iam:ListTagsForResource         
             Resource: "*"
-          - Effect: Allow
-            Action:
-              - iam:PassRole
-            Resource:
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/BatchServiceRole*
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/service-role/AWSBatchServiceRole
           - Effect: Allow
             Action:
               - iam:CreateServiceLinkedRole
@@ -2785,7 +2880,6 @@ Resources:
               - iam:ListAttachedRolePolicies
               - iam:ListInstanceProfiles
               - iam:ListRoles
-              - iam:PassRole
               - lambda:ListFunctions
               - lambda:*Tag*
               - lambda:PutFunctionEventInvokeConfig
@@ -2840,31 +2934,6 @@ Resources:
             Condition:
               StringLike:
                 ec2:ResourceTag/aws:cloudformation:stack-name: EC2ContainerService-*
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/pn-*-TaskRole
-            Condition:
-              StringLike:
-                iam:PassedToService: ecs-tasks.amazonaws.com
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/ecsInstanceRole*
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - ec2.amazonaws.com
-                  - ec2.amazonaws.com.cn
-          - Action: iam:PassRole
-            Effect: Allow
-            Resource:
-              - arn:aws:iam::*:role/ecsAutoscaleRole*
-            Condition:
-              StringLike:
-                iam:PassedToService:
-                  - application-autoscaling.amazonaws.com
-                  - application-autoscaling.amazonaws.com.cn
           - Effect: Allow
             Action: iam:CreateServiceLinkedRole
             Resource: "*"
@@ -2890,6 +2959,10 @@ Resources:
           - Effect: Allow
             Action: "events:ListEventBuses"
             Resource: "*"
+          - Effect: Allow
+            Action: iam:PassRole
+            Resource:
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/*
 
   CodeBuildPolicyAPICloudfront:
     Type: AWS::IAM::ManagedPolicy

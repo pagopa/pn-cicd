@@ -312,6 +312,25 @@ function prepareOneCloudFront() {
     OptionalParameters="${OptionalParameters} AlarmSNSTopicArn=${AlarmSNSTopicArn}"
   fi
 
+
+  echo "=== Prepare enhanced parameters for logging deployment"
+  OneLoggingConfigFile="${INFRA_FRONTEND_BASE_PATH}/one-logging-${env_type}-cfg.json"
+
+  if [ ! -f ${OneLoggingConfigFile} ]; then
+    echo "{ \"Parameters\": {} }" > ${OneLoggingConfigFile}
+  fi
+
+  EnhancedParamFilePath="one-logging-${env_type}-cfg-enhanced.json"
+  
+  echo "= Enhanced parameters file"
+  jq -s "{ \"Parameters\": .[0] } * .[1]" \
+    ${INFRA_ALL_OUTPUTS_FILE} ${OneLoggingConfigFile} \
+    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+    > ${EnhancedParamFilePath}
+  sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
+  echo "]" >> "$EnhancedParamFilePath"
+  cat ${EnhancedParamFilePath}
+
   if ( [ -f "${INFRA_FRONTEND_BASE_PATH}/one-logging.yaml" ] ) then
     echo ""
     echo "=== Create Logs Bucket ${CdnName}"
@@ -319,7 +338,8 @@ function prepareOneCloudFront() {
       cloudformation deploy \
         --no-fail-on-empty-changeset \
         --stack-name $CdnName-logging \
-        --template-file ${INFRA_FRONTEND_BASE_PATH}/one-logging.yaml
+        --template-file ${INFRA_FRONTEND_BASE_PATH}/one-logging.yaml \
+        --parameter-overrides file://${EnhancedParamFilePath}
 
     logBucketName=$( aws ${aws_log_base_args} \
       cloudformation describe-stacks \
@@ -669,6 +689,17 @@ mkdir -p "pn-personafisica-webapp"
 
 aws ${aws_command_base_args} \
     s3 cp "pn-personafisica-webapp" "s3://${webappPfBucketName}/" --recursive 
+
+# Force apple universal link with content-type=application/json
+appleFileKey=".well-known/apple-app-site-association"
+
+if aws ${aws_command_base_args} s3api head-object --bucket "$webappPfBucketName" --key "$appleFileKey"; then
+  aws ${aws_command_base_args} \
+    s3 cp "s3://${webappPfBucketName}/${appleFileKey}" \
+          "s3://${webappPfBucketName}/${appleFileKey}" \
+          --metadata-directive REPLACE \
+          --content-type application/json
+fi
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPfDistributionId} --paths "/*"
 
