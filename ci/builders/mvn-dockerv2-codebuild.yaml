@@ -254,6 +254,9 @@ Resources:
           - Name: JAVA_VERSION
             Type: PLAINTEXT
             Value: !Sub "${JavaVersion}"
+          - Name: ARM_ENVIRONMENT
+            Type: PLAINTEXT
+            Value: !Sub "${ARMEnvironment}"
           - Name: NATIVE_COMP
             Type: PLAINTEXT
             Value: !Sub "${NativeComp}"                    
@@ -377,7 +380,11 @@ Resources:
                 - |
                   if [ "$JAVA_VERSION" = "21" ]; then
                     CUSTOM_BUILDER_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/builder-jammy-base:0.4.447
-                    CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/run-jammy-base:0.1.160
+                    if [ "$ARM_ENVIRONMENT" = "true" ]; then
+                      CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/run-jammy-base:0.1.160-arm64
+                    else
+                      CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/run-jammy-base:0.1.160  
+                    fi
                     if [ "$NATIVE_COMP" = "true" ]; then
                       ./mvnw clean verify -Pnative $MAVEN_OPTS -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE   spring-boot:build-image $MAVEN_ADD_GOAL
                      else
