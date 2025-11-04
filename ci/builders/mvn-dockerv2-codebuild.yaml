@@ -199,7 +199,11 @@ Resources:
         Type: NO_ARTIFACTS
       Environment:
         PrivilegedMode: true
-        Type: LINUX_CONTAINER
+        Type: 
+          Fn::If:
+            - NeedARMEnvironment
+            - ARM_CONTAINER
+            - LINUX_CONTAINER
         ComputeType:
           Fn::If:
             - NeedMediumBuildEnv
