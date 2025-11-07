@@ -1841,7 +1841,7 @@ Resources:
   PnPaperTrackerCI:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-dockerv2-codebuild.yaml"
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-paper-tracker"
         GitHubDefaultBranch: "develop"
