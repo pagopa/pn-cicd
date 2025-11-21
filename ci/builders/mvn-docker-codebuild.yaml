@@ -43,6 +43,15 @@ Parameters:
       - '21'
       - '17'
 
+  NodeVersion:
+    Description: Node.js version for Lambda function builds
+    Type: String
+    Default: '20'
+    AllowedValues:
+      - '18'
+      - '20'
+      - '22'
+
   ARMEnvironment:
     Description: Codebuild with ARM architecture
     Type: String
@@ -209,7 +218,7 @@ Resources:
           Fn::If:
             - NeedARMEnvironment
             - aws/codebuild/amazonlinux-aarch64-standard:3.0
-            - aws/codebuild/standard:6.0
+            - aws/codebuild/standard:7.0
         EnvironmentVariables:
           - Name: IS_PUBLIC_PROJECT
             Type: PLAINTEXT
@@ -254,6 +263,9 @@ Resources:
           - Name: JAVA_VERSION
             Type: PLAINTEXT
             Value: !Sub "${JavaVersion}"
+          - Name: NODE_VERSION
+            Type: PLAINTEXT
+            Value: !Sub "${NodeVersion}"
           - Name: NATIVE_COMP
             Type: PLAINTEXT
             Value: !Sub "${NativeComp}"                    
@@ -310,6 +322,7 @@ Resources:
             install:
               runtime-versions:
                 java: corretto${JAVA_VERSION}
+                nodejs: ${NODE_VERSION}
             pre_build:
               on-failure: ABORT
               commands:
