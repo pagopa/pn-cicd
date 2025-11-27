@@ -462,7 +462,6 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        JavaVersion: "21"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
@@ -1854,7 +1853,6 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "21"
-        ARMEnvironment: false
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
