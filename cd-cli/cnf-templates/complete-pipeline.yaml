@@ -7956,7 +7956,6 @@ Resources:
       EventBusName: pn-CoreEventBus
       State: ENABLED
       EventPattern:
-        detail-type: [ "SafeStorageOutcomeEvent" ]
         detail:
           client_short_code: [ 'pn-test' ]
       Targets:
