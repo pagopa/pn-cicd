@@ -239,6 +239,10 @@ echo " - ParamFilePath: ${ParamFilePath}"
 echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
 echo " - PipelineParams: ${PipelineParams}"
 
+##Add transform in storage template
+echo "Add transform in storage template"
+bash ${cwdir}/commons/transform-microservice-template.sh -f ${TemplateFilePath}
+
 # if ParamFilePath doesn't exist, create an empty one
 if [ ! -f ${ParamFilePath} ]; then
   echo "{ \"Parameters\": {} }" > ${ParamFilePath}
