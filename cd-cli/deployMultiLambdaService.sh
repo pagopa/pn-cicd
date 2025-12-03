@@ -242,6 +242,10 @@ ParamFilePath=${repo_name}/scripts/aws/cfn/storage-${env_type}-cfg.json
 EnanchedParamFilePath=${repo_name}-storage-${env_type}-cfg-enanched.json
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
 
+##Add transform in storage template
+echo "Add transform in storage template"
+bash ${cwdir}/commons/transform-microservice-template.sh -f ${TemplateFilePath}
+
 echo " - TemplateFilePath: ${TemplateFilePath}"
 echo " - ParamFilePath: ${ParamFilePath}"
 echo " - EnanchedParamFilePath: ${EnanchedParamFilePath}"
