@@ -7919,6 +7919,48 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/codebuild/${RunTestsFeCodebuildProject}"
       RetentionInDays: 14
+
+  SafeStorageToQaQueue:
+    Condition: IsTestCondition
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: pn-safestorage-to-qa
+      MessageRetentionPeriod: 1209600  # 14 days
+
+  SafeStorageToQaQueuePolicy:
+    Condition: IsTestCondition
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref SafeStorageToQaQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowEventBridgeToSendMessage
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action:
+              - sqs:SendMessage
+            Resource: !GetAtt SafeStorageToQaQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !GetAtt SafeStorageToQaEventRule.Arn
+
+  SafeStorageToQaEventRule:
+    Condition: IsTestCondition
+    Type: AWS::Events::Rule
+    Properties:
+      Name: pn-safestorage-to-qa-rule
+      Description: Event rule to forward SafeStorage events to QA queue
+      EventBusName: pn-CoreEventBus
+      State: ENABLED
+      EventPattern:
+        detail:
+          client_short_code: [ 'pn-test' ]
+      Targets:
+        - Arn: !GetAtt SafeStorageToQaQueue.Arn
+          Id: SafeStorageToQaQueueTarget
         
 Outputs:
   CdArtifactBucketName:
@@ -7930,3 +7972,4 @@ Outputs:
         - IsContinuousDeliveryCondition
         - !GetAtt CdEventBus.Arn
         - ''
+
