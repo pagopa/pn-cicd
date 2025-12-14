@@ -2019,6 +2019,20 @@ Resources:
         AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
 
+  PnSimulatoreRecapitiLambdasCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/multilambda-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-simulatore-recapiti"
+        GitHubDefaultBranch: "develop"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        BaseDir: "fuctions"
+        BaseDirEscaped: "fuctions"
+        PythonVersion: "3.13"
+      TimeoutInMinutes: 5
+
   # Progetti Progression Sensor
   PnProgressionSensorLambdas:
     Type: AWS::CloudFormation::Stack
