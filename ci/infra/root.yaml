@@ -2033,6 +2033,16 @@ Resources:
         PythonVersion: "3.13"
       TimeoutInMinutes: 5
 
+  PnSimulatoreRecapitiGlueCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/glue-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-simulatore-recapiti"
+        GitHubDefaultBranch: "develop"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
+
   # Progetti Progression Sensor
   PnProgressionSensorLambdas:
     Type: AWS::CloudFormation::Stack
