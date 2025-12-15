@@ -23,6 +23,11 @@ Parameters:
     Default: 'false'
     Description: ECR creation is needed only the first time
 
+  CiArtifactBucket:
+    Type: String
+    Description: Ci Artifact bucket name for Lambda functions
+    Default: ''
+
   AllowedDeployAccount1:
     Type: Number
     Description: Account number allowed to read the artifacts
@@ -153,6 +158,9 @@ Resources:
           - Name: AWS_ACCOUNT_ID
             Type: PLAINTEXT
             Value: !Sub "${AWS::AccountId}"
+          - Name: CI_BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !Ref CiArtifactBucket
 
       Source:
         Type: GITHUB
@@ -207,6 +215,43 @@ Resources:
               commands:
                 - echo "Starting Docker build..."
                 - docker build -t "${GITHUB_PRJ_NAME}:${VERSION}" .
+                
+                # Build Lambda functions if present
+                - |
+                  if [ -d "fuctions" ]; then
+                    echo "Building Lambda functions..."
+                    cd fuctions
+                    for i in */; do
+                      echo "Building Lambda: $i"
+                      cd $i
+                      
+                      if [ -f "requirements.txt" ]; then
+                        echo "Building Python Lambda with dependencies"
+                        if [ -n "$(find . -type f -name "*.py")" ]; then
+                          echo "Installing dependencies from requirements.txt"
+                          python3 -m pip install --target . -r requirements.txt
+                          echo "Creating function.zip"
+                          zip -r function.zip . -x "*.pyc" -x "__pycache__/*" -x "requirements.txt"
+                        else
+                          echo "Error: requirements.txt found but no Python files in ${i}"
+                          exit 1
+                        fi
+                      elif [ -n "$(find . -type f -name "*.py")" ]; then
+                        echo "Building Python Lambda without dependencies"
+                        zip -r function.zip . -x "*.pyc" -x "__pycache__/*"
+                      fi
+                      
+                      cd ..
+                    done
+                    cd ..
+                  fi
+                
+                # Package static assets (Glue, etc.) if present
+                - |
+                  if [ -d "static" ]; then
+                    echo "Packaging static assets..."
+                    # Static assets will be uploaded as-is to S3
+                  fi
             post_build:
               on-failure: ABORT
               commands:
@@ -240,6 +285,37 @@ Resources:
                     echo $EVENT_DETAIL | jq -R -s '[{ "DetailType": "CiEvent","EventBusName": "CiEventBus", "Source":"Builder", "Detail": . }]' > ci_event.json
                     cat ci_event.json
                     aws events put-events --entries file://ci_event.json
+                    
+                    # Upload Lambda functions if present
+                    if [ -d "fuctions" ]; then
+                      echo "Uploading Lambda functions to S3..."
+                      cd fuctions
+                      export COMMIT_ID=$(git rev-parse --verify HEAD)
+                      echo $COMMIT_ID > commitID.txt
+                      
+                      for i in *; do
+                        if [[ -f "${i}/function.zip" ]]; then
+                          cp -p "${i}/function.zip" "${i}.zip"
+                        fi
+                      done
+                      
+                      zip -u functions.zip commitID.txt *.zip
+                      aws s3 cp functions.zip "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/${BRANCH_NAME}/functions.zip"
+                      aws s3 cp functions.zip "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/commits/${COMMIT_ID}/functions.zip"
+                      cd ..
+                    fi
+                    
+                    # Upload static assets if present
+                    if [ -d "static" ]; then
+                      echo "Uploading static assets to S3..."
+                      export COMMIT_ID=$(git rev-parse --verify HEAD)
+                      
+                      # Upload static directory
+                      aws s3 sync static "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/${BRANCH_NAME}/static/"
+                      aws s3 sync static "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/commits/${COMMIT_ID}/static/"
+                      
+                      echo "Static assets uploaded successfully"
+                    fi
                   else
                     echo "Deploy"
                     docker tag ${GITHUB_PRJ_NAME}:$VERSION $ECR_URL/${IMAGE_REPO_NAME}:latest_feature_bug
@@ -361,6 +437,20 @@ Resources:
                   - ecr:UploadLayerPart
                 Resource:
                   - "*"
+              - Sid: S3AccessForLambdasAndStatic
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:aws:s3:::${CiArtifactBucket}/*"
+                  - !Sub "arn:aws:s3:::${CiArtifactBucket}"
+              - Sid: StsGetCallerIdentity
+                Effect: Allow
+                Action:
+                  - sts:GetCallerIdentity
+                Resource: "*"
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
