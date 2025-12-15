@@ -437,18 +437,15 @@ Resources:
                   - ecr:UploadLayerPart
                 Resource:
                   - "*"
-              - Sid: S3AccessForLambdasAndGlue
+              - Sid: S3AccessForLambdasAndStatic
                 Effect: Allow
                 Action:
                   - s3:GetObject
                   - s3:PutObject
                   - s3:ListBucket
-                  - s3:CreateBucket
                 Resource:
                   - !Sub "arn:aws:s3:::${CiArtifactBucket}/*"
                   - !Sub "arn:aws:s3:::${CiArtifactBucket}"
-                  - !Sub "arn:aws:s3:::aws-glue-assets-${AWS::AccountId}-${AWS::Region}/*"
-                  - !Sub "arn:aws:s3:::aws-glue-assets-${AWS::AccountId}-${AWS::Region}"
               - Sid: StsGetCallerIdentity
                 Effect: Allow
                 Action:
