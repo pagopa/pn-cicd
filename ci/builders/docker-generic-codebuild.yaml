@@ -279,12 +279,6 @@ Resources:
                       IMAGE_URL_WITH_SHA=$( docker inspect --format='{{index .RepoDigests 0}}' $ECR_URL/${IMAGE_REPO_NAME}:${CODEBUILD_RESOLVED_SOURCE_VERSION} )
                     fi
                     docker image ls
-                    echo Generate build event
-                    
-                    EVENT_DETAIL="{ \"event_type\": \"BUILD_DONE\", \"project_branch\":\"${BRANCH_NAME}\",\"project_type\":\"MICROSERVICE_CONTAINER\", \"project\":\"${GITHUB_PRJ_NAME}\", \"commit_id\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\", \"image_url\":\"${IMAGE_URL_WITH_SHA}\" }"
-                    echo $EVENT_DETAIL | jq -R -s '[{ "DetailType": "CiEvent","EventBusName": "CiEventBus", "Source":"Builder", "Detail": . }]' > ci_event.json
-                    cat ci_event.json
-                    aws events put-events --entries file://ci_event.json
                     
                     # Upload Lambda functions if present
                     if [ -d "fuctions" ]; then
@@ -315,6 +309,15 @@ Resources:
                       aws s3 sync static "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/commits/${COMMIT_ID}/static/"
                       
                       echo "Static assets uploaded successfully"
+                    fi
+                    
+                    # Generate build event only for main/develop/release/hotfix branches
+                    if [[ "$BRANCH_NAME" =~ ^(main|develop)|(release|hotfix)\/.*$ ]]; then
+                      echo Generate build event
+                      EVENT_DETAIL="{ \"event_type\": \"BUILD_DONE\", \"project_branch\":\"${BRANCH_NAME}\",\"project_type\":\"MICROSERVICE_CONTAINER\", \"project\":\"${GITHUB_PRJ_NAME}\", \"commit_id\": \"${CODEBUILD_RESOLVED_SOURCE_VERSION}\", \"image_url\":\"${IMAGE_URL_WITH_SHA}\" }"
+                      echo $EVENT_DETAIL | jq -R -s '[{ "DetailType": "CiEvent","EventBusName": "CiEventBus", "Source":"Builder", "Detail": . }]' > ci_event.json
+                      cat ci_event.json
+                      aws events put-events --entries file://ci_event.json
                     fi
                   else
                     echo "Deploy"
