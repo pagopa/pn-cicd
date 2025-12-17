@@ -372,6 +372,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-delivery-push"
+        JavaVersion: "21"
         DisableIntegrationTest: "false"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
