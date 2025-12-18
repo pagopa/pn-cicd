@@ -278,6 +278,24 @@ else
   echo "File functions.zip not found, skipping lambda functions deployment"
 fi
 
+echo " - Copy Glue scripts"
+glueLocalPath='static'
+
+glueDirPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api list-objects-v2 --bucket ${LambdasBucketName} --prefix "${microcvs_name}/commits/${pn_microsvc_commitid}/static/" 2> /dev/null | jq -r '.Contents[]' > /dev/null ) && echo "OK"  || echo "KO" )
+if ( [ $glueDirPresent = "OK" ] ) then
+
+  aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3 sync \
+      "s3://${LambdasBucketName}/${microcvs_name}/commits/${pn_microsvc_commitid}/static/" \
+      "./${glueLocalPath}/"
+
+  aws ${aws_command_base_args} s3 cp --recursive \
+      "${glueLocalPath}" \
+      "${microserviceBucketS3BaseUrl}/static/"
+
+else
+  echo "Directory static/ not found, skipping glue scripts deployment"
+fi
+
 echo "Load all outputs in a single file for next stack deployments"
 INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
 (cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
