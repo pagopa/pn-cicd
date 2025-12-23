@@ -2600,11 +2600,7 @@ Resources:
               - "glue:*Table*"
               - "glue:*Database*"
               - "glue:*Crawler*"
-              - "glue:*Tag*" 
-              - "glue:DeleteJob"
-              - "glue:CreateJob"
-              - "glue:UpdateJob"
-              - "glue:GetJob"            
+              - "glue:*Tag*"       
               - "athena:*WorkGroup*" 
               - "athena:*Tag*"                     
             Resource: "*"
@@ -3007,6 +3003,13 @@ Resources:
           - Effect: Allow
             Action: "iam:CreateServiceLinkedRole"
             Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
+          - Effect: Allow
+            Action:
+              - "glue:DeleteJob"
+              - "glue:CreateJob"
+              - "glue:UpdateJob"
+              - "glue:GetJob"               
+            Resource: "*"
           - Effect: Allow
             Action:
               - elasticache:*
