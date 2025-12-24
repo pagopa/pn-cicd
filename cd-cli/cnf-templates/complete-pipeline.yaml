@@ -2600,7 +2600,7 @@ Resources:
               - "glue:*Table*"
               - "glue:*Database*"
               - "glue:*Crawler*"
-              - "glue:*Tag*"              
+              - "glue:*Tag*"       
               - "athena:*WorkGroup*" 
               - "athena:*Tag*"                     
             Resource: "*"
@@ -3003,6 +3003,11 @@ Resources:
           - Effect: Allow
             Action: "iam:CreateServiceLinkedRole"
             Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
+          - Effect: Allow
+            Action:
+              - "glue:*Job"
+              - "glue:*Connection"           
+            Resource: "*"
           - Effect: Allow
             Action:
               - elasticache:*

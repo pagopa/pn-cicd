@@ -218,27 +218,28 @@ Resources:
                 
                 # Build Lambda functions if present
                 - |
-                  if [ -d "fuctions" ]; then
+                  if [ -d "functions" ]; then
                     echo "Building Lambda functions..."
-                    cd fuctions
+                    cd functions
                     for i in */; do
-                      echo "Building Lambda: $i"
-                      cd $i
+                      function_name="${i%/}"
+                      echo "Building Lambda: $function_name"
+                      cd "$function_name"
                       
                       if [ -f "requirements.txt" ]; then
                         echo "Building Python Lambda with dependencies"
                         if [ -n "$(find . -type f -name "*.py")" ]; then
                           echo "Installing dependencies from requirements.txt"
                           python3 -m pip install --target . -r requirements.txt
-                          echo "Creating function.zip"
-                          zip -r function.zip . -x "*.pyc" -x "__pycache__/*" -x "requirements.txt"
+                          echo "Creating lambda.zip"
+                          zip -r lambda.zip . -x "*.pyc" -x "__pycache__/*" -x "requirements.txt"
                         else
-                          echo "Error: requirements.txt found but no Python files in ${i}"
+                          echo "Error: requirements.txt found but no Python files in ${function_name}"
                           exit 1
                         fi
                       elif [ -n "$(find . -type f -name "*.py")" ]; then
                         echo "Building Python Lambda without dependencies"
-                        zip -r function.zip . -x "*.pyc" -x "__pycache__/*"
+                        zip -r lambda.zip . -x "*.pyc" -x "__pycache__/*"
                       fi
                       
                       cd ..
@@ -293,22 +294,33 @@ Resources:
                   fi
                   
                   # Upload Lambda functions if present (always, for all branches)
-                  if [ -d "fuctions" ] && [ -n "${CI_BUCKET_NAME}" ]; then
+                  if [ -d "functions" ] && [ -n "${CI_BUCKET_NAME}" ]; then
                     echo "Uploading Lambda functions to S3..."
-                    cd fuctions
+                    cd functions
                     export COMMIT_ID=$(git rev-parse --verify HEAD)
                     echo $COMMIT_ID > commitID.txt
                     
-                    for i in *; do
-                      if [[ -f "${i}/function.zip" ]]; then
-                        cp -p "${i}/function.zip" "${i}.zip"
+                    for i in *
+                    do
+                      if [[ -f "${i}/lambda.zip" ]]
+                      then
+                        cp -p "${i}/lambda.zip" "${i}.zip" 
                       fi
-                    done
-                    
+                      if [[ -f "${i}/code_layer.zip" ]]
+                      then
+                        cp -p "${i}/code_layer.zip" "${i}_code.zip" 
+                      fi
+                      if [[ -f "${i}/lib_layer.zip" ]]
+                      then
+                        cp -p "${i}/lib_layer.zip" "${i}_libs.zip"
+                      fi
+                    done 
                     zip -u functions.zip commitID.txt *.zip
                     aws s3 cp functions.zip "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/${BRANCH_NAME}/functions.zip"
                     aws s3 cp functions.zip "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/commits/${COMMIT_ID}/functions.zip"
                     cd ..
+                  else
+                    echo "Folders functions not found or CI_BUCKET_NAME not defined"
                   fi
                   
                   # Upload static assets if present (always, for all branches)
