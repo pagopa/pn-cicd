@@ -181,10 +181,11 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
 
     openSearchArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.OpenSearchArn') 
     echo "OpenSearchArn=${openSearchArn}"
-
+  
     #logsBucketName=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LogsBucketName') 
     #echo "LogsBucketName=${logsBucketName}"
-
+    logsBucketName=''
+    
     applicationLoadBalancerListenerArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.ApplicationLoadBalancerListenerArn') 
     echo "ApplicationLoadBalancerListenerArn=${applicationLoadBalancerListenerArn}"
 
