@@ -245,7 +245,7 @@ Resources:
                 - |
                   if ( [ "$PROJECT" = "pn-infra-core" ] ) then
                     sed -i -e "s|pn_infra_core_commitId=.*|pn_infra_core_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-infra-authfleet-update-pipeline"
+                    export PIPELINE_NAME="pn-infra-update-pipeline"
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-infra" ] ) then
