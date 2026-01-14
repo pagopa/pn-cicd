@@ -472,7 +472,6 @@ Resources:
                     export COMMIT_ID=$(git rev-parse --verify HEAD)
                     
                     # Upload static directory
-                    aws s3 cp static "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/${BRANCH_NAME}/static/" --recursive
                     aws s3 cp static "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/commits/${COMMIT_ID}/static/" --recursive
                     
                     echo "Static assets uploaded successfully"
