@@ -316,7 +316,6 @@ Resources:
                       fi
                     done 
                     zip -u functions.zip commitID.txt *.zip
-                    aws s3 cp functions.zip "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/${BRANCH_NAME}/functions.zip"
                     aws s3 cp functions.zip "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/commits/${COMMIT_ID}/functions.zip"
                     cd ..
                   else
@@ -329,7 +328,6 @@ Resources:
                     export COMMIT_ID=$(git rev-parse --verify HEAD)
                     
                     # Upload static directory
-                    aws s3 sync static "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/${BRANCH_NAME}/static/"
                     aws s3 sync static "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/commits/${COMMIT_ID}/static/"
                     
                     echo "Static assets uploaded successfully"
