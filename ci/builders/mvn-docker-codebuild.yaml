@@ -426,6 +426,13 @@ Resources:
                   else
                     echo "Folder ${FUNCTIONS_FOLDER_NAME} not found or CI_BUCKET_NAME not defined"
                   fi
+                
+                # Package static assets (Glue, etc.) if present
+                - |
+                  if [ -d "static" ]; then
+                    echo "Packaging static assets..."
+                    # Static assets will be uploaded as-is to S3
+                  fi
             post_build:
               on-failure: ABORT
               commands:
@@ -456,6 +463,18 @@ Resources:
                     cd ..
                   else
                     echo "Folders ${FUNCTIONS_FOLDER_NAME} not found or CI_BUCKET_NAME not defined"
+                  fi
+                
+                # Upload static assets if present (always, for all branches)
+                - |
+                  if [ -d "static" ] && [ -n "${CI_BUCKET_NAME}" ]; then
+                    echo "Uploading static assets to S3..."
+                    export COMMIT_ID=$(git rev-parse --verify HEAD)
+                    
+                    # Upload static directory
+                    aws s3 cp static "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/commits/${COMMIT_ID}/static/" --recursive
+                    
+                    echo "Static assets uploaded successfully"
                   fi
                 - |
                   echo "Ensure different image for each commit"
