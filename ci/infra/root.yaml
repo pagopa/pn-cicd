@@ -1103,6 +1103,7 @@ Resources:
         GitHubProjectName: "pn-statemachinemanager"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
+        JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
