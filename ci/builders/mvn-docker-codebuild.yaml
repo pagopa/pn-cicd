@@ -458,7 +458,6 @@ Resources:
                       fi
                     done 
                     zip -u functions.zip commitID.txt *.zip
-                    aws s3 cp functions.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/$BRANCH_NAME/functions.zip"
                     aws s3 cp functions.zip "s3://$CI_BUCKET_NAME/$GITHUB_PRJ_NAME/commits/$COMMIT_ID/functions.zip"
                     cd ..
                   else
