@@ -493,13 +493,23 @@ ParamFilePath=pn-infra/runtime-infra/pn-event-bridge-${env_type}-cfg.json
 
 echo ""
 echo "= Read Parameters file"
-cat ${ParamFilePath} 
+if [ -f "${ParamFilePath}" ]; then
+  cat ${ParamFilePath}
+else
+  echo "File ${ParamFilePath} not found, skipping cat"
+fi
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
-  | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
-  > ${EnanchedParamFilePath}
+if [ -f "${ParamFilePath}" ]; then
+   jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
+     | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+     > ${EnanchedParamFilePath}
+else
+   jq -s "{ \"Parameters\": .[0] }" ${INFRA_ALL_OUTPUTS_FILE} \
+     | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+     > ${EnanchedParamFilePath}
+fi
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
 cat ${EnanchedParamFilePath}
 
@@ -771,4 +781,35 @@ if [[ -f "$CDC_ANALYTICS_FILE" ]]; then
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 else
   echo "$CDC_ANALYTICS_FILE file doesn't exist, stack update skipped"
+fi
+
+echo ""
+echo "=== Deploy PN-DATA-ANALYTICS FOR $env_type ACCOUNT"
+DATA_ANALYTICS_FILE=pn-infra/runtime-infra/pn-data-analytics.yaml
+ParamFilePath=pn-infra/runtime-infra/pn-data-analytics-${env_type}-cfg.json
+
+if [[ -f "$DATA_ANALYTICS_FILE" ]]; then
+    echo "$DATA_ANALYTICS_FILE exists, updating $DATA_ANALYTICS_FILE stack"
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath}
+
+    echo ""
+    echo "= Enanched parameters file"
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
+      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+      > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
+    
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name pn-data-analytics-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --template-file ${DATA_ANALYTICS_FILE} \
+          --tags Microservice=pn-infra-analytics \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+else
+  echo "$DATA_ANALYTICS_FILE file doesn't exist, stack update skipped"
 fi
