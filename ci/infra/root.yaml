@@ -286,6 +286,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ec-namirial-pec"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
