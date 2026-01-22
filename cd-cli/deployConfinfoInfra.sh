@@ -462,6 +462,7 @@ if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --tags Microservice=pn-infra-data-monitoring \
           --template-file ${DATA_MONITORING_STACK_FILE} \
+          --
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 else
@@ -493,6 +494,8 @@ if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --tags Microservice=pn-infra-cost-saving \
           --template-file ${COST_SAVING_STACK_FILE} \
+          --s3-bucket ${bucketName} \
+          --s3-prefix cfn \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 else
