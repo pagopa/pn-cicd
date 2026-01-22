@@ -613,6 +613,8 @@ if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --template-file ${DATA_MONITORING_STACK_FILE} \
           --tags Microservice=pn-infra-data-monitoring \
+          --s3-bucket ${bucketName} \
+          --s3-prefix cfn \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 else
