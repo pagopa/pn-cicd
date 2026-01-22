@@ -2089,6 +2089,7 @@ Resources:
         BaseDirEscaped: "functions"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        NodeVersion: '22'
       TimeoutInMinutes: 10
 
   # Progetto Zen Desk Auth con Lambda
