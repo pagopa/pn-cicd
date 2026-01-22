@@ -61,6 +61,9 @@ Resources:
           - Name: CI_BUCKET_NAME
             Type: PLAINTEXT
             Value: !Sub "${CiArtifactBucket}"
+          - Name: NODE_VERSION
+            Type: PLAINTEXT
+            Value: !Sub "${NodeVersion}"
       Source:
         Type: GITHUB
         Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
@@ -71,6 +74,9 @@ Resources:
             secrets-manager:
               SONAR_TOKEN: arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM:token
           phases:
+            install:
+              runtime-versions:
+                nodejs: ${NODE_VERSION}              
             pre_build:
               on-failure: ABORT
               commands:
