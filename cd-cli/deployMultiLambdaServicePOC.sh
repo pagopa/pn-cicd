@@ -20,16 +20,23 @@ cleanup() {
         -d "${cd_scripts_commitId:-}" \
         -b "${bucketName:-}" \
         -m "Exit code: ${_exit_code}" \
+        -r "${release_label:-}" \
         -R "${aws_region:-}" || true
   fi
 }
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
+die() {
+  local msg=$1
+  local code=${2-1}
+  echo >&2 "$msg"
+  exit "$code"
+}
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -n <repo-name> -r <aws-region> -e <env-type> -i <github-commitid> -a <pn-microsvc-github-commitId> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaArtifactBucketName> [-w <work_dir>]
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -n <repo-name> -r <aws-region> -e <env-type> -i <github-commitid> -a <pn-microsvc-github-commitId> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaArtifactBucketName> [-w <work_dir>] [-R <release-label>]
     
     
     [-h]                           : this help message
@@ -43,7 +50,8 @@ usage() {
     -b <artifactBucketName>        : bucket name to use as temporary artifacts storage
     -B <lambdaArtifactBucketName>  : bucket name where lambda artifact are memorized
     -n <repo-name>                 : nome del repository del servizio
-    -w <work-dir>                    : working directory used by the script to download artifacts (default $HOME/tmp/deploy)
+    -w <work-dir>                  : working directory used by the script to download artifacts (default $HOME/tmp/deploy)
+    [-R <release-label>]           : release label for tracking (e.g., GA26Q1.A)
 
 EOF
   exit 1
@@ -61,6 +69,7 @@ parse_params() {
   pn_microsvc_commitId=""
   bucketName=""
   LambdasBucketName=""
+  release_label=""
 
   while :; do
     case "${1-}" in
@@ -102,8 +111,12 @@ parse_params() {
       bucketName="${2-}"
       shift
       ;;
-    -B | --lambda-bucket-name) 
+    -B | --lambda-bucket-name)
       LambdasBucketName="${2-}"
+      shift
+      ;;
+    -R | --release-label)
+      release_label="${2-}"
       shift
       ;;
     -?*) die "Unknown option: $1" ;;
@@ -140,6 +153,7 @@ dump_params(){
   echo "AWS profile:        ${aws_profile}"
   echo "Bucket Name:        ${bucketName}"
   echo "Lambda Bucket Name: ${LambdasBucketName}"
+  echo "Release Label:      ${release_label}"
 }
 
 
@@ -198,6 +212,7 @@ bash "${script_dir}/commons/track-release.sh" \
     -c "${_pn_config_commit}" \
     -d "${cd_scripts_commitId:-}" \
     -b "${bucketName}" \
+    -r "${release_label}" \
     -R "${aws_region}" || true
 
 echo ""
@@ -484,4 +499,5 @@ bash "${script_dir}/commons/track-release.sh" \
     -c "${_pn_config_commit}" \
     -d "${cd_scripts_commitId:-}" \
     -b "${bucketName}" \
+    -r "${release_label}" \
     -R "${aws_region}" || true
