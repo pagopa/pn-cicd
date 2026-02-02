@@ -5809,7 +5809,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: ""
+          DefaultValue: "N/A"
           Description: "Optional release label for tracking (e.g., JIRA-123, Sprint-15)"
       Stages:
         - Name: Download_Configurations
