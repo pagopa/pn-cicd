@@ -1066,6 +1066,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ss"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1155,6 +1156,7 @@ Resources:
         GitHubProjectName: "pn-ec"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
+        JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
