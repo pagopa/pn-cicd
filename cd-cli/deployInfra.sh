@@ -776,6 +776,36 @@ else
 fi
 
 echo ""
+echo "=== Deploy PN-RELEASE-TRACKING FOR $env_type ACCOUNT"
+RELEASE_TRACKING_FILE=pn-infra/runtime-infra/pn-release-tracking.yaml
+ParamFilePath=pn-infra/runtime-infra/pn-release-tracking-${env_type}-cfg.json
+
+if [[ -f "$RELEASE_TRACKING_FILE" ]]; then
+    echo "$RELEASE_TRACKING_FILE exists, updating $RELEASE_TRACKING_FILE stack"
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath}
+
+    echo ""
+    echo "= Enanched parameters file"
+    EnanchedParamFilePath=pn-release-tracking-${env_type}-cfg-enanched.json
+    jq -r '.Parameters | del(.CdArtifactBucketName) | to_entries[] | "\(.key)=\(.value)"' ${ParamFilePath} \
+      > ${EnanchedParamFilePath}
+    echo "CdArtifactBucketName=${bucketName}" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name pn-release-tracking-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --template-file ${RELEASE_TRACKING_FILE} \
+          --tags Microservice=pn-release-tracking \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+else
+  echo "$RELEASE_TRACKING_FILE file doesn't exist, stack update skipped"
+fi
+
+echo ""
 echo "=== Deploy PN-DATA-ANALYTICS FOR $env_type ACCOUNT"
 DATA_ANALYTICS_FILE=pn-infra/runtime-infra/pn-data-analytics.yaml
 ParamFilePath=pn-infra/runtime-infra/pn-data-analytics-${env_type}-cfg.json

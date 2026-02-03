@@ -9,6 +9,10 @@ cleanup() {
   
   if [[ ${_exit_code} -ne 0 && "${_DEPLOY_SUCCESS:-false}" != "true" ]]; then
     echo "=== Detected failure, tracking release event..."
+    local end_epoch
+    end_epoch=$(date -u +%s)
+    local start_epoch="${_START_TIME_EPOCH:-$end_epoch}"
+    local duration_seconds=$(( end_epoch - start_epoch ))
     bash "${script_dir}/commons/track-release.sh" \
         -i "${_RELEASE_EVENT_ID:-}" \
         -n "${repo_name:-}" \
@@ -20,12 +24,16 @@ cleanup() {
         -d "${cd_scripts_commitId:-}" \
         -b "${bucketName:-}" \
         -m "Exit code: ${_exit_code}" \
+        -s "${_START_TIMESTAMP:-}" \
+        -D "${duration_seconds}" \
         -r "${release_label:-}" \
         -R "${aws_region:-}" || true
   fi
 }
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+_START_TIME_EPOCH=$(date -u +%s)
+_START_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 die() {
   local msg=$1
@@ -200,20 +208,6 @@ fi
 
 # pn_configuration commit - left empty for now (TODO: add export in downloadCustomConfig.sh)
 _pn_config_commit=""
-
-# Release Tracking: STARTED
-bash "${script_dir}/commons/track-release.sh" \
-    -i "${_RELEASE_EVENT_ID}" \
-    -n "${repo_name}" \
-    -e "${env_type}" \
-    -p "STARTED" \
-    -V "${pn_microsvc_commitId}" \
-    -f "${pn_infra_commitid}" \
-    -c "${_pn_config_commit}" \
-    -d "${cd_scripts_commitId:-}" \
-    -b "${bucketName}" \
-    -r "${release_label}" \
-    -R "${aws_region}" || true
 
 echo ""
 echo "=== Base AWS command parameters"
@@ -487,6 +481,8 @@ else
 fi
 
 # Release Tracking: SUCCESS
+_END_TIME_EPOCH=$(date -u +%s)
+_DURATION_SECONDS=$(( _END_TIME_EPOCH - _START_TIME_EPOCH ))
 _DEPLOY_SUCCESS=true
 echo "=== Deploy completed successfully, tracking release event..."
 bash "${script_dir}/commons/track-release.sh" \
@@ -499,5 +495,7 @@ bash "${script_dir}/commons/track-release.sh" \
     -c "${_pn_config_commit}" \
     -d "${cd_scripts_commitId:-}" \
     -b "${bucketName}" \
+    -s "${_START_TIMESTAMP}" \
+    -D "${_DURATION_SECONDS}" \
     -r "${release_label}" \
     -R "${aws_region}" || true

@@ -30,6 +30,8 @@ usage() {
                                           [-d <cicd-version>]
                                           [-l <pipeline-name>]
                                           [-m <error-message>]
+                                          [-s <start-timestamp>]
+                                          [-D <duration-seconds>]
                                           [-r <release-label>]
                                           [-R <aws-region>]
                                           [--dry-run]
@@ -47,6 +49,8 @@ usage() {
     -d <cicd-version>         : cicd scripts version/commit
     -l <pipeline-name>        : codepipeline name
     -m <error-message>        : error message (for FAILURE phase)
+    -s <start-timestamp>      : deployment start timestamp (ISO 8601)
+    -D <duration-seconds>     : deployment duration in seconds
     -r <release-label>        : release label (e.g. GA26Q1.A)
     -R <aws-region>           : aws region
     --dry-run                 : print JSON without uploading to S3
@@ -69,6 +73,8 @@ parse_params() {
   cicd_version=""
   pipeline_name=""
   error_message=""
+  start_timestamp=""
+  duration_seconds=""
   release_label=""
   aws_region="eu-south-1"
   dry_run="false"
@@ -119,6 +125,14 @@ parse_params() {
       ;;
     -m | --error-message)
       error_message="${2-}"
+      shift
+      ;;
+    -s | --start-timestamp)
+      start_timestamp="${2-}"
+      shift
+      ;;
+    -D | --duration-seconds)
+      duration_seconds="${2-}"
       shift
       ;;
     -r | --release-label)
@@ -213,6 +227,8 @@ cat > "${TMP_JSON}" <<EOF
 {
   "event_id": "${event_id}",
   "timestamp": "${timestamp}",
+  "start_timestamp": "${start_timestamp}",
+  "duration_seconds": "${duration_seconds}",
   "execution_user": "${execution_user}",
   "project": "${project_name}",
   "component": "${component_name}",
