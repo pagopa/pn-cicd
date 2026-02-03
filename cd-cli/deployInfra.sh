@@ -789,9 +789,12 @@ if [[ -f "$RELEASE_TRACKING_FILE" ]]; then
     echo ""
     echo "= Enanched parameters file"
     EnanchedParamFilePath=pn-release-tracking-${env_type}-cfg-enanched.json
-    jq -r '.Parameters | del(.CdArtifactBucketName) | to_entries[] | "\(.key)=\(.value)"' ${ParamFilePath} \
+    ReleaseTrackingPipelineParams="${PipelineParams},\"CdArtifactBucketName=${bucketName}\""
+
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
+      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
       > ${EnanchedParamFilePath}
-    echo "CdArtifactBucketName=${bucketName}" >> ${EnanchedParamFilePath}
+    echo "${ReleaseTrackingPipelineParams} ]" >> ${EnanchedParamFilePath}
     cat ${EnanchedParamFilePath}
 
     aws ${aws_command_base_args} \
