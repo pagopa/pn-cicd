@@ -2655,9 +2655,22 @@ Resources:
               - "glue:*Table*"
               - "glue:*Database*"
               - "glue:*Crawler*"
-              - "glue:*Tag*"       
-              - "athena:*WorkGroup*" 
-              - "athena:*Tag*"                     
+              - "glue:*Tag*"
+              - "athena:*WorkGroup*"
+              - "athena:*Tag*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "quicksight:CreateDataSource"
+              - "quicksight:DeleteDataSource"
+              - "quicksight:DescribeDataSource"
+              - "quicksight:UpdateDataSource"
+              - "quicksight:CreateDataSet"
+              - "quicksight:DeleteDataSet"
+              - "quicksight:DescribeDataSet"
+              - "quicksight:UpdateDataSet"
+              - "quicksight:PassDataSource"
+              - "quicksight:*Tag*"
             Resource: "*"
           - Effect: Allow
             Action:
