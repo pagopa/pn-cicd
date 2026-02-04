@@ -5904,7 +5904,8 @@ Resources:
                     {"name":"MsName", "value":"pn-zendesk-auth", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"0", "type":"PLAINTEXT"},
                     {"name":"VarPrefix", "value":"pn_zendesk_auth", "type":"PLAINTEXT"},
-                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"}
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts

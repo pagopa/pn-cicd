@@ -206,8 +206,13 @@ if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/${repo_name} .
 fi
 
-# pn_configuration commit - left empty for now (TODO: add export in downloadCustomConfig.sh)
+# Get pn_configuration commit from custom-config dir
 _pn_config_commit=""
+if [[ -n "${custom_config_dir}" ]] && [[ -d "${custom_config_dir}/.git" ]]; then
+  echo "=== Extracting pn-configuration commit from ${custom_config_dir}"
+  _pn_config_commit=$(cd "${custom_config_dir}" && git rev-parse HEAD 2>/dev/null || echo "")
+  echo "pn-configuration commit: ${_pn_config_commit}"
+fi
 
 echo ""
 echo "=== Base AWS command parameters"

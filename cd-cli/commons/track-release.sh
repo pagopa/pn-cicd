@@ -195,10 +195,37 @@ hour=$(date -u +"%H")
 
 echo "=== Gathering metadata for release event ${event_id}"
 
-# 1. Get User Identity
-execution_user=$(aws sts get-caller-identity --query Arn --output text 2>/dev/null || echo "")
+# Get User Identity and Pipeline Execution ID
+execution_user=""
+pipeline_execution_id="${PipelineExecutionId:-}"
 
-# 2. Resolve Software Version (Tag vs Commit)
+if [[ -n "${CODEBUILD_INITIATOR:-}" ]] && [[ "${CODEBUILD_INITIATOR}" == codepipeline/* ]]; then
+  # Extract pipeline name from CODEBUILD_INITIATOR (format: codepipeline/pipeline-name)
+  _pipeline_name="${CODEBUILD_INITIATOR#codepipeline/}"
+  
+  if [[ -n "${pipeline_execution_id}" ]]; then
+    echo "=== Retrieving pipeline trigger info for execution ${pipeline_execution_id}"
+    # Get the user who triggered the pipeline execution
+    execution_user=$(aws codepipeline get-pipeline-execution \
+      --pipeline-name "${_pipeline_name}" \
+      --pipeline-execution-id "${pipeline_execution_id}" \
+      --query 'pipelineExecution.trigger.triggerDetail' \
+      --output text 2>/dev/null || echo "")
+  fi
+fi
+
+# Fallback to STS caller identity if pipeline trigger not available
+if [[ -z "${execution_user}" ]]; then
+  execution_user=$(aws sts get-caller-identity --query Arn --output text 2>/dev/null || echo "")
+fi
+
+# Auto-detect config_version from pn-configuration git repo if not provided
+if [[ -z "${config_version}" ]] && [[ -d "pn-configuration/.git" ]]; then
+  echo "=== Auto-detecting config_version from pn-configuration git repo"
+  config_version=$(cd pn-configuration && git rev-parse HEAD 2>/dev/null || echo "")
+fi
+
+# Resolve Software Version (Tag vs Commit)
 if [[ "${software_version}" == tag/* ]]; then
     tag="${software_version#tag/}"
     commit_id=""
@@ -207,7 +234,7 @@ else
     commit_id="${software_version}"
 fi
 
-# 3. Build context
+# Build context
 build_id="${CODEBUILD_BUILD_ID:-}"
 build_url="${CODEBUILD_BUILD_URL:-}"
 
@@ -231,6 +258,7 @@ jq -cn \
   --arg infra_version "${infra_version}" \
   --arg cicd_version "${cicd_version}" \
   --arg pipeline_name "${pipeline_name}" \
+  --arg pipeline_execution_id "${pipeline_execution_id}" \
   --arg build_id "${build_id}" \
   --arg build_url "${build_url}" \
   --arg release_label "${release_label}" \
@@ -252,6 +280,7 @@ jq -cn \
     infra_version: $infra_version,
     cicd_version: $cicd_version,
     pipeline_name: $pipeline_name,
+    pipeline_execution_id: $pipeline_execution_id,
     build_id: $build_id,
     build_url: $build_url,
     release_label: $release_label,
