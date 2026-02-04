@@ -214,39 +214,49 @@ build_url="${CODEBUILD_BUILD_URL:-}"
 # --- JSON Construction ---
 TMP_JSON=$(mktemp)
 
-# Build JSON manually to avoid dependencies like jq for writing
-# Handling null for error_message and ensuring proper quoting
-escaped_error_message="null"
-if [[ -n "${error_message}" ]]; then
-    # Escape double quotes for JSON
-    escaped_val="${error_message//\"/\\\"}"
-    escaped_error_message="\"${escaped_val}\""
-fi
-
-cat > "${TMP_JSON}" <<EOF
-{
-  "event_id": "${event_id}",
-  "timestamp": "${timestamp}",
-  "start_timestamp": "${start_timestamp}",
-  "duration_seconds": "${duration_seconds}",
-  "execution_user": "${execution_user}",
-  "project": "${project_name}",
-  "component": "${component_name}",
-  "environment": "${environment}",
-  "phase": "${phase}",
-  "requested_version": "${software_version}",
-  "commit_id": "${commit_id}",
-  "tag": "${tag}",
-  "config_version": "${config_version}",
-  "infra_version": "${infra_version}",
-  "cicd_version": "${cicd_version}",
-  "pipeline_name": "${pipeline_name}",
-  "build_id": "${build_id}",
-  "build_url": "${build_url}",
-  "release_label": "${release_label}",
-  "error_message": ${escaped_error_message}
-}
-EOF
+jq -cn \
+  --arg event_id "${event_id}" \
+  --arg timestamp "${timestamp}" \
+  --arg start_timestamp "${start_timestamp}" \
+  --arg duration_seconds "${duration_seconds}" \
+  --arg execution_user "${execution_user}" \
+  --arg project "${project_name}" \
+  --arg component "${component_name}" \
+  --arg environment "${environment}" \
+  --arg phase "${phase}" \
+  --arg requested_version "${software_version}" \
+  --arg commit_id "${commit_id}" \
+  --arg tag "${tag}" \
+  --arg config_version "${config_version}" \
+  --arg infra_version "${infra_version}" \
+  --arg cicd_version "${cicd_version}" \
+  --arg pipeline_name "${pipeline_name}" \
+  --arg build_id "${build_id}" \
+  --arg build_url "${build_url}" \
+  --arg release_label "${release_label}" \
+  --arg error_message "${error_message}" \
+  '{
+    event_id: $event_id,
+    timestamp: $timestamp,
+    start_timestamp: $start_timestamp,
+    duration_seconds: $duration_seconds,
+    execution_user: $execution_user,
+    project: $project,
+    component: $component,
+    environment: $environment,
+    phase: $phase,
+    requested_version: $requested_version,
+    commit_id: $commit_id,
+    tag: $tag,
+    config_version: $config_version,
+    infra_version: $infra_version,
+    cicd_version: $cicd_version,
+    pipeline_name: $pipeline_name,
+    build_id: $build_id,
+    build_url: $build_url,
+    release_label: $release_label,
+    error_message: $error_message
+  }' > "${TMP_JSON}"
 
 # --- Output / S3 Upload ---
 event_id_short="${event_id:0:8}"
