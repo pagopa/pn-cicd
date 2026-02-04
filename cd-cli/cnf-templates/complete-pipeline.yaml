@@ -2652,28 +2652,6 @@ Resources:
             Resource: "*"            
           - Effect: Allow
             Action:
-              - "glue:*Table*"
-              - "glue:*Database*"
-              - "glue:*Crawler*"
-              - "glue:*Tag*"
-              - "athena:*WorkGroup*"
-              - "athena:*Tag*"
-            Resource: "*"
-          - Effect: Allow
-            Action:
-              - "quicksight:CreateDataSource"
-              - "quicksight:DeleteDataSource"
-              - "quicksight:DescribeDataSource"
-              - "quicksight:UpdateDataSource"
-              - "quicksight:CreateDataSet"
-              - "quicksight:DeleteDataSet"
-              - "quicksight:DescribeDataSet"
-              - "quicksight:UpdateDataSet"
-              - "quicksight:PassDataSource"
-              - "quicksight:*Tag*"
-            Resource: "*"
-          - Effect: Allow
-            Action:
               - "synthetics:*"                  
             Resource: "*"
           - Effect: Allow
@@ -3075,6 +3053,28 @@ Resources:
             Action:
               - "glue:*Job"
               - "glue:*Connection"           
+              - "glue:*Table*"
+              - "glue:*Database*"
+              - "glue:*Crawler*"
+              - "glue:*Tag*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "athena:*WorkGroup*"
+              - "athena:*Tag*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "quicksight:CreateDataSource"
+              - "quicksight:DeleteDataSource"
+              - "quicksight:DescribeDataSource"
+              - "quicksight:UpdateDataSource"
+              - "quicksight:CreateDataSet"
+              - "quicksight:DeleteDataSet"
+              - "quicksight:DescribeDataSet"
+              - "quicksight:UpdateDataSet"
+              - "quicksight:PassDataSource"
+              - "quicksight:*Tag*"
             Resource: "*"
           - Effect: Allow
             Action:
@@ -8144,4 +8144,3 @@ Outputs:
         - IsContinuousDeliveryCondition
         - !GetAtt CdEventBus.Arn
         - ''
-
