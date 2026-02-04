@@ -5829,7 +5829,6 @@ Resources:
         - Name: release_label
           DefaultValue: "N/A"
           Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
-          Description: "Optional release label for tracking (e.g., JIRA-123, Sprint-15)"
       Stages:
         - Name: Download_Configurations
           Actions:
