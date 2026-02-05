@@ -219,10 +219,14 @@ if [[ -z "${execution_user}" ]]; then
   execution_user=$(aws sts get-caller-identity --query Arn --output text 2>/dev/null || echo "")
 fi
 
-# Auto-detect config_version from pn-configuration git repo if not provided
-if [[ -z "${config_version}" ]] && [[ -d "pn-configuration/.git" ]]; then
-  echo "=== Auto-detecting config_version from pn-configuration git repo"
-  config_version=$(cd pn-configuration && git rev-parse HEAD 2>/dev/null || echo "")
+# Auto-detect config_version
+if [[ -z "${config_version}" ]]; then
+  # Try from file
+  commit_file="${script_dir}/../pn-configuration-commit-id.txt"
+  if [[ -f "${commit_file}" ]]; then
+    config_version=$(cat "${commit_file}" | tr -d '[:space:]')
+  fi
+
 fi
 
 # Resolve Software Version (Tag vs Commit)
