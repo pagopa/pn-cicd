@@ -221,12 +221,13 @@ fi
 
 # Auto-detect config_version
 if [[ -z "${config_version}" ]]; then
-  # Try from file
-  commit_file="${script_dir}/../pn-configuration-commit-id.txt"
+  # File created by downloadCustomConfig.sh in custom-config folder
+  commit_file="${script_dir}/../custom-config/pn-configuration-commit-id.txt"
+  
   if [[ -f "${commit_file}" ]]; then
+    echo "=== Reading config_version from ${commit_file}"
     config_version=$(cat "${commit_file}" | tr -d '[:space:]')
   fi
-
 fi
 
 # Resolve Software Version (Tag vs Commit)
