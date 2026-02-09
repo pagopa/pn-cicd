@@ -4,12 +4,38 @@ set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 
 cleanup() {
+  _exit_code=$?
   trap - SIGINT SIGTERM ERR EXIT
-  # script cleanup here
+  
+  if [[ ${_exit_code} -ne 0 && "${_DEPLOY_SUCCESS:-false}" != "true" ]]; then
+    echo "=== Detected failure, tracking release event..."
+    local end_epoch
+    end_epoch=$(date -u +%s)
+    local start_epoch="${_START_TIME_EPOCH:-$end_epoch}"
+    local duration_seconds=$(( end_epoch - start_epoch ))
+    bash "${script_dir}/commons/track-release.sh" \
+        -i "${_RELEASE_EVENT_ID:-}" \
+        -n "pn-showcase-site" \
+        -e "${env_type:-}" \
+        -p "FAILURE" \
+        -V "${pn_showcase_site_commitid:-}" \
+        -f "${pn_infra_commitid:-}" \
+        -d "${cd_scripts_commitId:-}" \
+        -b "${bucketName:-}" \
+        -m "Exit code: ${_exit_code}" \
+        -s "${_START_TIMESTAMP:-}" \
+        -D "${duration_seconds}" \
+        -R "${aws_region:-}" || true
+  fi
 }
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
+# === Release Tracking Initialization ===
+_RELEASE_EVENT_ID=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen | tr '[:upper:]' '[:lower:]' || echo "unknown-$(date +%s)")
+_START_TIME_EPOCH=$(date -u +%s)
+_START_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+_DEPLOY_SUCCESS=false
 
 usage() {
       cat <<EOF
@@ -551,5 +577,23 @@ aws ${aws_command_base_args} \
 
 aws ${aws_command_base_args} \
     s3 sync "pn-showcase-site" "s3://${landingBucketName}/" --delete --exclude "static/documents/*"
+
+# Release Tracking: SUCCESS
+_END_TIME_EPOCH=$(date -u +%s)
+_DURATION_SECONDS=$(( _END_TIME_EPOCH - _START_TIME_EPOCH ))
+_DEPLOY_SUCCESS=true
+echo "=== Deploy completed successfully, tracking release event..."
+bash "${script_dir}/commons/track-release.sh" \
+    -i "${_RELEASE_EVENT_ID}" \
+    -n "pn-showcase-site" \
+    -e "${env_type}" \
+    -p "SUCCESS" \
+    -V "${pn_showcase_site_commitid}" \
+    -f "${pn_infra_commitid}" \
+    -d "${cd_scripts_commitId:-}" \
+    -b "${bucketName}" \
+    -s "${_START_TIMESTAMP}" \
+    -D "${_DURATION_SECONDS}" \
+    -R "${aws_region}" || true
 
 aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${landingDistributionId} --paths "/*"
