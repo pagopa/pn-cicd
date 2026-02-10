@@ -2068,7 +2068,7 @@ Resources:
                     PHASE="FAILURE"
                   fi
                 - 'echo "=== Deploy completed with status: $PHASE, tracking release event..."'
-                - '(cd scripts/cd-cli && ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-infra" -e "$EnvName" -p "$PHASE" -V "$pn_infra_commitId" -f "$pn_infra_commitId" -d "$cd_scripts_commitId" -b "$CdArtifactBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -R "$AwsRegion" || true)'
+                - '(cd scripts/cd-cli && bash ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-infra" -e "$EnvName" -p "$PHASE" -V "$pn_infra_commitId" -f "$pn_infra_commitId" -d "$cd_scripts_commitId" -b "$CdArtifactBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -R "$AwsRegion" || true)'
           artifacts:
             files:
               - '**/*'
