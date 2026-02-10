@@ -251,6 +251,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-servizifiduciari-spapi"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -262,6 +263,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ec-aruba-pec"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -273,6 +275,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ss-aruba-sign"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -284,6 +287,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ec-namirial-pec"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -295,6 +299,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ss-namirial-sign"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -306,6 +311,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ec-dummy-pec"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -317,6 +323,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ss-dummy-sign"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -504,6 +511,7 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-national-registries"
         GitHubDefaultBranch: "develop"
+        JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
@@ -1058,6 +1066,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ss"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1103,6 +1112,7 @@ Resources:
         GitHubProjectName: "pn-statemachinemanager"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
+        JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
@@ -1146,6 +1156,7 @@ Resources:
         GitHubProjectName: "pn-ec"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
+        JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
@@ -2068,6 +2079,21 @@ Resources:
         NodeVersion: "18"
       TimeoutInMinutes: 10
 
+  # Progetto pn-bfhd
+  PnBfhdLambda:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-bfhd"
+        BaseDir: "functions"
+        BaseDirEscaped: "functions"
+        GitHubDefaultBranch: "develop"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        NodeVersion: "22"
+      TimeoutInMinutes: 10
+
   # Progetto Auth Fleet con Multilambda
   PnAuthFleetLambdas:
     Type: AWS::CloudFormation::Stack
@@ -2080,6 +2106,7 @@ Resources:
         BaseDirEscaped: "functions"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        NodeVersion: '22'
       TimeoutInMinutes: 10
 
   # Progetto Zen Desk Auth con Lambda
