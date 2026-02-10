@@ -632,6 +632,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -3883,6 +3888,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -3975,6 +3985,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4067,6 +4082,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4159,6 +4179,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4250,6 +4275,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4342,6 +4372,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4437,6 +4472,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4532,6 +4572,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4624,6 +4669,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4720,6 +4770,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4816,6 +4871,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4911,6 +4971,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5007,6 +5072,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5103,6 +5173,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5199,6 +5274,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5294,6 +5374,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5392,6 +5477,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5487,6 +5577,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5582,6 +5677,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5677,6 +5777,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5772,6 +5877,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5867,6 +5977,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6062,6 +6177,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6157,6 +6277,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6252,6 +6377,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6347,6 +6477,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6442,6 +6577,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6537,6 +6677,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6632,6 +6777,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6727,6 +6877,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6822,6 +6977,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6917,6 +7077,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7012,6 +7177,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7107,6 +7277,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7202,6 +7377,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7297,6 +7477,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7392,6 +7577,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7487,6 +7677,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7582,6 +7777,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7677,6 +7877,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7767,6 +7972,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7856,6 +8066,11 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "N/A"
+          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
       Tags:
         - Key: goallowed
           Value: true
