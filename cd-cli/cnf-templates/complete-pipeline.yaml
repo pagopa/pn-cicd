@@ -6099,8 +6099,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g., GA26Q1.A) or Jira issue reference.Use N/A if not applicable."
+          DefaultValue: ""
+          Description: "Insert Jira release label or issue key(example format: GA26Q1.A or PN-XXXX).Leave blank if not applicable."
       Stages:
         - Name: Download_Configurations
           Actions:
