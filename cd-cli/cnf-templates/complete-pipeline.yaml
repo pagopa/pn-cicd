@@ -635,8 +635,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -3910,8 +3909,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4007,8 +4005,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4104,8 +4101,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4201,8 +4197,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4297,8 +4292,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4394,8 +4388,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4494,8 +4487,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4594,8 +4586,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4691,8 +4682,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4792,8 +4782,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4893,8 +4882,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4993,8 +4981,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5094,8 +5081,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5195,8 +5181,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5296,8 +5281,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5396,8 +5380,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5499,8 +5482,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5599,8 +5581,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5699,8 +5680,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5799,8 +5779,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5899,8 +5878,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5999,8 +5977,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6099,8 +6076,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: ""
-          Description: "Insert Jira release label or issue key(example format: GA26Q1.A or PN-XXXX).Leave blank if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6199,8 +6175,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6299,8 +6274,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6399,8 +6373,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6499,8 +6472,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6599,8 +6571,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6699,8 +6670,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6799,8 +6769,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6899,8 +6868,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6999,8 +6967,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7099,8 +7066,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7199,8 +7165,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7299,8 +7264,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7399,8 +7363,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7499,8 +7462,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7599,8 +7561,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7699,8 +7660,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7799,8 +7759,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7898,9 +7857,8 @@ Resources:
         Location: !Ref PipelineArtifactBucket
       # Pipeline V2 Variables for release tracking
       Variables:
-        - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+        - Name: release_label          
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7994,8 +7952,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -8088,8 +8045,7 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          DefaultValue: "N/A"
-          Description: "Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A if not applicable."
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
       Tags:
         - Key: goallowed
           Value: true
