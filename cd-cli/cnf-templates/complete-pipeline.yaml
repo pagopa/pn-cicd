@@ -1950,22 +1950,22 @@ Resources:
                     echo "Auth fleet non multifunctions is not supported"
                  fi
             post_build:
-             commands:
-               - 'echo ""'
-               - 'echo "### RELEASE TRACKING FINALIZATION ###"'
-               - '_END_TIME_EPOCH=$(date -u +%s)'
-               - '_DURATION_SECONDS=$(( _END_TIME_EPOCH - _START_TIME_EPOCH ))'
-               - |
-                 if [ $CODEBUILD_BUILD_SUCCEEDING -eq 1 ]; then
-                   PHASE="SUCCESS"
-                 else
-                   PHASE="FAILURE"
-                 fi
-               - 'echo "=== Deploy completed with status: $PHASE, tracking release event..."'
-               - '(cd scripts/cd-cli && bash ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-infra" -e "$EnvName" -p "$PHASE" -V "$pn_infra_commitId" -f "$pn_infra_commitId" -d "$cd_scripts_commitId" -b "$CdArtifactBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -R "$AwsRegion" || true)'
+              commands:
+                - 'echo ""'
+                - 'echo "### RELEASE TRACKING FINALIZATION ###"'
+                - '_END_TIME_EPOCH=$(date -u +%s)'
+                - '_DURATION_SECONDS=$(( _END_TIME_EPOCH - _START_TIME_EPOCH ))'
+                - |
+                  if [ $CODEBUILD_BUILD_SUCCEEDING -eq 1 ]; then
+                    PHASE="SUCCESS"
+                  else
+                    PHASE="FAILURE"
+                  fi
+                - 'echo "=== Deploy completed with status: $PHASE, tracking release event..."'
+                - '(cd scripts/cd-cli && bash ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-infra" -e "$EnvName" -p "$PHASE" -V "$pn_infra_commitId" -f "$pn_infra_commitId" -d "$cd_scripts_commitId" -b "$CdArtifactBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -R "$AwsRegion" || true)'
           artifacts:
-           files:
-             - '**/*'
+            files:
+              - '**/*'
       Artifacts:
         Type: CODEPIPELINE
       Environment:
