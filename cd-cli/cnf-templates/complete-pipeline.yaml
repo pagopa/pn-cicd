@@ -1948,7 +1948,7 @@ Resources:
                     (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
                   else
                     echo "Auth fleet non multifunctions is not supported"
-                 fi
+                  fi
             post_build:
               commands:
                 - 'echo ""'
