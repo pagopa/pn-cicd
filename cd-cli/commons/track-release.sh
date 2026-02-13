@@ -202,12 +202,17 @@ pipeline_execution_id="${PipelineExecutionId:-}"
 if [[ -n "${CODEBUILD_INITIATOR:-}" ]] && [[ "${CODEBUILD_INITIATOR}" == codepipeline/* ]]; then
   # Extract pipeline name from CODEBUILD_INITIATOR (format: codepipeline/pipeline-name)
   _pipeline_name="${CODEBUILD_INITIATOR#codepipeline/}"
+
+  # Auto-populate pipeline_name from CodeBuild context 
+  if [[ -z "${pipeline_name}" ]]; then
+    pipeline_name="${_pipeline_name}"
+  fi
   
   if [[ -n "${pipeline_execution_id}" ]]; then
     echo "=== Retrieving pipeline trigger info for execution ${pipeline_execution_id}"
     # Get the user who triggered the pipeline execution
     execution_user=$(aws codepipeline get-pipeline-execution \
-      --pipeline-name "${_pipeline_name}" \
+      --pipeline-name "${pipeline_name}" \
       --pipeline-execution-id "${pipeline_execution_id}" \
       --query 'pipelineExecution.trigger.triggerDetail' \
       --output text 2>/dev/null || echo "")
