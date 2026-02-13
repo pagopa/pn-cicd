@@ -635,7 +635,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -731,7 +732,7 @@ Resources:
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
-                    {"name":"ReleaseLabel", "value":"RLS:#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
                     {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
@@ -3909,7 +3910,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4005,7 +4007,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4101,7 +4104,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4197,7 +4201,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4292,7 +4297,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4388,7 +4394,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4487,7 +4494,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4586,7 +4594,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4682,7 +4691,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4782,7 +4792,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4882,7 +4893,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -4981,7 +4993,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5081,7 +5094,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5181,7 +5195,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5281,7 +5296,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5380,7 +5396,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5482,7 +5499,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5581,7 +5599,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5680,7 +5699,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5779,7 +5799,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5878,7 +5899,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -5977,7 +5999,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6076,7 +6099,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6175,7 +6199,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6274,7 +6299,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6373,7 +6399,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6472,7 +6499,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6571,7 +6599,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6670,7 +6699,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6769,7 +6799,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6868,7 +6899,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -6967,7 +6999,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7066,7 +7099,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7165,7 +7199,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7264,7 +7299,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7363,7 +7399,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7462,7 +7499,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7561,7 +7599,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7660,7 +7699,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7759,7 +7799,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -7952,7 +7993,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -8045,7 +8087,8 @@ Resources:
       # Pipeline V2 Variables for release tracking
       Variables:
         - Name: release_label
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Tags:
         - Key: goallowed
           Value: true
