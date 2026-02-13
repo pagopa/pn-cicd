@@ -1628,10 +1628,6 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
-      Variables:
-        - Name: release_label
-          DefaultValue: "UNTAGGED"
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Tags:
         - Key: goallowed
           Value: true
@@ -2224,7 +2220,7 @@ Resources:
                     PHASE="FAILURE"
                   fi
                 - 'echo "=== Deploy completed with status: $PHASE, tracking release event..."'
-                - '(cd scripts/cd-cli && bash ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-post-deploy" -e "$EnvName" -p "$PHASE" -V "$pn_infra_commitId" -f "$pn_infra_commitId" -d "$cd_scripts_commitId" -b "$CdArtifactBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -r "$ReleaseLabel" -R "$AwsRegion" || true)'
+                - '(cd scripts/cd-cli && bash ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-infra" -e "$EnvName" -p "$PHASE" -V "$pn_infra_commitId" -f "$pn_infra_commitId" -d "$cd_scripts_commitId" -b "$CdArtifactBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -r "$ReleaseLabel" -R "$AwsRegion" || true)'
           artifacts:
             files:
               - '**/*'

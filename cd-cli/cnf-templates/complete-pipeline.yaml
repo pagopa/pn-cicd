@@ -2393,7 +2393,7 @@ Resources:
                     PHASE="FAILURE"
                   fi
                 - 'echo "=== Deploy completed with status: $PHASE, tracking release event..."'
-                - '(cd scripts/cd-cli && bash ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-post-deploy" -e "$EnvName" -p "$PHASE" -V "$pn_infra_commitId" -f "$pn_infra_commitId" -d "$cd_scripts_commitId" -b "$CdArtifactBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -R "$AwsRegion" || true)'
+                - '(cd scripts/cd-cli && bash ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-infra" -e "$EnvName" -p "$PHASE" -V "$pn_infra_commitId" -f "$pn_infra_commitId" -d "$cd_scripts_commitId" -b "$CdArtifactBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -R "$AwsRegion" || true)'
           artifacts:
             files:
               - '**/*'
@@ -3984,7 +3984,7 @@ Resources:
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
-                    {"name":"ReleaseLabel", "value":"RLS:#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
                     {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
@@ -7898,8 +7898,9 @@ Resources:
         Location: !Ref PipelineArtifactBucket
       # Pipeline V2 Variables for release tracking
       Variables:
-        - Name: release_label          
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue Key.Use N/A or "" if not applicable.'
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -8084,11 +8085,6 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
-      # Pipeline V2 Variables for release tracking
-      Variables:
-        - Name: release_label
-          DefaultValue: "UNTAGGED"
-          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Tags:
         - Key: goallowed
           Value: true
@@ -8554,4 +8550,3 @@ Outputs:
         - IsContinuousDeliveryCondition
         - !GetAtt CdEventBus.Arn
         - ''
-
