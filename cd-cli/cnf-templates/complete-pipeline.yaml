@@ -2233,56 +2233,6 @@ Resources:
         Image: "aws/codebuild/standard:6.0"
 
 
-  # CODEBUILD POC for multi-lambda with release tracking
-  # Used by pn-zendesk-auth pipeline for testing release monitoring
-  ###################################################
-  UpdateMultiLambdaServicePOCCodeBuildProject:
-    Type: 'AWS::CodeBuild::Project'
-    Properties:
-      Name: !Sub ${ProjectName}-UpdateMultiLambdaServicePOCCodeBuildProject
-      ServiceRole: !GetAtt CodeBuildRole.Arn
-      Source: 
-        Type: CODEPIPELINE
-        BuildSpec: |
-          version: 0.2
-          phases:
-            pre_build:
-              commands:
-                - 'echo "### SCRIPTS ###"'
-                - 'find scripts'
-                - 'echo "### SOURCE DESIRED COMMIT IDS ###"'
-                - '. ./scripts/desired-commit-ids-env.sh'
-                - 'echo ""'
-                - 'echo "###     ENVIRONMENT     ###"'
-                - 'echo "###########################"'
-                - env
-            build:
-              commands:
-                - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
-                - 'ms_commitId=$( env | grep "${VarPrefix}_commitId=" | sed -e "s/^[^=]*=//" )'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo ""'
-                - 'echo "########################################################"'
-                - 'echo "###   UPDATE MULTI-LAMBDA MICROSERVICE (POC+TRACK) "###'
-                - 'echo "########################################################"'
-                - 'echo ""'
-                - 'echo "./deployMultiLambdaServicePOC.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n $MsName -a $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir -R $ReleaseLabel"'
-                - '(cd scripts/cd-cli && ./deployMultiLambdaServicePOC.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n $MsName -a $ms_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir -R "$ReleaseLabel" )'
-          artifacts:
-            files:
-              - '**/*'
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        ComputeType: BUILD_GENERAL1_SMALL
-        Type: LINUX_CONTAINER
-        Image: "aws/codebuild/standard:6.0"
-
-
   # CODEBUILD used for post microservices deployment scripts
   ###################################################
   PostDeployScriptsCodeBuildProject:
@@ -6158,7 +6108,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 1
             
-            # Update pn-zendesk-auth (using POC script with release tracking)
+            # Update pn-zendesk-auth
             - Name: Update_PnZendeskAuth
               ActionTypeId:
                 Category: Build
@@ -6166,7 +6116,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateMultiLambdaServicePOCCodeBuildProject
+                ProjectName: !Ref UpdateMultiLambdaServiceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
