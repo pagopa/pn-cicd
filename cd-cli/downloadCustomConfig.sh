@@ -144,9 +144,10 @@ if ( [ ! -z "${configuration_repository_secret_name}" ] ) then
 
     git clone $( cat ./secret-config-repo.json | jq -r '.repositoryUrl' ) custom-config
     ( cd custom-config && git fetch && git checkout $commit_id )
+    ( cd custom-config && git rev-parse HEAD ) > custom-config/pn-configuration-commit-id.txt
     touch custom-config/empty.txt
     rm ./secret-config-repo.json
-  else 
+  else
     echo "=== Secret $configuration_repository_secret_name not found"
     mkdir custom-config
     touch custom-config/empty.txt
@@ -312,6 +313,7 @@ echo "****   EXPORT COMPLETED   ****"
 
   mkdir -p custom-config
   cp -r pn-configuration/${env_type}/* custom-config/
+  ( cd pn-configuration && git rev-parse HEAD ) > custom-config/pn-configuration-commit-id.txt
 
   chmod a+x ./desired-commit-ids-env.sh
    . ./desired-commit-ids-env.sh
