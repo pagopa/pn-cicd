@@ -3133,16 +3133,7 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
-              - "quicksight:CreateDataSource"
-              - "quicksight:DeleteDataSource"
-              - "quicksight:DescribeDataSource"
-              - "quicksight:UpdateDataSource"
-              - "quicksight:CreateDataSet"
-              - "quicksight:DeleteDataSet"
-              - "quicksight:DescribeDataSet"
-              - "quicksight:UpdateDataSet"
-              - "quicksight:PassDataSource"
-              - "quicksight:*Tag*"
+              - "quicksight:*"
             Resource: "*"
           - Effect: Allow
             Action:
