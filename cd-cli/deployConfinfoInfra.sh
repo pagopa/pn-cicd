@@ -238,13 +238,6 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   echo "PnCoreAwsAccountId  ${PnCoreAwsAccountId}"
 fi
 
-echo "Load all outputs in a single file for next stack deployments"
-INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
-(cd ${cwdir}/commons && ./merge-infra-outputs-confinfo.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
-
-echo "## start merge all ##"
-cat $INFRA_ALL_OUTPUTS_FILE
-echo "## end merge all ##"
 
 echo ""
 echo ""
@@ -347,6 +340,22 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   INFRA_INPUT_STACK=infra-storage-${env_type}
 fi
 
+
+echo ""
+echo ""
+echo ""
+echo "======================================================================="
+echo "======================================================================="
+echo "===                                                                 ==="
+echo "===                       INFRA DEPLOYMENT                  ==="
+echo "===                                                                 ==="
+echo "======================================================================="
+echo "======================================================================="
+echo ""
+echo ""
+echo ""
+echo "=== Prepare parameters for infra.yaml deployment in $env_type ACCOUNT"
+
 ## Merge pn_infra_confinfo output into EnanchedParamFilePath=confinfo-infra-${env_type}-cfg-enanched.json
 ParamFilePath=${infra_confinfo_path}/infra-${env_type}-cfg.json # infra cfg file, it is the target of merge from pn_infra_confinfo
 
@@ -360,20 +369,7 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   mv ${TmpFilePath} ${ParamFilePath}
 fi
 
-echo ""
-echo ""
-echo ""
-echo "======================================================================="
-echo "======================================================================="
-echo "======================================================================="
-echo ""
-echo ""
-echo "=== Deploy INFRA FOR $env_type ACCOUNT"
-echo "======================================================================="
-
-echo ""
 echo "= Read Outputs from previous stack"
-
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=${infra_confinfo_path}/infra.yml
 EnanchedParamFilePath=confinfo-infra-${env_type}-cfg-enanched.json
@@ -386,6 +382,11 @@ aws ${aws_command_base_args} \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${PreviousOutputFilePath}
+
+echo ""
+echo "= Read Parameters file"
+cat ${ParamFilePath} 
+
 
 echo ""
 echo "= Enanched parameters file"
@@ -406,12 +407,64 @@ aws ${aws_command_base_args}  \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 
+echo "=== Prepare parameters next deployment in $env_type ACCOUNT"
+
+PreviousOutputFilePath=infra-${env_type}-out.json
+EnanchedParamFilePath=infra-${env_type}-cfg-enanched.json
+
+echo "= Read Outputs from previous stack"
+aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name infra-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | tee ${PreviousOutputFilePath}
+
+
 echo ""
-echo "=== Deploy PN-Buckup FOR $env_type ACCOUNT"
+echo "= Read Parameters file"
+cat ${ParamFilePath} 
+
+echo ""
+echo "= Enanched parameters file"
+jq -s "{ \"Parameters\": .[0] } * .[1]" \
+   ${PreviousOutputFilePath} ${ParamFilePath} \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnanchedParamFilePath}
+echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+cat ${EnanchedParamFilePath}
+
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-confinfo.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
+
+
+echo ""
+echo "=== Deploy PN-Backup FOR $env_type ACCOUNT"
 BACKUP_STACK_FILE=pn-infra/runtime-infra/pn-backup_confinfo_dynamotable.yaml
 
 if [[ -f "$BACKUP_STACK_FILE" ]]; then
     echo "$BACKUP_STACK_FILE exists, updating backup stack"
+
+    echo ""
+    echo ""
+    echo ""
+    echo "======================================================================="
+    echo "======================================================================="
+    echo "===                                                                 ==="
+    echo "===                  PN-DYNAMO-BACKUP DEPLOYMENT                    ==="
+    echo "===                                                                 ==="
+    echo "======================================================================="
+    echo "======================================================================="
+    echo ""
+    echo ""
+    echo ""
+    echo "=== Prepare parameters for pn-dynamo-backup-${env_type}.yaml deployment in $env_type ACCOUNT"
 
     echo ""
     echo "= Read Parameters file"
@@ -444,7 +497,21 @@ DATA_MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-data-monitoring.yaml
 if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
     echo "$DATA_MONITORING_STACK_FILE exists, updating pn-data-monitoring stack"
 
-    
+    echo ""
+    echo ""
+    echo ""
+    echo "======================================================================="
+    echo "======================================================================="
+    echo "===                                                                 ==="
+    echo "===                PN-DATA-MONITORING DEPLOYMENT                    ==="
+    echo "===                                                                 ==="
+    echo "======================================================================="
+    echo "======================================================================="
+    echo ""
+    echo ""
+    echo ""
+    echo "=== Prepare parameters for pn-data-monitoring-${env_type}.yaml deployment in $env_type ACCOUNT"
+
     echo "= Read Parameters file"
     cat ${ParamFilePath}
 
@@ -478,6 +545,21 @@ if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
     echo "$COST_SAVING_STACK_FILE exists, updating pn-cost-saving stack"
 
     echo ""
+    echo ""
+    echo ""
+    echo "======================================================================="
+    echo "======================================================================="
+    echo "===                                                                 ==="
+    echo "===                  PN-COST-SAVING DEPLOYMENT                      ==="
+    echo "===                                                                 ==="
+    echo "======================================================================="
+    echo "======================================================================="
+    echo ""
+    echo ""
+    echo ""
+    echo "=== Prepare parameters for pn-cost-saving-${env_type}.yaml deployment in $env_type ACCOUNT"
+
+    echo ""
     echo "= Read Parameters file"
     cat ${ParamFilePath} 
 
@@ -504,6 +586,22 @@ fi
 MONITORING_STACK_FILE=${infra_confinfo_path}/infra-monitoring.yaml
 if [[ -f "$MONITORING_STACK_FILE" ]]; then
     echo "$MONITORING_STACK_FILE exists, updating monitoring stack"
+
+    echo ""
+    echo ""
+    echo ""
+    echo "======================================================================="
+    echo "======================================================================="
+    echo "===                                                                 ==="
+    echo "===                PN-INFRA-MONITORING DEPLOYMENT                   ==="
+    echo "===                                                                 ==="
+    echo "======================================================================="
+    echo "======================================================================="
+    echo ""
+    echo ""
+    echo ""
+    echo "=== Prepare parameters for pn-infra-monitoring-${env_type}.yaml deployment in $env_type ACCOUNT"
+
 
     echo ""
     echo "= Read Parameters file"
