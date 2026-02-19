@@ -238,13 +238,6 @@ if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
   echo "PnCoreAwsAccountId  ${PnCoreAwsAccountId}"
 fi
 
-echo "Load all outputs in a single file for next stack deployments"
-INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
-(cd ${cwdir}/commons && ./merge-infra-outputs-confinfo.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
-
-echo "## start merge all ##"
-cat $INFRA_ALL_OUTPUTS_FILE
-echo "## end merge all ##"
 
 echo ""
 echo ""
@@ -347,18 +340,6 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
   INFRA_INPUT_STACK=infra-storage-${env_type}
 fi
 
-## Merge pn_infra_confinfo output into EnanchedParamFilePath=confinfo-infra-${env_type}-cfg-enanched.json
-ParamFilePath=${infra_confinfo_path}/infra-${env_type}-cfg.json # infra cfg file, it is the target of merge from pn_infra_confinfo
-
-if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
-  echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH}"
-
-  echo ""
-  echo "= Enanched Terraform parameters file"
-  jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
-  cat ${TmpFilePath}
-  mv ${TmpFilePath} ${ParamFilePath}
-fi
 
 echo ""
 echo ""
@@ -375,6 +356,19 @@ echo ""
 echo ""
 echo "=== Prepare parameters for infra.yaml deployment in $env_type ACCOUNT"
 
+## Merge pn_infra_confinfo output into EnanchedParamFilePath=confinfo-infra-${env_type}-cfg-enanched.json
+ParamFilePath=${infra_confinfo_path}/infra-${env_type}-cfg.json # infra cfg file, it is the target of merge from pn_infra_confinfo
+
+if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
+  echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH}"
+
+  echo ""
+  echo "= Enanched Terraform parameters file"
+  jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
+  cat ${TmpFilePath}
+  mv ${TmpFilePath} ${ParamFilePath}
+fi
+
 echo "= Read Outputs from previous stack"
 PreviousOutputFilePath=${INFRA_INPUT_STACK}-out.json
 TemplateFilePath=${infra_confinfo_path}/infra.yml
@@ -388,6 +382,11 @@ aws ${aws_command_base_args} \
       --output json \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${PreviousOutputFilePath}
+
+echo ""
+echo "= Read Parameters file"
+cat ${ParamFilePath} 
+
 
 echo ""
 echo "= Enanched parameters file"
@@ -435,6 +434,15 @@ jq -s "{ \"Parameters\": .[0] } * .[1]" \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
 cat ${EnanchedParamFilePath}
+
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-confinfo.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
+
 
 echo ""
 echo "=== Deploy PN-Backup FOR $env_type ACCOUNT"
