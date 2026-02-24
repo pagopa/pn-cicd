@@ -2094,6 +2094,21 @@ Resources:
         NodeVersion: "22"
       TimeoutInMinutes: 10
 
+  # Progetto go-automation
+  PnGoAutomationLambda:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "go-automation"
+        BaseDir: "functions"
+        BaseDirEscaped: "functions"
+        GitHubDefaultBranch: "develop"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        NodeVersion: "22"
+      TimeoutInMinutes: 10
+
   # Progetto Auth Fleet con Multilambda
   PnAuthFleetLambdas:
     Type: AWS::CloudFormation::Stack
