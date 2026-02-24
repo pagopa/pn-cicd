@@ -6233,12 +6233,12 @@ Resources:
 
   # MICROSERVICE GO-AUTOMATION
   ############################
-  PnGoAutomationDeployPipeline:
+  GoAutomationDeployPipeline:
     Condition: RequiresSingleProjects
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
-      Name: !Sub 'go-automation-update-pipeline'
+      Name: go-automation-update-pipeline
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
