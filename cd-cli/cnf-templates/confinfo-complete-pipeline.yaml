@@ -2872,6 +2872,24 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
+              - s3tables:CreateTableBucket
+              - s3tables:DeleteTableBucket
+              - s3tables:GetTableBucket
+              - s3tables:ListTableBuckets
+              - s3tables:CreateNamespace
+              - s3tables:DeleteNamespace
+              - s3tables:GetNamespace
+              - s3tables:ListNamespaces
+              - s3tables:CreateTable
+              - s3tables:DeleteTable
+              - s3tables:GetTable
+              - s3tables:ListTables
+              - s3tables:TagResource
+              - s3tables:UntagResource
+              - s3tables:ListTagsForResource
+            Resource: "*"
+          - Effect: Allow
+            Action:
               - backup:CreateBackupPlan            
               - backup:CreateBackupSelection               
               - backup:CreateBackupVault               
