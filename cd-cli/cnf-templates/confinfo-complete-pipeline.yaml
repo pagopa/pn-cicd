@@ -2876,6 +2876,8 @@ Resources:
               - s3tables:DeleteTableBucket
               - s3tables:GetTableBucket
               - s3tables:ListTableBuckets
+              - s3tables:PutTableBucketMaintenanceConfiguration
+              - s3tables:GetTableBucketMaintenanceConfiguration
               - s3tables:CreateNamespace
               - s3tables:DeleteNamespace
               - s3tables:GetNamespace
