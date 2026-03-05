@@ -330,6 +330,7 @@ Resources:
               runtime-versions:
                 java: corretto${JAVA_VERSION}
                 nodejs: ${NODE_VERSION}
+                python: 3.11
             pre_build:
               on-failure: ABORT
               commands:
@@ -416,10 +417,23 @@ Resources:
                     cd $FUNCTIONS_FOLDER_NAME
                     for i in */
                     do
-                      echo "Bulding $i"
+                      echo "Building $i"
                       cd $i
-                      npm ci
-                      npm run-script test-build || exit 1
+                      if [ -f "package.json" ]; then
+                        echo "Node.js function detected"
+                        npm ci
+                        npm run-script test-build || exit 1
+                      elif [ -f "requirements.txt" ] || ls *.py 1> /dev/null 2>&1; then
+                        echo "Python function detected"
+                        if [ -f "requirements.txt" ]; then
+                          pip install -t . -r requirements.txt
+                        fi
+                        # Use first .py file name for zip if no function.zip exists
+                        PY_FILE=$(ls *.py | head -n 1)
+                        zip -r function.zip . -x "*.git*"
+                      else
+                        echo "Unknown function type in $i"
+                      fi
                       cd ..
                     done
                     cd ..
