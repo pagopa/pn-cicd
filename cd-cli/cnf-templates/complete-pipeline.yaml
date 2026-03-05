@@ -483,6 +483,12 @@ Resources:
                     sed -i -e "s|pn_delivery_push_validator_imageUrl=.*|pn_delivery_push_validator_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
                     export PIPELINE_NAME="pn-delivery-push-validator-update-pipeline"
                   fi
+                - |
+                  if ( [ "$PROJECT" = "pn-notification-cost-service" ] ) then
+                    sed -i -e "s|pn_notification_cost_service_commitId=.*|pn_notification_cost_service_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_notification_cost_service_imageUrl=.*|pn_notification_cost_service_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-notification-cost-service-update-pipeline"
+                  fi
                 - 'cat desired-commit-ids-env.sh'
                 - 'echo "Upload commit configuration file"'
                 - 'aws s3 cp desired-commit-ids-env.sh s3://${CdArtifactBucketName}/config/desired-commit-ids-env.sh'
