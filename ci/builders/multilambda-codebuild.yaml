@@ -93,6 +93,7 @@ Resources:
                 - pyenv versions
                 - pyenv global $PYTHON_VERSION
                 - python --version
+                - npm install --global pnpm
             pre_build:
               on-failure: ABORT
               commands:
@@ -123,6 +124,15 @@ Resources:
                       -H "X-GitHub-Api-Version: 2022-11-28" \
                       "https://api.github.com/repos/pagopa/${GITHUB_PRJ_NAME}/pulls/${PR_NUM}" | jq '.base.ref')
                     echo "BRANCH_TARGET=${BRANCH_TARGET}"
+                  fi
+                - |
+                  # if there is a file in the root of the app with name init_monorepo_ci.sh, execute it to set environment variables or do other setup operations
+                  if [ -f "init_monorepo_ci.sh" ]; then
+                    echo "Running init_monorepo_ci.sh"
+                    chmod +x init_monorepo_ci.sh
+                    ./init_monorepo_ci.sh
+                  else
+                    echo "No init_monorepo_ci.sh found, skipping"
                   fi
             build:
               on-failure: ABORT
