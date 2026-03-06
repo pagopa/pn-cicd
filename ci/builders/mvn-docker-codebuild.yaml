@@ -52,6 +52,16 @@ Parameters:
       - '20'
       - '22'
 
+  PythonVersion:
+    Description: Python version for Lambda function builds
+    Type: String
+    Default: '3.12'
+    AllowedValues:
+      - '3.10'
+      - '3.11'
+      - '3.12'
+      - '3.13'
+
   ARMEnvironment:
     Description: Codebuild with ARM architecture
     Type: String
@@ -224,6 +234,9 @@ Resources:
             - aws/codebuild/amazonlinux-aarch64-standard:3.0
             - aws/codebuild/standard:7.0
         EnvironmentVariables:
+          - Name: PYTHON_VERSION
+            Type: PLAINTEXT
+            Value: !Ref PythonVersion
           - Name: IS_PUBLIC_PROJECT
             Type: PLAINTEXT
             Value: !Sub "${IsPublicProject}"
@@ -330,6 +343,12 @@ Resources:
               runtime-versions:
                 java: corretto${JAVA_VERSION}
                 nodejs: ${NODE_VERSION}
+              commands:
+                - echo "Setting up Python ${PYTHON_VERSION}"
+                - pyenv install -s $PYTHON_VERSION
+                - pyenv versions
+                - pyenv global $PYTHON_VERSION
+                - python --version
             pre_build:
               on-failure: ABORT
               commands:
@@ -416,10 +435,25 @@ Resources:
                     cd $FUNCTIONS_FOLDER_NAME
                     for i in */
                     do
-                      echo "Bulding $i"
+                      echo "Building $i"
                       cd $i
-                      npm ci
-                      npm run-script test-build || exit 1
+                      if [ -f "package.json" ]; then
+                        echo "Node.js function detected"
+                        npm ci
+                        npm run-script test-build || exit 1
+                      elif [ -f "requirements.txt" ] || ls *.py 1> /dev/null 2>&1; then
+                        echo "Python function detected"
+                        echo "Using Python version: $(python --version)"
+                        if [ -f "requirements.txt" ]; then
+                          echo "Installing dependencies from requirements.txt"
+                          python -m pip install --target . -r requirements.txt
+                        fi
+                        # zip maintaining folder structure and excluding pyc/cache
+                        echo "Creating function.zip"
+                        zip -r function.zip . -x "*.pyc" -x "__pycache__/*" -x "requirements.txt" -x "*.git*"
+                      else
+                        echo "Unknown function type in $i"
+                      fi
                       cd ..
                     done
                     cd ..
