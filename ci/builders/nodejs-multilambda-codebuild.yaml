@@ -76,7 +76,7 @@ Resources:
           phases:
             install:
               runtime-versions:
-                nodejs: ${NODE_VERSION}              
+                nodejs: ${NODE_VERSION}  
             pre_build:
               on-failure: ABORT
               commands:
@@ -156,7 +156,7 @@ Resources:
                   fi
       Artifacts:
         Type: NO_ARTIFACTS
-      TimeoutInMinutes: 10
+      TimeoutInMinutes: 20
       Triggers:
         Webhook: true
         FilterGroups:
