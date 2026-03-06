@@ -2170,7 +2170,7 @@ Resources:
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         NodeVersion: '22'
-      TimeoutInMinutes: 10
+      TimeoutInMinutes: 20
 
   # Progetto Zen Desk Auth con Lambda
   PnZenDeskAuthLambda:
