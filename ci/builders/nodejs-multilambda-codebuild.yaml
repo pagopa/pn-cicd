@@ -133,8 +133,9 @@ Resources:
                     if [ -f "package-lock.json" ]; then
                       echo "Running npm ci" 
                       npm ci
+                    else
+                      echo "Skip npm ci, monorepo setup"
                     fi
-                    npm ci
                     npm run-script test-build || exit 1
                     cd ..
                   done               
