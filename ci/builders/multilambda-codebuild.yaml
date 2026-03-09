@@ -147,7 +147,11 @@ Resources:
                     
                     if [ -f "package.json" ]; then
                       echo "Building Node.js function"
-                      npm ci
+                      # run npm ci only if package-lock.json is present, otherwise npm install to generate it
+                      if [ -f "package-lock.json" ]; then
+                        echo "Running npm ci" 
+                        npm ci
+                      fi
                       npm run-script test-build || exit 1
                     # check for requirements file 
                     elif [ -f "requirements.txt" ]; then
