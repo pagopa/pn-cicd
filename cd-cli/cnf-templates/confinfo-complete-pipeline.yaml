@@ -2878,6 +2878,8 @@ Resources:
               - s3tables:ListTableBuckets
               - s3tables:PutTableBucketMaintenanceConfiguration
               - s3tables:GetTableBucketMaintenanceConfiguration
+              - s3tables:GetTableBucketEncryption
+              - s3tables:PutTableBucketEncryption
               - s3tables:CreateNamespace
               - s3tables:DeleteNamespace
               - s3tables:GetNamespace
