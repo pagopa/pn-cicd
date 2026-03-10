@@ -3144,6 +3144,15 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
+              - "lakeformation:GrantPermissions"
+              - "lakeformation:BatchGrantPermissions"
+              - "lakeformation:RevokePermissions"
+              - "lakeformation:BatchRevokePermissions"
+              - "lakeformation:ListPermissions"
+              - "lakeformation:GetDataLakeSettings"
+            Resource: "*"
+          - Effect: Allow
+            Action:
               - "quicksight:*"
             Resource: "*"
           - Effect: Allow
