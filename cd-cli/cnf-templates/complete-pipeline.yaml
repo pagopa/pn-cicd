@@ -1523,53 +1523,53 @@ Resources:
             #   OutputArtifacts:
             #     - Name: PnPaperTrackerOutput
 
-            # - Name: Update_PnDeliveryPushWorkFlow
-            #   ActionTypeId:
-            #     Category: Build
-            #     Owner: AWS
-            #     Version: 1
-            #     Provider: CodeBuild
-            #   Configuration:
-            #     ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-            #     PrimarySource: DesiredCommitIdsAndScripts
-            #     EnvironmentVariables: !Sub '[
-            #         {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-            #         {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-            #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-            #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
-            #         {"name":"MsName", "value":"pn-delivery-push-workflow", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"30", "type":"PLAINTEXT"},
-            #         {"name":"VarPrefix", "value":"pn_delivery_push_workflow", "type":"PLAINTEXT"}
-            #       ]'
-            #   InputArtifacts:
-            #     - Name: DesiredCommitIdsAndScripts
-            #   OutputArtifacts:
-            #     - Name: PnDeliveryPushWorkflowOutput
-            #   RunOrder: 4
+            - Name: Update_PnDeliveryPushWorkFlow
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-delivery-push-workflow", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"30", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_delivery_push_workflow", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnDeliveryPushWorkflowOutput
+              RunOrder: 4
 
-            # - Name: Update_PnDeliveryPushValidator
-            #   ActionTypeId:
-            #     Category: Build
-            #     Owner: AWS
-            #     Version: 1
-            #     Provider: CodeBuild
-            #   Configuration:
-            #     ProjectName: !Ref UpdateMicroserviceCodeBuildProject
-            #     PrimarySource: DesiredCommitIdsAndScripts
-            #     EnvironmentVariables: !Sub '[
-            #         {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-            #         {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-            #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-            #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
-            #         {"name":"MsName", "value":"pn-delivery-push-validator", "type":"PLAINTEXT"},
-            #         {"name":"MsNumber", "value":"31", "type":"PLAINTEXT"},
-            #         {"name":"VarPrefix", "value":"pn_delivery_push_validator", "type":"PLAINTEXT"}
-            #       ]'
-            #   InputArtifacts:
-            #     - Name: DesiredCommitIdsAndScripts
-            #   OutputArtifacts:
-            #     - Name: PnDeliveryPushValidatorOutput
-            #   RunOrder: 4
+            - Name: Update_PnDeliveryPushValidator
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-delivery-push-validator", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"31", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_delivery_push_validator", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnDeliveryPushValidatorOutput
+              RunOrder: 4
 
             # Update Frontend
             - Name: Update_Frontend
