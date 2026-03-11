@@ -2741,12 +2741,6 @@ Resources:
               - "states:DeleteStateMachine"
               - "states:UpdateStateMachine"        
             Resource: "*"
-          - Effect: Allow
-            Action:
-              - "ses:CreateConfigurationSetEventDestination"
-              - "ses:DeleteConfigurationSetEventDestination"
-              - "ses:UpdateConfigurationSetEventDestination"
-            Resource: "*"
 
 
   
