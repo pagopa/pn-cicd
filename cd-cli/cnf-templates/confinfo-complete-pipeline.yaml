@@ -3518,6 +3518,8 @@ Resources:
               - "ses:CreateConfigurationSetEventDestination"
               - "ses:DeleteConfigurationSetEventDestination"
               - "ses:UpdateConfigurationSetEventDestination"
+              - "ses:DescribeConfigurationSet"
+              - "ses:ListConfigurationSets"
             Resource: "*"
             Effect: Allow
 
