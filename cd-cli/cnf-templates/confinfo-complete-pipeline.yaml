@@ -3520,6 +3520,8 @@ Resources:
               - "ses:UpdateConfigurationSetEventDestination"
               - "ses:DescribeConfigurationSet"
               - "ses:ListConfigurationSets"
+              - "ses:GetConfigurationSet"
+              - "ses:GetConfigurationSetEventDestinations"
             Resource: "*"
             Effect: Allow
 
