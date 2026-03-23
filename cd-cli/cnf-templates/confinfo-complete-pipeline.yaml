@@ -2877,6 +2877,11 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
+              - lakeformation:GetDataLakeSettings
+              - lakeformation:PutDataLakeSettings
+            Resource: "*"
+          - Effect: Allow
+            Action:
               - backup:CreateBackupPlan            
               - backup:CreateBackupSelection               
               - backup:CreateBackupVault               
