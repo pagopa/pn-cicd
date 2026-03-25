@@ -361,6 +361,28 @@ Resources:
                 - export BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///')
                 - if echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/ ; then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); export PR_NUM; fi;
                 - export CI_PROFILE="$CODEBUILD_CI"
+                - |
+                  # Maven Distribution Fallback Logic
+                  PRIMARY_URL="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.1/apache-maven-3.8.1-bin.zip"
+                  SECONDARY_URL="https://repo1.maven.org/maven2/org/apache/maven/apache-maven/3.8.1/apache-maven-3.8.1-bin.zip"
+                  ARCHIVE_URL="https://archive.apache.org/dist/maven/maven-3/3.8.1/binaries/apache-maven-3.8.1-bin.zip"
+                  
+                  if ! curl -Isf "$PRIMARY_URL" > /dev/null; then
+                    echo "Primary repo (repo.maven.apache.org) blocked. Trying repo1.maven.org..."
+                    if curl -Isf "$SECONDARY_URL" > /dev/null; then
+                      echo "repo1 reachable, switching to repo1.maven.org"
+                      find . -name "maven-wrapper.properties" -exec sed -i 's/repo.maven.apache.org/repo1.maven.org/g' {} +
+                      [ -f maven-settings.xml ] && sed -i 's/repo.maven.apache.org/repo1.maven.org/g' maven-settings.xml
+                    else
+                      echo "repo1 also unreachable, checking archive.apache.org..."
+                      if curl -Isf "$ARCHIVE_URL" > /dev/null; then
+                        echo "Archive reachable, switching to archive.apache.org"
+                        find . -name "maven-wrapper.properties" -exec sed -i "s|repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.1/apache-maven-3.8.1-bin.zip|archive.apache.org/dist/maven/maven-3/3.8.1/binaries/apache-maven-3.8.1-bin.zip|g" {} +
+                      else
+                        echo "Warning: All Maven repositories unreachable. Build might fail."
+                      fi
+                    fi
+                  fi
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - export MAVEN_CONFIG="--settings maven-settings.xml --no-transfer-progress"
                 - export VERSION=$( mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG )
@@ -403,7 +425,7 @@ Resources:
                   else
                     MAVEN_OPTS="$MAVEN_OPTS"
                   fi
-                  MAVEN_OPTS="$MAVEN_OPTS $SONAR_OPTS"
+                  MAVEN_OPTS="$MAVEN_OPTS $SONAR_OPTS $MAVEN_CONFIG"
                   MAVEN_OPTS="$MAVEN_OPTS -Decr-username=AWS -Decr-token=$ECR_TOKEN"
                   export MAVEN_OPTS
                 - env
@@ -422,12 +444,12 @@ Resources:
                       CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/run-jammy-tiny:0.2.57
                     fi
                     if [ "$NATIVE_COMP" = "true" ]; then
-                      ./mvnw clean verify -Pnative $MAVEN_OPTS -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE   spring-boot:build-image $MAVEN_ADD_GOAL
+                      mvnw clean verify -Pnative $MAVEN_OPTS -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE   spring-boot:build-image $MAVEN_ADD_GOAL
                      else
-                      ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL                    
+                      mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL                    
                      fi 
                   else
-                   ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
+                   mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
                   fi
                 - echo "Functions Build"
                 - |
