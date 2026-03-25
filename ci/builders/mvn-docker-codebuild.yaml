@@ -425,7 +425,7 @@ Resources:
                   else
                     MAVEN_OPTS="$MAVEN_OPTS"
                   fi
-                  MAVEN_OPTS="$MAVEN_OPTS $SONAR_OPTS $MAVEN_CONFIG"
+                  MAVEN_OPTS="$MAVEN_OPTS $SONAR_OPTS"
                   MAVEN_OPTS="$MAVEN_OPTS -Decr-username=AWS -Decr-token=$ECR_TOKEN"
                   export MAVEN_OPTS
                 - env
@@ -444,12 +444,12 @@ Resources:
                       CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/run-jammy-tiny:0.2.57
                     fi
                     if [ "$NATIVE_COMP" = "true" ]; then
-                      mvnw clean verify -Pnative $MAVEN_OPTS -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE   spring-boot:build-image $MAVEN_ADD_GOAL
+                      ./mvnw clean verify -Pnative $MAVEN_OPTS -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE   spring-boot:build-image $MAVEN_ADD_GOAL
                      else
-                      mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL                    
+                      ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL                    
                      fi 
                   else
-                   mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
+                   ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
                   fi
                 - echo "Functions Build"
                 - |
