@@ -352,7 +352,6 @@ Resources:
             pre_build:
               on-failure: ABORT
               commands:
-                - curl https://api.ipify.org
                 - echo Logging in to Amazon ECR...
                 - export ECR_TOKEN=$( aws ecr get-login-password --region $AWS_DEFAULT_REGION )
                 - echo $ECR_TOKEN | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
