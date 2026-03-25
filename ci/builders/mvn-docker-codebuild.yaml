@@ -283,6 +283,12 @@ Resources:
           - Name: NODE_VERSION
             Type: PLAINTEXT
             Value: !Sub "${NodeVersion}"
+          - Name: MAVEN_VERSION
+            Type: PLAINTEXT
+            Value: '3.8.1'
+          - Name: MAVEN_S3_BASE_URI
+            Type: PLAINTEXT
+            Value: !Sub "s3://${CiArtifactBucket}/mvn"
           - Name: ARM_ENVIRONMENT
             Type: PLAINTEXT
             Value: !Sub "${ARMEnvironment}"
@@ -344,6 +350,11 @@ Resources:
                 java: corretto${JAVA_VERSION}
                 nodejs: ${NODE_VERSION}
               commands:
+                - echo "Downloading Apache Maven ZIP ${MAVEN_VERSION} from ${MAVEN_S3_BASE_URI}/apache-maven-${MAVEN_VERSION}-bin.zip"
+                - aws s3 cp ${MAVEN_S3_BASE_URI}/apache-maven-${MAVEN_VERSION}-bin.zip /tmp/apache-maven-${MAVEN_VERSION}-bin.zip
+                - echo "Downloading Maven Wrapper JAR from ${MAVEN_S3_BASE_URI}/maven-wrapper-0.5.6.jar"
+                - aws s3 cp ${MAVEN_S3_BASE_URI}/maven-wrapper-0.5.6.jar /tmp/maven-wrapper.jar
+                - ls -lh /tmp/apache-maven-${MAVEN_VERSION}-bin.zip /tmp/maven-wrapper.jar
                 - echo "Setting up Python ${PYTHON_VERSION}"
                 - pyenv install -s $PYTHON_VERSION
                 - pyenv versions
@@ -352,6 +363,13 @@ Resources:
             pre_build:
               on-failure: ABORT
               commands:
+                - mkdir -p ./.mvn/wrapper
+                - cp /tmp/maven-wrapper.jar ./.mvn/wrapper/maven-wrapper.jar
+                - cp ./.mvn/wrapper/maven-wrapper.properties /tmp/maven-wrapper.properties.bak
+                - sed -i "s#^distributionUrl=.*#distributionUrl=file:///tmp/apache-maven-${MAVEN_VERSION}-bin.zip#" ./.mvn/wrapper/maven-wrapper.properties
+                - sed -i "s#^wrapperUrl=.*#wrapperUrl=file:///tmp/maven-wrapper.jar#" ./.mvn/wrapper/maven-wrapper.properties
+                - cat ./.mvn/wrapper/maven-wrapper.properties
+                - ./mvnw -version
                 - echo Logging in to Amazon ECR...
                 - export ECR_TOKEN=$( aws ecr get-login-password --region $AWS_DEFAULT_REGION )
                 - echo $ECR_TOKEN | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
@@ -363,7 +381,7 @@ Resources:
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - export REPO_URL=https://${CODEARTIFACT_DOMAIN_FULL}/maven/${CODEARTIFACT_REPO}/
                 - export MAVEN_CONFIG="--settings maven-settings.xml --no-transfer-progress"
-                - export VERSION=$( mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG )
+                - export VERSION=$( ./mvnw org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout $MAVEN_CONFIG )
                 - export IMAGE_TAG=$VERSION
                 - export IMAGE_REPO_NAME=$GITHUB_PRJ_NAME
                 - export SOURCE_VERSION=${CODEBUILD_SOURCE_VERSION}
@@ -422,7 +440,7 @@ Resources:
                       CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/run-jammy-tiny:0.2.57
                     fi
                     if [ "$NATIVE_COMP" = "true" ]; then
-                      ./mvnw clean verify -Pnative $MAVEN_OPTS -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE   spring-boot:build-image $MAVEN_ADD_GOAL
+                      ./mvnw clean verify -Pnative $MAVEN_OPTS -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE spring-boot:build-image $MAVEN_ADD_GOAL
                      else
                       ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL                    
                      fi 
@@ -697,6 +715,7 @@ Resources:
               - Sid: CiArtifactBucketObjects
                 Effect: Allow
                 Action:
+                  - s3:GetObject
                   - s3:GetObjectVersion
                   - s3:GetObjectVersionAcl
                   - 's3:PutObject*'
