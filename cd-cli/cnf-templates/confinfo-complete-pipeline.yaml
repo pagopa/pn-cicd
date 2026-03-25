@@ -325,6 +325,7 @@ Resources:
         - !Ref CodeBuildPolicyEventLogs
         - !Ref CodeBuildPolicyIAM
         - !Ref CodeBuildNetworking
+        - !Ref CodeBuildPolicySES
       
   ###########################################################################
   ###             EFFECTIVE CONTINUOS INTEGRATIONS PIPELINES              ###
@@ -2872,6 +2873,15 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action:
+              - s3tables:*
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - lakeformation:GetDataLakeSettings
+              - lakeformation:PutDataLakeSettings
+            Resource: "*"
+          - Effect: Allow
+            Action:
               - backup:CreateBackupPlan            
               - backup:CreateBackupSelection               
               - backup:CreateBackupVault               
@@ -3497,6 +3507,26 @@ Resources:
               - ec2:UpdateSecurityGroupRuleDescriptionsEgress
               - ec2:UpdateSecurityGroupRuleDescriptionsIngress
               - ec2:*Tag*
+            Resource: "*"
+            Effect: Allow
+
+  CodeBuildPolicySES:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-SES
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - "ses:CreateConfigurationSetEventDestination"
+              - "ses:DeleteConfigurationSetEventDestination"
+              - "ses:UpdateConfigurationSetEventDestination"
+              - "ses:DescribeConfigurationSet"
+              - "ses:ListConfigurationSets"
+              - "ses:GetConfigurationSet"
+              - "ses:GetConfigurationSetEventDestinations"
             Resource: "*"
             Effect: Allow
 

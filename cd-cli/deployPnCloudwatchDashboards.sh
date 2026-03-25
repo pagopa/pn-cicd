@@ -171,13 +171,37 @@ aws ${aws_command_base_args} \
 ## Deploy RADD Digitale Dashboard
 if ( [ -f pn-infra/runtime-infra/pn-radd-digitale-dashboard.yaml ] ) then
     echo "Deploy RADD Digitale dashboard"
-    
-    aws ${aws_command_base_args} cloudformation deploy \
-        --stack-name pn-radd-digitale-dashboard-${env_type} \
-        --template-file pn-infra/runtime-infra/pn-radd-digitale-dashboard.yaml \
-        --tags Microservice=pn-infra-monitoring \
-        --parameter-overrides \
-            ProjectName=${project_name}
+
+    ParamFilePath="pn-infra/runtime-infra/pn-radd-digitale-dashboard-${env_type}-cfg.json"
+    EnanchedParamFilePath="pn-radd-digitale-dashboard-${env_type}-enhanced-cfg.json"
+    PipelineParams="\"ProjectName=$project_name\""
+
+    if ( [ -f "${ParamFilePath}" ] ) then
+        echo "= Read Parameters file"
+        cat ${ParamFilePath}
+
+        echo ""
+        echo "= Enanched parameters file"
+        jq -c "." \
+           ${ParamFilePath} \
+           | jq -s ".[] | .Parameters" | sed -e 's/\": \"/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+           > ${EnanchedParamFilePath}
+        echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+        cat ${EnanchedParamFilePath}
+
+        aws ${aws_command_base_args} cloudformation deploy \
+            --stack-name pn-radd-digitale-dashboard-${env_type} \
+            --template-file pn-infra/runtime-infra/pn-radd-digitale-dashboard.yaml \
+            --tags Microservice=pn-infra-monitoring \
+            --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+    else
+        aws ${aws_command_base_args} cloudformation deploy \
+            --stack-name pn-radd-digitale-dashboard-${env_type} \
+            --template-file pn-infra/runtime-infra/pn-radd-digitale-dashboard.yaml \
+            --tags Microservice=pn-infra-monitoring \
+            --parameter-overrides \
+                ProjectName=${project_name}
+    fi
 else
     echo "Skipped RADD Digitale dashboard deploy"
 fi
