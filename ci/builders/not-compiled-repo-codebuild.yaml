@@ -101,6 +101,11 @@ Resources:
           #     Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
           #   - Type: BASE_REF
           #     Pattern: ^refs/heads/(main|develop)|release\/.*$
+      VpcConfig:
+        VpcId: !Ref VpcId
+        Subnets: !Ref SubnetsIds
+        SecurityGroupIds: 
+          - !Ref SecurityGroupId
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -148,6 +153,12 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                 Resource: "arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM"
+              - Sid: Ec2Permissions
+                Effect: Allow
+                Action:
+                  - 'ec2:*'
+                Resource:
+                  - "*"
               
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule

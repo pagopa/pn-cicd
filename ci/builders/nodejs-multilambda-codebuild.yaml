@@ -189,6 +189,11 @@ Resources:
           #     Pattern: ^refs/heads/(main|develop)|release\/.*$
           #   - Type: FILE_PATH
           #     Pattern: !Sub "^${BaseDir}/.*"
+      VpcConfig:
+        VpcId: !Ref VpcId
+        Subnets: !Ref SubnetsIds
+        SecurityGroupIds: 
+          - !Ref SecurityGroupId
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -259,6 +264,12 @@ Resources:
                   - events:PutEvents
                 Resource:
                   - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
+              - Sid: Ec2Permissions
+                Effect: Allow
+                Action:
+                  - 'ec2:*'
+                Resource:
+                  - "*"
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule

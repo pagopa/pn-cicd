@@ -97,6 +97,11 @@ Resources:
           #     Pattern: ^refs/heads/(main|develop|hotfix)|release\/.*$
           #   - Type: FILE_PATH
           #     Pattern: !Sub "^${BaseDir}/.*"
+      VpcConfig:
+        VpcId: !Ref VpcId
+        Subnets: !Ref SubnetsIds
+        SecurityGroupIds: 
+          - !Ref SecurityGroupId
 
   # BuildBatchServiceRole:
   #   Type: AWS::IAM::Role
@@ -226,6 +231,12 @@ Resources:
                   - codebuild:StopBuild
                 Resource:
                   - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${GitHubProjectName}-${PackageName}-CodeBuild"
+              - Sid: Ec2Permissions
+                Effect: Allow
+                Action:
+                  - 'ec2:*'
+                Resource:
+                  - "*"
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule

@@ -14,6 +14,18 @@ Parameters:
   NotificationSNSTopic:
     Type: String
     Description: Topic for build and pipeline notification
+  VpcId:
+    Type: String
+    Description: VPC id to use for E2E tests, if not specified a new VPC will be created 
+    Default: vpc-0b672efeb65088a12
+  SubnetsIds:
+    Type: CommaDelimitedList
+    Description: Subnets ids to use for E2E tests, if not specified new subnets will be created
+    Default: 'subnet-08026072a0eacdd71,subnet-068ed8dffa1ae786e,subnet-0d491d72cb030d323'
+  SecurityGroupId:
+    Type: String
+    Description: Security group id 
+    Default: sg-03a2c0bb8367596b2
 
 Resources:
   CodeBuildProject:
@@ -121,6 +133,11 @@ Resources:
           #     Pattern: ^refs/heads/(main|develop)|release\/.*$
           #   - Type: FILE_PATH
           #     Pattern: !Sub "^${BaseDir}/.*"
+      VpcConfig:
+        VpcId: !Ref VpcId
+        Subnets: !Ref SubnetsIds
+        SecurityGroupIds: 
+          - !Ref SecurityGroupId
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -186,6 +203,13 @@ Resources:
                   - events:PutEvents
                 Resource:
                   - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus'
+                
+              - Sid: Ec2Permissions
+                Effect: Allow
+                Action:
+                  - 'ec2:*'
+                Resource:
+                  - "*"
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule

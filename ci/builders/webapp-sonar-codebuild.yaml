@@ -67,6 +67,11 @@ Resources:
           #     Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
           #   - Type: BASE_REF
           #     Pattern: ^refs/heads/(main|develop)|release\/.*$
+      VpcConfig:
+        VpcId: !Ref VpcId
+        Subnets: !Ref SubnetsIds
+        SecurityGroupIds: 
+          - !Ref SecurityGroupId
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -122,3 +127,9 @@ Resources:
                   - events:PutEvents
                 Resource:
                   - !Sub "arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/CiEventBus"
+              - Sid: Ec2Permissions
+                Effect: Allow
+                Action:
+                  - 'ec2:*'
+                Resource:
+                  - "*"
