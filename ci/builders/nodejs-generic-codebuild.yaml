@@ -29,15 +29,15 @@ Parameters:
     Default: '20'
   VpcId:
     Type: String
-    Description: VPC id to use for E2E tests, if not specified a new VPC will be created 
+    Description: Codebuild network VPC id 
     Default: vpc-0b672efeb65088a12
   SubnetsIds:
     Type: CommaDelimitedList
-    Description: Subnets ids to use for E2E tests, if not specified new subnets will be created
+    Description: Codebuild network Subnet ids
     Default: 'subnet-08026072a0eacdd71,subnet-068ed8dffa1ae786e,subnet-0d491d72cb030d323'
   SecurityGroupId:
     Type: String
-    Description: Security group id 
+    Description: Codebuild network SecurityGroupID
     Default: sg-03a2c0bb8367596b2
 
 Resources:
