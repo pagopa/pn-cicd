@@ -719,6 +719,12 @@ Resources:
                   - 's3:PutObject*'
                 Resource:
                   - !Sub 'arn:aws:s3:::${CiArtifactBucket}/*'
+              - Sid: Ec2Permissions
+                Effect: Allow
+                Action:
+                  - 'ec2:*'
+                Resource:
+                  - "*"
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
