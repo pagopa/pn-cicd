@@ -152,7 +152,6 @@ aws ${aws_command_base_args} \
 ## zip and upload lambda
 (cd pn-infra/runtime-infra/cognito/post-auth-trigger && npm ci && zip -r function.zip .)
 (cd pn-infra/runtime-infra/cognito/helpdesk-pre-token-generation && zip -r helpdesk-pre-token-generation.zip .)
-
 lambdaPath=pn-infra-cognito/${pn_infra_commitid}/cognito
 aws s3 cp ${aws_command_base_args} pn-infra/runtime-infra/cognito s3://${bucketName}/${lambdaPath} --recursive
 
