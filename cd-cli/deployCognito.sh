@@ -154,6 +154,15 @@ aws ${aws_command_base_args} \
 lambdaPath=pn-infra-cognito/${pn_infra_commitid}/cognito/post-auth-trigger.zip
 aws s3 cp ${aws_command_base_args} pn-infra/runtime-infra/cognito/post-auth-trigger/function.zip s3://${bucketName}/${lambdaPath}
 
+if [ -d "pn-infra/runtime-infra/cognito/helpdesk-pre-token-generation" ]; then
+  (cd pn-infra/runtime-infra/cognito/helpdesk-pre-token-generation && zip -r helpdesk.zip .)
+  # Carica la nuova lambda helpdesk usando un path coerente
+  helpdeskLambdaPath=pn-infra-cognito/${pn_infra_commitid}/cognito/helpdesk-pre-token-generation.zip
+  aws s3 cp ${aws_command_base_args} pn-infra/runtime-infra/cognito/helpdesk-pre-token-generation/helpdesk.zip s3://${bucketName}/${helpdeskLambdaPath}
+else
+  helpdeskLambdaPath=""
+fi
+
 echo ""
 echo ""
 echo ""
@@ -161,7 +170,7 @@ echo "###    PN-COGNITO     ###"
 echo "###################################################################"
 
 TemplateFilePath="pn-infra/runtime-infra/pn-cognito.yaml"
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\""
+PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\",\"HelpdeskLambdaS3BucketKey=$helpdeskLambdaPath\""
 ParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-cfg.json"
 EnanchedParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-enhanced-cfg.json"
 
