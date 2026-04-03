@@ -254,6 +254,8 @@ aws ${aws_command_base_args}  \
       --stack-name once-$env_type \
       --capabilities CAPABILITY_NAMED_IAM \
       --template-file  ${infra_confinfo_path}/once4account.yaml \
+      --s3-bucket ${bucketName} \
+      --s3-prefix cfn \
       --parameter-overrides \
         TemplateBucketBaseUrl="$templateBucketHttpsBaseUrl" \
         PnCoreAwsAccountId="$PnCoreAwsAccountId" \
@@ -335,6 +337,8 @@ if [[ -f "$STORAGE_STACK_FILE" ]]; then
         --capabilities CAPABILITY_NAMED_IAM \
         --tags Microservice=pn-infra-logs \
         --template-file ${infra_confinfo_path}/infra-storage.yaml \
+        --s3-bucket ${bucketName} \
+        --s3-prefix cfn \
         --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
   INFRA_INPUT_STACK=infra-storage-${env_type}
@@ -404,6 +408,8 @@ aws ${aws_command_base_args}  \
       --capabilities CAPABILITY_NAMED_IAM \
       --tags "Microservice=pn-infra-networking" \
       --template-file ${infra_confinfo_path}/infra.yml \
+      --s3-bucket ${bucketName} \
+      --s3-prefix cfn \
       --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 
@@ -484,6 +490,8 @@ if [[ -f "$BACKUP_STACK_FILE" ]]; then
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --tags Microservice=pn-infra-backup \
           --template-file ${BACKUP_STACK_FILE} \
+          --s3-bucket ${bucketName} \
+          --s3-prefix cfn \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 else
@@ -577,6 +585,8 @@ if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --tags Microservice=pn-infra-cost-saving \
           --template-file ${COST_SAVING_STACK_FILE} \
+          --s3-bucket ${bucketName} \
+          --s3-prefix cfn \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 else
@@ -621,6 +631,8 @@ if [[ -f "$MONITORING_STACK_FILE" ]]; then
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
           --tags Microservice=pn-infra-monitoring \
           --template-file ${MONITORING_STACK_FILE} \
+          --s3-bucket ${bucketName} \
+          --s3-prefix cfn \
           --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 
 else
