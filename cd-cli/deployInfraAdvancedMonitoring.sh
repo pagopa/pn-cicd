@@ -239,6 +239,7 @@ if ( [ -f "${INFRA_SEC_MONITORING_TEMPLATE_PATH}" ] ) then
         --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
         --template-file $INFRA_SEC_MONITORING_TEMPLATE_PATH \
         --tags Microservice=pn-infra-sec-monitoring \
+        --s3-bucket ${bucketName} \
         --parameter-overrides file://$( realpath ${EnhancedParamFilePath} )
 else 
   echo "No ${INFRA_SEC_MONITORING_TEMPLATE_PATH} provided"
