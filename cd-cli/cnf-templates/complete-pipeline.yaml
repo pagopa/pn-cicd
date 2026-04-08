@@ -8386,12 +8386,12 @@ Resources:
             pre_build:
               commands:
                 - echo "### NO PRE_BUILD"
-          build:
-            commands:
-              - echo "### CLONE CICD REPOSITORY ###"
-              - git clone --depth 1 --single-branch --branch "experiment/QA-13770-cucumber-retry-mechanism" https://github.com/pagopa/pn-cicd pn-cicd
-              - chmod +x pn-cicd/cd-cli/run-e2e-codebuild.sh
-              - pn-cicd/cd-cli/run-e2e-codebuild.sh
+            build:
+              commands:
+                - echo "### CLONE CICD REPOSITORY ###"
+                - git clone --depth 1 --single-branch --branch "experiment/QA-13770-cucumber-retry-mechanism" https://github.com/pagopa/pn-cicd pn-cicd
+                - chmod +x pn-cicd/cd-cli/run-e2e-codebuild.sh
+                - pn-cicd/cd-cli/run-e2e-codebuild.sh
 
           reports:
             reportGroup:
