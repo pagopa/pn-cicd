@@ -31,10 +31,21 @@ set_var() {
 copy_if_exists() {
   local src="$1"
   local dest="$2"
-  if [ -e "${src}" ]; then
-    cp -R "${src}" "${dest}"
-  else
+
+  if [ ! -e "${src}" ]; then
     warn "Not found, skipping: ${src}"
+    return 0
+  fi
+
+  if [ -d "${src}" ]; then
+    local src_clean="${src%/}"
+    local dir_name
+    dir_name="$(basename "${src_clean}")"
+
+    mkdir -p "${dest}"
+    tar -C "$(dirname "${src_clean}")" -czf "${dest%/}/${dir_name}.tar.gz" "${dir_name}"
+  else
+    cp -R "${src}" "${dest}"
   fi
 }
 
