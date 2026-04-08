@@ -8506,7 +8506,7 @@ Resources:
                         # Rerun opzionale
                         if [ "${ENABLE_RERUN}" == "true" ]; then
                           echo "### RUNNING RERUN TEST SUITE ###"
-                          ( cd pn-b2b-client && MAVEN_OPTS='-Xms1g -Xmx2g' ./mvnw $COMMON_MAVEN_PARAMS -Dtest=it.pagopa.pn.cucumber.${TEST_SUITE_RERUN} clean verify )
+                          ( cd pn-b2b-client && MAVEN_OPTS='-Xms1g -Xmx2g' ./mvnw $COMMON_MAVEN_PARAMS -Dtest=it.pagopa.pn.cucumber.RerunFailedTestSuite verify )
                           echo "### GENERATE MERGED CUCUMBER REPORT ###"
                           ( cd pn-b2b-client && ./mvnw exec:java@process-cucumber-report )
                           REPORT_JSON_TO_USE="pn-b2b-client/target/cucumber-report-merged.json"
