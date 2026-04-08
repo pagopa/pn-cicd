@@ -1658,7 +1658,7 @@ Resources:
                         {"name":"ENV_NAME", "value":"${EnvName}", "type":"PLAINTEXT"},
                         {"name":"REGION", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                         {"name":"TEST_SUITE", "value":"CucumberSmokeTest", "type":"PLAINTEXT"},
-                        {"name":"INTEROP_ENABLED", "value":"false", "type":"PLAINTEXT"}
+                        {"name":"INTEROP_ENABLED", "value":"false", "type":"PLAINTEXT"},
                         {"name":"ENABLE_RERUN", "value":"false", "type":"PLAINTEXT"}
                       ]'
                   InputArtifacts:
@@ -8447,7 +8447,7 @@ Resources:
                       EXTERNAL_CHANNEL_URL=$(aws ssm get-parameters --names /pn-test-e2e/externalChannelsUrl --query "Parameters[*].Value" --output text)
                       DELIVERY_URL=$(aws ssm get-parameters --names /pn-test-e2e/deliveryUrl --query "Parameters[*].Value" --output text)
                       PA_TAX_ID_1=$(aws ssm get-parameters --names /pn-test-e2e/paTaxId1 --query "Parameters[*].Value" --output text)
-                      PA_TAX_ID_2=$(aws ssm get-parameters --names                 /pn-test-e2e/paTaxId2 --query "Parameters[*].Value" --output text)
+                      PA_TAX_ID_2=$(aws ssm get-parameters --names /pn-test-e2e/paTaxId2 --query "Parameters[*].Value" --output text)
                       PA_TAX_ID_GA=$(aws ssm get-parameters --names /pn-test-e2e/paTaxIdGA --query "Parameters[*].Value" --output text)
                       PA_TAX_ID_SON=$(aws ssm get-parameters --names /pn-test-e2e/paTaxIdSON --query "Parameters[*].Value" --output text)
                       PA_TAX_ID_ROOT=$(aws ssm get-parameters --names /pn-test-e2e/paTaxIdROOT --query "Parameters[*].Value" --output text)
