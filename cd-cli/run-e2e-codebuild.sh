@@ -1,30 +1,50 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "### PREPARE VARIABLES ###"
+log() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+warn() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] WARNING: $*" >&2
+}
+
+require_env() {
+  local var_name="$1"
+  if [ -z "${!var_name:-}" ]; then
+    echo "Missing required environment variable: ${var_name}" >&2
+    exit 1
+  fi
+}
 
 get_ssm() {
   local name="$1"
   aws ssm get-parameters --names "${name}" --query "Parameters[*].Value" --output text
 }
 
-SECRETS_JSON="$(aws secretsmanager get-secret-value --secret-id secretsForTests --query SecretString --output text)"
-get_secret_field() {
-  local field="$1"
-  jq -r --arg f "$field" '.[$f]' <<< "${SECRETS_JSON}"
-}
-
 set_var() {
   local var_name="$1"
   local var_value="$2"
-  printf -v "${var_name}" '%s' "${var_value}"
+  printf -v "${var_name}" "%s" "${var_value}"
 }
 
-# ---- secretsForTests mappings: VAR FIELD ----
-while read -r var field; do
-  [ -z "${var:-}" ] && continue
-  set_var "${var}" "$(get_secret_field "${field}")"
-done <<'EOF'
+copy_if_exists() {
+  local src="$1"
+  local dest="$2"
+  if [ -e "${src}" ]; then
+    cp -R "${src}" "${dest}"
+  else
+    warn "Not found, skipping: ${src}"
+  fi
+}
+
+load_secret_mappings() {
+  local secrets_json="$1"
+
+  while read -r var field; do
+    [ -z "${var:-}" ] && continue
+    set_var "${var}" "$(jq -r --arg f "${field}" '.[$f]' <<< "${secrets_json}")"
+  done <<'EOF'
 API_KEY e2eTestApiKey
 API_KEY_2 e2eTestApiKey2
 API_KEY_GA e2eTestApiKeyGA
@@ -87,14 +107,13 @@ COGNITO_CLIENTID_USER_1 e2eTestCognitoClientIdUser1
 COGNITO_PASSWORD_USER_2 e2eTestCognitoPasswordUser2
 COGNITO_CLIENTID_USER_2 e2eTestCognitoClientIdUser2
 EOF
+}
 
-GITHUB_TOKEN="$(aws secretsmanager get-secret-value --secret-id github-token --query SecretString --output text)"
-
-# ---- Parameter-Store mappings: VAR PARAM_NAME ----
-while read -r var ssm_name; do
-  [ -z "${var:-}" ] && continue
-  set_var "${var}" "$(get_ssm "${ssm_name}")"
-done <<'EOF'
+load_parameter_store_value() {
+  while read -r var ssm_name; do
+    [ -z "${var:-}" ] && continue
+    set_var "${var}" "$(get_ssm "${ssm_name}")"
+  done <<'EOF'
 PRE_RETENTION_TIME /pn-test-e2e/preLoadRetetionTime
 LOAD_RETENTION_TIME /pn-test-e2e/loadRetentionTime
 PRE_RETENTION_VIDEOTIME /pn-test-e2e/retentionVideotimePreload
@@ -135,13 +154,52 @@ IUN_60GG_USER_1 /pn-test-e2e/iun60ggUser1
 APPIO_QRCODEV2_URL /pn-test-e2e/appIOQrCodeV2Url
 DELEGHE_TEMPORANEE_S3 /pn-test-e2e/delegheTemporaneeBucketS3
 EOF
+}
 
-echo "### CLONE E2E TEST REPOSITORY ###"
+run_maven_suite() {
+  local suite_name="$1"
+  local goals="$2"
+
+  set +e
+  (
+    cd pn-b2b-client
+    MAVEN_OPTS="-Xms1g -Xmx2g" ./mvnw \
+      "-DargLine=${MAVEN_ARGLINE}" \
+      "-Dtest=it.pagopa.pn.cucumber.${suite_name}" \
+      "${COMMON_MAVEN_PARAMS[@]}" \
+      ${goals}
+  )
+  local rc=$?
+  set -e
+  return "${rc}"
+}
+
+generate_merged_report() {
+  set +e
+  (
+    cd pn-b2b-client
+    ./mvnw exec:java@process-cucumber-report
+  )
+  local rc=$?
+  set -e
+  return "${rc}"
+}
+
+log "### PREPARE VARIABLES ###"
+
+require_env ENV_NAME
+
+SECRETS_JSON="$(aws secretsmanager get-secret-value --secret-id secretsForTests --query SecretString --output text)"
+load_secret_mappings "${SECRETS_JSON}"
+
+GITHUB_TOKEN="$(aws secretsmanager get-secret-value --secret-id github-token --query SecretString --output text)"
+load_parameter_store_value
+
+log "### CLONE E2E TEST REPOSITORY ###"
 git clone --depth 1 --branch "${ENV_NAME}" https://github.com/pagopa/pn-b2b-client pn-b2b-client
 
 MAVEN_ARGLINE="-Xms6g -Xmx10g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 
-# Build property array (evita problemi di quoting)
 COMMON_MAVEN_PARAMS=(
   "-Dpn.external.base-url=https://api.${ENV_NAME}.${DOMAIN}"
   "-Dpn.interop.enable=${INTEROP_ENABLED:-false}"
@@ -258,47 +316,72 @@ COMMON_MAVEN_PARAMS=(
 MAIN_SUITE="${TEST_SUITE:-NrtTest_${ENV_NAME}}"
 RERUN_SUITE="${TEST_SUITE_RERUN:-RerunFailedTestSuite}"
 
-echo "### RUN MAIN SUITE: ${MAIN_SUITE} ###"
-(
-  cd pn-b2b-client
-  MAVEN_OPTS='-Xms1g -Xmx2g' ./mvnw \
-    "-DargLine=${MAVEN_ARGLINE}" \
-    "-Dtest=it.pagopa.pn.cucumber.${MAIN_SUITE}" \
-    "${COMMON_MAVEN_PARAMS[@]}" \
-    clean verify
-)
+MAIN_EXIT=0
+RERUN_EXIT=0
+MERGE_EXIT=0
+FINAL_EXIT=0
 
 REPORT_JSON_TO_USE="pn-b2b-client/target/cucumber-report.json"
 
-if [ "${ENABLE_RERUN:-false}" = "true" ]; then
-  echo "### RUN RERUN SUITE: ${RERUN_SUITE} ###"
-  (
-    cd pn-b2b-client
-    MAVEN_OPTS='-Xms1g -Xmx2g' ./mvnw \
-      "-DargLine=${MAVEN_ARGLINE}" \
-      "-Dtest=it.pagopa.pn.cucumber.${RERUN_SUITE}" \
-      "${COMMON_MAVEN_PARAMS[@]}" \
-      verify
-
-    echo "### GENERATE MERGED CUCUMBER REPORT ###"
-    ./mvnw exec:java@process-cucumber-report
-  )
-  REPORT_JSON_TO_USE="pn-b2b-client/target/cucumber-report-merged.json"
+log "### RUN MAIN SUITE: ${MAIN_SUITE} ###"
+run_maven_suite "${MAIN_SUITE}" "clean verify" || MAIN_EXIT=$?
+if [ "${MAIN_EXIT}" -ne 0 ]; then
+  warn "Main suite failed with exit code ${MAIN_EXIT}"
 fi
 
-echo "### PREPARE CODEBUILD ARTIFACTS ###"
+if [ "${ENABLE_RERUN:-false}" = "true" ]; then
+  log "### RUN RERUN SUITE: ${RERUN_SUITE} ###"
+  run_maven_suite "${RERUN_SUITE}" "verify" || RERUN_EXIT=$?
+  if [ "${RERUN_EXIT}" -ne 0 ]; then
+    warn "Rerun suite failed with exit code ${RERUN_EXIT}"
+  fi
+
+  log "### GENERATE MERGED CUCUMBER REPORT ###"
+  generate_merged_report || MERGE_EXIT=$?
+  if [ "${MERGE_EXIT}" -ne 0 ]; then
+    warn "Merged report generation failed with exit code ${MERGE_EXIT}"
+  fi
+
+  if [ -f "pn-b2b-client/target/cucumber-report-merged.json" ]; then
+    REPORT_JSON_TO_USE="pn-b2b-client/target/cucumber-report-merged.json"
+  else
+    warn "Merged report not found, fallback to cucumber-report.json"
+    REPORT_JSON_TO_USE="pn-b2b-client/target/cucumber-report.json"
+  fi
+fi
+
+log "### PREPARE CODEBUILD ARTIFACTS ###"
 ARTIFACTS_DIR="pn-b2b-client/target/codebuild-artifacts"
 rm -rf "${ARTIFACTS_DIR}"
 mkdir -p "${ARTIFACTS_DIR}"
 
-cp "${REPORT_JSON_TO_USE}" "${ARTIFACTS_DIR}/cucumber-report-to-publish.json"
-cp "pn-b2b-client/target/cucumber-report.csv" "${ARTIFACTS_DIR}/"
-cp "pn-b2b-client/target/cucumber-report.json" "${ARTIFACTS_DIR}/" || true
-cp "pn-b2b-client/target/cucumber-report.html" "${ARTIFACTS_DIR}/" || true
-
-if [ "${ENABLE_RERUN:-false}" = "true" ]; then
-  cp "pn-b2b-client/target/cucumber-report-rerun.html" "${ARTIFACTS_DIR}/" || true
-  cp -R "pn-b2b-client/target/cucumber-html-reports" "${ARTIFACTS_DIR}/" || true
+if [ -f "${REPORT_JSON_TO_USE}" ]; then
+  cp "${REPORT_JSON_TO_USE}" "${ARTIFACTS_DIR}/cucumber-report-to-publish.json"
+else
+  warn "Primary report not found: ${REPORT_JSON_TO_USE}"
+  FINAL_EXIT=1
 fi
 
-echo "### DONE ###"
+copy_if_exists "pn-b2b-client/target/cucumber-report.csv" "${ARTIFACTS_DIR}/"
+copy_if_exists "pn-b2b-client/target/cucumber-report.json" "${ARTIFACTS_DIR}/"
+copy_if_exists "pn-b2b-client/target/cucumber-report.html" "${ARTIFACTS_DIR}/"
+
+if [ "${ENABLE_RERUN:-false}" = "true" ]; then
+  copy_if_exists "pn-b2b-client/target/cucumber-report-rerun.html" "${ARTIFACTS_DIR}/"
+  copy_if_exists "pn-b2b-client/target/cucumber-html-reports" "${ARTIFACTS_DIR}/"
+fi
+
+# Exit policy:
+# - ENABLE_RERUN=false: main suite decides
+# - ENABLE_RERUN=true: rerun + merge decide (main can fail and be recovered)
+if [ "${ENABLE_RERUN:-false}" = "true" ]; then
+  [ "${RERUN_EXIT}" -ne 0 ] && FINAL_EXIT=1
+  [ "${MERGE_EXIT}" -ne 0 ] && FINAL_EXIT=1
+else
+  [ "${MAIN_EXIT}" -ne 0 ] && FINAL_EXIT=1
+fi
+
+log "### EXIT CODES -> main:${MAIN_EXIT} rerun:${RERUN_EXIT} merge:${MERGE_EXIT} final:${FINAL_EXIT} ###"
+log "### DONE ###"
+
+exit "${FINAL_EXIT}"
