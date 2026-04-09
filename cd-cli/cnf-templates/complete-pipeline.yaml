@@ -3408,7 +3408,9 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Action: acm:DeleteCertificate
-            Resource: !Sub arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
+            Resource:
+              - !Sub arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/*
+              - !Sub arn:aws:acm:us-east-1:${AWS::AccountId}:certificate/*
           - Effect: Allow
             Action: s3:PutBucketPolicy
             Resource: arn:aws:s3:::*
