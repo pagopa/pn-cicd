@@ -377,9 +377,15 @@ prepare_artifacts() {
     return 1
   fi
 
+  # Main run reports
   copy_if_exists "pn-b2b-client/target/cucumber-report.json" "${artifacts_dir}/"
   copy_if_exists "pn-b2b-client/target/cucumber-report.html" "${artifacts_dir}/"
+  copy_if_exists "pn-b2b-client/target/cucumber-report-main.html" "${artifacts_dir}/"
 
+  # Failed tests log
+  copy_if_exists "pn-b2b-client/target/failed.txt" "${artifacts_dir}/"
+
+  # Rerun specific reports
   if [ "${ENABLE_RERUN:-false}" = "true" ]; then
     copy_if_exists "pn-b2b-client/target/cucumber-report-rerun.html" "${artifacts_dir}/"
     copy_if_exists "pn-b2b-client/target/cucumber-html-reports" "${artifacts_dir}/"
@@ -433,6 +439,14 @@ main() {
   run_maven_suite "${MAIN_SUITE}" "clean verify" || MAIN_EXIT=$?
   if [ "${MAIN_EXIT}" -ne 0 ]; then
     warn "Main suite failed with exit code ${MAIN_EXIT}"
+  fi
+
+  # Backup main run reports if rerun is enabled (to prevent overwrite)
+  if [ "${ENABLE_RERUN:-false}" = "true" ]; then
+    if [ -f "pn-b2b-client/target/cucumber-report.html" ]; then
+      cp "pn-b2b-client/target/cucumber-report.html" "pn-b2b-client/target/cucumber-report-main.html"
+      log "Backup of main run report created: cucumber-report-main.html"
+    fi
   fi
 
   # Run rerun suite if enabled
