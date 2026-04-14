@@ -161,7 +161,7 @@ echo "###    PN-COGNITO     ###"
 echo "###################################################################"
 
 TemplateFilePath="pn-infra/runtime-infra/pn-cognito.yaml"
-PipelineParams="\"TemplateBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\",\"KinesisAuditStreamName=pn-logs-delivery-stream\""
+PipelineParams="\"TemplateBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\",\"KinesisAuditStreamArn=arn:aws:kinesis:${aws_region}:830192246553:stream/pn-logs-stream:1681213212\""
 ParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-cfg.json"
 EnanchedParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-enhanced-cfg.json"
 
