@@ -209,10 +209,16 @@ Conditions:
       - Ref: GitHubProjectName
       - 'pn-paper-channel'
 
+  IsNativeComp:
+    Fn::Equals:
+      - Ref: NativeComp
+      - 'true'
+
   NeedMediumBuildEnv:
     Fn::Or:
       - Condition: PnDeliveryPushModule
       - Condition: PnPaperChannelModule
+      - Condition: IsNativeComp
   
   NeedARMEnvironment:
      Fn::Equals:
