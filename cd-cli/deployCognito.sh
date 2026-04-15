@@ -160,8 +160,18 @@ echo ""
 echo "###    PN-COGNITO     ###"
 echo "###################################################################"
 
+KinesisAuditStreamArn=$(aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name pn-infra-storage-${env_type} \
+    --query "Stacks[0].Outputs[?OutputKey=='LogsKinesisStreamArn'].OutputValue" \
+    --output text)
+
+if [ "${KinesisAuditStreamArn}" == "None" ] || [ -z "${KinesisAuditStreamArn}" ]; then
+  echo "WARNING: LogsKinesisStreamArn not found in stack pn-infra-storage-${env_type}. Subscription filter might fail if Kinesis is required."
+  KinesisAuditStreamArn=""
+fi
+
 TemplateFilePath="pn-infra/runtime-infra/pn-cognito.yaml"
-PipelineParams="\"TemplateBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\",\"KinesisAuditStreamArn=arn:aws:kinesis:${aws_region}:830192246553:stream/pn-logs-stream:1681213212\""
+PipelineParams="\"TemplateBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\",\"KinesisAuditStreamArn=$KinesisAuditStreamArn\""
 ParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-cfg.json"
 EnanchedParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-enhanced-cfg.json"
 
