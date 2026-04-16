@@ -13,11 +13,12 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] -p <project-name> -r <aws-region> -m <microcvs-name>
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] -p <project-name> -r <aws-region> -m <microcvs-name> -s <app-env-file-sha>
     [-h]                      : this help message
     -p <project-name>         : project name
     -r <aws-region>           : aws region
     -m <microcvs-name>        : microcvs name
+    -s <app-env-file-sha>      : application env file sha256 (optional, used to avoid unnecessary upload of env file if not changed)
 
 EOF
   exit 1
@@ -29,6 +30,7 @@ parse_params() {
   aws_region=""
   microcvs_name=""
   env_type=""
+  app_env_file_sha=""
 
   while :; do
     case "${1-}" in
@@ -47,6 +49,10 @@ parse_params() {
       ;;
     -e | --env-type)
       env_type="${2-}"
+      shift
+      ;;
+    -s | --app-env-file-sha)
+      app_env_file_sha="${2-}"
       shift
       ;;
     -?*) die "Unknown option: $1" ;;
@@ -73,7 +79,8 @@ dump_params(){
   echo "AWS Region:                  ${aws_region}"
   echo "Microservice Name:           ${microcvs_name}"
   echo "Env Type:                    ${env_type}"
-
+  echo "App Env File SHA:            ${app_env_file_sha:-}"
+  echo "##################################"
 }
 
 
@@ -100,10 +107,10 @@ else
     runtime_microcvs_name=${microcvs_name}
 fi
 
-file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
-file_env_application_name="application.env"
 account_id=$(aws sts get-caller-identity --query Account --output text)
 bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
+file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
+file_env_application_name="application-${app_env_file_sha}.env"
 
 if [[ -f "${file_env_application_path}" ]]; then
   aws ${aws_command_base_args} \
@@ -113,6 +120,7 @@ if [[ -f "${file_env_application_path}" ]]; then
   echo ""
 else
   echo ""
+  file_env_application_name="application.env"
   echo "${file_env_application_path} file doesn't exist, updating empty application.env..."
   touch ./${file_env_application_name}
   aws ${aws_command_base_args} \
