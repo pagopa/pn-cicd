@@ -407,7 +407,7 @@ if [[ -f "${file_env_application_path}" ]]; then
 fi
 
 echo "Environment variables file upload"
-bash ${cwdir}/commons/upload-files-runtime.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name} -e ${env_type}
+bash ${cwdir}/commons/upload-files-runtime.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name} -e ${env_type} -s ${app_env_file_sha}
 
 PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/microservice.yml
