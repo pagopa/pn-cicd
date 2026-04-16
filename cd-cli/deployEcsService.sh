@@ -409,15 +409,10 @@ echo "=== Prepare parameters for $microcvs_name microservice deployment in $env_
 
 app_env_file_sha="-"
 file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
-echo "current directory: $(pwd)"
+
 if [[ -f "${file_env_application_path}" ]]; then
   echo " - application env file found, calculating sha256"
   app_env_file_sha=$(sha256sum ${file_env_application_path} | awk '{print $1}')
-  echo " - sha256: ${app_env_file_sha}"
-  echo ""
-  echo ""
-elif
-  echo " - application env file not found, skipping env file upload"
   echo ""
   echo ""
 fi
