@@ -302,7 +302,7 @@ Resources:
                   if ( [ "$PROJECT" = "pn-io-connector" ] ) then
                     sed -i -e "s|pn_io_connector_commitId=.*|pn_io_connector_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_io_connector_imageUrl=.*|pn_io_connector_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
-                    export PIPELINE_NAME="pn-pn-io-connector-update-pipeline"
+                    export PIPELINE_NAME="pn-io-connector-update-pipeline"
                   fi
                 - |
                   if ( [ "$PROJECT" = "pn-radd-fsu" ] ) then
@@ -5183,7 +5183,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
-      Name: !Sub '${ProjectName}-pn-io-connector-update-pipeline'
+      Name: !Sub '${ProjectName}-io-connector-update-pipeline'
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
