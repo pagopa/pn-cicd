@@ -18,6 +18,7 @@ usage() {
     -p <project-name>         : project name
     -r <aws-region>           : aws region
     -m <microcvs-name>        : microcvs name
+    -s <app-env-file-sha>      : application env file sha256 (optional, used to avoid unnecessary upload of env file if not changed)
 
 EOF
   exit 1
@@ -49,6 +50,10 @@ parse_params() {
       env_type="${2-}"
       shift
       ;;
+    -s | --app-env-file-sha)
+      app_env_file_sha="${2-}"
+      shift
+      ;;
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -73,7 +78,8 @@ dump_params(){
   echo "AWS Region:                  ${aws_region}"
   echo "Microservice Name:           ${microcvs_name}"
   echo "Env Type:                    ${env_type}"
-
+  echo "App Env File SHA:            ${app_env_file_sha:-}"
+  echo "##################################"
 }
 
 
@@ -100,16 +106,10 @@ else
     runtime_microcvs_name=${microcvs_name}
 fi
 
-file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
-if [[ -f "${file_env_application_path}" ]]; then
-  app_env_file_sha=$(sha256sum ${file_env_application_path} | awk '{print $1}')
-  echo ""
-  echo ""
-fi
-
-file_env_application_name="application-${app_env_file_sha}.env"
 account_id=$(aws sts get-caller-identity --query Account --output text)
 bucket_env_path=${project_name}-runtime-environment-variables-${aws_region}-${account_id}
+file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
+file_env_application_name="application-${app_env_file_sha}.env"
 
 if [[ -f "${file_env_application_path}" ]]; then
   aws ${aws_command_base_args} \
@@ -119,12 +119,13 @@ if [[ -f "${file_env_application_path}" ]]; then
   echo ""
 else
   echo ""
-  echo "${file_env_application_path} file doesn't exist, updating empty application-${app_env_file_sha}.env..."
+  file_env_application_name="application.env"
+  echo "${file_env_application_path} file doesn't exist, updating empty application.env..."
   touch ./${file_env_application_name}
   aws ${aws_command_base_args} \
       s3 cp ${file_env_application_name} s3://${bucket_env_path}/${runtime_microcvs_name}/${file_env_application_name}
   rm ./${file_env_application_name}
-  echo "Empty application-${app_env_file_sha}.env updated"
+  echo "Empty application.env updated"
   echo ""
   echo ""
 fi
