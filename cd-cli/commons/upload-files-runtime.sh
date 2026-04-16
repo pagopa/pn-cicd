@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] -p <project-name> -r <aws-region> -m <microcvs-name>
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] -p <project-name> -r <aws-region> -m <microcvs-name> -s <app-env-file-sha>
     [-h]                      : this help message
     -p <project-name>         : project name
     -r <aws-region>           : aws region
@@ -30,7 +30,8 @@ parse_params() {
   aws_region=""
   microcvs_name=""
   env_type=""
-
+  app_env_file_sha=""
+  
   while :; do
     case "${1-}" in
     -h | --help) usage ;;
