@@ -299,6 +299,12 @@ Resources:
                     export PIPELINE_NAME="pn-pn-downtime-logs-update-pipeline"
                   fi
                 - |
+                  if ( [ "$PROJECT" = "pn-io-connector" ] ) then
+                    sed -i -e "s|pn_io_connector_commitId=.*|pn_io_connector_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_io_connector_imageUrl=.*|pn_io_connector_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-pn-io-connector-update-pipeline"
+                  fi
+                - |
                   if ( [ "$PROJECT" = "pn-radd-fsu" ] ) then
                     sed -i -e "s|pn_radd_fsu_commitId=.*|pn_radd_fsu_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_radd_fsu_imageUrl=.*|pn_radd_fsu_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
@@ -1570,6 +1576,33 @@ Resources:
               OutputArtifacts:
                 - Name: PnDeliveryPushValidatorOutput
               RunOrder: 4
+
+            # # Update pn-io-connector
+            # - Name: Update_IoConnector
+            #   ActionTypeId:
+            #     Category: Build
+            #     Owner: AWS
+            #     Version: 1
+            #     Provider: CodeBuild
+            #   Configuration:
+            #     ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+            #     PrimarySource: DesiredCommitIdsAndScripts
+            #     EnvironmentVariables: !Sub '[
+            #         {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+            #         {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+            #         {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+            #         {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+            #         {"name":"MsName", "value":"pn-io-connector", "type":"PLAINTEXT"},
+            #         {"name":"MsNumber", "value":"35", "type":"PLAINTEXT"},
+            #         {"name":"VarPrefix", "value":"pn_io_connector", "type":"PLAINTEXT"},
+            #         {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+            #         {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
+            #       ]'
+            #   InputArtifacts:
+            #     - Name: DesiredCommitIdsAndScripts
+            #   OutputArtifacts:
+            #     - Name: PnIoConnectorOutput
+            #   RunOrder: 4
 
             # Update Frontend
             - Name: Update_Frontend
@@ -5143,6 +5176,105 @@ Resources:
                 - Name: PnDowntimeLogsOutput
               RunOrder: 3
 
+  # MICROSERVICE PN-IO-CONNECTOR
+  ############################
+  PnIoConnectorDeployPipeline:
+    Condition: RequiresSingleProjects
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-pn-io-connector-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-io-connector
+            - Name: Update_IoConnector
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-io-connector", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"35", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_io_connector", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnIoConnectorOutput
+              RunOrder: 3
 
   # MICROSERVICE PN-RADD-FSU
   ############################
