@@ -416,6 +416,10 @@ if [[ -f "${file_env_application_path}" ]]; then
   echo " - sha256: ${app_env_file_sha}"
   echo ""
   echo ""
+elif
+  echo " - application env file not found, skipping env file upload"
+  echo ""
+  echo ""
 fi
 
 echo "Environment variables file upload"
