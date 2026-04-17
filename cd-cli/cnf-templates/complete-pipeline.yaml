@@ -2321,7 +2321,7 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
-                - 'echo "###        UPDATE INFRA ADVANCED MONITORING           ###"'
+                - 'echo "###        UPDATE INFRA ADVANCED/SEC MONITORING       ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - 'echo ""'
