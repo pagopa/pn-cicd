@@ -950,6 +950,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        JavaVersion: "21"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1436,6 +1437,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        JavaVersion: "21"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1480,6 +1482,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        JavaVersion: "21"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
