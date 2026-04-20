@@ -2753,6 +2753,7 @@ Resources:
               - "sns:Subscribe"
               - "sns:ConfirmSubscription"
               - "sns:RemovePermission"
+              - "sns:SetTopicAttributes"
             Resource: !Sub arn:aws:sns:*:${AWS::AccountId}:*
           - Effect: Allow
             Action:
