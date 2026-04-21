@@ -351,6 +351,7 @@ function prepareOneCloudFront() {
         HostedZoneId="${HostedZoneId}" \
         WebApiUrl="${API_BASE_URL}" \
         BoWebApiUrl="${BO_API_BASE_URL}" \
+        EnvironmentType="${env_type}" \
         $OptionalParameters
   
   bucketName=$( aws ${aws_command_base_args} \
