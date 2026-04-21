@@ -205,3 +205,43 @@ if ( [ -f pn-infra/runtime-infra/pn-radd-digitale-dashboard.yaml ] ) then
 else
     echo "Skipped RADD Digitale dashboard deploy"
 fi
+
+## Deploy WAF Dashboard Hub
+if ( [ -f pn-infra/runtime-infra/pn-waf-dashboard-hub.yaml ] ) then
+    echo "Deploy WAF dashboard hub"
+
+    ParamFilePath="pn-infra/runtime-infra/pn-waf-dashboard-hub-${env_type}-cfg.json"
+    EnanchedParamFilePath="pn-waf-dashboard-hub-${env_type}-enhanced-cfg.json"
+    PipelineParams="\"ProjectName=$project_name\""
+
+    if ( [ -f "${ParamFilePath}" ] ) then
+        echo "= Read Parameters file"
+        cat ${ParamFilePath}
+
+        echo ""
+        echo "= Enanched parameters file"
+        jq -c "." \
+           ${ParamFilePath} \
+           | jq -s ".[] | .Parameters" | sed -e 's/\": \"/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+           > ${EnanchedParamFilePath}
+        echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+        cat ${EnanchedParamFilePath}
+
+        aws ${aws_command_base_args} cloudformation deploy \
+            --stack-name pn-waf-dashboard-hub-${env_type} \
+            --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+            --template-file pn-infra/runtime-infra/pn-waf-dashboard-hub.yaml \
+            --tags Microservice=pn-infra-monitoring \
+            --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+    else
+        aws ${aws_command_base_args} cloudformation deploy \
+            --stack-name pn-waf-dashboard-hub-${env_type} \
+            --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+            --template-file pn-infra/runtime-infra/pn-waf-dashboard-hub.yaml \
+            --tags Microservice=pn-infra-monitoring \
+            --parameter-overrides \
+                ProjectName=${project_name}
+    fi
+else
+    echo "Skipped WAF dashboard hub deploy"
+fi
