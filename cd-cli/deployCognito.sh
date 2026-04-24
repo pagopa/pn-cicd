@@ -171,7 +171,7 @@ if [ "${KinesisAuditStreamArn}" == "None" ] || [ -z "${KinesisAuditStreamArn}" ]
 fi
 
 TemplateFilePath="pn-infra/runtime-infra/pn-cognito.yaml"
-PipelineParams="\"TemplateBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\",\"KinesisAuditStreamArn=$KinesisAuditStreamArn\""
+PipelineParams="\"TemplateBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\",\"KinesisAuditStreamArn=$KinesisAuditStreamArn\",\"EnvironmentType=$env_type\""
 ParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-cfg.json"
 EnanchedParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-enhanced-cfg.json"
 
