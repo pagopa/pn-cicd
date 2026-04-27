@@ -397,7 +397,7 @@ echo ""
 echo "=== Prepare parameters for $microcvs_name microservice deployment in $env_type ACCOUNT"
 
 ##Update environments variable for microservice
-app_env_file_sha="-"
+app_env_file_sha=""
 file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
 if [[ -f "${file_env_application_path}" ]]; then
   echo " - application env file found, calculating sha256"
@@ -407,7 +407,13 @@ if [[ -f "${file_env_application_path}" ]]; then
 fi
 
 echo "Environment variables file upload"
-bash ${cwdir}/commons/upload-files-runtime.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name} -e ${env_type} -s ${app_env_file_sha}
+echo "Environment variables file upload"
+bash ${cwdir}/commons/upload-files-runtime.sh \
+   -p ${project_name} \
+   -r ${aws_region} \
+   -m ${microcvs_name} \
+   -e ${env_type} \
+   -s "$app_env_file_sha"
 
 PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/microservice.yml
