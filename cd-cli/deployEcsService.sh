@@ -424,7 +424,7 @@ bash ${cwdir}/commons/upload-files-runtime.sh \
    -r ${aws_region} \
    -m ${microcvs_name} \
    -e ${env_type} \
-   -s "${app_env_file_sha:-}"
+   -s "$app_env_file_sha"
 
 
 PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
@@ -437,7 +437,7 @@ PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"ContainerImageUri=${ContainerImageUri}\",\
      \"MicroserviceBucketName=${microserviceBucketName}\",\"MicroserviceBucketBaseKey=${microserviceBucketBaseKey}\",\
      \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\",\
-     \"ApplicativeEnvFileChecksum=\"${app_env_file_sha}\"\""
+     \"ApplicativeEnvFileChecksum=${app_env_file_sha}\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - InfraIpcOutputFilePath: ${InfraIpcOutputFilePath}"
