@@ -418,7 +418,7 @@ PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"ContainerImageUri=${ContainerImageUri}\",\
      \"MicroserviceBucketName=${microserviceBucketName}\",\"MicroserviceBucketBaseKey=${microserviceBucketBaseKey}\",\
      \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${microcvs_name}=${pn_microsvc_commitid}\",\
-     \"ApplicativeEnvFileChecksum=\"${app_env_file_sha}\"\""
+     \"ApplicativeEnvFileChecksum='${app_env_file_sha}'\""
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
