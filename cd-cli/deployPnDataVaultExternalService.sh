@@ -413,7 +413,7 @@ bash ${cwdir}/commons/upload-files-runtime.sh \
    -r ${aws_region} \
    -m ${microcvs_name} \
    -e ${env_type} \
-   -s "${app_env_file_sha:-}"
+   -s "$app_env_file_sha"
 
 PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/microservice.yml
