@@ -688,6 +688,7 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-downtime-logs"
         GitHubDefaultBranch: "develop"
+        JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
