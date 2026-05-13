@@ -58,7 +58,7 @@ Resources:
         Type: GITHUB
         Location: !Sub "https://github.com/pagopa/${GitHubProjectName}"
         BuildSpec: "./sonar_buildspec.yaml"
-      TimeoutInMinutes: 15
+      TimeoutInMinutes: 20
       Cache:
         Type: LOCAL
         Modes: # You can specify one or more cache mode,
