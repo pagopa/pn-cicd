@@ -28,6 +28,10 @@ Parameters:
 
 Conditions:
   HasBaseDir: !Not [!Equals [!Ref BaseDir, ""]]
+  PnPersonafisicaSonarModule:
+    !Equals
+      - !Ref PackageName
+      - "pn-personafisica-webapp"
 
 Resources:
   CodeBuildProject:
@@ -39,7 +43,11 @@ Resources:
         Type: NO_ARTIFACTS
       Environment:
         Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_MEDIUM
+        ComputeType:
+          !If
+            - PnPersonafisicaSonarModule
+            - BUILD_GENERAL1_LARGE
+            - BUILD_GENERAL1_MEDIUM
         Image: aws/codebuild/standard:7.0
         EnvironmentVariables:
           - Name: GITHUB_PRJ_NAME
