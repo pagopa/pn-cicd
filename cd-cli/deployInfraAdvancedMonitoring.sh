@@ -244,3 +244,42 @@ if ( [ -f "${INFRA_SEC_MONITORING_TEMPLATE_PATH}" ] ) then
 else 
   echo "No ${INFRA_SEC_MONITORING_TEMPLATE_PATH} provided"
 fi
+
+
+
+echo ""
+echo "###        BUILD IAM UNUSED ACCESS ANALYZER             ###"
+echo "###########################################################"
+
+IAM_UNUSED_ACCESS_TEMPLATE_PATH=pn-infra/runtime-infra/pn-iam-unused-access-analyzer.yaml
+
+echo "=== Prepare enhanced parameters for iam unused access analyzer"
+IAM_UNUSED_ACCESS_TEMPLATE_CONFIG_PATH="pn-infra/$runtime_path/pn-iam-unused-access-analyzer-${env_type}-cfg.json"
+
+if [ ! -f ${IAM_UNUSED_ACCESS_TEMPLATE_CONFIG_PATH} ]; then
+  echo "{ \"Parameters\": {} }" > ${IAM_UNUSED_ACCESS_TEMPLATE_CONFIG_PATH}
+fi
+
+EnhancedParamFilePath="pn-iam-unused-access-analyzer-${env_type}-cfg-enhanced.json"
+
+bucketBasePath="pn-infra/${pn_infra_commitid}"
+
+echo "= Enhanced parameters file"
+jq -s "{ \"Parameters\": .[0] } * .[1]" \
+   ${INFRA_ALL_OUTPUTS_FILE} ${IAM_UNUSED_ACCESS_TEMPLATE_CONFIG_PATH} \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnhancedParamFilePath}
+sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
+echo ",\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"LambdasBucketName=${bucketName}\",\"LambdasBasePath=$bucketBasePath\",\"ProjectName=$project_name\"]" >> "$EnhancedParamFilePath"
+cat ${EnhancedParamFilePath}
+
+if ( [ -f "${IAM_UNUSED_ACCESS_TEMPLATE_PATH}" ] ) then
+  aws ${aws_command_base_args} cloudformation deploy \
+        --stack-name pn-iam-unused-access-analyzer-${env_type} \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --template-file $IAM_UNUSED_ACCESS_TEMPLATE_PATH \
+        --tags Microservice=pn-infra-iam-access-analyzer \
+        --parameter-overrides file://$( realpath ${EnhancedParamFilePath} )
+else 
+  echo "No ${IAM_UNUSED_ACCESS_TEMPLATE_PATH} provided"
+fi
