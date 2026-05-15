@@ -1943,6 +1943,16 @@ Resources:
                 - 'echo ""'
                 - 'echo "./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir -m $ms_commitId -n $MsName"'
                 - '(cd scripts/cd-cli && ./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir -m $ms_commitId -n $MsName)'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "########################################################"'
+                - 'echo "###          UPDATE IAM ACCESS ANALYZER             ###"'
+                - 'echo "########################################################"'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./deployInfraIamAccessAnalyzer.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
             post_build:
               commands:
                 - 'echo ""'
