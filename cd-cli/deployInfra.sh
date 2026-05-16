@@ -840,3 +840,34 @@ if [[ -f "$DATA_ANALYTICS_FILE" ]]; then
 else
   echo "$DATA_ANALYTICS_FILE file doesn't exist, stack update skipped"
 fi
+
+echo ""
+echo "=== Deploy IAM UNUSED ACCESS ANALYZER FOR $env_type ACCOUNT"
+IAM_UNUSED_ACCESS_STACK_FILE=pn-infra/runtime-infra/pn-iam-unused-access-analyzer.yaml
+
+if [[ -f "$IAM_UNUSED_ACCESS_STACK_FILE" ]]; then
+    echo "$IAM_UNUSED_ACCESS_STACK_FILE exists, updating pn-iam-unused-access-analyzer stack"
+
+    echo ""
+    echo "= Read Parameters file"
+    cat ${ParamFilePath} 
+
+    echo ""
+    echo "= Enanched parameters file"
+    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
+      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+      > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
+    aws ${aws_command_base_args} \
+        cloudformation deploy \
+          --stack-name pn-iam-unused-access-analyzer-$env_type \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --template-file ${IAM_UNUSED_ACCESS_STACK_FILE} \
+          --tags Microservice=pn-infra-iam-access-analyzer \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+
+else
+  echo "${IAM_UNUSED_ACCESS_STACK_FILE} file doesn't exist, stack update skipped"
+fi
