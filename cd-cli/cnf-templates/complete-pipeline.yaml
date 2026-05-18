@@ -608,6 +608,7 @@ Resources:
         - !Ref CodeBuildPolicyEventLogs
         - !Ref CodeBuildPolicyIAM
         - !Ref CodeBuildNetworking
+        - !Ref CodeBuildPolicyAccessAnalyzer
       
   ###########################################################################
   ###             EFFECTIVE CONTINUOS INTEGRATIONS PIPELINES              ###
@@ -2789,9 +2790,6 @@ Resources:
               - "states:DeleteStateMachine"
               - "states:UpdateStateMachine"        
             Resource: "*"
-
-
-  
   CodeBuildPolicyR53:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -3839,6 +3837,29 @@ Resources:
               - ec2:*Tag*
             Resource: "*"
             Effect: Allow
+
+  CodeBuildPolicyAccessAnalyzer:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-AccessAnalyzer
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - access-analyzer:CreateAnalyzer
+              - access-analyzer:DeleteAnalyzer
+              - access-analyzer:GetAnalyzer
+              - access-analyzer:ListArchiveRules
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - access-analyzer:ListTagsForResource
+              - access-analyzer:TagResource
+              - access-analyzer:UntagResource
+            Resource: !Sub arn:aws:access-analyzer:${AWS::Region}:${AWS::AccountId}:analyzer/*
 
   ###########################################################################
   ###  Utility codebuild used to list the deployed artifacts versions

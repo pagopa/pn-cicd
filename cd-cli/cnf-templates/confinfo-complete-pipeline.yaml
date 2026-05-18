@@ -2548,7 +2548,6 @@ Resources:
               - "elasticloadbalancing:DescribeTargetGroups"
               - "elasticloadbalancing:DescribeListenerAttributes"
             Resource: "*"
-
   CodeBuildPolicyR53:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -3533,6 +3532,13 @@ Resources:
               - "ses:ListConfigurationSets"
               - "ses:GetConfigurationSet"
               - "ses:GetConfigurationSetEventDestinations"
+              - "access-analyzer:CreateAnalyzer"
+              - "access-analyzer:DeleteAnalyzer"
+              - "access-analyzer:GetAnalyzer"
+              - "access-analyzer:ListArchiveRules"
+              - "access-analyzer:ListTagsForResource"
+              - "access-analyzer:TagResource"
+              - "access-analyzer:UntagResource"
             Resource: "*"
             Effect: Allow
 
