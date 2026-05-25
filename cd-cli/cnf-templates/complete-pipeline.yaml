@@ -1536,6 +1536,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnPaperTrackerOutput
+              RunOrder: 4
 
             # Update pn-notification-cost-service
             - Name: Update_PnNotificationCostServiceTracker
@@ -1562,6 +1563,7 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnNotificationCostServiceOutput
+              RunOrder: 4
 
             - Name: Update_PnDeliveryPushWorkFlow
               ActionTypeId:
@@ -1605,7 +1607,7 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
                     {"name":"MsName", "value":"pn-delivery-push-validator", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"31", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_delivery_push_validator", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_delivery_push_validator", "type":"PLAINTEXT"},
                     {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
                     {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
