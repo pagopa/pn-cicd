@@ -3386,6 +3386,7 @@ Resources:
               - "access-analyzer:CreateAnalyzer"
               - "access-analyzer:DeleteAnalyzer"
               - "access-analyzer:GetAnalyzer"
+              - "access-analyzer:UpdateAnalyzer"
               - "access-analyzer:ListAnalyzers"
               - "access-analyzer:ListFindings"
               - "access-analyzer:GetFinding"
