@@ -2440,6 +2440,14 @@ Resources:
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - '(cd scripts/cd-cli && ./cleanupInfrastructure.sh -w /tmp -r $AwsRegion)'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###          UPDATE IAM ACCESS ANALYZER              ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./deployInfraIamAccessAnalyzer.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -a core -w /tmp -c $custom_config_dir )'
             post_build:
               commands:
                 - 'echo ""'
