@@ -3389,6 +3389,7 @@ Resources:
               - "access-analyzer:ListAnalyzers"
               - "access-analyzer:ListFindings"
               - "access-analyzer:GetFinding"
+              - "access-analyzer:*ArchiveRule"
               - "access-analyzer:ListArchiveRules"
               - "access-analyzer:ListTagsForResource"
               - "access-analyzer:TagResource"
