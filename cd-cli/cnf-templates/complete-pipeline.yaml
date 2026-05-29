@@ -3736,6 +3736,20 @@ Resources:
               - "kms:CreateCustomKeyStore"
               - "kms:*Tag*"
             Resource: "*"
+          - Sid: AccessAnalyzer
+            Effect: Allow
+            Action:
+              - "access-analyzer:CreateAnalyzer"
+              - "access-analyzer:DeleteAnalyzer"
+              - "access-analyzer:GetAnalyzer"
+              - "access-analyzer:ListAnalyzers"
+              - "access-analyzer:ListFindings"
+              - "access-analyzer:GetFinding"
+              - "access-analyzer:ListArchiveRules"
+              - "access-analyzer:ListTagsForResource"
+              - "access-analyzer:TagResource"
+              - "access-analyzer:UntagResource"
+            Resource: "*"
 
   CodeBuildNetworking:
     Type: AWS::IAM::ManagedPolicy
