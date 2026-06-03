@@ -2440,6 +2440,14 @@ Resources:
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - '(cd scripts/cd-cli && ./cleanupInfrastructure.sh -w /tmp -r $AwsRegion)'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###          UPDATE IAM ACCESS ANALYZER              ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./deployInfraIamAccessAnalyzer.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -a core -w /tmp -c $custom_config_dir )'
             post_build:
               commands:
                 - 'echo ""'
@@ -3727,6 +3735,20 @@ Resources:
               - "kms:ConnectCustomKeyStore"
               - "kms:CreateCustomKeyStore"
               - "kms:*Tag*"
+            Resource: "*"
+          - Sid: AccessAnalyzer
+            Effect: Allow
+            Action:
+              - "access-analyzer:CreateAnalyzer"
+              - "access-analyzer:DeleteAnalyzer"
+              - "access-analyzer:GetAnalyzer"
+              - "access-analyzer:ListAnalyzers"
+              - "access-analyzer:ListFindings"
+              - "access-analyzer:GetFinding"
+              - "access-analyzer:ListArchiveRules"
+              - "access-analyzer:ListTagsForResource"
+              - "access-analyzer:TagResource"
+              - "access-analyzer:UntagResource"
             Resource: "*"
 
   CodeBuildNetworking:
