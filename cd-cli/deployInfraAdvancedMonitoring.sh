@@ -244,3 +244,57 @@ if ( [ -f "${INFRA_SEC_MONITORING_TEMPLATE_PATH}" ] ) then
 else 
   echo "No ${INFRA_SEC_MONITORING_TEMPLATE_PATH} provided"
 fi
+
+echo ""
+echo "###          UPDATE IAM ACCESS ANALYZER              ###"
+echo "###########################################################"
+
+echo "=== Package and upload Lambda functions"
+lambdasBasePath="pn-infra-iam-access/${pn_infra_commitid}"
+
+for lambda_dir in pn-infra/runtime-infra/lambdas/iam-unused-access-exporter pn-infra/runtime-infra/lambdas/iam-unused-access-core-widget; do
+  lambda_name=$(basename "$lambda_dir")
+  echo " - Packaging ${lambda_name}"
+  (cd "$lambda_dir" && zip -r "${work_dir}/${lambda_name}.zip" .)
+  aws ${aws_command_base_args} s3 cp \
+      "${work_dir}/${lambda_name}.zip" \
+      "s3://${bucketName}/${lambdasBasePath}/${lambda_name}.zip"
+  rm -f "${work_dir}/${lambda_name}.zip"
+done
+
+IAM_ANALYZER_TEMPLATE_PATH=pn-infra/runtime-infra/pn-iam-unused-access-analyzer.yaml
+
+echo "=== Prepare enhanced parameters for IAM unused access analyzer"
+IAM_ANALYZER_TEMPLATE_CONFIG_PATH="pn-infra/runtime-infra/pn-iam-unused-access-analyzer-${env_type}-cfg.json"
+if [[ "$account" == "confinfo" ]]; then
+  confinfo_cfg_path="pn-infra/${runtime_path}/pn-iam-unused-access-analyzer-${env_type}-cfg.json"
+  if [ -f "${confinfo_cfg_path}" ]; then
+    IAM_ANALYZER_TEMPLATE_CONFIG_PATH="${confinfo_cfg_path}"
+  fi
+fi
+
+if [ ! -f ${IAM_ANALYZER_TEMPLATE_CONFIG_PATH} ]; then
+  echo "{ \"Parameters\": {} }" > ${IAM_ANALYZER_TEMPLATE_CONFIG_PATH}
+fi
+
+EnhancedParamFilePath="pn-iam-unused-access-analyzer-${env_type}-cfg-enhanced.json"
+
+echo "= Enhanced parameters file"
+jq -s "{ \"Parameters\": .[0] } * .[1]" \
+   ${INFRA_ALL_OUTPUTS_FILE} ${IAM_ANALYZER_TEMPLATE_CONFIG_PATH} \
+   | jq -s ".[] | .Parameters" | sed -e 's/\": \"/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnhancedParamFilePath}
+sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
+echo ",\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"LambdasBucketName=$bucketName\",\"LambdasBasePath=$lambdasBasePath\"]" >> "$EnhancedParamFilePath"
+cat ${EnhancedParamFilePath}
+
+if ( [ -f "${IAM_ANALYZER_TEMPLATE_PATH}" ] ) then
+  aws ${aws_command_base_args} cloudformation deploy \
+        --stack-name pn-iam-unused-access-analyzer-${env_type} \
+        --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+        --template-file $IAM_ANALYZER_TEMPLATE_PATH \
+        --tags Microservice=pn-iam-unused-access-analyzer \
+        --parameter-overrides file://$( realpath ${EnhancedParamFilePath} )
+else
+  echo "No ${IAM_ANALYZER_TEMPLATE_PATH} provided"
+fi
