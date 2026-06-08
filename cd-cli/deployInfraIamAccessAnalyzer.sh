@@ -184,8 +184,10 @@ echo "=== Load all outputs in a single file for next stack deployments"
 INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
 
 if [[ "$account" == "core" ]]; then
+  runtime_path="runtime-infra"
   (cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
 elif [[ "$account" == "confinfo" ]]; then
+  runtime_path="runtime-infra-confinfo"
   (cd ${cwdir}/commons && ./merge-infra-outputs-confinfo.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
 fi
 
@@ -202,6 +204,12 @@ IAM_ANALYZER_TEMPLATE_PATH=pn-infra/runtime-infra/pn-iam-unused-access-analyzer.
 
 echo "=== Prepare enhanced parameters for IAM unused access analyzer"
 IAM_ANALYZER_TEMPLATE_CONFIG_PATH="pn-infra/runtime-infra/pn-iam-unused-access-analyzer-${env_type}-cfg.json"
+if [[ "$account" == "confinfo" ]]; then
+  confinfo_cfg_path="pn-infra/${runtime_path}/pn-iam-unused-access-analyzer-${env_type}-cfg.json"
+  if [ -f "${confinfo_cfg_path}" ]; then
+    IAM_ANALYZER_TEMPLATE_CONFIG_PATH="${confinfo_cfg_path}"
+  fi
+fi
 
 if [ ! -f ${IAM_ANALYZER_TEMPLATE_CONFIG_PATH} ]; then
   echo "{ \"Parameters\": {} }" > ${IAM_ANALYZER_TEMPLATE_CONFIG_PATH}
@@ -209,13 +217,21 @@ fi
 
 EnhancedParamFilePath="pn-iam-unused-access-analyzer-${env_type}-cfg-enhanced.json"
 
+caller_account_id=$(aws ${aws_command_base_args} sts get-caller-identity --query Account --output text)
+pn_core_account_id=$(jq -r '.PnCoreAwsAccountId // empty' ${INFRA_ALL_OUTPUTS_FILE})
+topic_account_id="${caller_account_id}"
+if [[ -n "${pn_core_account_id}" && "${pn_core_account_id}" != "null" ]]; then
+  topic_account_id="${pn_core_account_id}"
+fi
+infra_sec_topic_arn="arn:aws:sns:${aws_region}:${topic_account_id}:pn-InfraSecTopic"
+
 echo "= Enhanced parameters file"
 jq -s "{ \"Parameters\": .[0] } * .[1]" \
    ${INFRA_ALL_OUTPUTS_FILE} ${IAM_ANALYZER_TEMPLATE_CONFIG_PATH} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnhancedParamFilePath}
 sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
-echo ",\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"LambdasBucketName=$bucketName\",\"LambdasBasePath=$lambdasBasePath\"]" >> "$EnhancedParamFilePath"
+echo ",\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"LambdasBucketName=$bucketName\",\"LambdasBasePath=$lambdasBasePath\",\"InfraSecTopicArn=$infra_sec_topic_arn\"]" >> "$EnhancedParamFilePath"
 cat ${EnhancedParamFilePath}
 
 if ( [ -f "${IAM_ANALYZER_TEMPLATE_PATH}" ] ) then
