@@ -184,8 +184,10 @@ echo "=== Load all outputs in a single file for next stack deployments"
 INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
 
 if [[ "$account" == "core" ]]; then
+  runtime_path="runtime-infra"
   (cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
 elif [[ "$account" == "confinfo" ]]; then
+  runtime_path="runtime-infra-confinfo"
   (cd ${cwdir}/commons && ./merge-infra-outputs-confinfo.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
 fi
 
@@ -202,6 +204,12 @@ IAM_ANALYZER_TEMPLATE_PATH=pn-infra/runtime-infra/pn-iam-unused-access-analyzer.
 
 echo "=== Prepare enhanced parameters for IAM unused access analyzer"
 IAM_ANALYZER_TEMPLATE_CONFIG_PATH="pn-infra/runtime-infra/pn-iam-unused-access-analyzer-${env_type}-cfg.json"
+if [[ "$account" == "confinfo" ]]; then
+  confinfo_cfg_path="pn-infra/${runtime_path}/pn-iam-unused-access-analyzer-${env_type}-cfg.json"
+  if [ -f "${confinfo_cfg_path}" ]; then
+    IAM_ANALYZER_TEMPLATE_CONFIG_PATH="${confinfo_cfg_path}"
+  fi
+fi
 
 if [ ! -f ${IAM_ANALYZER_TEMPLATE_CONFIG_PATH} ]; then
   echo "{ \"Parameters\": {} }" > ${IAM_ANALYZER_TEMPLATE_CONFIG_PATH}
