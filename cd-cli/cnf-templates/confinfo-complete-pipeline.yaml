@@ -2431,6 +2431,8 @@ Resources:
               - lambda:DeleteEventSourceMapping
               - lambda:UntagResource
               - lambda:Update*
+              - lambda:PublishVersion
+              - lambda:PutProvisionedConcurrencyConfig
             Resource: "*"
           - Effect: Allow
             Action:
