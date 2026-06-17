@@ -459,7 +459,7 @@ function prepareOneCloudFront() {
 }
 
 ZONE_ID=""
-SHOWCASE_SITE_CERTIFICATE_ARN=""
+LANDING_CERTIFICATE_ARN=""
 
 LANDING_DOMAIN="www.${env_type}.pn.pagopa.it"
 
@@ -472,7 +472,7 @@ if ( [ $ZoneId != '-' ] ) then
 fi
 
 LandingCertificateArn=$( cat ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} | jq -r '.LandingCertificateArn' )
-if ( [ $LandingCertificateArn != '-' ] ) then
+if ( [ "$LandingCertificateArn" != '-' ] ) then
   LANDING_CERTIFICATE_ARN=$LandingCertificateArn
 fi
 
