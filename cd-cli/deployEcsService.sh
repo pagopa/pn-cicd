@@ -269,6 +269,13 @@ echo "=== Upload microservice files to bucket"
 microserviceBucketName=$bucketName
 microserviceBucketBaseKey="projects/${microcvs_name}/${pn_microsvc_commitid}_$(date +%s)"
 microserviceBucketS3BaseUrl="s3://${microserviceBucketName}/${microserviceBucketBaseKey}"
+microserviceTemplateFilePath="${microcvs_name}/scripts/aws/cfn/microservice.yml"
+privateLinkSharedLambdasEnabled="false"
+
+if grep -q "fragments/private-link-routing.yaml" "${microserviceTemplateFilePath}"; then
+  privateLinkSharedLambdasEnabled="true"
+fi
+
 aws ${aws_command_base_args} \
     s3 cp ${microcvs_name} $microserviceBucketS3BaseUrl \
       --recursive --exclude ".git/*"
@@ -302,6 +309,54 @@ if ( [ $functionsDirPresent = "OK" ] ) then
 
 else
   echo "File functions.zip not found, skipping lambda functions deployment"
+fi
+
+echo " - Copy shared infra Lambdas zip"
+sharedInfraLambdasZip='functions.zip'
+sharedInfraLambdasPackage="pn-infra-${sharedInfraLambdasZip}"
+sharedInfraLambdasPackageKey="pn-infra/commits/${pn_infra_commitid}/${sharedInfraLambdasZip}"
+sharedInfraLambdasLocalPath='pn-infra-functions'
+sharedLambdasLocalPath='shared-functions'
+sharedInfraLambdaZipNames=("private-channel-proxy.zip")
+
+if [ "${privateLinkSharedLambdasEnabled}" = "true" ]; then
+  rm -rf "${sharedInfraLambdasLocalPath}" "${sharedLambdasLocalPath}" "${sharedInfraLambdasPackage}"
+  mkdir -p "${sharedInfraLambdasLocalPath}" "${sharedLambdasLocalPath}"
+
+  sharedInfraLambdasPackagePresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "${sharedInfraLambdasPackageKey}" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+  if [ "${sharedInfraLambdasPackagePresent}" = "OK" ]; then
+    aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+          --bucket "${LambdasBucketName}" --key "${sharedInfraLambdasPackageKey}" \
+          "${sharedInfraLambdasPackage}"
+
+    unzip -o "${sharedInfraLambdasPackage}" -d "./${sharedInfraLambdasLocalPath}"
+
+    # timestamp.txt workaround lambda to fix problem with Lambda versioning when deploying the same commit ID
+    date > timestamp.txt
+
+    for sharedLambdaZipName in "${sharedInfraLambdaZipNames[@]}"; do
+      sourceSharedLambdaZip="${sharedInfraLambdasLocalPath}/${sharedLambdaZipName}"
+      targetSharedLambdaZip="${sharedLambdasLocalPath}/${sharedLambdaZipName}"
+
+      if [ -f "${sourceSharedLambdaZip}" ]; then
+        cp "${sourceSharedLambdaZip}" "${targetSharedLambdaZip}"
+        zip "${targetSharedLambdaZip}" timestamp.txt
+      else
+        echo "Shared infra Lambda ${sharedLambdaZipName} not found in ${sharedInfraLambdasPackageKey}"
+        exit 1
+      fi
+    done
+    # end of timestamp.txt workaround
+
+    aws ${aws_command_base_args} s3 cp --recursive \
+        "${sharedLambdasLocalPath}" \
+        "${microserviceBucketS3BaseUrl}/functions_zip/"
+  else
+    echo "File ${sharedInfraLambdasPackageKey} not found, cannot deploy shared infra Lambdas for PrivateLink routing"
+    exit 1
+  fi
+else
+  echo "PrivateLink routing not found, skipping shared infra Lambdas deployment"
 fi
 
 echo " - Copy static files"
@@ -583,4 +638,3 @@ bash "${script_dir}/commons/track-release.sh" \
     -s "${_START_TIMESTAMP}" \
     -D "${_DURATION_SECONDS}" \
     -R "${aws_region}" || true
-
