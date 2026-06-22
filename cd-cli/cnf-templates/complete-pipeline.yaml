@@ -8720,7 +8720,7 @@ Resources:
                         git clone --depth 1 https://github.com/pagopa/pn-cicd.git
 
                         echo "### LOAD SECRETS AND PARAMETERS INTO MVN_PROPS ###"
-                        source ./pn-cicd/cd-cli/fetch-test-config.sh
+                        source ./pn-cicd/cd-cli/fetchE2ETestConfig.sh
 
                         echo "### CLONE E2E TEST REPOSITORY ###"
                         git clone --depth 1 --branch "${ENV_NAME}" https://github.com/pagopa/pn-b2b-client pn-b2b-client
