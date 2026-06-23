@@ -298,7 +298,7 @@ if ( [ $functionsDirPresent = "OK" ] ) then
 
   for f in $lambdasLocalPath/*.zip; do
     if [ -f "$f" ]; then
-      zip $f timestamp.txt
+      zip -q "$f" timestamp.txt
     fi
   done
   # end of timestamp.txt workaround
@@ -340,7 +340,7 @@ if [ "${privateLinkSharedLambdasEnabled}" = "true" ]; then
 
       if [ -f "${sourceSharedLambdaZip}" ]; then
         cp "${sourceSharedLambdaZip}" "${targetSharedLambdaZip}"
-        zip "${targetSharedLambdaZip}" timestamp.txt
+        zip -q "${targetSharedLambdaZip}" timestamp.txt
       else
         echo "Shared infra Lambda ${sharedLambdaZipName} not found in ${sharedInfraLambdasPackageKey}"
         exit 1
