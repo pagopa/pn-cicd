@@ -310,7 +310,7 @@ if [[ "${dry_run}" == "true" ]]; then
 else
   echo "=== Uploading event to ${s3_path}"
   # Failure tolerance: don't fail the build if tracking fails
-  aws s3 cp "${TMP_JSON}" "${s3_path}" --region "${aws_region}" || echo "Warning: Failed to upload release event to S3"
+  aws s3 cp "${TMP_JSON}" "${s3_path}" --region "${aws_region}" --quiet|| echo "Warning: Failed to upload release event to S3"
 fi
 
 echo "=== Release event ${phase} for ${component_name} tracked successfully"
