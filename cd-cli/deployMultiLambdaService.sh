@@ -214,7 +214,7 @@ echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
-      --recursive --exclude ".git/*"
+      --recursive --exclude ".git/*" --quiet
 
 echo " - Copy Lambdas zip"
 lambdasZip='functions.zip'
@@ -229,7 +229,7 @@ unzip ${lambdasZip} -d ./${lambdasLocalPath}
 bucketBasePath="${repo_name}/${pn_microsvc_commitId}"
 aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}/" \
-      "s3://$bucketName/${bucketBasePath}/"
+      "s3://$bucketName/${bucketBasePath}/" --quiet
 
 
 echo ""
@@ -237,7 +237,7 @@ echo "=== Upload microservice files to bucket"
 microserviceBucketS3BaseUrl="s3://${bucketName}/${bucketBasePath}"
 aws ${aws_command_base_args} \
     s3 cp "${repo_name}/" $microserviceBucketS3BaseUrl \
-      --recursive --exclude ".git/*" --exclude "functions/*"
+      --recursive --exclude ".git/*" --exclude "functions/*" --quiet
 
 MicroserviceNumber=0
 
