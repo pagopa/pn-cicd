@@ -713,7 +713,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref UpdateExternalMicroserviceCodeBuildProject
+                ProjectName: !Ref UpdateMultilambdaMicroserviceCodeBuildProject
                 PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
@@ -3056,6 +3056,8 @@ Resources:
               - lambda:ListFunctions
               - lambda:*Tag*
               - lambda:PutFunctionEventInvokeConfig
+              - lambda:PublishVersion
+              - lambda:PutProvisionedConcurrencyConfig
               - logs:CreateLogGroup
               - logs:DescribeLogGroups
               - logs:FilterLogEvents
@@ -3379,6 +3381,22 @@ Resources:
               - "kms:ConnectCustomKeyStore"
               - "kms:CreateCustomKeyStore"
               - "kms:*Tag*"
+            Resource: "*"
+          - Sid: AccessAnalyzer
+            Effect: Allow
+            Action:
+              - "access-analyzer:CreateAnalyzer"
+              - "access-analyzer:DeleteAnalyzer"
+              - "access-analyzer:GetAnalyzer"
+              - "access-analyzer:UpdateAnalyzer"
+              - "access-analyzer:ListAnalyzers"
+              - "access-analyzer:ListFindings"
+              - "access-analyzer:GetFinding"
+              - "access-analyzer:*ArchiveRule"
+              - "access-analyzer:ListArchiveRules"
+              - "access-analyzer:ListTagsForResource"
+              - "access-analyzer:TagResource"
+              - "access-analyzer:UntagResource"
             Resource: "*"
 
   CodeBuildNetworking:
