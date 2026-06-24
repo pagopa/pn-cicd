@@ -101,10 +101,13 @@ jobs:
           java-version: '17'
           cache: 'maven'
       - name: check tag and pom version consistency
+        env:
+          TAG: ${{ inputs.tag }}
+          BASE_BRANCH: ${{ inputs.base_branch }}
         run: |
-          tag=${{ inputs.tag }}
+          tag="$TAG"
           if [[ "$tag" == *"RC"* ]]; then
-            base_branch=$([ ${{ inputs.base_branch }}  = "" ] && echo "develop" || echo "${{ inputs.base_branch }}")
+            base_branch=$([ "$BASE_BRANCH" = "" ] && echo "develop" || echo "$BASE_BRANCH")
             echo "Check consistency from branch: $base_branch"
             git checkout $base_branch
           else
@@ -138,10 +141,13 @@ jobs:
           fi
       - name: run RC flow
         if: contains(inputs.tag, 'RC')
+        env:
+          TAG: ${{ inputs.tag }}
+          BASE_BRANCH: ${{ inputs.base_branch }}
         run: |
           export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
-          tag=${{ inputs.tag }}
-          base_branch=$([ ${{ inputs.base_branch }}  = "" ] && echo "develop" || echo "${{ inputs.base_branch }}")
+          tag="$TAG"
+          base_branch=$([ "$BASE_BRANCH" = "" ] && echo "develop" || echo "$BASE_BRANCH")
           # Esegui git fetch
           git fetch
           # Sposta sul ramo $base_branch e allineati al ramo remoto
@@ -173,9 +179,11 @@ jobs:
 
       - name: run RELEASE flow
         if: "!contains(inputs.tag, 'RC')"
+        env:
+          TAG: ${{ inputs.tag }}
         run: |
           export CODEARTIFACT_AUTH_TOKEN=$( aws codeartifact get-authorization-token --domain $CODEARTIFACT_DOMAIN_NAME --query authorizationToken --output text )
-          tag=${{ inputs.tag }}
+          tag="$TAG"
           echo "Creating RELEASE tag: $tag"
           # Esegui git fetch
           git fetch
