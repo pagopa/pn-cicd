@@ -447,10 +447,7 @@ Resources:
                   if [ "$JAVA_VERSION" = "25" ]; then
                     CUSTOM_BUILDER_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/builder-noble-java-tiny:0.0.130
                     CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/ubuntu-noble-run-tiny:0.0.80
-                    if [ "$CDS_ENABLED" = "true" ]; then
-                      MAVEN_OPTS="$MAVEN_OPTS -Dbp.jvm.cds.enabled=true"
-                    fi
-                    ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
+                    ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dbp.jvm.cds.enabled=$CDS_ENABLED -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
                   elif [ "$JAVA_VERSION" = "21" ]; then
                     CUSTOM_BUILDER_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/builder-jammy-base:0.4.447
                     CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/run-jammy-base:0.1.160
