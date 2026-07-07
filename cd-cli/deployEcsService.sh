@@ -259,7 +259,7 @@ echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
-      --recursive --exclude ".git/*"
+      --recursive --exclude ".git/*" --quiet
 
 echo "Environment variables file creation"
 (cd ${cwdir}/commons && ./environment-files-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
@@ -278,7 +278,7 @@ fi
 
 aws ${aws_command_base_args} \
     s3 cp ${microcvs_name} $microserviceBucketS3BaseUrl \
-      --recursive --exclude ".git/*"
+      --recursive --exclude ".git/*" --quiet
 
 
 echo " - Copy Lambdas zip"
@@ -298,14 +298,14 @@ if ( [ $functionsDirPresent = "OK" ] ) then
 
   for f in $lambdasLocalPath/*.zip; do
     if [ -f "$f" ]; then
-      zip $f timestamp.txt
+      zip -q "$f" timestamp.txt
     fi
   done
   # end of timestamp.txt workaround
 
   aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}" \
-      "${microserviceBucketS3BaseUrl}/functions_zip/"
+      "${microserviceBucketS3BaseUrl}/functions_zip/" --quiet
 
 else
   echo "File functions.zip not found, skipping lambda functions deployment"
@@ -340,7 +340,7 @@ if [ "${privateLinkSharedLambdasEnabled}" = "true" ]; then
 
       if [ -f "${sourceSharedLambdaZip}" ]; then
         cp "${sourceSharedLambdaZip}" "${targetSharedLambdaZip}"
-        zip "${targetSharedLambdaZip}" timestamp.txt
+        zip -q "${targetSharedLambdaZip}" timestamp.txt
       else
         echo "Shared infra Lambda ${sharedLambdaZipName} not found in ${sharedInfraLambdasPackageKey}"
         exit 1
@@ -350,7 +350,7 @@ if [ "${privateLinkSharedLambdasEnabled}" = "true" ]; then
 
     aws ${aws_command_base_args} s3 cp --recursive \
         "${sharedLambdasLocalPath}" \
-        "${microserviceBucketS3BaseUrl}/functions_zip/"
+        "${microserviceBucketS3BaseUrl}/functions_zip/" --quiet
   else
     echo "File ${sharedInfraLambdasPackageKey} not found, cannot deploy shared infra Lambdas for PrivateLink routing"
     exit 1
@@ -371,7 +371,7 @@ if ( [ $staticDirPresent = "OK" ] ) then
 
   aws ${aws_command_base_args} s3 cp --recursive \
       "${staticLocalPath}" \
-      "${microserviceBucketS3BaseUrl}/static/"
+      "${microserviceBucketS3BaseUrl}/static/" --quiet
 
 else
   echo "Directory static/ not found, skipping static files deployment"

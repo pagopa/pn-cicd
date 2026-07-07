@@ -158,7 +158,7 @@ echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
-      --recursive --exclude ".git/*"
+      --recursive --exclude ".git/*" --quiet
 
 
 echo " - Copy Lambdas zip"
@@ -175,7 +175,7 @@ unzip ${lambdasZip} -d ./${lambdasLocalPath}
 bucketBasePath="${repo_name}/${pn_infra_commitid}"
 aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}/" \
-      "s3://$bucketName/${bucketBasePath}/"
+      "s3://$bucketName/${bucketBasePath}/" --quiet
 
 # delete functions folder
 rm -rf ${lambdasLocalPath} 
