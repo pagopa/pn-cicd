@@ -28,6 +28,12 @@ Parameters:
     Default: "none"
     Description: Topic for build and pipeline notification
 
+Conditions:
+  PnPersonafisicaModule:
+    !Equals
+      - !Ref PackageName
+      - "pn-personafisica-webapp"
+
 Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
@@ -41,7 +47,11 @@ Resources:
         Type: NO_ARTIFACTS
       Environment:
         Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_MEDIUM
+        ComputeType:
+          !If
+            - PnPersonafisicaModule
+            - BUILD_GENERAL1_LARGE
+            - BUILD_GENERAL1_MEDIUM
         Image: aws/codebuild/standard:7.0
         EnvironmentVariables:
           - Name: CODEARTIFACT_DOMAIN_NAME

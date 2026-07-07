@@ -147,12 +147,12 @@ echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
-      --recursive --exclude ".git/*"
+      --recursive --exclude ".git/*" --quiet
 
 ## zip and upload lambda
-(cd pn-infra/runtime-infra/cognito/post-auth-trigger && npm ci && zip -r function.zip .)
+(cd pn-infra/runtime-infra/cognito/post-auth-trigger && npm --silent ci && zip -q -r function.zip .)
 lambdaPath=pn-infra-cognito/${pn_infra_commitid}/cognito/post-auth-trigger.zip
-aws s3 cp ${aws_command_base_args} pn-infra/runtime-infra/cognito/post-auth-trigger/function.zip s3://${bucketName}/${lambdaPath}
+aws s3 cp ${aws_command_base_args} pn-infra/runtime-infra/cognito/post-auth-trigger/function.zip s3://${bucketName}/${lambdaPath} --quiet
 
 echo ""
 echo ""
@@ -160,8 +160,18 @@ echo ""
 echo "###    PN-COGNITO     ###"
 echo "###################################################################"
 
+KinesisAuditStreamArn=$(aws ${aws_command_base_args} cloudformation describe-stacks \
+    --stack-name pn-infra-storage-${env_type} \
+    --query "Stacks[0].Outputs[?OutputKey=='LogsKinesisStreamArn'].OutputValue" \
+    --output text)
+
+if [ "${KinesisAuditStreamArn}" == "None" ] || [ -z "${KinesisAuditStreamArn}" ]; then
+  echo "WARNING: LogsKinesisStreamArn not found in stack pn-infra-storage-${env_type}. Subscription filter might fail if Kinesis is required."
+  KinesisAuditStreamArn=""
+fi
+
 TemplateFilePath="pn-infra/runtime-infra/pn-cognito.yaml"
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\""
+PipelineParams="\"TemplateBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\",\"LambdaS3Bucket=$bucketName\",\"LambdaS3BucketKey=$lambdaPath\",\"KinesisAuditStreamArn=$KinesisAuditStreamArn\",\"EnvironmentType=$env_type\""
 ParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-cfg.json"
 EnanchedParamFilePath="pn-infra/runtime-infra/pn-cognito-${env_type}-enhanced-cfg.json"
 
