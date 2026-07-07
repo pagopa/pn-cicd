@@ -4,11 +4,40 @@ set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 
 cleanup() {
+  _exit_code=$?
   trap - SIGINT SIGTERM ERR EXIT
-  # script cleanup here
+
+  if [[ ${_exit_code} -ne 0 && "${_DEPLOY_SUCCESS:-false}" != "true" ]]; then
+    echo "=== Detected failure, tracking release event..."
+    local end_epoch
+    end_epoch=$(date -u +%s)
+    local start_epoch="${_START_TIME_EPOCH:-$end_epoch}"
+    local duration_seconds=$(( end_epoch - start_epoch ))
+    bash "${script_dir}/commons/track-release.sh" \
+        -i "${_RELEASE_EVENT_ID:-}" \
+        -n "${microcvs_name:-}" \
+        -e "${env_type:-}" \
+        -p "FAILURE" \
+        -V "${pn_microsvc_commitid:-}" \
+        -f "${pn_infra_commitid:-}" \
+        -d "${cd_scripts_commitId:-}" \
+        -b "${bucketName:-}" \
+        -m "Exit code: ${_exit_code}" \
+        -s "${_START_TIMESTAMP:-}" \
+        -D "${duration_seconds}" \
+        -r "${release_label:-}" \
+        -R "${aws_region:-}" || true
+  fi
 }
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
+# === Release Tracking Initialization ===
+_RELEASE_EVENT_ID=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen | tr '[:upper:]' '[:lower:]' || echo "unknown-$(date +%s)")
+_START_TIME_EPOCH=$(date -u +%s)
+_START_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+_DEPLOY_SUCCESS=false
+release_label="${ReleaseLabel:-}"
 
 
 usage() {
@@ -242,6 +271,14 @@ echo ""
 echo "=== Upload microservice files to bucket"
 microserviceBucketName=$bucketName
 microserviceBucketBaseKey="projects/${microcvs_name}/${pn_microsvc_commitid}"
+microserviceTemplateFilePath="${microcvs_name}/scripts/aws/cfn/microservice.yml"
+privateLinkSharedLambdasEnabled="false"
+
+if grep -q "fragments/private-link-routing.yaml" "${microserviceTemplateFilePath}"; then
+  privateLinkSharedLambdasEnabled="true"
+  microserviceBucketBaseKey="${microserviceBucketBaseKey}_$(date +%s)"
+fi
+
 microserviceBucketS3BaseUrl="s3://${microserviceBucketName}/${microserviceBucketBaseKey}"
 aws ${aws_command_base_args} \
     s3 cp ${microcvs_name} $microserviceBucketS3BaseUrl \
@@ -275,6 +312,54 @@ if ( [ $functionsDirPresent = "OK" ] ) then
 
 else
   echo "File functions.zip not found, skipping lambda functions deployment"
+fi
+
+echo " - Copy shared infra Lambdas zip"
+sharedInfraLambdasZip='functions.zip'
+sharedInfraLambdasPackage="pn-infra-${sharedInfraLambdasZip}"
+sharedInfraLambdasPackageKey="pn-infra/commits/${pn_infra_commitid}/${sharedInfraLambdasZip}"
+sharedInfraLambdasLocalPath='pn-infra-functions'
+sharedLambdasLocalPath='shared-functions'
+sharedInfraLambdaZipNames=("private-channel-proxy.zip")
+
+if [ "${privateLinkSharedLambdasEnabled}" = "true" ]; then
+  rm -rf "${sharedInfraLambdasLocalPath}" "${sharedLambdasLocalPath}" "${sharedInfraLambdasPackage}"
+  mkdir -p "${sharedInfraLambdasLocalPath}" "${sharedLambdasLocalPath}"
+
+  sharedInfraLambdasPackagePresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "${sharedInfraLambdasPackageKey}" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
+  if [ "${sharedInfraLambdasPackagePresent}" = "OK" ]; then
+    aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+          --bucket "${LambdasBucketName}" --key "${sharedInfraLambdasPackageKey}" \
+          "${sharedInfraLambdasPackage}"
+
+    unzip -o "${sharedInfraLambdasPackage}" -d "./${sharedInfraLambdasLocalPath}"
+
+    # timestamp.txt workaround lambda to fix problem with Lambda versioning when deploying the same commit ID
+    date > timestamp.txt
+
+    for sharedLambdaZipName in "${sharedInfraLambdaZipNames[@]}"; do
+      sourceSharedLambdaZip="${sharedInfraLambdasLocalPath}/${sharedLambdaZipName}"
+      targetSharedLambdaZip="${sharedLambdasLocalPath}/${sharedLambdaZipName}"
+
+      if [ -f "${sourceSharedLambdaZip}" ]; then
+        cp "${sourceSharedLambdaZip}" "${targetSharedLambdaZip}"
+        zip "${targetSharedLambdaZip}" timestamp.txt
+      else
+        echo "Shared infra Lambda ${sharedLambdaZipName} not found in ${sharedInfraLambdasPackageKey}"
+        exit 1
+      fi
+    done
+    # end of timestamp.txt workaround
+
+    aws ${aws_command_base_args} s3 cp --recursive \
+        "${sharedLambdasLocalPath}" \
+        "${microserviceBucketS3BaseUrl}/functions_zip/"
+  else
+    echo "File ${sharedInfraLambdasPackageKey} not found, cannot deploy shared infra Lambdas for PrivateLink routing"
+    exit 1
+  fi
+else
+  echo "PrivateLink routing not found, skipping shared infra Lambdas deployment"
 fi
 
 echo "Load all outputs in a single file for next stack deployments"
@@ -369,17 +454,23 @@ echo ""
 echo "=== Prepare parameters for $microcvs_name microservice deployment in $env_type ACCOUNT"
 
 ##Update environments variable for microservice
-app_env_file_sha="-"
-
-echo "Environment variables file upload"
-bash ${cwdir}/commons/upload-files-runtime.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name} -e ${env_type}
-
+app_env_file_sha=""
 file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
 if [[ -f "${file_env_application_path}" ]]; then
+  echo " - application env file found, calculating sha256"
   app_env_file_sha=$(sha256sum ${file_env_application_path} | awk '{print $1}')
   echo ""
   echo ""
 fi
+
+echo "Environment variables file upload"
+echo "Environment variables file upload"
+bash ${cwdir}/commons/upload-files-runtime.sh \
+   -p ${project_name} \
+   -r ${aws_region} \
+   -m ${microcvs_name} \
+   -e ${env_type} \
+   -s "$app_env_file_sha"
 
 PreviousOutputFilePath=${microcvs_name}-storage-${env_type}-out.json
 TemplateFilePath=${microcvs_name}/scripts/aws/cfn/microservice.yml
@@ -516,7 +607,21 @@ else
     echo "${microcvs_name}/scripts/aws/cfn/data-quality.yml file doesn't exist, data quality deployment skipped"
 fi
 
-
-
-
-
+# Release Tracking: SUCCESS
+_END_TIME_EPOCH=$(date -u +%s)
+_DURATION_SECONDS=$(( _END_TIME_EPOCH - _START_TIME_EPOCH ))
+_DEPLOY_SUCCESS=true
+echo "=== Deploy completed successfully, tracking release event..."
+bash "${script_dir}/commons/track-release.sh" \
+    -i "${_RELEASE_EVENT_ID}" \
+    -n "${microcvs_name}" \
+    -e "${env_type}" \
+    -p "SUCCESS" \
+    -V "${pn_microsvc_commitid}" \
+    -f "${pn_infra_commitid}" \
+    -d "${cd_scripts_commitId:-}" \
+    -b "${bucketName}" \
+    -s "${_START_TIMESTAMP}" \
+    -D "${_DURATION_SECONDS}" \
+    -r "${release_label:-}" \
+    -R "${aws_region}" || true

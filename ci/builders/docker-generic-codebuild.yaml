@@ -118,6 +118,18 @@ Parameters:
   AllowedDeployAccount30:
     Type: Number
     Description: Account number allowed to read the artifacts
+  VpcId:
+    Type: String
+    Description: Codebuild network VPC id 
+    Default: vpc-0b672efeb65088a12
+  SubnetsIds:
+    Type: CommaDelimitedList
+    Description: Codebuild network Subnet ids
+    Default: 'subnet-08026072a0eacdd71,subnet-068ed8dffa1ae786e,subnet-0d491d72cb030d323'
+  SecurityGroupId:
+    Type: String
+    Description: Codebuild network SecurityGroupID
+    Default: sg-03a2c0bb8367596b2
 
 Conditions:
   CreateEcr:
@@ -368,6 +380,11 @@ Resources:
           #     Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
           #   - Type: BASE_REF
           #     Pattern: ^refs/heads/(main|develop)|release\/.*$
+      VpcConfig:
+        VpcId: !Ref VpcId
+        Subnets: !Ref SubnetsIds
+        SecurityGroupIds: 
+          - !Ref SecurityGroupId
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -464,6 +481,12 @@ Resources:
                 Action:
                   - sts:GetCallerIdentity
                 Resource: "*"
+              - Sid: Ec2Permissions
+                Effect: Allow
+                Action:
+                  - 'ec2:*'
+                Resource:
+                  - "*"
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule
