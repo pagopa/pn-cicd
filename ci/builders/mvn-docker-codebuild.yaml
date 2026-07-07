@@ -40,6 +40,7 @@ Parameters:
     Type: String
     Default: '17'
     AllowedValues:
+      - '25'
       - '21'
       - '17'
 
@@ -72,6 +73,14 @@ Parameters:
 
   NativeComp:
     Description: Java version
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+  CdsEnabled:
+    Description: Enable Project Leyden (CDS) for Java applications
     Type: String
     Default: 'false'
     AllowedValues:
@@ -306,7 +315,10 @@ Resources:
             Value: !Sub "${ARMEnvironment}"
           - Name: NATIVE_COMP
             Type: PLAINTEXT
-            Value: !Sub "${NativeComp}"                    
+            Value: !Sub "${NativeComp}"
+          - Name: CDS_ENABLED
+            Type: PLAINTEXT
+            Value: !Sub "${CdsEnabled}"
           - Name: SETTINGS
             Type: PLAINTEXT
             Value: |
@@ -432,7 +444,11 @@ Resources:
                 - CUSTOM_BUILDER_IMAGE=public.ecr.aws/c7u1m8f9/paketobuildpacks/builder:0.3.192-base
                 - CUSTOM_RUN_IMAGE=public.ecr.aws/c7u1m8f9/paketobuildpacks/run:1.2.58-base-cnb
                 - |
-                  if [ "$JAVA_VERSION" = "21" ]; then
+                  if [ "$JAVA_VERSION" = "25" ]; then
+                    CUSTOM_BUILDER_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/builder-noble-java-tiny:0.0.130
+                    CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/ubuntu-noble-run-tiny:0.0.80
+                    ./mvnw $MAVEN_OPTS clean verify spring-boot:build-image -Dbp.jvm.cds.enabled=$CDS_ENABLED -Dspring-boot.build-image.builder=$CUSTOM_BUILDER_IMAGE -Dspring-boot.build-image.runImage=$CUSTOM_RUN_IMAGE $MAVEN_ADD_GOAL
+                  elif [ "$JAVA_VERSION" = "21" ]; then
                     CUSTOM_BUILDER_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/builder-jammy-base:0.4.447
                     CUSTOM_RUN_IMAGE=911845998067.dkr.ecr.eu-central-1.amazonaws.com/paketobuildpacks/run-jammy-base:0.1.160
                     if [ "$ARM_ENVIRONMENT" = "true" ]; then
