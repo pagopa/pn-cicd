@@ -259,6 +259,7 @@ Resources:
                   - 'events:*'
                   - 'logs:*'
                   - 'lambda:*'
+                  - 'ec2:*'
                 Effect: Allow
                 Resource: '*'
 

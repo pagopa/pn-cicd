@@ -218,6 +218,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-lollipop-client"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -229,6 +230,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-jar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-f24lib"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -553,6 +555,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-external-registries"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -596,6 +599,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-mandate"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -684,6 +688,7 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-downtime-logs"
         GitHubDefaultBranch: "develop"
+        JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
@@ -768,6 +773,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-radd-alt"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -854,6 +860,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-logextractor-be"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -897,6 +904,7 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-logsaver-be"
         GitHubDefaultBranch: "develop"
+        JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
@@ -938,6 +946,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-emd-integration"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -1029,6 +1038,51 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         JavaVersion: "21"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
+      TimeoutInMinutes: 5
+  PnIoConnector:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-io-connector"
+        JavaVersion: "21"
+        GitHubDefaultBranch: "develop"
+        DisableIntegrationTest: "false"
+        ARMEnvironment: true
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
@@ -1193,49 +1247,6 @@ Resources:
         AllowedDeployAccount29: !Ref Ada29
         AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
-  PnPlatformUsageEstimatesCI:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-platform-usage-estimates"
-        GitHubDefaultBranch: "develop"
-        DisableIntegrationTest: "false"
-        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
-        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
-        AllowedDeployAccount1: !Ref Ada1
-        AllowedDeployAccount2: !Ref Ada2
-        AllowedDeployAccount3: !Ref Ada3
-        AllowedDeployAccount4: !Ref Ada4
-        AllowedDeployAccount5: !Ref Ada5
-        AllowedDeployAccount6: !Ref Ada6
-        AllowedDeployAccount7: !Ref Ada7
-        AllowedDeployAccount8: !Ref Ada8
-        AllowedDeployAccount9: !Ref Ada9
-        AllowedDeployAccount10: !Ref Ada10
-        AllowedDeployAccount11: !Ref Ada11
-        AllowedDeployAccount12: !Ref Ada12
-        AllowedDeployAccount13: !Ref Ada13
-        AllowedDeployAccount14: !Ref Ada14
-        AllowedDeployAccount15: !Ref Ada15
-        AllowedDeployAccount16: !Ref Ada16
-        AllowedDeployAccount17: !Ref Ada17
-        AllowedDeployAccount18: !Ref Ada18
-        AllowedDeployAccount19: !Ref Ada19
-        AllowedDeployAccount20: !Ref Ada20
-        AllowedDeployAccount21: !Ref Ada21
-        AllowedDeployAccount22: !Ref Ada22
-        AllowedDeployAccount23: !Ref Ada23
-        AllowedDeployAccount24: !Ref Ada24
-        AllowedDeployAccount25: !Ref Ada25
-        AllowedDeployAccount26: !Ref Ada26
-        AllowedDeployAccount27: !Ref Ada27
-        AllowedDeployAccount28: !Ref Ada28
-        AllowedDeployAccount29: !Ref Ada29
-        AllowedDeployAccount30: !Ref Ada30
-      TimeoutInMinutes: 5
 
   PnKafkaBridgeCI:
     Type: AWS::CloudFormation::Stack
@@ -1250,50 +1261,6 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "21"
-        AllowedDeployAccount1: !Ref Ada1
-        AllowedDeployAccount2: !Ref Ada2
-        AllowedDeployAccount3: !Ref Ada3
-        AllowedDeployAccount4: !Ref Ada4
-        AllowedDeployAccount5: !Ref Ada5
-        AllowedDeployAccount6: !Ref Ada6
-        AllowedDeployAccount7: !Ref Ada7
-        AllowedDeployAccount8: !Ref Ada8
-        AllowedDeployAccount9: !Ref Ada9
-        AllowedDeployAccount10: !Ref Ada10
-        AllowedDeployAccount11: !Ref Ada11
-        AllowedDeployAccount12: !Ref Ada12
-        AllowedDeployAccount13: !Ref Ada13
-        AllowedDeployAccount14: !Ref Ada14
-        AllowedDeployAccount15: !Ref Ada15
-        AllowedDeployAccount16: !Ref Ada16
-        AllowedDeployAccount17: !Ref Ada17
-        AllowedDeployAccount18: !Ref Ada18
-        AllowedDeployAccount19: !Ref Ada19
-        AllowedDeployAccount20: !Ref Ada20
-        AllowedDeployAccount21: !Ref Ada21
-        AllowedDeployAccount22: !Ref Ada22
-        AllowedDeployAccount23: !Ref Ada23
-        AllowedDeployAccount24: !Ref Ada24
-        AllowedDeployAccount25: !Ref Ada25
-        AllowedDeployAccount26: !Ref Ada26
-        AllowedDeployAccount27: !Ref Ada27
-        AllowedDeployAccount28: !Ref Ada28
-        AllowedDeployAccount29: !Ref Ada29
-        AllowedDeployAccount30: !Ref Ada30
-      TimeoutInMinutes: 20
-
-  PnRaddBffCI:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
-      Parameters:
-        GitHubProjectName: "pn-radd-bff"
-        DisableIntegrationTest: "false"
-        GitHubDefaultBranch: "develop"
-        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
-        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
-        NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1377,6 +1344,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-service-desk"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1421,6 +1389,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-f24"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1507,6 +1476,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-pdfraster"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1596,6 +1566,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-templates-engine"
+        JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1949,6 +1920,97 @@ Resources:
         AllowedDeployAccount30: !Ref Ada30
       TimeoutInMinutes: 5
 
+  PnWorkflowManagerCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-workflow-manager"
+        GitHubDefaultBranch: "develop"
+        DisableIntegrationTest: "false"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        JavaVersion: "21"
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
+      TimeoutInMinutes: 5
+
+  PnNotificationCostServiceCI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-notification-cost-service"
+        GitHubDefaultBranch: "develop"
+        DisableIntegrationTest: "false"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        JavaVersion: "21"
+        ARMEnvironment: true
+        AllowedDeployAccount1: !Ref Ada1
+        AllowedDeployAccount2: !Ref Ada2
+        AllowedDeployAccount3: !Ref Ada3
+        AllowedDeployAccount4: !Ref Ada4
+        AllowedDeployAccount5: !Ref Ada5
+        AllowedDeployAccount6: !Ref Ada6
+        AllowedDeployAccount7: !Ref Ada7
+        AllowedDeployAccount8: !Ref Ada8
+        AllowedDeployAccount9: !Ref Ada9
+        AllowedDeployAccount10: !Ref Ada10
+        AllowedDeployAccount11: !Ref Ada11
+        AllowedDeployAccount12: !Ref Ada12
+        AllowedDeployAccount13: !Ref Ada13
+        AllowedDeployAccount14: !Ref Ada14
+        AllowedDeployAccount15: !Ref Ada15
+        AllowedDeployAccount16: !Ref Ada16
+        AllowedDeployAccount17: !Ref Ada17
+        AllowedDeployAccount18: !Ref Ada18
+        AllowedDeployAccount19: !Ref Ada19
+        AllowedDeployAccount20: !Ref Ada20
+        AllowedDeployAccount21: !Ref Ada21
+        AllowedDeployAccount22: !Ref Ada22
+        AllowedDeployAccount23: !Ref Ada23
+        AllowedDeployAccount24: !Ref Ada24
+        AllowedDeployAccount25: !Ref Ada25
+        AllowedDeployAccount26: !Ref Ada26
+        AllowedDeployAccount27: !Ref Ada27
+        AllowedDeployAccount28: !Ref Ada28
+        AllowedDeployAccount29: !Ref Ada29
+        AllowedDeployAccount30: !Ref Ada30
+      TimeoutInMinutes: 5
+
   PnDeliveryPushValidatorCI:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -2095,6 +2157,21 @@ Resources:
         NodeVersion: "22"
       TimeoutInMinutes: 10
 
+  # Progetto go-automation
+  PnGoAutomationLambda:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "go-automation"
+        BaseDir: "functions"
+        BaseDirEscaped: "functions"
+        GitHubDefaultBranch: "develop"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        NodeVersion: "22"
+      TimeoutInMinutes: 10
+
   # Progetto Auth Fleet con Multilambda
   PnAuthFleetLambdas:
     Type: AWS::CloudFormation::Stack
@@ -2108,7 +2185,7 @@ Resources:
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         NodeVersion: '22'
-      TimeoutInMinutes: 10
+      TimeoutInMinutes: 20
 
   # Progetto Zen Desk Auth con Lambda
   PnZenDeskAuthLambda:
