@@ -206,3 +206,41 @@ if ( [ -f "${ADVANCED_MONITORING_TEMPLATE_PATH}" ] ) then
 else 
   echo "No ${ADVANCED_MONITORING_TEMPLATE_PATH} provided"
 fi
+
+
+
+echo ""
+echo "###           BUILD INFRA SEC MONITORING                ###"
+echo "###########################################################"
+
+INFRA_SEC_MONITORING_TEMPLATE_PATH=pn-infra/runtime-infra/pn-infra-sec-monitoring.yaml
+
+echo "=== Prepare enhanced parameters for infra sec monitoring"
+INFRA_SEC_MONITORING_TEMPLATE_CONFIG_PATH="pn-infra/$runtime_path/pn-infra-sec-monitoring-${env_type}-cfg.json"
+
+if [ ! -f ${INFRA_SEC_MONITORING_TEMPLATE_CONFIG_PATH} ]; then
+  echo "{ \"Parameters\": {} }" > ${INFRA_SEC_MONITORING_TEMPLATE_CONFIG_PATH}
+fi
+
+EnhancedParamFilePath="pn-infra-sec-monitoring-${env_type}-cfg-enhanced.json"
+
+echo "= Enhanced parameters file"
+jq -s "{ \"Parameters\": .[0] } * .[1]" \
+   ${INFRA_ALL_OUTPUTS_FILE} ${INFRA_SEC_MONITORING_TEMPLATE_CONFIG_PATH} \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnhancedParamFilePath}
+sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
+echo ",\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\"]" >> "$EnhancedParamFilePath"
+cat ${EnhancedParamFilePath}
+
+if ( [ -f "${INFRA_SEC_MONITORING_TEMPLATE_PATH}" ] ) then
+  aws ${aws_command_base_args} cloudformation deploy \
+        --stack-name pn-infra-sec-monitoring-${env_type} \
+        --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+        --template-file $INFRA_SEC_MONITORING_TEMPLATE_PATH \
+        --tags Microservice=pn-infra-sec-monitoring \
+        --s3-bucket ${bucketName} \
+        --parameter-overrides file://$( realpath ${EnhancedParamFilePath} )
+else 
+  echo "No ${INFRA_SEC_MONITORING_TEMPLATE_PATH} provided"
+fi

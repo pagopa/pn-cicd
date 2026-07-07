@@ -118,6 +118,18 @@ Parameters:
   AllowedDeployAccount30:
     Type: Number
     Description: Account number allowed to read the artifacts
+  VpcId:
+    Type: String
+    Description: Codebuild network VPC id 
+    Default: vpc-0b672efeb65088a12
+  SubnetsIds:
+    Type: CommaDelimitedList
+    Description: Codebuild network Subnet ids
+    Default: 'subnet-08026072a0eacdd71,subnet-068ed8dffa1ae786e,subnet-0d491d72cb030d323'
+  SecurityGroupId:
+    Type: String
+    Description: Codebuild network SecurityGroupID
+    Default: sg-03a2c0bb8367596b2
 
 Conditions:
   CreateEcr:
@@ -218,27 +230,28 @@ Resources:
                 
                 # Build Lambda functions if present
                 - |
-                  if [ -d "fuctions" ]; then
+                  if [ -d "functions" ]; then
                     echo "Building Lambda functions..."
-                    cd fuctions
+                    cd functions
                     for i in */; do
-                      echo "Building Lambda: $i"
-                      cd $i
+                      function_name="${i%/}"
+                      echo "Building Lambda: $function_name"
+                      cd "$function_name"
                       
                       if [ -f "requirements.txt" ]; then
                         echo "Building Python Lambda with dependencies"
                         if [ -n "$(find . -type f -name "*.py")" ]; then
                           echo "Installing dependencies from requirements.txt"
                           python3 -m pip install --target . -r requirements.txt
-                          echo "Creating function.zip"
-                          zip -r function.zip . -x "*.pyc" -x "__pycache__/*" -x "requirements.txt"
+                          echo "Creating lambda.zip"
+                          zip -r lambda.zip . -x "*.pyc" -x "__pycache__/*" -x "requirements.txt"
                         else
-                          echo "Error: requirements.txt found but no Python files in ${i}"
+                          echo "Error: requirements.txt found but no Python files in ${function_name}"
                           exit 1
                         fi
                       elif [ -n "$(find . -type f -name "*.py")" ]; then
                         echo "Building Python Lambda without dependencies"
-                        zip -r function.zip . -x "*.pyc" -x "__pycache__/*"
+                        zip -r lambda.zip . -x "*.pyc" -x "__pycache__/*"
                       fi
                       
                       cd ..
@@ -293,22 +306,32 @@ Resources:
                   fi
                   
                   # Upload Lambda functions if present (always, for all branches)
-                  if [ -d "fuctions" ] && [ -n "${CI_BUCKET_NAME}" ]; then
+                  if [ -d "functions" ] && [ -n "${CI_BUCKET_NAME}" ]; then
                     echo "Uploading Lambda functions to S3..."
-                    cd fuctions
+                    cd functions
                     export COMMIT_ID=$(git rev-parse --verify HEAD)
                     echo $COMMIT_ID > commitID.txt
                     
-                    for i in *; do
-                      if [[ -f "${i}/function.zip" ]]; then
-                        cp -p "${i}/function.zip" "${i}.zip"
+                    for i in *
+                    do
+                      if [[ -f "${i}/lambda.zip" ]]
+                      then
+                        cp -p "${i}/lambda.zip" "${i}.zip" 
                       fi
-                    done
-                    
+                      if [[ -f "${i}/code_layer.zip" ]]
+                      then
+                        cp -p "${i}/code_layer.zip" "${i}_code.zip" 
+                      fi
+                      if [[ -f "${i}/lib_layer.zip" ]]
+                      then
+                        cp -p "${i}/lib_layer.zip" "${i}_libs.zip"
+                      fi
+                    done 
                     zip -u functions.zip commitID.txt *.zip
-                    aws s3 cp functions.zip "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/${BRANCH_NAME}/functions.zip"
                     aws s3 cp functions.zip "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/commits/${COMMIT_ID}/functions.zip"
                     cd ..
+                  else
+                    echo "Folders functions not found or CI_BUCKET_NAME not defined"
                   fi
                   
                   # Upload static assets if present (always, for all branches)
@@ -317,7 +340,6 @@ Resources:
                     export COMMIT_ID=$(git rev-parse --verify HEAD)
                     
                     # Upload static directory
-                    aws s3 sync static "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/${BRANCH_NAME}/static/"
                     aws s3 sync static "s3://${CI_BUCKET_NAME}/${GITHUB_PRJ_NAME}/commits/${COMMIT_ID}/static/"
                     
                     echo "Static assets uploaded successfully"
@@ -358,6 +380,11 @@ Resources:
           #     Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
           #   - Type: BASE_REF
           #     Pattern: ^refs/heads/(main|develop)|release\/.*$
+      VpcConfig:
+        VpcId: !Ref VpcId
+        Subnets: !Ref SubnetsIds
+        SecurityGroupIds: 
+          - !Ref SecurityGroupId
 
   CodeBuildServiceRole:
     Type: AWS::IAM::Role
@@ -454,6 +481,12 @@ Resources:
                 Action:
                   - sts:GetCallerIdentity
                 Resource: "*"
+              - Sid: Ec2Permissions
+                Effect: Allow
+                Action:
+                  - 'ec2:*'
+                Resource:
+                  - "*"
 
   CodeBuildNotifications:
     Type: AWS::CodeStarNotifications::NotificationRule

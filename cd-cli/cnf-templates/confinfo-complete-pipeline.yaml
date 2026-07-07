@@ -325,6 +325,7 @@ Resources:
         - !Ref CodeBuildPolicyEventLogs
         - !Ref CodeBuildPolicyIAM
         - !Ref CodeBuildNetworking
+        - !Ref CodeBuildPolicySES
       
   ###########################################################################
   ###             EFFECTIVE CONTINUOS INTEGRATIONS PIPELINES              ###
@@ -384,6 +385,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -480,7 +485,9 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -505,7 +512,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"5", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -530,7 +539,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"99", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -554,7 +565,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-address-manager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_address_manager", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_address_manager", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -578,7 +591,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ec", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_ec", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_ec", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -602,7 +617,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -627,7 +644,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -651,7 +670,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-cn", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"20", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_cn", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_cn", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -675,12 +696,40 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-pdfraster", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"14", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_pdfraster", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_pdfraster", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnPdfrasterOutput
+              RunOrder: 4
+
+            - Name: Update_PnPdfNormalizerIntegration
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMultilambdaMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"MsName", "value":"pn-pdf-normalizer-integration", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"15", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_pdf_normalizer_integration", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnPdfNormalizerIntegrationOutput
               RunOrder: 4
 
              # Update logs and Usage Plans
@@ -698,7 +747,9 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -737,6 +788,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -811,7 +866,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ss", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"11", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_ss", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -828,6 +885,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -902,7 +963,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-statemachinemanager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"10", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_statemachinemanager", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -919,6 +982,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -993,7 +1060,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-ec", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"12", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_ec", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_ec", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1010,6 +1079,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -1084,7 +1157,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-address-manager", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"13", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_address_manager", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_address_manager", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1101,6 +1176,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -1175,7 +1254,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-pdfraster", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"14", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_pdfraster", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_pdfraster", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1192,6 +1273,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -1266,7 +1351,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-cn", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"0", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_cn", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_cn", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1283,6 +1370,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -1352,7 +1443,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-pdf-normalizer-integration", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"15", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_pdf_normalizer_integration", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_pdf_normalizer_integration", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1369,6 +1462,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -1443,7 +1540,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"5", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1460,6 +1559,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -1534,7 +1637,9 @@ Resources:
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-logsaver-be", "type":"PLAINTEXT"},
                     {"name":"MsNumber", "value":"99", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_logsaver_be", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1642,6 +1747,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -1715,7 +1824,9 @@ Resources:
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
                     {"name":"MsName", "value":"pn-data-vault", "type":"PLAINTEXT"},
-                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"}
+                    {"name":"VarPrefix", "value":"pn_data_vault", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -1823,6 +1934,11 @@ Resources:
                 - 'echo "###     ENVIRONMENT     ###"'
                 - 'echo "###########################"'
                 - env
+                - 'echo ""'
+                - 'echo "### RELEASE TRACKING INITIALIZATION ###"'
+                - 'export _RELEASE_EVENT_ID=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen | tr "[:upper:]" "[:lower:]" || echo "unknown-$(date +%s)")'
+                - 'export _START_TIME_EPOCH=$(date -u +%s)'
+                - 'export _START_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
             build:
               commands:
                 - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
@@ -1853,6 +1969,20 @@ Resources:
                 - 'echo ""'
                 - 'echo "./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir -m $ms_commitId -n $MsName"'
                 - '(cd scripts/cd-cli && ./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir -m $ms_commitId -n $MsName)'
+            post_build:
+              commands:
+                - 'echo ""'
+                - 'echo "### RELEASE TRACKING FINALIZATION ###"'
+                - '_END_TIME_EPOCH=$(date -u +%s)'
+                - '_DURATION_SECONDS=$(( _END_TIME_EPOCH - _START_TIME_EPOCH ))'
+                - |
+                  if [ $CODEBUILD_BUILD_SUCCEEDING -eq 1 ]; then
+                    PHASE="SUCCESS"
+                  else
+                    PHASE="FAILURE"
+                  fi
+                - 'echo "=== Deploy completed with status: $PHASE, tracking release event..."'
+                - '(cd scripts/cd-cli && bash ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-infra" -e "$EnvName" -p "$PHASE" -V "$pn_infra_commitId" -f "$pn_infra_commitId" -d "$cd_scripts_commitId" -b "$CdArtifactBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -r "$ReleaseLabel" -R "$AwsRegion" || true)'
           artifacts:
             files:
               - '**/*'
@@ -1923,6 +2053,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineArtifactBucket
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -1994,7 +2128,9 @@ Resources:
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
                     {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"}
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
@@ -2072,6 +2208,11 @@ Resources:
                 - 'echo "###     ENVIRONMENT     ###"'
                 - 'echo "###########################"'
                 - env
+                - 'echo ""'
+                - 'echo "### RELEASE TRACKING INITIALIZATION ###"'
+                - 'export _RELEASE_EVENT_ID=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen | tr "[:upper:]" "[:lower:]" || echo "unknown-$(date +%s)")'
+                - 'export _START_TIME_EPOCH=$(date -u +%s)'
+                - 'export _START_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
             build:
               commands:
                 - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
@@ -2080,7 +2221,7 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
-                - 'echo "###        UPDATE INFRA ADVANCED MONITORING           ###"'
+                - 'echo "###        UPDATE INFRA ADVANCED/SEC MONITORING       ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - 'echo ""'
@@ -2093,6 +2234,28 @@ Resources:
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - '(cd scripts/cd-cli && ./cleanupInfrastructure.sh -w /tmp -r $AwsRegion)'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###          UPDATE IAM ACCESS ANALYZER              ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./deployInfraIamAccessAnalyzer.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -a confinfo -w /tmp -c $custom_config_dir )'
+            post_build:
+              commands:
+                - 'echo ""'
+                - 'echo "### RELEASE TRACKING FINALIZATION ###"'
+                - '_END_TIME_EPOCH=$(date -u +%s)'
+                - '_DURATION_SECONDS=$(( _END_TIME_EPOCH - _START_TIME_EPOCH ))'
+                - |
+                  if [ $CODEBUILD_BUILD_SUCCEEDING -eq 1 ]; then
+                    PHASE="SUCCESS"
+                  else
+                    PHASE="FAILURE"
+                  fi
+                - 'echo "=== Deploy completed with status: $PHASE, tracking release event..."'
+                - '(cd scripts/cd-cli && bash ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-infra" -e "$EnvName" -p "$PHASE" -V "$pn_infra_commitId" -f "$pn_infra_commitId" -d "$cd_scripts_commitId" -b "$CdArtifactBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -r "$ReleaseLabel" -R "$AwsRegion" || true)'
           artifacts:
             files:
               - '**/*'
@@ -2624,6 +2787,7 @@ Resources:
               - "sns:Subscribe"
               - "sns:ConfirmSubscription"
               - "sns:RemovePermission"
+              - "sns:SetTopicAttributes"
             Resource: !Sub arn:aws:sns:*:${AWS::AccountId}:*
           - Effect: Allow
             Action:
@@ -2741,6 +2905,15 @@ Resources:
             Resource: !Sub arn:aws:firehose:*:${AWS::AccountId}:deliverystream/*
           - Effect: Allow
             Action: firehose:ListDeliveryStreams
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - s3tables:*
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - lakeformation:GetDataLakeSettings
+              - lakeformation:PutDataLakeSettings
             Resource: "*"
           - Effect: Allow
             Action:
@@ -2883,6 +3056,8 @@ Resources:
               - lambda:ListFunctions
               - lambda:*Tag*
               - lambda:PutFunctionEventInvokeConfig
+              - lambda:PublishVersion
+              - lambda:PutProvisionedConcurrencyConfig
               - logs:CreateLogGroup
               - logs:DescribeLogGroups
               - logs:FilterLogEvents
@@ -3207,6 +3382,22 @@ Resources:
               - "kms:CreateCustomKeyStore"
               - "kms:*Tag*"
             Resource: "*"
+          - Sid: AccessAnalyzer
+            Effect: Allow
+            Action:
+              - "access-analyzer:CreateAnalyzer"
+              - "access-analyzer:DeleteAnalyzer"
+              - "access-analyzer:GetAnalyzer"
+              - "access-analyzer:UpdateAnalyzer"
+              - "access-analyzer:ListAnalyzers"
+              - "access-analyzer:ListFindings"
+              - "access-analyzer:GetFinding"
+              - "access-analyzer:*ArchiveRule"
+              - "access-analyzer:ListArchiveRules"
+              - "access-analyzer:ListTagsForResource"
+              - "access-analyzer:TagResource"
+              - "access-analyzer:UntagResource"
+            Resource: "*"
 
   CodeBuildNetworking:
     Type: AWS::IAM::ManagedPolicy
@@ -3369,6 +3560,26 @@ Resources:
               - ec2:UpdateSecurityGroupRuleDescriptionsEgress
               - ec2:UpdateSecurityGroupRuleDescriptionsIngress
               - ec2:*Tag*
+            Resource: "*"
+            Effect: Allow
+
+  CodeBuildPolicySES:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${ProjectName}-CodeBuildPolicy-SES
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - "ses:CreateConfigurationSetEventDestination"
+              - "ses:DeleteConfigurationSetEventDestination"
+              - "ses:UpdateConfigurationSetEventDestination"
+              - "ses:DescribeConfigurationSet"
+              - "ses:ListConfigurationSets"
+              - "ses:GetConfigurationSet"
+              - "ses:GetConfigurationSetEventDestinations"
             Resource: "*"
             Effect: Allow
 

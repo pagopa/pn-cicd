@@ -10,10 +10,16 @@ cleanup() {
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
+die() {
+  local msg=$1
+  local code=${2-1}
+  echo >&2 "$msg"
+  exit "$code"
+}
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> [-c <custom_config_dir>] -b <artifactBucketName>
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> -a <account> [-c <custom_config_dir>] -b <artifactBucketName>
 
     [-h]                      : this help message
     [-v]                      : verbose mode
@@ -21,8 +27,9 @@ usage() {
     -r <aws-region>           : aws region as eu-south-1
     -e <env-type>             : one of dev / uat / svil / coll / cert / prod
     -i <github-commitid>      : commitId for github repository pagopa/pn-infra
-    [-c <custom_config_dir>]  : where tor read additional env-type configurations
+    [-c <custom_config_dir>]  : where to read additional env-type configurations
     -b <artifactBucketName>   : bucket name to use as temporary artifacts storage
+    -a <account>              : one of core / confinfo
     
 EOF
   exit 1
@@ -31,13 +38,14 @@ EOF
 parse_params() {
   # default values of variables set from params
   project_name=pn
-  work_dir=$HOME/tmp/deploy
+  work_dir=$HOME/tmp/poste_deploy
   custom_config_dir=""
   aws_profile=""
   aws_region=""
   env_type=""
   pn_infra_commitid=""
   bucketName=""
+  account=""
 
   while :; do
     case "${1-}" in
@@ -71,6 +79,10 @@ parse_params() {
       bucketName="${2-}"
       shift
       ;;
+    -a | --account) 
+      account="${2-}"
+      shift
+      ;;
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -84,6 +96,8 @@ parse_params() {
   [[ -z "${pn_infra_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
+  [[ -z "${account-}" ]] && usage
+  [[ "$account" != "core" && "$account" != "confinfo" ]] && die "Account must be 'core' or 'confinfo', got: $account"
   return 0
 }
 
@@ -99,6 +113,7 @@ dump_params(){
   echo "AWS region:         ${aws_region}"
   echo "AWS profile:        ${aws_profile}"
   echo "Bucket Name:        ${bucketName}"
+  echo "Account:            ${account}"
 }
 
 
@@ -107,7 +122,7 @@ dump_params(){
 parse_params "$@"
 dump_params
 
-
+cwdir=$(pwd)
 cd $work_dir
 
 
@@ -122,11 +137,6 @@ echo "=== Checkout pn-infra commitId=${pn_infra_commitid}"
 echo " - copy custom config"
 if ( [ ! -z "${custom_config_dir}" ] ) then
   cp -r $custom_config_dir/pn-infra .
-fi
-
-echo " - copy pn-infra-core config"
-if ( [ -d "${custom_config_dir}/pn-infra-core" ] ) then
-  cp -r $custom_config_dir/pn-infra-core .
 fi
 
 echo ""
@@ -147,51 +157,74 @@ echo " - Bucket Name: ${bucketName}"
 echo " - Bucket Template S3 Url: ${templateBucketS3BaseUrl}"
 echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
 
-
 echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
-      --recursive --exclude ".git/*" --quiet
+      --recursive --exclude ".git/*"
+
 
 echo ""
+echo "=== Package and upload Lambda functions"
+lambdasBasePath="pn-infra-iam-access/${pn_infra_commitid}"
+
+for lambda_dir in pn-infra/runtime-infra/lambdas/iam-unused-access-exporter pn-infra/runtime-infra/lambdas/iam-unused-access-core-widget; do
+  lambda_name=$(basename "$lambda_dir")
+  echo " - Packaging ${lambda_name}"
+  (cd "$lambda_dir" && zip -r "${work_dir}/${lambda_name}.zip" .)
+  aws ${aws_command_base_args} s3 cp \
+      "${work_dir}/${lambda_name}.zip" \
+      "s3://${bucketName}/${lambdasBasePath}/${lambda_name}.zip"
+  rm -f "${work_dir}/${lambda_name}.zip"
+done
+
+
 echo ""
-echo ""
-echo "###    PN-OPENSEARCH     ###"
-echo "###################################################################"
+echo "=== Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
 
-
-TERRAFORM_PARAMS_FILEPATH=pn-infra-core/terraform-${env_type}-cfg.json
-TmpFilePath=terraform-merge-${env_type}-cfg.json
-
-ParamFilePath="pn-infra/runtime-infra/pn-opensearch-${env_type}-cfg.json"
-if ( [ -f "$TERRAFORM_PARAMS_FILEPATH" ] ) then
-  echo "Merging outputs of ${TERRAFORM_PARAMS_FILEPATH} into pn-opensearch"
-
-  echo ""
-  echo "= Enanched Terraform parameters file for pn-opensearch"
-  jq -s ".[0] * .[1]" ${ParamFilePath} ${TERRAFORM_PARAMS_FILEPATH} > ${TmpFilePath}
-  cat ${TmpFilePath}
-  mv ${TmpFilePath} ${ParamFilePath}
+if [[ "$account" == "core" ]]; then
+  (cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+elif [[ "$account" == "confinfo" ]]; then
+  (cd ${cwdir}/commons && ./merge-infra-outputs-confinfo.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
 fi
 
+echo "## start merge all ##"
+cat $INFRA_ALL_OUTPUTS_FILE
+echo "## end merge all ##"
 
-TemplateFilePath="pn-infra/runtime-infra/pn-opensearch.yaml"
-PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
-EnanchedParamFilePath="pn-infra/runtime-infra/pn-opensearch-${env_type}-enhanced-cfg.json"
 
 echo ""
-echo "= Enanched parameters file"
-jq -c "." \
-   ${ParamFilePath} \
-   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
-   > ${EnanchedParamFilePath}
-echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
-cat ${EnanchedParamFilePath}
+echo "###        BUILD IAM UNUSED ACCESS ANALYZER             ###"
+echo "###########################################################"
 
-aws ${aws_command_base_args} cloudformation deploy \
-      --stack-name pn-opensearch-${env_type} \
-      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-      --template-file "$TemplateFilePath" \
-      --tags Microservice=pn-infra-logs \
-      --parameter-overrides file://$(realpath $EnanchedParamFilePath)
+IAM_ANALYZER_TEMPLATE_PATH=pn-infra/runtime-infra/pn-iam-unused-access-analyzer.yaml
+
+echo "=== Prepare enhanced parameters for IAM unused access analyzer"
+IAM_ANALYZER_TEMPLATE_CONFIG_PATH="pn-infra/runtime-infra/pn-iam-unused-access-analyzer-${env_type}-cfg.json"
+
+if [ ! -f ${IAM_ANALYZER_TEMPLATE_CONFIG_PATH} ]; then
+  echo "{ \"Parameters\": {} }" > ${IAM_ANALYZER_TEMPLATE_CONFIG_PATH}
+fi
+
+EnhancedParamFilePath="pn-iam-unused-access-analyzer-${env_type}-cfg-enhanced.json"
+
+echo "= Enhanced parameters file"
+jq -s "{ \"Parameters\": .[0] } * .[1]" \
+   ${INFRA_ALL_OUTPUTS_FILE} ${IAM_ANALYZER_TEMPLATE_CONFIG_PATH} \
+   | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+   > ${EnhancedParamFilePath}
+sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
+echo ",\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"LambdasBucketName=$bucketName\",\"LambdasBasePath=$lambdasBasePath\"]" >> "$EnhancedParamFilePath"
+cat ${EnhancedParamFilePath}
+
+if ( [ -f "${IAM_ANALYZER_TEMPLATE_PATH}" ] ) then
+  aws ${aws_command_base_args} cloudformation deploy \
+        --stack-name pn-iam-unused-access-analyzer-${env_type} \
+        --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+        --template-file $IAM_ANALYZER_TEMPLATE_PATH \
+        --tags Microservice=pn-iam-unused-access-analyzer \
+        --parameter-overrides file://$( realpath ${EnhancedParamFilePath} )
+else 
+  echo "No ${IAM_ANALYZER_TEMPLATE_PATH} provided"
+fi
