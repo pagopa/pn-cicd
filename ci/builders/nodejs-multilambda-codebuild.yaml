@@ -50,6 +50,8 @@ Mappings:
       Image: aws/codebuild/standard:7.0
     '22':
       Image: aws/codebuild/standard:7.0
+    '24':
+      Image: aws/codebuild/standard:7.0
 
 Resources:
   CodeBuildProject:
