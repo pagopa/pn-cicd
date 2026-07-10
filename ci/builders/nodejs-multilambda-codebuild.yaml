@@ -27,6 +27,7 @@ Parameters:
       - '18'
       - '20'
       - '22'
+      - '24'
     Description: Node.js runtime version to use
   VpcId:
     Type: String
