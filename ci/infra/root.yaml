@@ -2126,7 +2126,7 @@ Resources:
         GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        NodeVersion: "18"
+        NodeVersion: "24"
       TimeoutInMinutes: 5
   
   # Progetto pn-pdf-normalizer-integration
