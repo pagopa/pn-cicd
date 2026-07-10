@@ -262,7 +262,7 @@ echo ""
 echo "=== Upload files to bucket"
 aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
-      --recursive --exclude ".git/*"
+      --recursive --exclude ".git/*" --quiet
 
 echo "Environment variables file creation"
 (cd ${cwdir}/commons && ./environment-files-creation.sh -p ${project_name} -r ${aws_region} -m ${microcvs_name})
@@ -282,7 +282,7 @@ fi
 microserviceBucketS3BaseUrl="s3://${microserviceBucketName}/${microserviceBucketBaseKey}"
 aws ${aws_command_base_args} \
     s3 cp ${microcvs_name} $microserviceBucketS3BaseUrl \
-      --recursive --exclude ".git/*"
+      --recursive --exclude ".git/*" --quiet
 
 echo " - Copy Lambdas zip"
 lambdasZip='functions.zip'
@@ -308,7 +308,7 @@ if ( [ $functionsDirPresent = "OK" ] ) then
 
   aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}" \
-      "${microserviceBucketS3BaseUrl}/functions_zip/"
+      "${microserviceBucketS3BaseUrl}/functions_zip/" --quiet
 
 else
   echo "File functions.zip not found, skipping lambda functions deployment"
@@ -353,7 +353,7 @@ if [ "${privateLinkSharedLambdasEnabled}" = "true" ]; then
 
     aws ${aws_command_base_args} s3 cp --recursive \
         "${sharedLambdasLocalPath}" \
-        "${microserviceBucketS3BaseUrl}/functions_zip/"
+        "${microserviceBucketS3BaseUrl}/functions_zip/" --quiet
   else
     echo "File ${sharedInfraLambdasPackageKey} not found, cannot deploy shared infra Lambdas for PrivateLink routing"
     exit 1
