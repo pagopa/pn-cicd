@@ -3611,7 +3611,7 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Sid: IAMxCelonis
+          - Sid: IAM
             Effect: Allow
             Action:
               - iam:AttachUserPolicy
@@ -3639,7 +3639,7 @@ Resources:
             Action:
               - secretsmanager:GetRandomPassword
             Resource: "*"
-          - Sid: SecretxCelonis
+          - Sid: Secret
             Effect: Allow
             Action: 
               - secretsmanager:CreateSecret
