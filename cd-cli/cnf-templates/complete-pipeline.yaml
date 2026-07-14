@@ -3611,7 +3611,7 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Sid: IAM
+          - Sid: IAMPolicy
             Effect: Allow
             Action:
               - iam:AttachUserPolicy
