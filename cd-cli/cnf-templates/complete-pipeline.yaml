@@ -602,6 +602,7 @@ Resources:
         - !Ref CodeBuildPolicyEventLogs
         - !Ref CodeBuildPolicyIAM
         - !Ref CodeBuildNetworking
+        - !Ref CodeBuildPolicyData
       
   ###########################################################################
   ###             EFFECTIVE CONTINUOS INTEGRATIONS PIPELINES              ###
