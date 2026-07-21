@@ -222,9 +222,15 @@ if [[ -f "$WARNING_NOTIFICATIONS_STACK_FILE" && -f "$WARNING_NOTIFICATIONS_PARAM
   jq \
     --arg TemplateBucketBaseUrl "$templateBucketHttpsBaseUrl" \
     --arg ConfidentialInfoAccountId "$ConfidentialInfoAccountId" \
+    --arg EnvironmentType "$env_type" \
+    --arg LambdasBucketName "$bucketName" \
+    --arg LambdasBasePath "$bucketBasePath" \
     '.Parameters + {
       TemplateBucketBaseUrl: $TemplateBucketBaseUrl,
-      ConfidentialInfoAccountId: $ConfidentialInfoAccountId
+      ConfidentialInfoAccountId: $ConfidentialInfoAccountId,
+      EnvironmentType: $EnvironmentType,
+      LambdasBucketName: $LambdasBucketName,
+      LambdasBasePath: $LambdasBasePath
     } | to_entries | map("\(.key)=\(.value | tostring)")' \
     ${WARNING_NOTIFICATIONS_PARAM_FILE} > ${WarningNotificationsEnhancedParamFilePath}
 
