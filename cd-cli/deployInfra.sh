@@ -209,6 +209,34 @@ aws ${aws_command_base_args}  \
         ConfidentialInfoAccountId="$ConfidentialInfoAccountId" \
         Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}"
 
+WARNING_NOTIFICATIONS_STACK_FILE=pn-infra/runtime-infra/pn-warning-notifications.yaml
+WARNING_NOTIFICATIONS_PARAM_FILE=pn-infra/runtime-infra/pn-warning-notifications-${env_type}-cfg.json
+
+if [[ -f "$WARNING_NOTIFICATIONS_STACK_FILE" && -f "$WARNING_NOTIFICATIONS_PARAM_FILE" ]]; then
+  echo ""
+  echo "======================================================================="
+  echo "===              PN-WARNING-NOTIFICATIONS DEPLOYMENT                ==="
+  echo "======================================================================="
+
+  WarningNotificationsEnhancedParamFilePath=pn-warning-notifications-${env_type}-cfg-enhanced.json
+  jq \
+    --arg TemplateBucketBaseUrl "$templateBucketHttpsBaseUrl" \
+    --arg ConfidentialInfoAccountId "$ConfidentialInfoAccountId" \
+    '.Parameters + {
+      TemplateBucketBaseUrl: $TemplateBucketBaseUrl,
+      ConfidentialInfoAccountId: $ConfidentialInfoAccountId
+    } | to_entries | map("\(.key)=\(.value | tostring)")' \
+    ${WARNING_NOTIFICATIONS_PARAM_FILE} > ${WarningNotificationsEnhancedParamFilePath}
+
+  aws ${aws_command_base_args} \
+      cloudformation deploy \
+        --stack-name pn-warning-notifications-$env_type \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --template-file ${WARNING_NOTIFICATIONS_STACK_FILE} \
+        --tags Microservice=pn-warning-notifications \
+        --parameter-overrides file://$( realpath ${WarningNotificationsEnhancedParamFilePath} )
+fi
+
 STORAGE_STACK_FILE=pn-infra/runtime-infra/pn-infra-storage.yaml 
 
 INFRA_INPUT_STACK=once-${env_type} 
