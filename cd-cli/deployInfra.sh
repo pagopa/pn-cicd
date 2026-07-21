@@ -223,12 +223,14 @@ if [[ -f "$WARNING_NOTIFICATIONS_STACK_FILE" && -f "$WARNING_NOTIFICATIONS_PARAM
     --arg TemplateBucketBaseUrl "$templateBucketHttpsBaseUrl" \
     --arg ConfidentialInfoAccountId "$ConfidentialInfoAccountId" \
     --arg EnvironmentType "$env_type" \
+    --arg ProjectName "$project_name" \
     --arg LambdasBucketName "$bucketName" \
     --arg LambdasBasePath "$bucketBasePath" \
     '.Parameters + {
       TemplateBucketBaseUrl: $TemplateBucketBaseUrl,
       ConfidentialInfoAccountId: $ConfidentialInfoAccountId,
       EnvironmentType: $EnvironmentType,
+      ProjectName: $ProjectName,
       LambdasBucketName: $LambdasBucketName,
       LambdasBasePath: $LambdasBasePath
     } | to_entries | map("\(.key)=\(.value | tostring)")' \
