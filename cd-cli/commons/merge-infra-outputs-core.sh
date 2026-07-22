@@ -100,22 +100,6 @@ aws ${aws_command_base_args}  \
       | jq 'map({ (.OutputKey): .OutputValue}) | add' \
       | tee ${InfraStorageOutputFilePath}
 
-# Warning notifications output stack (introduced in DEV first)
-WarningNotificationsOutputFilePath="warning-notifications-output.json"
-echo ""
-echo "= Read Outputs from pn-warning-notifications stack, when available"
-echo '{}' > ${WarningNotificationsOutputFilePath}
-if aws ${aws_command_base_args} \
-    cloudformation describe-stacks \
-      --stack-name pn-warning-notifications-$env_type \
-      --query "Stacks[0].Outputs" \
-      --output json > ${WarningNotificationsOutputFilePath}.tmp 2>/dev/null; then
-  jq 'map({ (.OutputKey): .OutputValue}) | add' \
-    ${WarningNotificationsOutputFilePath}.tmp \
-    | tee ${WarningNotificationsOutputFilePath}
-fi
-rm -f ${WarningNotificationsOutputFilePath}.tmp
-
 # Infra pn-cache output stack
 CacheOutputFilePath="cache-output.json"
 echo ""
@@ -155,11 +139,10 @@ aws ${aws_command_base_args}  \
 # merge all outputs
 echo ""
 echo "= Merge all outputs"
-jq -s '.[0] * .[1] * .[2] * .[3] * .[4]' ${InfraStorageOutputFilePath} ${CacheOutputFilePath} ${InfraOutputFilePath} ${IpcOutputFilePath} ${WarningNotificationsOutputFilePath} | tee ${output_file}
+jq -s '.[0] * .[1] * .[2] * .[3]' ${InfraStorageOutputFilePath} ${CacheOutputFilePath} ${InfraOutputFilePath} ${IpcOutputFilePath} | tee ${output_file}
 
 # cleanup
 rm ${InfraStorageOutputFilePath}
-rm ${WarningNotificationsOutputFilePath}
 rm ${CacheOutputFilePath}
 rm ${InfraOutputFilePath}
 rm ${IpcOutputFilePath}
