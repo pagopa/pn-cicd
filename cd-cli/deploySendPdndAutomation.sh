@@ -100,9 +100,8 @@ do
   rm -rf "${runner_build}"
   rm -f "${runner_zip}"
   mkdir -p "${runner_build}"
-  cp "${runner_source}/index.js" "${runner_source}/package.json" \
-    "${runner_source}/package-lock.json" "${runner_build}/"
-  cp -R "${runner_source}/shared" "${runner_build}/shared"
+  cp "${runner_source}/package.json" "${runner_source}/package-lock.json" \
+    "${runner_source}"/*.js "${runner_build}/"
   (cd "${runner_build}" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
   (cd "${runner_build}" && zip -qr "${runner_zip}" .)
   aws "${aws_command_base_args[@]}" s3 cp "${runner_zip}" \
@@ -131,15 +130,20 @@ jq -s \
   --arg EnvironmentType "${env_type}" \
   --arg LambdasBucketName "${bucket_name}" \
   --arg LambdasBasePath "${lambda_base_path}" \
-  --arg WarningSNSTopicArn "${warning_topic_arn}" \
-  '.[0] + .[1].Parameters + {
-    TemplateBucketBaseUrl: $TemplateBucketBaseUrl,
-    ProjectName: $ProjectName,
-    EnvironmentType: $EnvironmentType,
-    LambdasBucketName: $LambdasBucketName,
-    LambdasBasePath: $LambdasBasePath,
-    WarningSNSTopicArn: $WarningSNSTopicArn
-  } | to_entries | map("\(.key)=\(.value | tostring)")' \
+  '{
+    "Parameters": .[0]
+  } * .[1] * {
+    "Parameters": {
+      "TemplateBucketBaseUrl": $TemplateBucketBaseUrl,
+      "ProjectName": $ProjectName,
+      "EnvironmentType": $EnvironmentType,
+      "LambdasBucketName": $LambdasBucketName,
+      "LambdasBasePath": $LambdasBasePath
+    }
+  }
+  | .Parameters
+  | to_entries
+  | map("\(.key)=\(.value | tostring)")' \
   "${infra_outputs_path}" "${config_path}" > "${enhanced_parameters_path}"
 
 echo "=== Deploy SEND PDND automation for ${env_type}"
