@@ -83,25 +83,33 @@ aws_command_base_args+=(--region "${aws_region}")
 template_bucket_base_path="pn-infra/${pn_infra_commitid}"
 template_bucket_base_url="https://s3.${aws_region}.amazonaws.com/${bucket_name}/${template_bucket_base_path}/runtime-infra"
 lambda_base_path="pn-send-pdnd-automation/${pn_infra_commitid}"
-runner_name=send-pdnd-automation-runner
-runner_source="pn-infra/runtime-infra/lambdas/${runner_name}"
-runner_build="${work_dir}/${runner_name}-build"
-runner_zip="${work_dir}/${runner_name}.zip"
 
 echo "=== Upload SEND PDND automation templates"
 aws "${aws_command_base_args[@]}" s3 cp pn-infra "s3://${bucket_name}/${template_bucket_base_path}" \
   --recursive --exclude ".git/*" --quiet
 
-echo "=== Package SEND PDND automation runner"
-rm -rf "${runner_build}"
-rm -f "${runner_zip}"
-mkdir -p "${runner_build}"
-cp -R "${runner_source}/." "${runner_build}/"
-(cd "${runner_build}" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund && zip -qr "${runner_zip}" .)
-aws "${aws_command_base_args[@]}" s3 cp "${runner_zip}" \
-  "s3://${bucket_name}/${lambda_base_path}/${runner_name}.zip" --quiet
-rm -rf "${runner_build}"
-rm -f "${runner_zip}"
+for runner_name in \
+  "send-pdnd-signup-runner" \
+  "send-pdnd-onboarding-tech-runner"
+do
+  runner_source="pn-infra/runtime-infra/lambdas/${runner_name}"
+  runner_build="${work_dir}/${runner_name}-build"
+  runner_zip="${work_dir}/${runner_name}.zip"
+
+  echo "=== Package ${runner_name}"
+  rm -rf "${runner_build}"
+  rm -f "${runner_zip}"
+  mkdir -p "${runner_build}"
+  cp "${runner_source}/index.js" "${runner_source}/package.json" \
+    "${runner_source}/package-lock.json" "${runner_build}/"
+  cp -R "${runner_source}/shared" "${runner_build}/shared"
+  (cd "${runner_build}" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
+  (cd "${runner_build}" && zip -qr "${runner_zip}" .)
+  aws "${aws_command_base_args[@]}" s3 cp "${runner_zip}" \
+    "s3://${bucket_name}/${lambda_base_path}/${runner_name}.zip" --quiet
+  rm -rf "${runner_build}"
+  rm -f "${runner_zip}"
+done
 
 infra_outputs_path="${work_dir}/infra_all_outputs_${env_type}.json"
 merge_outputs_args=(-r "${aws_region}" -e "${env_type}" -o "${infra_outputs_path}")
