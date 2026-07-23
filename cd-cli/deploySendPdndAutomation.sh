@@ -123,28 +123,29 @@ if [[ -z "${warning_topic_arn}" ]]; then
   exit 1
 fi
 
-enhanced_parameters_path="${work_dir}/pn-send-pdnd-automation-${env_type}-cfg-enhanced.json"
-jq -s \
-  --arg TemplateBucketBaseUrl "${template_bucket_base_url}" \
-  --arg ProjectName "${project_name}" \
-  --arg EnvironmentType "${env_type}" \
-  --arg LambdasBucketName "${bucket_name}" \
-  --arg LambdasBasePath "${lambda_base_path}" \
-  '{
-    "Parameters": .[0]
-  } * .[1] * {
-    "Parameters": {
-      "TemplateBucketBaseUrl": $TemplateBucketBaseUrl,
-      "ProjectName": $ProjectName,
-      "EnvironmentType": $EnvironmentType,
-      "LambdasBucketName": $LambdasBucketName,
-      "LambdasBasePath": $LambdasBasePath
-    }
-  }
-  | .Parameters
-  | to_entries
-  | map("\(.key)=\(.value | tostring)")' \
-  "${infra_outputs_path}" "${config_path}" > "${enhanced_parameters_path}"
+EnhancedParamFilePath="${work_dir}/pn-send-pdnd-automation-${env_type}-cfg-enhanced.json"
+
+echo "= Enhanced parameters file"
+jq -s '{ "Parameters": .[0] } * .[1]' \
+  "${infra_outputs_path}" "${config_path}" \
+  | jq '.Parameters | to_entries | map("\(.key)=\(.value | tostring)")' \
+  > "${EnhancedParamFilePath}"
+
+PipelineParams=(
+  "TemplateBucketBaseUrl=${template_bucket_base_url}"
+  "ProjectName=${project_name}"
+  "EnvironmentType=${env_type}"
+  "LambdasBucketName=${bucket_name}"
+  "LambdasBasePath=${lambda_base_path}"
+)
+jq \
+  --args \
+  '. + $ARGS.positional' \
+  "${PipelineParams[@]}" \
+  < "${EnhancedParamFilePath}" \
+  > "${EnhancedParamFilePath}.tmp"
+mv "${EnhancedParamFilePath}.tmp" "${EnhancedParamFilePath}"
+cat "${EnhancedParamFilePath}"
 
 echo "=== Deploy SEND PDND automation for ${env_type}"
 aws "${aws_command_base_args[@]}" cloudformation deploy \
@@ -152,4 +153,4 @@ aws "${aws_command_base_args[@]}" cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM \
   --template-file "${template_path}" \
   --tags Microservice=pn-send-pdnd-automation \
-  --parameter-overrides "file://$(realpath "${enhanced_parameters_path}")"
+  --parameter-overrides "file://$(realpath "${EnhancedParamFilePath}")"
