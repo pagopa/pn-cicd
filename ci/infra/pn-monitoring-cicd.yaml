@@ -1,6 +1,17 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: 'This template deploys an EventBridge Rule and CloudWatch alarm to monitor vulnerabilities in ECR images'
 
+Parameters:
+  WhitelistParameterName:
+    Type: String
+    Description: "The name of the SSM parameter that contains the list of whitelisted microservices"
+    Default: "/pn-infra/ecr-monitoring-whitelist"
+
+  NodeVersion:
+    Type: String
+    Description: "The Node.js runtime version for the Lambda functions"
+    Default: "nodejs24.x"
+
 Resources:
 
   # Rule triggered when a Critical Vulnerabilities is detected by the ECR Scan
@@ -126,7 +137,7 @@ Resources:
     Properties:
       FunctionName: SlackMessageNotificationLambda
       Description: The lambda sends message to slack channel
-      Runtime: nodejs22.x
+      Runtime: !Ref NodeVersion
       ReservedConcurrentExecutions: 1
       Handler: index.handler
       Environment:
@@ -138,6 +149,9 @@ Resources:
           const util = require('util');
           const { S3Client, GetObjectCommand, PutObjectCommand } = require("@aws-sdk/client-s3");
           const { ECRClient, DescribeRegistryCommand, DescribeImageScanFindingsCommand } = require("@aws-sdk/client-ecr");
+
+          const STABLE_REGEX = /(?:.*-)?\d+\.\d+\.\d+$/;
+          const RC_REGEX = /(?:.*-)?\d+\.\d+\.\d+-RC\.\d+$/;
 
           async function getJsonFromS3(awsClient, bucket, key) {
             const s3 = new S3Client();
@@ -289,8 +303,8 @@ Resources:
               const slackToken = await getParameterOrSecretFromStore("slack/app_token", true);
               const bucketName = process.env.STATEFUL_BUCKET;
               const s3Client = new S3Client();
-
-              const fileName = `${event.detail['repository-name']}-${(event.detail['image-digest']).split(':')[1]}.json`
+              const imageTag = event.detail['image-tags'].find(tag => RC_REGEX.test(tag) || STABLE_REGEX.test(tag));
+              const fileName = `${event.detail['repository-name']}-${imageTag}.json`
               const lastState = await getJsonFromS3(s3Client, bucketName, fileName)
               
               const detailType = event["detail-type"].replace(/\s/g, "");
@@ -406,7 +420,7 @@ Resources:
     Properties:
       FunctionName: LambdaECRImagesScanStarter
       Description: The lambda execute the scan of the latest versions of ECR repository images
-      Runtime: nodejs22.x
+      Runtime: !Ref NodeVersion
       Handler: index.lambda_handler
       Code: 
         ZipFile: |
@@ -414,7 +428,7 @@ Resources:
 
           const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
           const STABLE_REGEX = /(?:.*-)?\d+\.\d+\.\d+$/;
-          const SNAPSHOT_REGEX = /(?:.*-)?\d+\.\d+\.\d+-SNAPSHOT$/;
+          //const SNAPSHOT_REGEX = /(?:.*-)?\d+\.\d+\.\d+-SNAPSHOT$/;
           const RC_REGEX = /(?:.*-)?\d+\.\d+\.\d+-RC\.\d+$/;
 
           async function getAllElements(func, param, ...args) {
@@ -478,7 +492,7 @@ Resources:
           function extractLatestImages(images) {
             const stable = [];
             const rc = [];
-            const snapshot = [];
+            //const snapshot = [];
 
             for (const img of images) {
               const tags = img.imageTags || [];
@@ -487,9 +501,10 @@ Resources:
                   stable.push({ ...img, matchedTag: tag });
                 } else if (RC_REGEX.test(tag)) {
                   rc.push({ ...img, matchedTag: tag });
-                } else if (SNAPSHOT_REGEX.test(tag)) {
-                  snapshot.push({ ...img, matchedTag: tag });
                 }
+                // else if (SNAPSHOT_REGEX.test(tag)) {
+                //  snapshot.push({ ...img, matchedTag: tag });
+                //}
               }
             }
 
@@ -498,31 +513,72 @@ Resources:
             return [
               ...stable.sort(sortDesc).slice(0, 2),
               ...rc.sort(sortDesc).slice(0, 1),
-              ...snapshot.sort(sortDesc).slice(0, 1)
+              //...snapshot.sort(sortDesc).slice(0, 1)
             ];
+          }
+
+          async function getParameterOrSecretFromStore(name, isSecret) {
+            let url;
+            if(isSecret) {
+              url = `http://localhost:2773/secretsmanager/get?secretId=${encodeURIComponent(name)}`
+            }
+            else {
+              url = `http://localhost:2773/systemsmanager/parameters/get?name=${encodeURIComponent(
+                name
+              )}`
+            }
+            try {
+              const response = await fetch(
+                url,
+                {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    "X-Aws-Parameters-Secrets-Token": process.env.AWS_SESSION_TOKEN,
+                  },
+                }
+              );
+              
+              const data = await response.json()
+              if(!isSecret)
+                return data.Parameter.Value;
+              return data.SecretString || JSON.stringify(data.SecretBinary);
+            } catch (err) {
+              console.error("Error in get parameter ", err);
+              return ''; // fallback to empty string
+              // throw new Error("Error in get parameter "+parameterName);
+            }
           }
 
           exports.lambda_handler = async (event) => {
 
             /**Initializing**/
-            const now = new Date();
-            now.setMonth(now.getMonth() - 6);
-            const startingScanDate = now.toISOString()
+            //const now = new Date();
+            //now.setMonth(now.getMonth() - 6);
+            //const startingScanDate = now.toISOString()
             const ecrClient = new ECRClient();
             
+            const whitelistParameterName = await getParameterOrSecretFromStore(process.env.MICROSERVICE_WHITELIST_PARAMETER_NAME, false);
+            const whiteList = JSON.parse(whitelistParameterName);
+
             /**Retrieving registry id**/
             const registryId = await getRegistryId(ecrClient);
 
             /**Retrieving repositories*/
             const repositoriesList = await getAllElements(getRepositoriesList, 'repositories', ecrClient, registryId)
-            for(const repository of repositoriesList) {
+            //se withlist is empty, scan all repositories starting with 'pn-' altrimenti scan only those in the whitelist
+            const repositoriesListFiltered = whiteList.length > 0 ? repositoriesList.filter(x => x.repositoryName.startsWith('pn-') && whiteList.includes(x.repositoryName)) : repositoriesList.filter(x => x.repositoryName.startsWith('pn-'));
+            if(repositoriesListFiltered.length === 0) {
+              console.log("No repositories found for scanning.")
+              return
+            }
+            for(const repository of repositoriesListFiltered) {
               const repositoryName = repository.repositoryName
                       
               /**Retrieving images of repository*/
               const imagesDescription = await getAllElements(getRepositoryImagesDescription, 'imageDetails', ecrClient, registryId, repositoryName)
               const images = extractLatestImages(imagesDescription);
               console.log(`${repositoryName} - ${images.length}`)
-              
+
               sleep(1000)
 
               for(const image of images) {
@@ -532,7 +588,11 @@ Resources:
                   const response = await startImageScan(ecrClient, registryId, repositoryName, image)
                 }
                 catch (err) {
-                  console.error("Scan error:", err);
+                  if(err.name === 'LimitExceededException') {
+                    console.warn(`Scan limit exceeded for ${repositoryName}:${image.matchedTag}. Skipping scan.`);
+                  } else {
+                    console.error("Scan error:", err);
+                  }
                 }
               }
             }
@@ -541,6 +601,12 @@ Resources:
       MemorySize: 128
       Timeout: 300
       Role: !GetAtt LambdaECRImagesScanStarterRole.Arn
+      Environment:
+        Variables:
+          MICROSERVICE_WHITELIST_PARAMETER_NAME: !Ref WhitelistParameterName
+      Layers:
+        - arn:aws:lambda:eu-central-1:187925254637:layer:AWS-Parameters-and-Secrets-Lambda-Extension:17
+
 
   LambdaECRImagesScanStarterRole:
     Type: AWS::IAM::Role
@@ -597,6 +663,11 @@ Resources:
                 Effect: Allow
                 Resource: 
                   - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*"
+              - Sid: AllowLambdaToSsmRead
+                Action:
+                  - ssm:GetParameter
+                Effect: Allow
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/*"
 
   # Log Group Target of the Event Bridge Rule
   LambdaScannerLogGroup:
