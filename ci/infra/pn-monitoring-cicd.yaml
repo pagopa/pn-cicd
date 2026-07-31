@@ -203,7 +203,7 @@ Resources:
                 imageDigest: event['image-digest'],
                 imageTag: event['image-tags'][0],
               },
-              maxResults: 100,
+              maxResults: 1000,
             };
             const command = new DescribeImageScanFindingsCommand(input);
             const response = await awsClient.send(command);

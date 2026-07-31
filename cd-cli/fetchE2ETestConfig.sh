@@ -107,6 +107,7 @@ SECRET_PROPS=(
   "pn.consolidatore.api.key=e2eConsolidatoreApiKey"
   "pn.interop.clientId=e2eTestClientIdInterop"
   "pn.interop.token-oauth2.client-assertion=e2eTestTokenClientAssertionInterop"
+  "pn.bearer-token-b2b.pg1=e2eTestbearerTokenB2BPG1"
   "pn.bearer-token-b2b.pg2=e2eTestbearerTokenB2BPG2"
   "pn.bearer-token.pg3=e2eTestbearerTokenUserPG3"
   "pn.bearer-token.pg4=e2eTestbearerTokenUserPG4"
