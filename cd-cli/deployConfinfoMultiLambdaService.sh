@@ -211,6 +211,8 @@ echo " - Bucket Name: ${bucketName}"
 echo " - Bucket Template S3 Url: ${templateBucketS3BaseUrl}"
 echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
 
+echo "Environment variables file creation"
+(cd ${cwdir}/commons && ./environment-files-creation.sh -p ${project_name} -r ${aws_region} -m ${repo_name})
 
 echo ""
 echo "=== Upload files to bucket"
@@ -321,6 +323,27 @@ echo ""
 echo ""
 echo ""
 echo "=== Prepare parameters for pn-infra.yaml deployment in $env_type ACCOUNT"
+
+app_env_file_sha=""
+file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
+
+if [[ -f "${file_env_application_path}" ]]; then
+  echo " - application env file found, calculating sha256"
+  app_env_file_sha=$(sha256sum ${file_env_application_path} | awk '{print $1}')
+  echo ""
+  echo ""
+fi
+
+echo "Environment variables file upload"
+echo "Environment variables file upload"
+bash ${cwdir}/commons/upload-files-runtime.sh \
+   -p ${project_name} \
+   -r ${aws_region} \
+   -m ${microcvs_name} \
+   -e ${env_type} \
+   -s "$app_env_file_sha"
+
+
 PreviousOutputFilePath=${repo_name}-storage-${env_type}-out.json
 TemplateFilePath=${repo_name}/scripts/aws/cfn/microservice.yml
 ParamFilePath=${repo_name}/scripts/aws/cfn/microservice-${env_type}-cfg.json
