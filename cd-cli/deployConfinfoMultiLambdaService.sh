@@ -325,7 +325,7 @@ echo ""
 echo "=== Prepare parameters for pn-infra.yaml deployment in $env_type ACCOUNT"
 
 app_env_file_sha=""
-file_env_application_path=${microcvs_name}/scripts/aws/cfn/application-${env_type}.env
+file_env_application_path=${repo_name}/scripts/aws/cfn/application-${env_type}.env
 
 if [[ -f "${file_env_application_path}" ]]; then
   echo " - application env file found, calculating sha256"
@@ -339,7 +339,7 @@ echo "Environment variables file upload"
 bash ${cwdir}/commons/upload-files-runtime.sh \
    -p ${project_name} \
    -r ${aws_region} \
-   -m ${microcvs_name} \
+   -m ${repo_name} \
    -e ${env_type} \
    -s "$app_env_file_sha"
 
