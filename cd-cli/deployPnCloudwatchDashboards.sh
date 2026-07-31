@@ -245,3 +245,41 @@ if ( [ -f pn-infra/runtime-infra/pn-waf-dashboard-hub.yaml ] ) then
 else
     echo "Skipped WAF dashboard hub deploy"
 fi
+
+## Deploy pn-delivery SenderTaxId Validation Dashboard
+if ( [ -f pn-infra/runtime-infra/pn-delivery-sender-taxid-validation-dashboard.yaml ] ) then
+    echo "Deploy pn-delivery SenderTaxId validation dashboard"
+
+    ParamFilePath="pn-infra/runtime-infra/pn-delivery-sender-taxid-validation-dashboard-${env_type}-cfg.json"
+    EnanchedParamFilePath="pn-delivery-sender-taxid-validation-dashboard-${env_type}-enhanced-cfg.json"
+    PipelineParams="\"ProjectName=$project_name\""
+
+    if ( [ -f "${ParamFilePath}" ] ) then
+        echo "= Read Parameters file"
+        cat ${ParamFilePath}
+
+        echo ""
+        echo "= Enanched parameters file"
+        jq -c "." \
+           ${ParamFilePath} \
+           | jq -s ".[] | .Parameters" | sed -e 's/\": \"/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+           > ${EnanchedParamFilePath}
+        echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+        cat ${EnanchedParamFilePath}
+
+        aws ${aws_command_base_args} cloudformation deploy \
+            --stack-name pn-delivery-sender-taxid-validation-dashboard-${env_type} \
+            --template-file pn-infra/runtime-infra/pn-delivery-sender-taxid-validation-dashboard.yaml \
+            --tags Microservice=pn-infra-monitoring \
+            --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+    else
+        aws ${aws_command_base_args} cloudformation deploy \
+            --stack-name pn-delivery-sender-taxid-validation-dashboard-${env_type} \
+            --template-file pn-infra/runtime-infra/pn-delivery-sender-taxid-validation-dashboard.yaml \
+            --tags Microservice=pn-infra-monitoring \
+            --parameter-overrides \
+                ProjectName=${project_name}
+    fi
+else
+    echo "Skipped pn-delivery SenderTaxId validation dashboard deploy"
+fi
