@@ -157,15 +157,36 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*"
 
-# Merge infra outputs for potential future use
-# Currently not used but prepared for dynamic parameter extraction
-# echo "Load all outputs in a single file for potential future use"
-# INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
-# (cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
+echo "Load all outputs in a single file for next stack deployments"
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
+(cd ${cwdir}/commons && ./merge-infra-outputs-core.sh -r ${aws_region} -e ${env_type} -o ${work_dir}/${INFRA_ALL_OUTPUTS_FILE} )
 
-# echo "## start merge all ##"
-# cat $INFRA_ALL_OUTPUTS_FILE
-# echo "## end merge all ##"
+
+## Deploy RADD PrivateLink Dashboard
+if ( [ -f pn-infra/runtime-infra/pn-radd-private-link-dashboard.yaml ] ) then
+    ApplicationLoadBalancerArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.ApplicationLoadBalancerArn // "-"')
+    RaddNetworkLoadBalancerArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.RaddNetworkLoadBalancerArn // "-"')
+    RaddVpcEndpointServiceId=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.RaddVpcEndpointServiceId // "-"')
+
+    if ( [ "$ApplicationLoadBalancerArn" != "-" ] \
+      && [ "$RaddNetworkLoadBalancerArn" != "-" ] \
+      && [ "$RaddVpcEndpointServiceId" != "-" ] ) then
+      echo "Deploy RADD PrivateLink dashboard"
+      aws ${aws_command_base_args} cloudformation deploy \
+          --stack-name pn-radd-private-link-dashboard-${env_type} \
+          --template-file pn-infra/runtime-infra/pn-radd-private-link-dashboard.yaml \
+          --tags Microservice=pn-infra-monitoring \
+          --parameter-overrides \
+              ProjectName=${project_name} \
+              ApplicationLoadBalancerArn=${ApplicationLoadBalancerArn} \
+              RaddNetworkLoadBalancerArn=${RaddNetworkLoadBalancerArn} \
+              RaddVpcEndpointServiceId=${RaddVpcEndpointServiceId}
+        else
+          echo "Skipped RADD PrivateLink dashboard deploy"
+    fi
+else
+    echo "Skipped RADD PrivateLink dashboard deploy"
+fi
 
 
 ## Deploy RADD Digitale Dashboard
