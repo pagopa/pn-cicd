@@ -157,16 +157,17 @@ Resources:
                       echo "Running unit tests for $(pwd)"
                       local TEST_ENV_DIR TEST_EXIT_CODE
                       TEST_ENV_DIR=$(mktemp -d /tmp/pytest-env-XXXXXX)
+                      python -m venv "$TEST_ENV_DIR"
 
                       if [ -f "requirements.txt" ]; then
                         echo "Installing runtime dependencies into isolated test environment"
-                        python -m pip install --target "$TEST_ENV_DIR" -r requirements.txt
+                        "$TEST_ENV_DIR/bin/pip" install -r requirements.txt
                       fi
 
                       echo "Installing test dependencies into isolated test environment"
-                      python -m pip install --target "$TEST_ENV_DIR" -r tests/requirements-test.txt
+                      "$TEST_ENV_DIR/bin/pip" install -r tests/requirements-test.txt
 
-                      PYTHONPATH="$TEST_ENV_DIR" python -m pytest
+                      "$TEST_ENV_DIR/bin/python" -m pytest
                       TEST_EXIT_CODE=$?
 
                       rm -rf "$TEST_ENV_DIR"
@@ -204,7 +205,7 @@ Resources:
                         
                         # zip mantaining folder structure
                         echo "Creating function.zip with all files"
-                        zip -r function.zip . -x "*.pyc" -x "__pycache__/*" -x "requirements.txt" -x "tests/*" -x ".pytest_cache/*"
+                        zip -r function.zip . -x "*.pyc" -x "__pycache__/*" -x "requirements.txt" -x "tests/*" -x ".pytest_cache/*" -x ".coverage*" -x "coverage.xml" -x "htmlcov/*"
                       else
                         echo "Error: requirements.txt found but no Python files (*.py) detected in ${i}"
                         exit 1
@@ -214,7 +215,7 @@ Resources:
                       echo "Building Python function without dependencies"
                       run_python_tests
 
-                      zip -r function.zip . -x "*.pyc" -x "__pycache__/*" -x "tests/*" -x ".pytest_cache/*"
+                      zip -r function.zip . -x "*.pyc" -x "__pycache__/*" -x "tests/*" -x ".pytest_cache/*" -x ".coverage*" -x "coverage.xml" -x "htmlcov/*"
 
                     else
                       echo "No recognized function code found in ${i}, no package.json requirements.txt nor *.py files detected"
