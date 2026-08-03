@@ -152,6 +152,34 @@ Resources:
                 - cd $FUNCTIONS_FOLDER_NAME
                 - echo Build started on `date`
                 - |
+                  run_python_tests() {
+                    if [ -d "tests" ] && [ -f "tests/requirements-test.txt" ]; then
+                      echo "Running unit tests for $(pwd)"
+                      local TEST_ENV_DIR TEST_EXIT_CODE
+                      TEST_ENV_DIR=$(mktemp -d /tmp/pytest-env-XXXXXX)
+                      python -m venv "$TEST_ENV_DIR"
+
+                      if [ -f "requirements.txt" ]; then
+                        echo "Installing runtime dependencies into isolated test environment"
+                        "$TEST_ENV_DIR/bin/pip" install -r requirements.txt
+                      fi
+
+                      echo "Installing test dependencies into isolated test environment"
+                      "$TEST_ENV_DIR/bin/pip" install -r tests/requirements-test.txt
+
+                      "$TEST_ENV_DIR/bin/python" -m pytest
+                      TEST_EXIT_CODE=$?
+
+                      rm -rf "$TEST_ENV_DIR"
+
+                      if [ $TEST_EXIT_CODE -ne 0 ]; then
+                        echo "Error: unit tests failed for $(pwd)"
+                        exit 1
+                      fi
+                    else
+                      echo "Skipping unit tests for $(pwd): tests/ directory or tests/requirements-test.txt not found"
+                    fi
+                  }
                   for i in */
                   do
                     echo "Building $i"
@@ -171,13 +199,13 @@ Resources:
                       echo "Using Python version: $(python --version)"
                       
                       if [ -n "$(find . -type f -name "*.py")" ]; then
-                        
+                        run_python_tests
                         echo "Installing dependencies from requirements.txt"
                         python -m pip install --target . -r requirements.txt
                         
                         # zip mantaining folder structure
                         echo "Creating function.zip with all files"
-                        zip -r function.zip . -x "*.pyc" -x "__pycache__/*" -x "requirements.txt"
+                        zip -r function.zip . -x "*.pyc" -x "__pycache__/*" -x "requirements.txt" -x "tests/*" -x ".pytest_cache/*" -x ".coverage*" -x "coverage.xml" -x "htmlcov/*"
                       else
                         echo "Error: requirements.txt found but no Python files (*.py) detected in ${i}"
                         exit 1
@@ -185,8 +213,10 @@ Resources:
                     # if no requiremnts.txt check for *.py files
                     elif [ -n "$(find . -type f -name "*.py")" ]; then
                       echo "Building Python function without dependencies"
-                      zip -r function.zip . -x "*.pyc" -x "__pycache__/*"
-                    
+                      run_python_tests
+
+                      zip -r function.zip . -x "*.pyc" -x "__pycache__/*" -x "tests/*" -x ".pytest_cache/*" -x ".coverage*" -x "coverage.xml" -x "htmlcov/*"
+
                     else
                       echo "No recognized function code found in ${i}, no package.json requirements.txt nor *.py files detected"
                       exit 1
