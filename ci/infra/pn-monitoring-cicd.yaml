@@ -140,6 +140,8 @@ Resources:
       Runtime: !Ref NodeVersion
       ReservedConcurrentExecutions: 1
       Handler: index.handler
+      LoggingConfig:
+        LogFormat: JSON
       Environment:
         Variables:
           STATEFUL_BUCKET: !Ref EcrMonitoringBucket
@@ -319,7 +321,8 @@ Resources:
                 return x.severity === 'CRITICAL'
               }))
 
-              if(criticalFindings === lastState) {
+              if(criticalFindings == lastState) {
+                console.log("Messaggio non inviato a Slack. Criticità già note.")
                 return { statusCode: 200, body: "Messaggio non inviato a Slack. Criticità già note." };
               }
               else {
@@ -422,6 +425,8 @@ Resources:
       Description: The lambda execute the scan of the latest versions of ECR repository images
       Runtime: !Ref NodeVersion
       Handler: index.lambda_handler
+      LoggingConfig:
+        LogFormat: JSON
       Code: 
         ZipFile: |
           const { ECRClient, DescribeRepositoriesCommand, DescribeRegistryCommand, DescribeImagesCommand, StartImageScanCommand } = require("@aws-sdk/client-ecr");
