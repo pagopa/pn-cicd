@@ -172,17 +172,42 @@ if ( [ -f pn-infra/runtime-infra/pn-radd-private-link-dashboard.yaml ] ) then
       && [ "$RaddNetworkLoadBalancerArn" != "-" ] \
       && [ "$RaddVpcEndpointServiceId" != "-" ] ) then
       echo "Deploy RADD PrivateLink dashboard"
-      aws ${aws_command_base_args} cloudformation deploy \
+
+      ParamFilePath="pn-infra/runtime-infra/pn-radd-private-link-dashboard-${env_type}-cfg.json"
+      EnanchedParamFilePath="pn-radd-private-link-dashboard-${env_type}-enhanced-cfg.json"
+      PipelineParams="\"ProjectName=$project_name\", \"ApplicationLoadBalancerArn=$ApplicationLoadBalancerArn\", \"RaddNetworkLoadBalancerArn=$RaddNetworkLoadBalancerArn\", \"RaddVpcEndpointServiceId=$RaddVpcEndpointServiceId\""
+
+      if ( [ -f "${ParamFilePath}" ] ) then
+        echo "= Read Parameters file"
+        cat ${ParamFilePath}
+
+        echo ""
+        echo "= Enanched parameters file"
+        jq -c "." \
+           ${ParamFilePath} \
+          | jq -s ".[] | .Parameters" | sed -e 's/\": \"/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+           > ${EnanchedParamFilePath}
+        echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+        cat ${EnanchedParamFilePath}
+
+        aws ${aws_command_base_args} cloudformation deploy \
+          --stack-name pn-radd-private-link-dashboard-${env_type} \
+          --template-file pn-infra/runtime-infra/pn-radd-private-link-dashboard.yaml \
+          --tags Microservice=pn-infra-monitoring \
+          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+      else
+        aws ${aws_command_base_args} cloudformation deploy \
           --stack-name pn-radd-private-link-dashboard-${env_type} \
           --template-file pn-infra/runtime-infra/pn-radd-private-link-dashboard.yaml \
           --tags Microservice=pn-infra-monitoring \
           --parameter-overrides \
-              ProjectName=${project_name} \
-              ApplicationLoadBalancerArn=${ApplicationLoadBalancerArn} \
-              RaddNetworkLoadBalancerArn=${RaddNetworkLoadBalancerArn} \
-              RaddVpcEndpointServiceId=${RaddVpcEndpointServiceId}
-        else
-          echo "Skipped RADD PrivateLink dashboard deploy"
+            ProjectName=${project_name} \
+            ApplicationLoadBalancerArn=${ApplicationLoadBalancerArn} \
+            RaddNetworkLoadBalancerArn=${RaddNetworkLoadBalancerArn} \
+            RaddVpcEndpointServiceId=${RaddVpcEndpointServiceId}
+      fi
+    else
+      echo "Skipped RADD PrivateLink dashboard deploy"
     fi
 else
     echo "Skipped RADD PrivateLink dashboard deploy"
