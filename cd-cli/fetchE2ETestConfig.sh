@@ -201,6 +201,7 @@ _prop "pn.interop.enable"               "${INTEROP_ENABLED:-false}"
 _prop "spring.profiles.active"          "${ENV_NAME}"
 _prop "jdk.httpclient.allowRestrictedMethods" "PATCH"
 _prop "github.token"                    "${GITHUB_TOKEN}"
+_prop "pn.external.informal-base-url"   "https://api.${ENV_NAME}.${DOMAIN}/informal/"
 
 # pn.radd-vpc.base-url: il parametro SSM da leggere dipende dal flag opzionale
 # RADD_POSTE_ENV:
