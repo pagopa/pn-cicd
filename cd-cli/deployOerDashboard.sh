@@ -246,7 +246,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
         --tags Microservice=pn-infra-monitoring \
         --parameter-overrides \
             ProjectName=${project_name} \
-            Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}" \
+            Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},LambdasBucketName=$bucketName,LambdasBasePath=$lambdasBasePath" \
             $OptionalParameters
 else
     echo "Skipped OER dashboard deploy"
