@@ -187,8 +187,8 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
 
     logsBucketName=''
 
-    LambdasBasePath=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LambdasBucketName') 
-    echo "LambdasBucketName=${LambdasBasePath}"
+    LambdasBasePath=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LambdasBasePath') 
+    echo "LambdasBasePath=${LambdasBasePath}"
 
     applicationLoadBalancerListenerArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.ApplicationLoadBalancerListenerArn') 
     echo "ApplicationLoadBalancerListenerArn=${applicationLoadBalancerListenerArn}"
