@@ -182,9 +182,6 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     openSearchArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.OpenSearchArn') 
     echo "OpenSearchArn=${openSearchArn}"
 
-    templateBucketBaseUrl=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.TemplateBucketBaseUrl') 
-    echo "TemplateBucketBaseUrl=${templateBucketBaseUrl}"
-
     logsBucketKmsKeyArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LogsBucketKmsKeyArn')
     echo "LogsBucketKmsKeyArn=${logsBucketKmsKeyArn}"
 
@@ -263,7 +260,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
             ProjectName=${project_name} \
             LambdasBucketName=${bucketName} \
             LambdasBasePath=${LambdasBasePath} \
-            TemplateBucketBaseUrl=${templateBucketBaseUrl} \
+            TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl} \
             LogsBucketKmsKeyArn=${logsBucketKmsKeyArn} \
             LogRetention=${logRetention} \
             Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}" \
