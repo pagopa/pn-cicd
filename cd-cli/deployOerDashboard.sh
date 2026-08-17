@@ -185,6 +185,8 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     #logsBucketName=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LogsBucketName') 
     #echo "LogsBucketName=${logsBucketName}"
 
+    logsBucketName=''
+    
     LambdasBucketName=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LambdasBucketName') 
     echo "LambdasBucketName=${LambdasBucketName}"
 
