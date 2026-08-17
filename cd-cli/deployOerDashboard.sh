@@ -186,14 +186,14 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     #echo "LogsBucketName=${logsBucketName}"
 
     logsBucketName=''
-    
-    LambdasBucketName=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LambdasBucketName') 
-    echo "LambdasBucketName=${LambdasBucketName}"
+
+    LambdasBasePath=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LambdasBucketName') 
+    echo "LambdasBucketName=${LambdasBasePath}"
 
     applicationLoadBalancerListenerArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.ApplicationLoadBalancerListenerArn') 
     echo "ApplicationLoadBalancerListenerArn=${applicationLoadBalancerListenerArn}"
     echo "LambdasBucketName=${bucketName}"
-    echo "LambdasBasePath=${LambdasBucketName}"
+    echo "LambdasBasePath=${LambdasBasePath}"
     
     raddTargetGroupArn=$( aws ${aws_command_base_args}  elbv2 describe-rules --listener-arn ${applicationLoadBalancerListenerArn}  \
        --query "Rules[].{Host:Conditions[0].Values[0],TargetGroup:Actions[0].TargetGroupArn}" | jq -r \
@@ -253,7 +253,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
         --parameter-overrides \
             ProjectName=${project_name} \
             LambdasBucketName=${bucketName} \
-            LambdasBasePath=${LambdasBucketName} \
+            LambdasBasePath=${LambdasBasePath} \
             Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}" \
             $OptionalParameters
 else
