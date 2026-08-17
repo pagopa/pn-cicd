@@ -188,7 +188,9 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
 
     applicationLoadBalancerListenerArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.ApplicationLoadBalancerListenerArn') 
     echo "ApplicationLoadBalancerListenerArn=${applicationLoadBalancerListenerArn}"
-
+    echo "LambdasBucketName=${bucketName}"
+    echo "LambdasBasePath=${LambdasBucketName}"
+    
     raddTargetGroupArn=$( aws ${aws_command_base_args}  elbv2 describe-rules --listener-arn ${applicationLoadBalancerListenerArn}  \
        --query "Rules[].{Host:Conditions[0].Values[0],TargetGroup:Actions[0].TargetGroupArn}" | jq -r \
        ".[] | select(.Host==\"/radd/*\") | .TargetGroup")
@@ -246,7 +248,9 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
         --tags Microservice=pn-infra-monitoring \
         --parameter-overrides \
             ProjectName=${project_name} \
-            Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId},LambdasBucketName=${bucketName},LambdasBasePath=${LambdasBucketName}" \
+            LambdasBucketName=${bucketName} \
+            LambdasBasePath=${LambdasBucketName} \
+            Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}" \
             $OptionalParameters
 else
     echo "Skipped OER dashboard deploy"
