@@ -246,7 +246,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       done;
 
       raddRef="targetgroup/"${array1[1]}
-      OptionalParameters="${OptionalParameters},\"Alb=${albRef}\",\"RaddTargetGroup=${raddRef}\""
+      OptionalParameters="\"Alb=${albRef}\",\"RaddTargetGroup=${raddRef}\""
     fi
 
     echo "Optional Parameters ${OptionalParameters}"
@@ -264,7 +264,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       mv ${TmpFilePath} ${ParamFilePath}
     fi
 
-    PipelineParams="\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}\" $OptionalParameters"
+    PipelineParams="\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}\",$OptionalParameters"
     EnanchedParamFilePath="pn-infra/runtime-infra/pn-oer-dashboard-${env_type}-enhanced-cfg.json"
 
     echo ""
