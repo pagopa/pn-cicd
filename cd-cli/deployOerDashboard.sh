@@ -281,15 +281,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
         --capabilities CAPABILITY_NAMED_IAM \
         --template-file pn-infra/runtime-infra/pn-oer-dashboard.yaml \
         --tags Microservice=pn-infra-monitoring \
-        --parameter-overrides \
-            ProjectName=${project_name} \
-            LambdasBucketName=${bucketName} \
-            LambdasBasePath=${LambdasBasePath} \
-            TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl} \
-            LogsBucketKmsKeyArn=${logsBucketKmsKeyArn} \
-            LogRetention=${logRetention} \
-            Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}" \
-            $OptionalParameters
+        --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 else
     echo "Skipped OER dashboard deploy"
 fi
