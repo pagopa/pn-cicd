@@ -252,7 +252,8 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     echo "Optional Parameters ${OptionalParameters}"
     
     ParamFilePath="pn-infra/runtime-infra/pn-oer-dashboard-${env_type}-cfg.json"
-    
+    TmpFilePath=terraform-merge-${env_type}-cfg.json
+
     if ( [ -f "$INFRA_ALL_OUTPUTS_FILE" ] ) then
       echo "Merging outputs of ${INFRA_ALL_OUTPUTS_FILE} into pn-oer-dashboard"
 
