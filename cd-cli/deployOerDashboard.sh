@@ -132,6 +132,228 @@ collect_apis_csv() {
   printf '%s\n' "${matched[@]}" | awk 'NF && !seen[$0]++ { printf("%s\047%s\047", sep, $0); sep="," } END { print "" }'
 }
 
+collect_apis_lines() {
+  local apis_text="$1"
+  shift
+  local patterns=("$@")
+  local matched=()
+
+  while IFS= read -r api_name; do
+    [[ -z "${api_name}" ]] && continue
+    for pattern in "${patterns[@]}"; do
+      if [[ "$api_name" == *"-${pattern}-"* ]]; then
+        matched+=("$api_name")
+        break
+      fi
+    done
+  done <<< "$apis_text"
+
+  if [[ ${#matched[@]} -eq 0 ]]; then
+    echo ""
+    return 0
+  fi
+
+  printf '%s\n' "${matched[@]}" | awk 'NF && !seen[$0]++'
+}
+
+build_category_widgets() {
+  local category_label="$1"
+  local category_key="$2"
+  local y_base="$3"
+  local apis_lines="$4"
+
+  mapfile -t apis < <(printf '%s\n' "$apis_lines" | sed '/^$/d')
+  if [[ ${#apis[@]} -eq 0 ]]; then
+    echo ""
+    return 0
+  fi
+
+  local metrics_worst=""
+  local metrics_ts=""
+  local metric_ids=""
+  local idx=1
+
+  for api_name in "${apis[@]}"; do
+    if [[ -z "$metric_ids" ]]; then
+      metric_ids="m${idx}"
+    else
+      metric_ids="${metric_ids},m${idx}"
+    fi
+
+    local worst_entry
+    worst_entry=$(jq -cn \
+      --arg apiName "$api_name" \
+      --arg id "m${idx}" \
+      '["AWS/ApiGateway","Latency","ApiName",$apiName,{"stat":"p95","id":$id,"visible":false}]')
+
+    local ts_entry
+    ts_entry=$(jq -cn \
+      --arg apiName "$api_name" \
+      --arg id "m${idx}" \
+      '["AWS/ApiGateway","Latency","ApiName",$apiName,{"stat":"p95","label":$apiName,"id":$id}]')
+
+    if [[ -z "$metrics_worst" ]]; then
+      metrics_worst="$worst_entry"
+    else
+      metrics_worst="${metrics_worst},${worst_entry}"
+    fi
+
+    if [[ -z "$metrics_ts" ]]; then
+      metrics_ts="$ts_entry"
+    else
+      metrics_ts="${metrics_ts},${ts_entry}"
+    fi
+
+    idx=$((idx + 1))
+  done
+
+  local worst_expression="MAX([${metric_ids}])"
+
+  local header_widget
+  header_widget=$(jq -cn \
+    --arg title "# OER - ${category_label} API Gateway" \
+    --argjson y "$y_base" \
+    '{type:"text",x:0,y:$y,width:24,height:1,properties:{markdown:$title}}')
+
+  local worst_widget
+  worst_widget=$(jq -cn \
+    --arg expr "$worst_expression" \
+    --arg label "${category_label} P95 - Worst API" \
+    --argjson y "$((y_base + 1))" \
+    --argjson metrics "[${metrics_worst}]" \
+    '{
+      type:"metric",
+      x:0,
+      y:$y,
+      width:8,
+      height:6,
+      properties:{
+        metrics: ([ [{expression:$expr,label:$label,id:"e1"}] ] + $metrics),
+        view:"singleValue",
+        region:"${AWS::Region}",
+        title:$label,
+        period:300,
+        setPeriodToTimeRange:true,
+        singleValueFullPrecision:false
+      }
+    }')
+
+  local timeseries_widget
+  timeseries_widget=$(jq -cn \
+    --arg title "${category_label} API Latency - P95" \
+    --argjson y "$((y_base + 1))" \
+    --argjson metrics "[${metrics_ts}]" \
+    '{
+      type:"metric",
+      x:8,
+      y:$y,
+      width:16,
+      height:6,
+      properties:{
+        metrics:$metrics,
+        view:"timeSeries",
+        region:"${AWS::Region}",
+        title:$title,
+        period:300,
+        yAxis:{left:{label:"Latency (ms)",showUnits:false}},
+        legend:{position:"bottom"}
+      }
+    }')
+
+  local detail_widgets=""
+  local x_positions=(0 8 16)
+  local max_details=3
+  local detail_count=${#apis[@]}
+  if (( detail_count > max_details )); then
+    detail_count=$max_details
+  fi
+
+  for ((i=0; i<detail_count; i++)); do
+    local api_name="${apis[$i]}"
+    local x_val="${x_positions[$i]}"
+    local short_title="$api_name"
+    short_title="${short_title#pn-}"
+
+    local detail_widget
+    detail_widget=$(jq -cn \
+      --arg apiName "$api_name" \
+      --arg title "${short_title} - P95" \
+      --argjson x "$x_val" \
+      --argjson y "$((y_base + 7))" \
+      '{
+        type:"metric",
+        x:$x,
+        y:$y,
+        width:8,
+        height:5,
+        properties:{
+          metrics:[["AWS/ApiGateway","Latency","ApiName",$apiName,{"stat":"p95","label":"P95"}]],
+          view:"singleValue",
+          region:"${AWS::Region}",
+          title:$title,
+          period:300,
+          setPeriodToTimeRange:true
+        }
+      }')
+
+    if [[ -z "$detail_widgets" ]]; then
+      detail_widgets="$detail_widget"
+    else
+      detail_widgets="${detail_widgets},${detail_widget}"
+    fi
+  done
+
+  if [[ -n "$detail_widgets" ]]; then
+    echo "${header_widget},${worst_widget},${timeseries_widget},${detail_widgets}"
+  else
+    echo "${header_widget},${worst_widget},${timeseries_widget}"
+  fi
+}
+
+build_all_api_widgets() {
+  local backoffice_lines="$1"
+  local b2b_lines="$2"
+  local b2bpg_lines="$3"
+  local web_lines="$4"
+  local io_lines="$5"
+
+  local all_widgets=""
+  local current_y=16
+
+  local block
+
+  block=$(build_category_widgets "BACKOFFICE" "BACKOFFICE" "$current_y" "$backoffice_lines")
+  if [[ -n "$block" ]]; then
+    all_widgets="${all_widgets},${block}"
+    current_y=$((current_y + 13))
+  fi
+
+  block=$(build_category_widgets "B2B" "B2B" "$current_y" "$b2b_lines")
+  if [[ -n "$block" ]]; then
+    all_widgets="${all_widgets},${block}"
+    current_y=$((current_y + 13))
+  fi
+
+  block=$(build_category_widgets "B2BPG" "B2BPG" "$current_y" "$b2bpg_lines")
+  if [[ -n "$block" ]]; then
+    all_widgets="${all_widgets},${block}"
+    current_y=$((current_y + 13))
+  fi
+
+  block=$(build_category_widgets "WEB" "WEB" "$current_y" "$web_lines")
+  if [[ -n "$block" ]]; then
+    all_widgets="${all_widgets},${block}"
+    current_y=$((current_y + 13))
+  fi
+
+  block=$(build_category_widgets "IO" "IO" "$current_y" "$io_lines")
+  if [[ -n "$block" ]]; then
+    all_widgets="${all_widgets},${block}"
+  fi
+
+  echo "$all_widgets"
+}
+
 
 # START SCRIPT
 
@@ -298,11 +520,19 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     web_apis=$(collect_apis_csv "$api_names" "WEB")
     io_apis=$(collect_apis_csv "$api_names" "IO" "IO_EXP")
 
+    backoffice_api_lines=$(collect_apis_lines "$api_names" "BACKOFFICE")
+    b2b_api_lines=$(collect_apis_lines "$api_names" "B2B")
+    b2bpg_api_lines=$(collect_apis_lines "$api_names" "B2BPG")
+    web_api_lines=$(collect_apis_lines "$api_names" "WEB")
+    io_api_lines=$(collect_apis_lines "$api_names" "IO" "IO_EXP")
+    api_gateway_widgets=$(build_all_api_widgets "$backoffice_api_lines" "$b2b_api_lines" "$b2bpg_api_lines" "$web_api_lines" "$io_api_lines")
+
     echo "BackofficeApis=${backoffice_apis}"
     echo "B2BApis=${b2b_apis}"
     echo "B2BPGApis=${b2bpg_apis}"
     echo "WEBApis=${web_apis}"
     echo "IOApis=${io_apis}"
+    echo "ApiGatewayWidgets generated length=${#api_gateway_widgets}"
 
     jq \
       --arg backofficeApis "$backoffice_apis" \
@@ -310,12 +540,14 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       --arg b2bpgApis "$b2bpg_apis" \
       --arg webApis "$web_apis" \
       --arg ioApis "$io_apis" \
+      --arg apiGatewayWidgets "$api_gateway_widgets" \
       '.Parameters = (.Parameters // {})
       | .Parameters.BackofficeApis = $backofficeApis
       | .Parameters.B2BApis = $b2bApis
       | .Parameters.B2BPGApis = $b2bpgApis
       | .Parameters.WEBApis = $webApis
-      | .Parameters.IOApis = $ioApis' \
+      | .Parameters.IOApis = $ioApis
+      | .Parameters.ApiGatewayWidgets = $apiGatewayWidgets' \
       ${ParamFilePath} > ${TmpFilePath}
 
     mv ${TmpFilePath} ${ParamFilePath}
