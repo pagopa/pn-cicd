@@ -129,7 +129,7 @@ collect_apis_csv() {
     return 0
   fi
 
-  printf '%s\n' "${matched[@]}" | awk 'NF && !seen[$0]++' | paste -sd, -
+  printf '%s\n' "${matched[@]}" | awk 'NF && !seen[$0]++ { printf("%s\047%s\047", sep, $0); sep="," } END { print "" }'
 }
 
 
