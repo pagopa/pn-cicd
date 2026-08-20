@@ -520,19 +520,11 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     web_apis=$(collect_apis_csv "$api_names" "WEB")
     io_apis=$(collect_apis_csv "$api_names" "IO" "IO_EXP")
 
-    backoffice_api_lines=$(collect_apis_lines "$api_names" "BACKOFFICE")
-    b2b_api_lines=$(collect_apis_lines "$api_names" "B2B")
-    b2bpg_api_lines=$(collect_apis_lines "$api_names" "B2BPG")
-    web_api_lines=$(collect_apis_lines "$api_names" "WEB")
-    io_api_lines=$(collect_apis_lines "$api_names" "IO" "IO_EXP")
-    api_gateway_widgets=$(build_all_api_widgets "$backoffice_api_lines" "$b2b_api_lines" "$b2bpg_api_lines" "$web_api_lines" "$io_api_lines")
-
     echo "BackofficeApis=${backoffice_apis}"
     echo "B2BApis=${b2b_apis}"
     echo "B2BPGApis=${b2bpg_apis}"
     echo "WEBApis=${web_apis}"
     echo "IOApis=${io_apis}"
-    echo "ApiGatewayWidgets generated length=${#api_gateway_widgets}"
 
     jq \
       --arg backofficeApis "$backoffice_apis" \
@@ -540,14 +532,12 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       --arg b2bpgApis "$b2bpg_apis" \
       --arg webApis "$web_apis" \
       --arg ioApis "$io_apis" \
-      --arg apiGatewayWidgets "$api_gateway_widgets" \
       '.Parameters = (.Parameters // {})
       | .Parameters.BackofficeApis = $backofficeApis
       | .Parameters.B2BApis = $b2bApis
       | .Parameters.B2BPGApis = $b2bpgApis
       | .Parameters.WEBApis = $webApis
-      | .Parameters.IOApis = $ioApis
-      | .Parameters.ApiGatewayWidgets = $apiGatewayWidgets' \
+      | .Parameters.IOApis = $ioApis' \
       ${ParamFilePath} > ${TmpFilePath}
 
     mv ${TmpFilePath} ${ParamFilePath}
