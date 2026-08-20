@@ -108,6 +108,30 @@ dump_params(){
   echo "Lambda Bucket Name: ${LambdasBucketName}"
 }
 
+collect_apis_csv() {
+  local apis_text="$1"
+  shift
+  local patterns=("$@")
+  local matched=()
+
+  while IFS= read -r api_name; do
+    [[ -z "${api_name}" ]] && continue
+    for pattern in "${patterns[@]}"; do
+      if [[ "$api_name" == *"-${pattern}-"* ]]; then
+        matched+=("$api_name")
+        break
+      fi
+    done
+  done <<< "$apis_text"
+
+  if [[ ${#matched[@]} -eq 0 ]]; then
+    echo ""
+    return 0
+  fi
+
+  printf '%s\n' "${matched[@]}" | awk 'NF && !seen[$0]++' | paste -sd, -
+}
+
 
 # START SCRIPT
 
@@ -263,6 +287,39 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       cat ${TmpFilePath}
       mv ${TmpFilePath} ${ParamFilePath}
     fi
+
+    echo ""
+    echo "= Fetch API Gateway names and inject OER API parameters"
+    api_names=$(aws ${aws_command_base_args} apigateway get-rest-apis --query 'items[].name' --output text | tr '\t' '\n' | sed '/^$/d' | sort -u)
+
+    backoffice_apis=$(collect_apis_csv "$api_names" "BACKOFFICE")
+    b2b_apis=$(collect_apis_csv "$api_names" "B2B")
+    b2bpg_apis=$(collect_apis_csv "$api_names" "B2BPG")
+    web_apis=$(collect_apis_csv "$api_names" "WEB")
+    io_apis=$(collect_apis_csv "$api_names" "IO" "IO_EXP")
+
+    echo "BackofficeApis=${backoffice_apis}"
+    echo "B2BApis=${b2b_apis}"
+    echo "B2BPGApis=${b2bpg_apis}"
+    echo "WEBApis=${web_apis}"
+    echo "IOApis=${io_apis}"
+
+    jq \
+      --arg backofficeApis "$backoffice_apis" \
+      --arg b2bApis "$b2b_apis" \
+      --arg b2bpgApis "$b2bpg_apis" \
+      --arg webApis "$web_apis" \
+      --arg ioApis "$io_apis" \
+      '.Parameters = (.Parameters // {})
+      | .Parameters.BackofficeApis = $backofficeApis
+      | .Parameters.B2BApis = $b2bApis
+      | .Parameters.B2BPGApis = $b2bpgApis
+      | .Parameters.WEBApis = $webApis
+      | .Parameters.IOApis = $ioApis' \
+      ${ParamFilePath} > ${TmpFilePath}
+
+    mv ${TmpFilePath} ${ParamFilePath}
+    cat ${ParamFilePath}
 
     PipelineParams="\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}\",$OptionalParameters"
     EnanchedParamFilePath="pn-infra/runtime-infra/pn-oer-dashboard-${env_type}-enhanced-cfg.json"
