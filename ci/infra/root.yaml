@@ -1081,8 +1081,8 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        JavaVersion: "21"
-        CdsEnabled: "false"
+        JavaVersion: "25"
+        CdsEnabled: "true"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
