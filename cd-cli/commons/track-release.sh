@@ -75,7 +75,7 @@ parse_params() {
   error_message=""
   start_timestamp=""
   duration_seconds=""
-  release_label=""
+  release_label="${ReleaseLabel:-}"
   aws_region="eu-south-1"
   dry_run="false"
 
