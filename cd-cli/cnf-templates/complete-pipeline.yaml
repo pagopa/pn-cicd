@@ -2446,7 +2446,7 @@ Resources:
                 - 'echo "###                    UPDATE PROWLER                  ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && ./deployProwler.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a core -w /tmp -c $custom_config_dir )'
+                - '(cd scripts/cd-cli && ./deployProwler.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a core -b $CdArtifactBucketName -w /tmp -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
