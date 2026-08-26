@@ -122,5 +122,7 @@ aws "${aws_command_base_args[@]}" cloudformation deploy \
   --stack-name "pn-prowler-${account}-${env_type}" \
   --capabilities CAPABILITY_NAMED_IAM \
   --template-file "$template_path" \
+  --s3-bucket "$artifact_bucket" \
+  --s3-prefix "cfn/pn-prowler/${pn_infra_commitid}" \
   --tags Microservice=pn-prowler Environment="$env_type" AccountType="$account" \
   --parameter-overrides "file://$(realpath "$enhanced_config_path")"
