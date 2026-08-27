@@ -75,6 +75,13 @@ if [[ -n "$custom_config_dir" ]]; then
   cp -r "$custom_config_dir/pn-infra" .
 fi
 
+template_path="pn-infra/runtime-infra/pn-prowler.yaml"
+config_path="pn-infra/runtime-infra/pn-prowler-${env_type}-cfg.json"
+if [[ ! -f "$template_path" || ! -f "$config_path" ]]; then
+  echo "Prowler runtime configuration not available for ${env_type}; skipping deployment."
+  exit 0
+fi
+
 aws_command_base_args=(--region "$aws_region")
 if [[ -n "$aws_profile" ]]; then
   aws_command_base_args+=(--profile "$aws_profile")
@@ -95,14 +102,7 @@ else
   (cd "$script_dir/commons" && ./merge-infra-outputs-confinfo.sh -r "$aws_region" -e "$env_type" -o "$work_dir/$outputs_file")
 fi
 
-template_path="pn-infra/runtime-infra/pn-prowler.yaml"
-config_path="pn-infra/runtime-infra/pn-prowler-${env_type}-cfg.json"
 enhanced_config_path="pn-prowler-${account}-${env_type}-cfg-enhanced.json"
-
-[[ -f "$template_path" ]] || die "Missing template $template_path"
-if [[ ! -f "$config_path" ]]; then
-  echo '{ "Parameters": {} }' > "$config_path"
-fi
 
 jq -s '
     {"Parameters": (.[0] | with_entries(select(.key == "PnCoreAwsAccountId" or .key == "ConfidentialInfoAccountId")))} * .[1]
