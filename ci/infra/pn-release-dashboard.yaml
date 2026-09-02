@@ -1,0 +1,967 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Release dashboard resources
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: pn-release-dashboard
+    MinLength: 3
+    MaxLength: 40
+    AllowedPattern: '^[a-z0-9-]+$'
+    Description: Base name for release dashboard resources
+
+  GoogleAudience:
+    Type: String
+    AllowedPattern: '^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$'
+    ConstraintDescription: Must be a Google OAuth client ID
+    Description: Google OAuth client ID used as JWT audience
+
+  AllowedGoogleSubject:
+    Type: String
+    AllowedPattern: '^[0-9]+$'
+    ConstraintDescription: Must be a Google subject identifier
+    Description: Google subject allowed to call the dashboard API
+
+  DevPublisherAccountId:
+    Type: String
+    AllowedPattern: '^[0-9]{12}$'
+    Description: AWS account ID for the DEV publisher
+
+  TestPublisherAccountId:
+    Type: String
+    AllowedPattern: '^[0-9]{12}$'
+    Description: AWS account ID for the TEST publisher
+
+  UatPublisherAccountId:
+    Type: String
+    AllowedPattern: '^[0-9]{12}$'
+    Description: AWS account ID for the UAT publisher
+
+  HotfixPublisherAccountId:
+    Type: String
+    AllowedPattern: '^[0-9]{12}$'
+    Description: AWS account ID for the HOTFIX publisher
+
+  ProdPublisherAccountId:
+    Type: String
+    AllowedPattern: '^[0-9]{12}$'
+    Description: AWS account ID for the PROD publisher
+
+  PublisherRoleNamePrefix:
+    Type: String
+    Default: pn-release-dashboard-publisher
+    MaxLength: 57
+    AllowedPattern: '^[a-zA-Z0-9+=,.@_-]+$'
+    Description: IAM role name prefix for environment publishers
+
+  LogRetention:
+    Type: Number
+    Default: 30
+    AllowedValues:
+      - 1
+      - 3
+      - 5
+      - 7
+      - 14
+      - 30
+      - 60
+      - 90
+      - 120
+      - 150
+      - 180
+      - 365
+      - 400
+      - 545
+      - 731
+      - 1096
+      - 1827
+      - 2192
+      - 2557
+      - 2922
+      - 3288
+      - 3653
+    Description: CloudWatch Logs retention in days
+
+  NoncurrentVersionRetentionDays:
+    Type: Number
+    Default: 365
+    MinValue: 1
+    MaxValue: 3650
+    Description: S3 noncurrent version retention in days
+
+  ApiThrottleRateLimit:
+    Type: Number
+    Default: 10
+    MinValue: 1
+    MaxValue: 1000
+    Description: API route throttle rate in requests per second
+
+  ApiThrottleBurstLimit:
+    Type: Number
+    Default: 20
+    MinValue: 1
+    MaxValue: 5000
+    Description: API route throttle burst limit
+
+  StaleAfterMinutes:
+    Type: Number
+    Default: 120
+    MinValue: 1
+    MaxValue: 10080
+    Description: Maximum dashboard data age in minutes
+
+  AlarmSNSTopicArn:
+    Type: String
+    Default: ''
+    AllowedPattern: '^$|^arn:(aws|aws-us-gov|aws-cn):sns:[a-z0-9-]+:[0-9]{12}:[A-Za-z0-9_.-]+$'
+    Description: SNS topic ARN for dashboard alarms
+
+Conditions:
+  HasAlarmSNSTopic: !Not
+    - !Equals
+      - !Ref AlarmSNSTopicArn
+      - ''
+
+Resources:
+  DashboardBucket:
+    Type: AWS::S3::Bucket
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteNoncurrentVersions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: !Ref NoncurrentVersionRetentionDays
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Name
+          Value: !Ref ProjectName
+
+  DashboardBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DashboardBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource:
+              - !GetAtt DashboardBucket.Arn
+              - !Sub ${DashboardBucket.Arn}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+          - Sid: AllowDevPublisher
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${DevPublisherAccountId}:root
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+            Resource: !Sub ${DashboardBucket.Arn}/v1/environments/dev/manifest.json
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${DevPublisherAccountId}:role/${PublisherRoleNamePrefix}-dev
+          - Sid: AllowDevPublisherToLocateManifest
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${DevPublisherAccountId}:root
+            Action: s3:ListBucket
+            Resource: !GetAtt DashboardBucket.Arn
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${DevPublisherAccountId}:role/${PublisherRoleNamePrefix}-dev
+              StringEquals:
+                s3:prefix: v1/environments/dev/manifest.json
+          - Sid: AllowTestPublisher
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${TestPublisherAccountId}:root
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+            Resource: !Sub ${DashboardBucket.Arn}/v1/environments/test/manifest.json
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${TestPublisherAccountId}:role/${PublisherRoleNamePrefix}-test
+          - Sid: AllowTestPublisherToLocateManifest
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${TestPublisherAccountId}:root
+            Action: s3:ListBucket
+            Resource: !GetAtt DashboardBucket.Arn
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${TestPublisherAccountId}:role/${PublisherRoleNamePrefix}-test
+              StringEquals:
+                s3:prefix: v1/environments/test/manifest.json
+          - Sid: AllowUatPublisher
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${UatPublisherAccountId}:root
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+            Resource: !Sub ${DashboardBucket.Arn}/v1/environments/uat/manifest.json
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${UatPublisherAccountId}:role/${PublisherRoleNamePrefix}-uat
+          - Sid: AllowUatPublisherToLocateManifest
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${UatPublisherAccountId}:root
+            Action: s3:ListBucket
+            Resource: !GetAtt DashboardBucket.Arn
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${UatPublisherAccountId}:role/${PublisherRoleNamePrefix}-uat
+              StringEquals:
+                s3:prefix: v1/environments/uat/manifest.json
+          - Sid: AllowHotfixPublisher
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${HotfixPublisherAccountId}:root
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+            Resource: !Sub ${DashboardBucket.Arn}/v1/environments/hotfix/manifest.json
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${HotfixPublisherAccountId}:role/${PublisherRoleNamePrefix}-hotfix
+          - Sid: AllowHotfixPublisherToLocateManifest
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${HotfixPublisherAccountId}:root
+            Action: s3:ListBucket
+            Resource: !GetAtt DashboardBucket.Arn
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${HotfixPublisherAccountId}:role/${PublisherRoleNamePrefix}-hotfix
+              StringEquals:
+                s3:prefix: v1/environments/hotfix/manifest.json
+          - Sid: AllowProdPublisher
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${ProdPublisherAccountId}:root
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+            Resource: !Sub ${DashboardBucket.Arn}/v1/environments/prod/manifest.json
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${ProdPublisherAccountId}:role/${PublisherRoleNamePrefix}-prod
+          - Sid: AllowProdPublisherToLocateManifest
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${ProdPublisherAccountId}:root
+            Action: s3:ListBucket
+            Resource: !GetAtt DashboardBucket.Arn
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !Sub arn:${AWS::Partition}:iam::${ProdPublisherAccountId}:role/${PublisherRoleNamePrefix}-prod
+              StringEquals:
+                s3:prefix: v1/environments/prod/manifest.json
+
+  ReaderLogGroup:
+    Type: AWS::Logs::LogGroup
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${ProjectName}-reader
+      RetentionInDays: !Ref LogRetention
+
+  ReaderRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-reader
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: logs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${ProjectName}-reader:*
+        - PolicyName: dashboard-data
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub ${DashboardBucket.Arn}/v1/environments/*/manifest.json
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-reader
+
+  ReaderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${ProjectName}-reader
+      Description: Reads release dashboard data
+      Architectures:
+        - arm64
+      Runtime: python3.12
+      Handler: index.handler
+      MemorySize: 256
+      Timeout: 30
+      Role: !GetAtt ReaderRole.Arn
+      Environment:
+        Variables:
+          DASHBOARD_BUCKET: !Ref DashboardBucket
+          GOOGLE_AUDIENCE: !Ref GoogleAudience
+          GOOGLE_SUBJECT: !Ref AllowedGoogleSubject
+          STALE_AFTER_MINUTES: !Ref StaleAfterMinutes
+      LoggingConfig:
+        ApplicationLogLevel: INFO
+        LogFormat: JSON
+        LogGroup: !Ref ReaderLogGroup
+        SystemLogLevel: WARN
+      Code:
+        ZipFile: |
+          import json
+          import logging
+          import math
+          import os
+          from datetime import datetime, timezone
+
+          import boto3
+          from botocore.exceptions import ClientError
+
+
+          LOGGER = logging.getLogger()
+          LOGGER.setLevel(logging.INFO)
+
+          S3 = boto3.client("s3")
+          BUCKET = os.environ["DASHBOARD_BUCKET"]
+          GOOGLE_AUDIENCE = os.environ["GOOGLE_AUDIENCE"]
+          GOOGLE_SUBJECT = os.environ["GOOGLE_SUBJECT"]
+          STALE_AFTER_SECONDS = int(os.environ["STALE_AFTER_MINUTES"]) * 60
+
+          ALLOWED_ENVIRONMENTS = {"dev", "test", "uat", "hotfix", "prod"}
+          ALLOWED_PERIODS = {"7d": 7, "30d": 30, "90d": 90, "180d": 180}
+          SUCCESS_STATUSES = {"SUCCESS", "SUCCEEDED"}
+          FAILURE_STATUSES = {"FAILURE", "FAILED"}
+          MAX_MANIFEST_BYTES = 5_000_000
+          MAX_MANIFEST_RECORDS = 50_000
+          MAX_RESPONSE_EXECUTIONS = 100
+          MAX_GROUPS = 500
+
+
+          class DashboardDataError(Exception):
+              pass
+
+
+          def response(status_code, body):
+              return {
+                  "statusCode": status_code,
+                  "headers": {
+                      "Cache-Control": "private, no-store",
+                      "Content-Type": "application/json",
+                      "X-Content-Type-Options": "nosniff",
+                  },
+                  "body": json.dumps(body, separators=(",", ":"), ensure_ascii=False),
+              }
+
+
+          def claim_value(event, name):
+              authorizer = event.get("requestContext", {}).get("authorizer", {})
+              claims = authorizer.get("jwt", {}).get("claims", {})
+              return claims.get(name)
+
+
+          def authorize(event):
+              audience = claim_value(event, "aud")
+              subject = claim_value(event, "sub")
+              email_verified = claim_value(event, "email_verified")
+
+              if isinstance(audience, list):
+                  audience_matches = GOOGLE_AUDIENCE in audience
+              else:
+                  audience_matches = audience == GOOGLE_AUDIENCE
+
+              verified = email_verified is True or email_verified == "true"
+              return audience_matches and subject == GOOGLE_SUBJECT and verified
+
+
+          def request_parameter(event, name):
+              values = event.get("queryStringParameters") or {}
+              return values.get(name)
+
+
+          def validate_request(event):
+              environment = str(
+                  event.get("pathParameters", {}).get("environment", "")
+              ).lower()
+              period = str(request_parameter(event, "period") or "30d").lower()
+              release = request_parameter(event, "release")
+
+              if environment not in ALLOWED_ENVIRONMENTS:
+                  raise ValueError("invalid_environment")
+              if period not in ALLOWED_PERIODS:
+                  raise ValueError("invalid_period")
+
+              if release is not None:
+                  release = str(release)
+                  if len(release) > 128 or any(
+                      ord(character) < 32 or ord(character) == 127
+                      for character in release
+                  ):
+                      raise ValueError("invalid_release")
+
+              return environment, period, release
+
+
+          def read_manifest(environment):
+              key = f"v1/environments/{environment}/manifest.json"
+
+              try:
+                  result = S3.get_object(Bucket=BUCKET, Key=key)
+              except ClientError as error:
+                  error_code = error.response.get("Error", {}).get("Code")
+                  if error_code in {"NoSuchKey", "404"}:
+                      return None
+                  raise
+
+              content_length = result.get("ContentLength", 0)
+              if content_length > MAX_MANIFEST_BYTES:
+                  raise DashboardDataError("manifest_too_large")
+
+              raw_body = result["Body"].read(MAX_MANIFEST_BYTES + 1)
+              if len(raw_body) > MAX_MANIFEST_BYTES:
+                  raise DashboardDataError("manifest_too_large")
+
+              try:
+                  return json.loads(raw_body)
+              except (UnicodeDecodeError, json.JSONDecodeError) as error:
+                  raise DashboardDataError("invalid_manifest_json") from error
+
+
+          def parse_timestamp(value):
+              if not isinstance(value, str) or not value:
+                  raise ValueError("invalid_timestamp")
+              parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+              if parsed.tzinfo is None:
+                  parsed = parsed.replace(tzinfo=timezone.utc)
+              return parsed.astimezone(timezone.utc)
+
+
+          def safe_text(value, maximum=512):
+              if value is None:
+                  return ""
+              text = str(value)
+              return text[:maximum]
+
+
+          def safe_duration(value):
+              try:
+                  duration = float(value)
+              except (TypeError, ValueError):
+                  return 0.0
+              if not math.isfinite(duration) or duration < 0:
+                  return 0.0
+              return round(duration, 3)
+
+
+          def safe_https_url(value):
+              url = safe_text(value, 2048)
+              return url if url.startswith("https://") else ""
+
+
+          def normalized_status(record):
+              return safe_text(record.get("status"), 64).upper()
+
+
+          def release_label(record):
+              return safe_text(record.get("releaseLabel"), 128) or "Unassigned"
+
+
+          def component_name(record):
+              return safe_text(record.get("component"), 256) or "Unknown"
+
+
+          def pipeline_name(record):
+              return safe_text(record.get("pipeline"), 256) or "Unknown"
+
+
+          def source_system(record):
+              return safe_text(record.get("sourceSystem"), 64) or "Unknown"
+
+
+          def actor_role(record):
+              user = record.get("executionUser")
+              if not isinstance(user, dict):
+                  return "Unknown"
+              role = safe_text(user.get("role"), 256)
+              if not role or "@" in role:
+                  return "Unknown"
+              if ":assumed-role/" in role:
+                  role = role.split(":assumed-role/", 1)[1].split("/", 1)[0]
+              elif role.startswith("arn:") and ":role/" in role:
+                  role = role.split(":role/", 1)[1].rsplit("/", 1)[-1]
+              return role or "Unknown"
+
+
+          def percentile(values, percentage):
+              if not values:
+                  return 0.0
+              ordered = sorted(values)
+              position = (len(ordered) - 1) * percentage
+              lower = math.floor(position)
+              upper = math.ceil(position)
+              if lower == upper:
+                  return round(ordered[lower], 3)
+              result = (
+                  ordered[lower] * (upper - position)
+                  + ordered[upper] * (position - lower)
+              )
+              return round(result, 3)
+
+
+          def summary(records):
+              successes = sum(
+                  1 for record in records
+                  if normalized_status(record) in SUCCESS_STATUSES
+              )
+              failures = sum(
+                  1 for record in records
+                  if normalized_status(record) in FAILURE_STATUSES
+              )
+              terminal = successes + failures
+              durations = [
+                  safe_duration(record.get("durationSeconds"))
+                  for record in records
+                  if safe_duration(record.get("durationSeconds")) > 0
+              ]
+              return {
+                  "executions": len(records),
+                  "successes": successes,
+                  "failures": failures,
+                  "successRate": round(successes * 100 / terminal, 2)
+                  if terminal else 0.0,
+                  "durationP50Seconds": percentile(durations, 0.50),
+                  "durationP95Seconds": percentile(durations, 0.95),
+              }
+
+
+          def group_summaries(records, value_function, output_name):
+              groups = {}
+              for record in records:
+                  value = value_function(record)
+                  groups.setdefault(value, []).append(record)
+
+              result = []
+              for value, grouped_records in groups.items():
+                  item = {output_name: value, **summary(grouped_records)}
+                  item["lastExecutionAt"] = max(
+                      record["_parsedTimestamp"] for record in grouped_records
+                  ).isoformat().replace("+00:00", "Z")
+                  result.append(item)
+
+              result.sort(
+                  key=lambda item: (
+                      item["lastExecutionAt"],
+                      item[output_name],
+                  ),
+                  reverse=True,
+              )
+              return result[:MAX_GROUPS]
+
+
+          def execution_payload(record):
+              user = record.get("executionUser")
+              if not isinstance(user, dict):
+                  user = {}
+
+              return {
+                  "eventId": safe_text(record.get("eventId"), 256),
+                  "timestamp": safe_text(record.get("timestamp"), 64),
+                  "startTimestamp": safe_text(record.get("startTimestamp"), 64),
+                  "durationSeconds": safe_duration(record.get("durationSeconds")),
+                  "executionUser": {
+                      "type": safe_text(user.get("type"), 64),
+                      "role": actor_role(record),
+                  },
+                  "project": safe_text(record.get("project"), 256),
+                  "component": safe_text(record.get("component"), 256),
+                  "environment": safe_text(record.get("environment"), 32),
+                  "status": normalized_status(record),
+                  "requestedVersion": safe_text(
+                      record.get("requestedVersion"), 256
+                  ),
+                  "commitId": safe_text(record.get("commitId"), 128),
+                  "tag": safe_text(record.get("tag"), 256),
+                  "configVersion": safe_text(record.get("configVersion"), 256),
+                  "infraVersion": safe_text(record.get("infraVersion"), 256),
+                  "cicdVersion": safe_text(record.get("cicdVersion"), 256),
+                  "pipeline": safe_text(record.get("pipeline"), 256),
+                  "pipelineExecutionId": safe_text(
+                      record.get("pipelineExecutionId"), 256
+                  ),
+                  "buildId": safe_text(record.get("buildId"), 256),
+                  "buildUrl": safe_https_url(record.get("buildUrl")),
+                  "releaseLabel": safe_text(record.get("releaseLabel"), 128),
+                  "sourceSystem": safe_text(record.get("sourceSystem"), 64),
+              }
+
+
+          def prepare_records(manifest, environment):
+              if not isinstance(manifest, dict):
+                  raise DashboardDataError("invalid_manifest")
+              if manifest.get("schemaVersion") != 1:
+                  raise DashboardDataError("unsupported_schema")
+              if manifest.get("environment") != environment:
+                  raise DashboardDataError("environment_mismatch")
+
+              records = manifest.get("records")
+              if not isinstance(records, list):
+                  raise DashboardDataError("invalid_records")
+              if len(records) > MAX_MANIFEST_RECORDS:
+                  raise DashboardDataError("too_many_records")
+
+              valid_records = []
+              invalid_records = 0
+              for record in records:
+                  if not isinstance(record, dict):
+                      invalid_records += 1
+                      continue
+                  try:
+                      parsed_timestamp = parse_timestamp(record.get("timestamp"))
+                  except (TypeError, ValueError):
+                      invalid_records += 1
+                      continue
+
+                  if safe_text(record.get("environment"), 32) != environment:
+                      invalid_records += 1
+                      continue
+
+                  prepared = dict(record)
+                  prepared["_parsedTimestamp"] = parsed_timestamp
+                  valid_records.append(prepared)
+
+              return valid_records, invalid_records
+
+
+          def build_dashboard(manifest, environment, period, requested_release):
+              records, invalid_records = prepare_records(manifest, environment)
+              now = datetime.now(timezone.utc)
+              period_start = now.timestamp() - ALLOWED_PERIODS[period] * 86400
+
+              period_records = [
+                  record for record in records
+                  if period_start <= record["_parsedTimestamp"].timestamp()
+                  <= now.timestamp() + 300
+              ]
+              available_releases = sorted({
+                  release_label(record) for record in period_records
+                  if release_label(record) != "Unassigned"
+              }, reverse=True)
+
+              filtered_records = period_records
+              if requested_release:
+                  filtered_records = [
+                      record for record in period_records
+                      if release_label(record) == requested_release
+                  ]
+
+              filtered_records.sort(
+                  key=lambda record: record["_parsedTimestamp"],
+                  reverse=True,
+              )
+
+              try:
+                  source_data_through = parse_timestamp(
+                      manifest.get("sourceDataThrough")
+                  )
+              except (TypeError, ValueError) as error:
+                  raise DashboardDataError(
+                      "invalid_source_data_through"
+                  ) from error
+              if source_data_through > now.replace(microsecond=0):
+                  if (source_data_through - now).total_seconds() > 300:
+                      raise DashboardDataError("source_data_through_in_future")
+
+              data_age_seconds = max(
+                  0,
+                  int((now - source_data_through).total_seconds()),
+              )
+
+              return {
+                  "schemaVersion": 1,
+                  "environment": environment,
+                  "period": period,
+                  "release": requested_release or "",
+                  "generatedAt": safe_text(manifest.get("generatedAt"), 64),
+                  "sourceDataThrough": source_data_through.isoformat()
+                  .replace("+00:00", "Z"),
+                  "freshness": {
+                      "dataAgeSeconds": data_age_seconds,
+                      "stale": data_age_seconds > STALE_AFTER_SECONDS,
+                  },
+                  "availableReleases": available_releases,
+                  "summary": summary(filtered_records),
+                  "trends": group_summaries(
+                      filtered_records,
+                      lambda record: record["_parsedTimestamp"].date().isoformat(),
+                      "date",
+                  ),
+                  "releases": group_summaries(
+                      filtered_records,
+                      release_label,
+                      "releaseLabel",
+                  ),
+                  "components": group_summaries(
+                      filtered_records,
+                      component_name,
+                      "component",
+                  ),
+                  "pipelines": group_summaries(
+                      filtered_records,
+                      pipeline_name,
+                      "pipeline",
+                  ),
+                  "actorRoles": group_summaries(
+                      filtered_records,
+                      actor_role,
+                      "role",
+                  ),
+                  "sourceSystems": group_summaries(
+                      filtered_records,
+                      source_system,
+                      "sourceSystem",
+                  ),
+                  "executions": [
+                      execution_payload(record)
+                      for record in filtered_records[:MAX_RESPONSE_EXECUTIONS]
+                  ],
+                  "dataQuality": {
+                      "manifestRecords": len(manifest.get("records", [])),
+                      "invalidRecordsSkipped": invalid_records,
+                  },
+              }
+
+
+          def handler(event, context):
+              if not authorize(event):
+                  return response(403, {"error": "forbidden"})
+
+              try:
+                  environment, period, release = validate_request(event)
+              except ValueError as error:
+                  return response(400, {"error": str(error)})
+
+              try:
+                  manifest = read_manifest(environment)
+                  if manifest is None:
+                      return response(
+                          200,
+                          {
+                              "schemaVersion": 1,
+                              "environment": environment,
+                              "period": period,
+                              "release": release or "",
+                              "dataAvailable": False,
+                          },
+                      )
+
+                  dashboard = build_dashboard(
+                      manifest,
+                      environment,
+                      period,
+                      release,
+                  )
+              except DashboardDataError as error:
+                  LOGGER.error(
+                      "Invalid release dashboard manifest environment=%s error=%s",
+                      environment,
+                      str(error),
+                  )
+                  return response(502, {"error": "dashboard_data_unavailable"})
+
+              dashboard["dataAvailable"] = True
+              return response(200, dashboard)
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-reader
+
+  DashboardApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Ref ProjectName
+      Description: Release dashboard API
+      ProtocolType: HTTP
+      DisableExecuteApiEndpoint: false
+      Tags:
+        Name: !Ref ProjectName
+
+  DashboardAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref DashboardApi
+      Name: google
+      AuthorizerType: JWT
+      IdentitySource:
+        - $request.header.Authorization
+      JwtConfiguration:
+        Audience:
+          - !Ref GoogleAudience
+        Issuer: https://accounts.google.com
+
+  ReaderIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref DashboardApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ReaderFunction.Arn
+      PayloadFormatVersion: '2.0'
+      TimeoutInMillis: 29000
+
+  DashboardRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref DashboardApi
+      RouteKey: GET /v1/dashboard/{environment}
+      AuthorizationType: JWT
+      AuthorizerId: !Ref DashboardAuthorizer
+      Target: !Sub integrations/${ReaderIntegration}
+
+  ApiAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/apigateway/${ProjectName}
+      RetentionInDays: !Ref LogRetention
+
+  DashboardStage:
+    Type: AWS::ApiGatewayV2::Stage
+    DependsOn:
+      - DashboardRoute
+    Properties:
+      ApiId: !Ref DashboardApi
+      StageName: $default
+      AutoDeploy: true
+      AccessLogSettings:
+        DestinationArn: !GetAtt ApiAccessLogGroup.Arn
+        Format: >-
+          {"requestId":"$context.requestId","ip":"$context.identity.sourceIp","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","routeKey":"$context.routeKey","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength","integrationError":"$context.integrationErrorMessage"}
+      DefaultRouteSettings:
+        DetailedMetricsEnabled: true
+        ThrottlingBurstLimit: !Ref ApiThrottleBurstLimit
+        ThrottlingRateLimit: !Ref ApiThrottleRateLimit
+      Tags:
+        Name: !Ref ProjectName
+
+  ReaderInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ReaderFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${DashboardApi}/*/GET/v1/dashboard/*
+
+  ReaderErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${ProjectName}-reader-errors
+      AlarmDescription: Release dashboard reader errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref ReaderFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If
+        - HasAlarmSNSTopic
+        - - !Ref AlarmSNSTopicArn
+        - !Ref AWS::NoValue
+      OKActions: !If
+        - HasAlarmSNSTopic
+        - - !Ref AlarmSNSTopicArn
+        - !Ref AWS::NoValue
+
+  ApiServerErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${ProjectName}-api-5xx
+      AlarmDescription: Release dashboard API server errors
+      Namespace: AWS/ApiGateway
+      MetricName: 5xx
+      Dimensions:
+        - Name: ApiId
+          Value: !Ref DashboardApi
+        - Name: Stage
+          Value: $default
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If
+        - HasAlarmSNSTopic
+        - - !Ref AlarmSNSTopicArn
+        - !Ref AWS::NoValue
+      OKActions: !If
+        - HasAlarmSNSTopic
+        - - !Ref AlarmSNSTopicArn
+        - !Ref AWS::NoValue
+
+Outputs:
+  DashboardBucketName:
+    Description: Release dashboard bucket name
+    Value: !Ref DashboardBucket
+
+  DashboardBucketArn:
+    Description: Release dashboard bucket ARN
+    Value: !GetAtt DashboardBucket.Arn
+
+  DashboardManifestKeyPattern:
+    Description: S3 key pattern for environment manifests
+    Value: v1/environments/{environment}/manifest.json
+
+  DashboardApiEndpoint:
+    Description: Release dashboard API endpoint
+    Value: !GetAtt DashboardApi.ApiEndpoint
+
+  DashboardEnvironmentUrl:
+    Description: Release dashboard environment URL
+    Value: !Sub ${DashboardApi.ApiEndpoint}/v1/dashboard/{environment}
+
+  ReaderFunctionName:
+    Description: Release dashboard reader function name
+    Value: !Ref ReaderFunction
