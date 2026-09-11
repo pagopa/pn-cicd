@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> [-c <custom_config_dir>] -b <artifactBucketName>
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> [-m <metrics-commitid>] [-c <custom_config_dir>] -b <artifactBucketName>
 
     [-h]                      : this help message
     [-v]                      : verbose mode
@@ -21,6 +21,7 @@ usage() {
     -r <aws-region>           : aws region as eu-south-1
     -e <env-type>             : one of dev / uat / svil / coll / cert / prod
     -i <github-commitid>      : commitId for github repository pagopa/pn-infra
+    [-m <metrics-commitid>]   : commitId for github repository pagopa/pn-metrics
     [-c <custom_config_dir>]  : where tor read additional env-type configurations
     -b <artifactBucketName>   : bucket name to use as temporary artifacts storage
     
@@ -37,6 +38,7 @@ parse_params() {
   aws_region=""
   env_type=""
   pn_infra_commitid=""
+  pn_metrics_commitid=""
   bucketName=""
   LambdasBucketName=""
 
@@ -58,6 +60,10 @@ parse_params() {
       ;;
     -i | --infra-commitid) 
       pn_infra_commitid="${2-}"
+      shift
+      ;;
+    -m | --metrics-commitid)
+      pn_metrics_commitid="${2-}"
       shift
       ;;
     -c | --custom-config-dir) 
@@ -101,6 +107,7 @@ dump_params(){
   echo "Work directory:     ${work_dir}"
   echo "Custom config dir:  ${custom_config_dir}"
   echo "Infra CommitId:     ${pn_infra_commitid}"
+  echo "Metrics CommitId:   ${pn_metrics_commitid}"
   echo "Env Name:           ${env_type}"
   echo "AWS region:         ${aws_region}"
   echo "AWS profile:        ${aws_profile}"
@@ -190,6 +197,15 @@ echo "LOGS Role Arn: ${logsExporterRoleArn}"
 echo "LambdasBucketName: ${lambdasBucketName}"
 echo "LambdasBasePath: ${lambdasBasePath}"
 
+if ( [ ! -z "${pn_metrics_commitid}" ] ) then
+  echo "=== Copy pn-metrics configuration commitId=${pn_metrics_commitid}"
+  aws ${aws_command_base_args} s3 cp \
+    "s3://${LambdasBucketName}/pn-metrics/commits/${pn_metrics_commitid}/config-layer.zip" \
+    "s3://${lambdasBucketName}/${lambdasBasePath}/cdc-preproc-data-quality-config/${pn_metrics_commitid}/config-layer.zip"
+else
+  echo "=== Skip pn-metrics configuration: no commitId configured"
+fi
+
 
 echo "=== Prepare parameters for pn-logs-export.yaml deployment in $env_type ACCOUNT"
 
@@ -237,7 +253,10 @@ echo " ==== Directory listing"
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * .[1] * { \"Parameters\": .[2] }" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} ${OpensearchParamFilePath} \
+jq -s --arg metricsCommitId "${pn_metrics_commitid}" \
+   '{ "Parameters": .[0] } * .[1] * { "Parameters": .[2] } |
+    if $metricsCommitId != "" then .Parameters.PnMetricsCommitId = $metricsCommitId else . end' \
+   ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} ${OpensearchParamFilePath} \
    > ${EnanchedParamFilePath}
 cat ${EnanchedParamFilePath}
 

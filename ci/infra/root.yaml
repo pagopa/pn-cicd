@@ -2408,6 +2408,19 @@ Resources:
       TimeoutInMinutes: 5
 
   # Progetti Infrastrutturali
+  PnMetrics:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/config-package-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-metrics"
+        GitHubDefaultBranch: "main"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        BaseDir: "data-quality/config"
+        BaseDirEscaped: "data-quality-config"
+        ArtifactName: "config-layer.zip"
+      TimeoutInMinutes: 5
   PnInfra:
     Type: AWS::CloudFormation::Stack
     Properties:
