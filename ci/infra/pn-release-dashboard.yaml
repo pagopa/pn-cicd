@@ -523,7 +523,9 @@ Resources:
               try:
                   versions = fetch_jira_versions()
                   result = {"status": "ready", "versions": versions, "fetchedAt": datetime.now(timezone.utc).isoformat()}
-              except Exception as error:
+              except (JiraCatalogError, ClientError, UnicodeDecodeError, json.JSONDecodeError,
+                      OSError, http.client.HTTPException, ConnectTimeoutError,
+                      EndpointConnectionError, ReadTimeoutError) as error:
                   code = "unexpected_error"
                   if isinstance(error, JiraCatalogError):
                       candidate = error.args[0] if error.args else None
@@ -556,8 +558,6 @@ Resources:
                       code = "dns_error"
                   elif isinstance(error, (EndpointConnectionError, OSError, http.client.HTTPException)):
                       code = "network_error"
-                  elif isinstance(error, (KeyError, TypeError, AttributeError)):
-                      code = "invalid_configuration_or_response"
                   # Log only controlled codes, never credentials or raw exception details.
                   LOGGER.warning("Jira release catalog unavailable code=%s", code)
                   result = {"status": "unavailable", "versions": []}
@@ -1146,6 +1146,8 @@ Resources:
       Tags:
         Name: !Sub ${ProjectName}-release-dashboard
 
+  # API Gateway validates Google-issued JWTs.
+  # ReaderFunction additionally enforces the allowed identity (aud/sub) and verified email.
   DashboardAuthorizer:
     Type: AWS::ApiGatewayV2::Authorizer
     Properties:
