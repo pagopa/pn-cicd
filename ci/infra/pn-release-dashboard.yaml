@@ -35,8 +35,6 @@ Parameters:
   ProjectName:
     Type: String
     Default: pn
-    MaxLength: 40
-    AllowedPattern: '^[a-z0-9-]+$'
     Description: Project prefix
 
   BucketSuffix:
@@ -91,29 +89,6 @@ Parameters:
   LogRetention:
     Type: Number
     Default: 30
-    AllowedValues:
-      - 1
-      - 3
-      - 5
-      - 7
-      - 14
-      - 30
-      - 60
-      - 90
-      - 120
-      - 150
-      - 180
-      - 365
-      - 400
-      - 545
-      - 731
-      - 1096
-      - 1827
-      - 2192
-      - 2557
-      - 2922
-      - 3288
-      - 3653
     Description: CloudWatch Logs retention in days
 
   NoncurrentVersionRetentionDays:
@@ -467,7 +442,13 @@ Resources:
               if cloud_id and not re.fullmatch(r"[a-f0-9-]{36}", cloud_id):
                   raise JiraCatalogError("jira_configuration_invalid")
               client = boto3.client("secretsmanager", config=Config(connect_timeout=2, read_timeout=2, retries={"max_attempts": 0}))
-              secret = json.loads(client.get_secret_value(SecretId=os.environ["JIRA_SECRET_ARN"])["SecretString"])
+              secret_response = client.get_secret_value(SecretId=os.environ["JIRA_SECRET_ARN"])
+              secret_string = secret_response.get("SecretString")
+              if not isinstance(secret_string, str):
+                  raise JiraCatalogError("jira_secret_invalid")
+              secret = json.loads(secret_string)
+              if not isinstance(secret, dict):
+                  raise JiraCatalogError("jira_secret_invalid")
               email, token = secret.get("email"), secret.get("apiToken")
               if not isinstance(email, str) or not isinstance(token, str) or not email or not token or ":" in email or any(c in email + token for c in "\r\n"):
                   raise JiraCatalogError("jira_secret_invalid")
@@ -873,7 +854,7 @@ Resources:
                   if output_name == "component":
                       item["activityGroup"] = value[1]
                       successful = [record for record in grouped_records
-                                    if record.get("status") in SUCCESS_STATUSES]
+                                    if normalized_status(record) in SUCCESS_STATUSES]
                       item["latestSuccessfulExecution"] = execution_payload(max(
                           successful, key=lambda record: record["_parsedTimestamp"]
                       )) if successful else None
@@ -1034,7 +1015,7 @@ Resources:
                   "executionLimit": MAX_RESPONSE_EXECUTIONS,
                   "latestSuccessfulExecution": next(
                       (execution_payload(record) for record in filtered_records
-                       if record.get("status") in SUCCESS_STATUSES), None),
+                       if normalized_status(record) in SUCCESS_STATUSES), None),
                   "availableReleases": available_releases,
                   "summary": summary(filtered_records),
                   "trends": group_summaries(
