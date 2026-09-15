@@ -459,6 +459,8 @@ Resources:
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
@@ -1658,6 +1660,10 @@ Resources:
       Tags:
         - Key: goallowed
           Value: true
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -1728,6 +1734,8 @@ Resources:
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
@@ -2287,6 +2295,10 @@ Resources:
             pre_build:
               commands:
                 - echo "NO PRE_BUILD"
+                - 'echo "### RELEASE TRACKING INITIALIZATION ###"'
+                - 'export _RELEASE_EVENT_ID=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen | tr "[:upper:]" "[:lower:]" || echo "unknown-$(date +%s)")'
+                - 'export _START_TIME_EPOCH=$(date -u +%s)'
+                - 'export _START_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
             build:
               commands:
                 - 'echo "### ENVIRONMENT ###"'
@@ -2329,6 +2341,19 @@ Resources:
                   else
                     echo "All parameters are syncs"
                   fi
+            post_build:
+              commands:
+                - 'echo "### RELEASE TRACKING FINALIZATION ###"'
+                - '_END_TIME_EPOCH=$(date -u +%s)'
+                - '_DURATION_SECONDS=$(( _END_TIME_EPOCH - _START_TIME_EPOCH ))'
+                - |
+                  if [ $CODEBUILD_BUILD_SUCCEEDING -eq 1 ]; then
+                    PHASE="SUCCESS"
+                  else
+                    PHASE="FAILURE"
+                  fi
+                - 'echo "=== Parameter check completed with status: $PHASE, tracking release event..."'
+                - '(cd pn-cicd/cd-cli && bash ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-check-system" -e "$EnvName" -p "$PHASE" -V "$cd_scripts_commitId" -d "$cd_scripts_commitId" -b "$DesiredCommitIdsBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -r "$ReleaseLabel" -R "$AwsRegion" || true)'
           artifacts:
             files:
               - '**/*'
