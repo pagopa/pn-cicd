@@ -1,14 +1,48 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Release dashboard resources
+Description: Release dashboard resources with optional Jira catalog and selectable time zone
 
 Parameters:
+  JiraIntegrationEnabled:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['false', 'true']
+    Description: Enable Jira release retrieval. False uses only observed pipeline labels without reading the Jira secret or catalog.
+
+  JiraSecretArn:
+    Type: String
+    Default: ''
+    AllowedPattern: '^$|^arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:[A-Za-z0-9/_+=.@-]+$'
+    Description: Existing CICD secret ARN (suggested name jira-readonly-token); JSON email and apiToken. Empty disables Jira.
+
+  JiraSiteUrl:
+    Type: String
+    Default: https://pagopa.atlassian.net
+    AllowedPattern: '^https://[a-z0-9-]+\.atlassian\.net$'
+    Description: Jira Cloud site (no path or trailing slash)
+
+  JiraCloudId:
+    Type: String
+    Default: ''
+    AllowedPattern: '^$|^[a-f0-9-]{36}$'
+    Description: Cloud ID required for scoped API tokens; empty uses the site URL for an unscoped token
+
+  JiraProjectKey:
+    Type: String
+    Default: PN
+    AllowedPattern: '^[A-Z][A-Z0-9_]{1,29}$'
+    Description: Jira project whose versions form the release catalog
+
   ProjectName:
     Type: String
-    Default: pn-release-dashboard
-    MinLength: 3
+    Default: pn
     MaxLength: 40
     AllowedPattern: '^[a-z0-9-]+$'
-    Description: Base name for release dashboard resources
+    Description: Project prefix
+
+  BucketSuffix:
+    Type: String
+    Default: '001'
+    Description: Bucket suffix
 
   GoogleAudience:
     Type: String
@@ -117,6 +151,10 @@ Parameters:
     Description: SNS topic ARN for dashboard alarms
 
 Conditions:
+  HasJiraSecret: !Not [!Equals [!Ref JiraSecretArn, '']]
+  JiraIntegrationActive: !And
+    - !Equals [!Ref JiraIntegrationEnabled, 'true']
+    - !Condition HasJiraSecret
   HasAlarmSNSTopic: !Not
     - !Equals
       - !Ref AlarmSNSTopicArn
@@ -128,6 +166,7 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
     Properties:
+      BucketName: !Sub ${ProjectName}-release-dashboard-${AWS::Region}-${AWS::AccountId}-${BucketSuffix}
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -150,7 +189,7 @@ Resources:
         Status: Enabled
       Tags:
         - Key: Name
-          Value: !Ref ProjectName
+          Value: !Sub ${ProjectName}-release-dashboard
 
   DashboardBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -285,13 +324,13 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
     Properties:
-      LogGroupName: !Sub /aws/lambda/${ProjectName}-reader
+      LogGroupName: !Sub /aws/lambda/${ProjectName}-release-dashboard-reader
       RetentionInDays: !Ref LogRetention
 
   ReaderRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ProjectName}-reader
+      RoleName: !Sub ${ProjectName}-release-dashboard-reader
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -300,6 +339,16 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
+        - !If
+          - JiraIntegrationActive
+          - PolicyName: jira-secret-readonly
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action: secretsmanager:GetSecretValue
+                  Resource: !Ref JiraSecretArn
+          - !Ref AWS::NoValue
         - PolicyName: logs
           PolicyDocument:
             Version: '2012-10-17'
@@ -308,7 +357,7 @@ Resources:
                 Action:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${ProjectName}-reader:*
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${ProjectName}-release-dashboard-reader:*
         - PolicyName: dashboard-data
           PolicyDocument:
             Version: '2012-10-17'
@@ -318,12 +367,12 @@ Resources:
                 Resource: !Sub ${DashboardBucket.Arn}/v1/environments/*/manifest.json
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-reader
+          Value: !Sub ${ProjectName}-release-dashboard-reader
 
   ReaderFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${ProjectName}-reader
+      FunctionName: !Sub ${ProjectName}-release-dashboard-reader
       Description: Reads release dashboard data
       Architectures:
         - arm64
@@ -338,6 +387,11 @@ Resources:
           GOOGLE_AUDIENCE: !Ref GoogleAudience
           GOOGLE_SUBJECT: !Ref AllowedGoogleSubject
           STALE_AFTER_MINUTES: !Ref StaleAfterMinutes
+          JIRA_ENABLED: !Ref JiraIntegrationEnabled
+          JIRA_SECRET_ARN: !Ref JiraSecretArn
+          JIRA_SITE_URL: !Ref JiraSiteUrl
+          JIRA_CLOUD_ID: !Ref JiraCloudId
+          JIRA_PROJECT_KEY: !Ref JiraProjectKey
       LoggingConfig:
         ApplicationLogLevel: INFO
         LogFormat: JSON
@@ -349,10 +403,16 @@ Resources:
           import logging
           import math
           import os
+          import re
+          import time
+          import base64
+          import http.client
           from datetime import datetime, timezone
+          from zoneinfo import ZoneInfo
 
           import boto3
           from botocore.exceptions import ClientError
+          from botocore.config import Config
 
 
           LOGGER = logging.getLogger()
@@ -365,13 +425,200 @@ Resources:
           STALE_AFTER_SECONDS = int(os.environ["STALE_AFTER_MINUTES"]) * 60
 
           ALLOWED_ENVIRONMENTS = {"dev", "test", "uat", "hotfix", "prod"}
-          ALLOWED_PERIODS = {"7d": 7, "30d": 30, "90d": 90, "180d": 180}
+          ALLOWED_PERIODS = {"1d": 1, "7d": 7, "30d": 30, "90d": 90, "180d": 180}
           SUCCESS_STATUSES = {"SUCCESS", "SUCCEEDED"}
           FAILURE_STATUSES = {"FAILURE", "FAILED"}
           MAX_MANIFEST_BYTES = 5_000_000
           MAX_MANIFEST_RECORDS = 50_000
-          MAX_RESPONSE_EXECUTIONS = 100
+          MAX_RESPONSE_EXECUTIONS = 250
           MAX_GROUPS = 500
+          MAX_COMPONENTS = 600
+          # ponytail: cache per warm Lambda; use a shared cache only if measured traffic requires it.
+          JIRA_CACHE = None
+          JIRA_CACHE_UNTIL = 0
+
+
+          class JiraCatalogError(Exception):
+              pass
+
+
+          def jira_get_page(host, path, authorization, timeout):
+              connection = http.client.HTTPSConnection(host, timeout=timeout)
+              try:
+                  connection.request("GET", path, headers={"Authorization": authorization, "Accept": "application/json"})
+                  result = connection.getresponse()
+                  # Never follow redirects or expose bodies/credentials in errors.
+                  if result.status != 200:
+                      raise JiraCatalogError("jira_http_" + str(result.status))
+                  body = result.read(512_001)
+                  if len(body) > 512_000:
+                      raise JiraCatalogError("jira_page_too_large")
+                  return json.loads(body)
+              finally:
+                  connection.close()
+
+
+          def fetch_jira_versions():
+              site = os.environ.get("JIRA_SITE_URL", "")
+              project = os.environ.get("JIRA_PROJECT_KEY", "")
+              cloud_id = os.environ.get("JIRA_CLOUD_ID", "")
+              if not re.fullmatch(r"https://[a-z0-9-]+\.atlassian\.net", site) or not re.fullmatch(r"[A-Z][A-Z0-9_]{1,29}", project):
+                  raise JiraCatalogError("jira_configuration_invalid")
+              if cloud_id and not re.fullmatch(r"[a-f0-9-]{36}", cloud_id):
+                  raise JiraCatalogError("jira_configuration_invalid")
+              client = boto3.client("secretsmanager", config=Config(connect_timeout=2, read_timeout=2, retries={"max_attempts": 0}))
+              secret = json.loads(client.get_secret_value(SecretId=os.environ["JIRA_SECRET_ARN"])["SecretString"])
+              email, token = secret.get("email"), secret.get("apiToken")
+              if not isinstance(email, str) or not isinstance(token, str) or not email or not token or ":" in email or any(c in email + token for c in "\r\n"):
+                  raise JiraCatalogError("jira_secret_invalid")
+              authorization = "Basic " + base64.b64encode((email + ":" + token).encode()).decode()
+              host = "api.atlassian.com" if cloud_id else site.removeprefix("https://")
+              prefix = "/ex/jira/" + cloud_id if cloud_id else ""
+              path = prefix + "/rest/api/3/project/" + project + "/version"
+              versions, seen, offset = [], set(), 0
+              deadline = time.monotonic() + 12
+              for _ in range(50):
+                  remaining = deadline - time.monotonic()
+                  if remaining <= 0:
+                      raise JiraCatalogError("jira_catalog_incomplete")
+                  page = jira_get_page(host, path + "?startAt=" + str(offset) + "&maxResults=100", authorization, min(3, remaining))
+                  if not isinstance(page, dict) or page.get("startAt") != offset or not isinstance(page.get("values"), list) or not isinstance(page.get("isLast"), bool):
+                      raise JiraCatalogError("jira_invalid_page")
+                  for item in page["values"]:
+                      if not isinstance(item, dict):
+                          raise JiraCatalogError("jira_invalid_version")
+                      ident, name = item.get("id"), item.get("name")
+                      if not isinstance(ident, str) or not re.fullmatch(r"[0-9]{1,20}", ident) or ident in seen or not isinstance(name, str) or not name.strip() or len(name) > 256 or any(ord(c) < 32 or ord(c) == 127 for c in name):
+                          raise JiraCatalogError("jira_invalid_version")
+                      if not isinstance(item.get("archived"), bool) or not isinstance(item.get("released"), bool):
+                          raise JiraCatalogError("jira_invalid_version")
+                      seen.add(ident)
+                      family = re.match(r"^(GA|TECH|FE)(?=[ ._\-0-9]|$)", name.upper())
+                      versions.append({"id": ident, "name": name, "type": family[1] if family else "Other", "archived": item["archived"], "released": item["released"], "releaseDate": item.get("releaseDate") if isinstance(item.get("releaseDate"), str) and re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", item["releaseDate"]) else None})
+                  if len(versions) > 5000:
+                      raise JiraCatalogError("jira_catalog_incomplete")
+                  if page["isLast"]:
+                      if isinstance(page.get("total"), int) and page["total"] != len(versions):
+                          raise JiraCatalogError("jira_catalog_incomplete")
+                      return sorted(versions, key=lambda v: ({"GA":0,"TECH":1,"FE":2,"Other":3}[v["type"]], v["name"], v["id"]))
+                  if not page["values"]:
+                      raise JiraCatalogError("jira_catalog_incomplete")
+                  offset += len(page["values"])
+              raise JiraCatalogError("jira_catalog_incomplete")
+
+
+          def jira_catalog():
+              import socket
+              import ssl
+              from botocore.exceptions import (
+                  ConnectTimeoutError, EndpointConnectionError, ReadTimeoutError,
+              )
+
+              global JIRA_CACHE, JIRA_CACHE_UNTIL
+              if os.environ.get("JIRA_ENABLED", "false") != "true" or not os.environ.get("JIRA_SECRET_ARN"):
+                  JIRA_CACHE, JIRA_CACHE_UNTIL = None, 0
+                  return {"status": "disabled", "versions": []}
+              if JIRA_CACHE is not None and time.monotonic() < JIRA_CACHE_UNTIL:
+                  return JIRA_CACHE
+              try:
+                  versions = fetch_jira_versions()
+                  result = {"status": "ready", "versions": versions, "fetchedAt": datetime.now(timezone.utc).isoformat()}
+              except Exception as error:
+                  code = "unexpected_error"
+                  if isinstance(error, JiraCatalogError):
+                      candidate = error.args[0] if error.args else None
+                      allowed = {
+                          "jira_configuration_invalid", "jira_secret_invalid",
+                          "jira_page_too_large", "jira_catalog_incomplete",
+                          "jira_invalid_page", "jira_invalid_version",
+                      }
+                      if isinstance(candidate, str) and (
+                          candidate in allowed or re.fullmatch(r"jira_http_[1-5][0-9]{2}", candidate)
+                      ):
+                          code = candidate
+                  elif isinstance(error, ClientError):
+                      code = {
+                          "AccessDenied": "secret_access_denied",
+                          "AccessDeniedException": "secret_access_denied",
+                          "ResourceNotFoundException": "secret_not_found",
+                          "DecryptionFailure": "secret_decryption_failed",
+                          "InvalidRequestException": "secret_invalid_request",
+                          "InvalidParameterException": "secret_invalid_parameter",
+                          "ThrottlingException": "secret_throttled",
+                      }.get(error.response.get("Error", {}).get("Code"), "secret_service_error")
+                  elif isinstance(error, (json.JSONDecodeError, UnicodeDecodeError)):
+                      code = "invalid_json_or_encoding"
+                  elif isinstance(error, (TimeoutError, ConnectTimeoutError, ReadTimeoutError)):
+                      code = "network_timeout"
+                  elif isinstance(error, ssl.SSLError):
+                      code = "tls_error"
+                  elif isinstance(error, socket.gaierror):
+                      code = "dns_error"
+                  elif isinstance(error, (EndpointConnectionError, OSError, http.client.HTTPException)):
+                      code = "network_error"
+                  elif isinstance(error, (KeyError, TypeError, AttributeError)):
+                      code = "invalid_configuration_or_response"
+                  # Log only controlled codes, never credentials or raw exception details.
+                  LOGGER.warning("Jira release catalog unavailable code=%s", code)
+                  result = {"status": "unavailable", "versions": []}
+              JIRA_CACHE = result
+              JIRA_CACHE_UNTIL = time.monotonic() + (300 if result["status"] == "ready" else 30)
+              return result
+
+
+          def normalized_release(value):
+              if not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9 ._\-]+", value):
+                  return ""
+              return re.sub(r"[ ._\-]", "", value).upper()
+
+
+          def release_indexes(versions):
+              exact, normalized = {}, {}
+              for version in versions:
+                  exact.setdefault(version["name"], []).append(version)
+                  key = normalized_release(version["name"])
+                  if key:
+                      normalized.setdefault(key, []).append(version)
+              return exact, normalized
+
+
+          def match_release(label, indexes):
+              if not label or label.strip().upper() in {"UNTAGGED", "UNASSIGNED", "NONE", "NULL", "N/A"}:
+                  return {"status": "unassigned"}
+              exact, normalized = indexes
+              candidates = exact.get(label, [])
+              method = "exact"
+              if not candidates:
+                  candidates = normalized.get(normalized_release(label), [])
+                  method = "normalized"
+              if len(candidates) > 1:
+                  return {"status": "ambiguous"}
+              if not candidates:
+                  return {"status": "unmatched"}
+              return {"status": method, "jiraVersionId": candidates[0]["id"], "jiraReleaseName": candidates[0]["name"]}
+
+
+          def catalog_for_records(records, catalog, jira_version):
+              if jira_version and catalog["status"] != "ready":
+                  raise JiraCatalogError("jira_catalog_unavailable")
+              versions = catalog.get("versions", [])
+              chosen = next((v for v in versions if v["id"] == jira_version), None)
+              if jira_version and chosen is None:
+                  raise JiraCatalogError("jira_version_not_found")
+              indexes = release_indexes(versions)
+              aliases = {v["id"]: {} for v in versions}
+              issues = {"ambiguous": 0, "unmatched": 0, "unassigned": 0}
+              for record in records:
+                  label = release_label(record)
+                  match = match_release(label, indexes) if catalog["status"] == "ready" else {"status": "unavailable"}
+                  record["_releaseMatch"] = match
+                  if match.get("jiraVersionId"):
+                      counts = aliases[match["jiraVersionId"]]
+                      counts[label] = counts.get(label, 0) + 1
+                  elif match["status"] in issues:
+                      issues[match["status"]] += 1
+              result = {**catalog, "issues": issues, "versions": [{**v, "observedLabels": [{"label": label, "runs": runs} for label, runs in sorted(aliases[v["id"]].items())], "runs": sum(aliases[v["id"]].values())} for v in versions]}
+              return result, chosen
 
 
           class DashboardDataError(Exception):
@@ -379,6 +626,9 @@ Resources:
 
 
           def response(status_code, body):
+              encoded = json.dumps(body, separators=(",", ":"), ensure_ascii=False)
+              if len(encoded.encode("utf-8")) > 3_000_000:
+                  status_code, encoded = 502, '{"error":"dashboard_response_too_large"}'
               return {
                   "statusCode": status_code,
                   "headers": {
@@ -386,7 +636,7 @@ Resources:
                       "Content-Type": "application/json",
                       "X-Content-Type-Options": "nosniff",
                   },
-                  "body": json.dumps(body, separators=(",", ":"), ensure_ascii=False),
+                  "body": encoded,
               }
 
 
@@ -421,10 +671,18 @@ Resources:
               ).lower()
               period = str(request_parameter(event, "period") or "30d").lower()
               release = request_parameter(event, "release")
+              time_zone = request_parameter(event, "timeZone")
+              if time_zone is None:
+                  time_zone = "Europe/Rome"
+              if time_zone not in ("Europe/Rome", "UTC"):
+                  raise ValueError("invalid_time_zone")
+              jira_version = request_parameter(event, "jiraVersion")
+              if jira_version is not None and (not isinstance(jira_version, str) or not re.fullmatch(r"[0-9]{1,20}", jira_version) or release):
+                  raise ValueError("invalid_jira_version")
 
               if environment not in ALLOWED_ENVIRONMENTS:
                   raise ValueError("invalid_environment")
-              if period not in ALLOWED_PERIODS:
+              if period not in ALLOWED_PERIODS and period != "custom":
                   raise ValueError("invalid_period")
 
               if release is not None:
@@ -435,7 +693,21 @@ Resources:
                   ):
                       raise ValueError("invalid_release")
 
-              return environment, period, release
+              start = request_parameter(event, "start")
+              end = request_parameter(event, "end")
+              if period == "custom":
+                  try:
+                      start = parse_timestamp(start)
+                      end = parse_timestamp(end)
+                  except (TypeError, ValueError):
+                      raise ValueError("invalid_date_range")
+                  now = datetime.now(timezone.utc)
+                  # Allow up to one minute of transport delay, never a range longer than 180 days.
+                  if not start < end or end > now or (end - start).total_seconds() > 180 * 86400 or (now - start).total_seconds() > 180 * 86400 + 60:
+                      raise ValueError("invalid_date_range")
+              elif start is not None or end is not None:
+                  raise ValueError("unexpected_date_range")
+              return environment, period, release, start, end, time_zone
 
 
           def read_manifest(environment):
@@ -480,12 +752,14 @@ Resources:
 
 
           def safe_duration(value):
+              if isinstance(value, bool):
+                  return None
               try:
                   duration = float(value)
               except (TypeError, ValueError):
-                  return 0.0
+                  return None
               if not math.isfinite(duration) or duration < 0:
-                  return 0.0
+                  return None
               return round(duration, 3)
 
 
@@ -504,6 +778,18 @@ Resources:
 
           def component_name(record):
               return safe_text(record.get("component"), 256) or "Unknown"
+
+
+          def activity_group(record):
+              # Separate post-deploy presentation without renaming the recorded component.
+              if component_name(record) != "pn-infra":
+                  return ""
+              project = safe_text(record.get("buildId"), 256).rsplit("/", 1)[-1].split(":", 1)[0]
+              if project.endswith("-PostDeployScriptsCodeBuildProject"):
+                  return "post-deploy"
+              if project.endswith(("-UpdateInfraCodeBuildProject", "-UpdateInfraOnlyCodeBuildProject", "-UpdateConfinfoInfraCodeBuildProject")):
+                  return ""
+              return "post-deploy" if pipeline_name(record).endswith("-infrastructure-post-deploy-update-pipeline") else ""
 
 
           def pipeline_name(record):
@@ -557,7 +843,7 @@ Resources:
               durations = [
                   safe_duration(record.get("durationSeconds"))
                   for record in records
-                  if safe_duration(record.get("durationSeconds")) > 0
+                  if (safe_duration(record.get("durationSeconds")) or 0) > 0
               ]
               return {
                   "executions": len(records),
@@ -574,14 +860,23 @@ Resources:
               groups = {}
               for record in records:
                   value = value_function(record)
+                  if output_name == "component":
+                      value = (value, activity_group(record))
                   groups.setdefault(value, []).append(record)
 
               result = []
               for value, grouped_records in groups.items():
-                  item = {output_name: value, **summary(grouped_records)}
+                  item = {output_name: value[0] if output_name == "component" else value, **summary(grouped_records)}
                   item["lastExecutionAt"] = max(
                       record["_parsedTimestamp"] for record in grouped_records
                   ).isoformat().replace("+00:00", "Z")
+                  if output_name == "component":
+                      item["activityGroup"] = value[1]
+                      successful = [record for record in grouped_records
+                                    if record.get("status") in SUCCESS_STATUSES]
+                      item["latestSuccessfulExecution"] = execution_payload(max(
+                          successful, key=lambda record: record["_parsedTimestamp"]
+                      )) if successful else None
                   result.append(item)
 
               result.sort(
@@ -591,7 +886,7 @@ Resources:
                   ),
                   reverse=True,
               )
-              return result[:MAX_GROUPS]
+              return result[:MAX_COMPONENTS if output_name == "component" else MAX_GROUPS]
 
 
           def execution_payload(record):
@@ -610,6 +905,7 @@ Resources:
                   },
                   "project": safe_text(record.get("project"), 256),
                   "component": safe_text(record.get("component"), 256),
+                  "activityGroup": activity_group(record),
                   "environment": safe_text(record.get("environment"), 32),
                   "status": normalized_status(record),
                   "requestedVersion": safe_text(
@@ -627,6 +923,7 @@ Resources:
                   "buildId": safe_text(record.get("buildId"), 256),
                   "buildUrl": safe_https_url(record.get("buildUrl")),
                   "releaseLabel": safe_text(record.get("releaseLabel"), 128),
+                  "releaseMatch": record.get("_releaseMatch"),
                   "sourceSystem": safe_text(record.get("sourceSystem"), 64),
               }
 
@@ -668,23 +965,28 @@ Resources:
               return valid_records, invalid_records
 
 
-          def build_dashboard(manifest, environment, period, requested_release):
+          def build_dashboard(manifest, environment, period, requested_release, start=None, end=None, time_zone="Europe/Rome", catalog=None, jira_version=None):
               records, invalid_records = prepare_records(manifest, environment)
+              grouping_zone = ZoneInfo(time_zone)
               now = datetime.now(timezone.utc)
-              period_start = now.timestamp() - ALLOWED_PERIODS[period] * 86400
+              period_start = start.timestamp() if start else now.timestamp() - ALLOWED_PERIODS[period] * 86400
+              period_end = end.timestamp() if end else now.timestamp()
 
               period_records = [
                   record for record in records
                   if period_start <= record["_parsedTimestamp"].timestamp()
-                  <= now.timestamp() + 300
+                  <= period_end
               ]
+              catalog, chosen = catalog_for_records(period_records, catalog or {"status": "disabled", "versions": []}, jira_version)
               available_releases = sorted({
                   release_label(record) for record in period_records
-                  if release_label(record) != "Unassigned"
+                  if release_label(record) != "Unassigned" and not record["_releaseMatch"].get("jiraVersionId")
               }, reverse=True)
 
               filtered_records = period_records
-              if requested_release:
+              if jira_version:
+                  filtered_records = [record for record in period_records if record["_releaseMatch"].get("jiraVersionId") == jira_version]
+              elif requested_release:
                   filtered_records = [
                       record for record in period_records
                       if release_label(record) == requested_release
@@ -716,7 +1018,9 @@ Resources:
                   "schemaVersion": 1,
                   "environment": environment,
                   "period": period,
-                  "release": requested_release or "",
+                  "release": chosen["name"] if chosen else requested_release or "",
+                  "jiraVersionId": jira_version or "",
+                  "releaseCatalog": catalog,
                   "generatedAt": safe_text(manifest.get("generatedAt"), 64),
                   "sourceDataThrough": source_data_through.isoformat()
                   .replace("+00:00", "Z"),
@@ -724,11 +1028,18 @@ Resources:
                       "dataAgeSeconds": data_age_seconds,
                       "stale": data_age_seconds > STALE_AFTER_SECONDS,
                   },
+                  "rangeStart": datetime.fromtimestamp(period_start, timezone.utc).isoformat(),
+                  "rangeEnd": datetime.fromtimestamp(period_end, timezone.utc).isoformat(),
+                  "timeZone": time_zone,
+                  "executionLimit": MAX_RESPONSE_EXECUTIONS,
+                  "latestSuccessfulExecution": next(
+                      (execution_payload(record) for record in filtered_records
+                       if record.get("status") in SUCCESS_STATUSES), None),
                   "availableReleases": available_releases,
                   "summary": summary(filtered_records),
                   "trends": group_summaries(
                       filtered_records,
-                      lambda record: record["_parsedTimestamp"].date().isoformat(),
+                      lambda record: record["_parsedTimestamp"].astimezone(grouping_zone).date().isoformat(),
                       "date",
                   ),
                   "releases": group_summaries(
@@ -772,21 +1083,29 @@ Resources:
                   return response(403, {"error": "forbidden"})
 
               try:
-                  environment, period, release = validate_request(event)
+                  environment, period, release, start, end, time_zone = validate_request(event)
               except ValueError as error:
                   return response(400, {"error": str(error)})
 
               try:
+                  catalog = jira_catalog()
+                  jira_version = request_parameter(event, "jiraVersion")
+                  empty_catalog, chosen = catalog_for_records([], catalog, jira_version)
                   manifest = read_manifest(environment)
                   if manifest is None:
+                      empty_catalog["observationsAvailable"] = False
                       return response(
                           200,
                           {
                               "schemaVersion": 1,
                               "environment": environment,
                               "period": period,
-                              "release": release or "",
+                              "release": chosen["name"] if chosen else release or "",
+                              "jiraVersionId": jira_version or "",
+                              "releaseCatalog": empty_catalog,
+                              "availableReleases": [],
                               "dataAvailable": False,
+                              "timeZone": time_zone,
                           },
                       )
 
@@ -795,7 +1114,14 @@ Resources:
                       environment,
                       period,
                       release,
+                      start,
+                      end,
+                      time_zone,
+                      catalog,
+                      jira_version,
                   )
+              except JiraCatalogError as error:
+                  return response(503 if str(error) == "jira_catalog_unavailable" else 404, {"error": str(error)})
               except DashboardDataError as error:
                   LOGGER.error(
                       "Invalid release dashboard manifest environment=%s error=%s",
@@ -808,17 +1134,17 @@ Resources:
               return response(200, dashboard)
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-reader
+          Value: !Sub ${ProjectName}-release-dashboard-reader
 
   DashboardApi:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: !Ref ProjectName
+      Name: !Sub ${ProjectName}-release-dashboard
       Description: Release dashboard API
       ProtocolType: HTTP
       DisableExecuteApiEndpoint: false
       Tags:
-        Name: !Ref ProjectName
+        Name: !Sub ${ProjectName}-release-dashboard
 
   DashboardAuthorizer:
     Type: AWS::ApiGatewayV2::Authorizer
@@ -856,7 +1182,7 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
     Properties:
-      LogGroupName: !Sub /aws/apigateway/${ProjectName}
+      LogGroupName: !Sub /aws/apigateway/${ProjectName}-release-dashboard
       RetentionInDays: !Ref LogRetention
 
   DashboardStage:
@@ -876,7 +1202,7 @@ Resources:
         ThrottlingBurstLimit: !Ref ApiThrottleBurstLimit
         ThrottlingRateLimit: !Ref ApiThrottleRateLimit
       Tags:
-        Name: !Ref ProjectName
+        Name: !Sub ${ProjectName}-release-dashboard
 
   ReaderInvokePermission:
     Type: AWS::Lambda::Permission
@@ -889,8 +1215,9 @@ Resources:
 
   ReaderErrorsAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: HasAlarmSNSTopic
     Properties:
-      AlarmName: !Sub ${ProjectName}-reader-errors
+      AlarmName: !Sub ${ProjectName}-release-dashboard-reader-errors
       AlarmDescription: Release dashboard reader errors
       Namespace: AWS/Lambda
       MetricName: Errors
@@ -904,19 +1231,16 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      AlarmActions: !If
-        - HasAlarmSNSTopic
-        - - !Ref AlarmSNSTopicArn
-        - !Ref AWS::NoValue
-      OKActions: !If
-        - HasAlarmSNSTopic
-        - - !Ref AlarmSNSTopicArn
-        - !Ref AWS::NoValue
+      AlarmActions:
+        - !Ref AlarmSNSTopicArn
+      OKActions:
+        - !Ref AlarmSNSTopicArn
 
   ApiServerErrorsAlarm:
     Type: AWS::CloudWatch::Alarm
+    Condition: HasAlarmSNSTopic
     Properties:
-      AlarmName: !Sub ${ProjectName}-api-5xx
+      AlarmName: !Sub ${ProjectName}-release-dashboard-api-5xx
       AlarmDescription: Release dashboard API server errors
       Namespace: AWS/ApiGateway
       MetricName: 5xx
@@ -932,14 +1256,10 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      AlarmActions: !If
-        - HasAlarmSNSTopic
-        - - !Ref AlarmSNSTopicArn
-        - !Ref AWS::NoValue
-      OKActions: !If
-        - HasAlarmSNSTopic
-        - - !Ref AlarmSNSTopicArn
-        - !Ref AWS::NoValue
+      AlarmActions:
+        - !Ref AlarmSNSTopicArn
+      OKActions:
+        - !Ref AlarmSNSTopicArn
 
 Outputs:
   DashboardBucketName:

@@ -176,6 +176,27 @@ dump_params(){
   echo "Region:                ${aws_region}"
 }
 
+# Configured tag for the recorded commit.
+configured_tag_for_commit() {
+  local config_dir="${script_dir}/../custom-config" candidate resolved recorded_config
+  local key="${component_name//-/_}_commitId"
+  [[ "${software_version}" =~ ^[0-9a-fA-F]{40}$ && "${component_name}" =~ ^pn-[a-z0-9]+(-[a-z0-9]+)*$ ]] || return 1
+  case "${component_name}" in
+    pn-check-system) return 1 ;;
+    # Legacy key uses authfleet without a separator, as in downloadCustomConfig.sh.
+    pn-auth-fleet) key="pn_authfleet_commitId" ;;
+    pn-cicd) key="cd_scripts_commitId" ;;
+  esac
+  [[ -f "${config_dir}/repository-list.json" && -f "${config_dir}/pn-configuration-commit-id.txt" ]] || return 1
+  recorded_config=$(tr -d '[:space:]' < "${config_dir}/pn-configuration-commit-id.txt") || return 1
+  [[ -n "${config_version}" && "${recorded_config}" == "${config_version}" ]] || return 1
+  candidate=$(jq -er --arg key "${key}" '.[$key] | select(type == "string") | select(startswith("tag/")) | .[4:] | select(length > 0 and length <= 128)' "${config_dir}/repository-list.json" 2>/dev/null) || return 1
+  git check-ref-format "refs/tags/${candidate}" >/dev/null 2>&1 || return 1
+  [[ -d "${PWD}/${component_name}/.git" || -f "${PWD}/${component_name}/.git" ]] || return 1
+  resolved=$(GIT_NO_LAZY_FETCH=1 git -C "${PWD}/${component_name}" rev-parse --verify "refs/tags/${candidate}^{commit}" 2>/dev/null) || return 1
+  [[ "${resolved}" == "${software_version}" ]] && printf '%s' "${candidate}"
+}
+
 # --- Main Execution ---
 
 parse_params "$@"
@@ -242,6 +263,9 @@ if [[ "${software_version}" == tag/* ]]; then
 else
     tag=""
     commit_id="${software_version}"
+    if recovered_tag=$(configured_tag_for_commit); then
+        tag="${recovered_tag}"
+    fi
 fi
 
 # Build context
