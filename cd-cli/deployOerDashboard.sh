@@ -505,8 +505,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
 
       echo ""
       echo "= Enanched Terraform parameters file for pn-oer-dashboard"
-      jq -s ".[0] * .[1]" ${ParamFilePath} ${INFRA_ALL_OUTPUTS_FILE} > ${TmpFilePath}
-      cat ${TmpFilePath}
+      jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} >  ${TmpFilePath}
       mv ${TmpFilePath} ${ParamFilePath}
     fi
 
