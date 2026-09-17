@@ -242,6 +242,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
     aws ${aws_command_base_args} cloudformation deploy \
         --stack-name pn-oer-dashboard-${env_type} \
         --capabilities CAPABILITY_NAMED_IAM \
+        --s3-bucket $bucketName \
         --template-file pn-infra/runtime-infra/pn-oer-dashboard.yaml \
         --tags Microservice=pn-infra-monitoring \
         --parameter-overrides \
