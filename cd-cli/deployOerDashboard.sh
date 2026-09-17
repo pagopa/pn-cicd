@@ -492,7 +492,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       done;
 
       raddRef="targetgroup/"${array1[1]}
-      OptionalParameters="\"Alb=${albRef}\",\"RaddTargetGroup=${raddRef}\",\"TemplateBucketHttpsBaseUrl=${templateBucketHttpsBaseUrl}\""
+      OptionalParameters="\"Alb=${albRef}\",\"RaddTargetGroup=${raddRef}\",\"TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}\""
     fi
 
     echo "Optional Parameters ${OptionalParameters}"
