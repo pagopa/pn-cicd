@@ -172,59 +172,15 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
 
     comm -3 all_metric_alarms.txt used.txt | tee not_referenced_metric_allarms.txt
 
-    #confidentialInfoAccountId=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.ConfidentialInfoAccountId') 
-    #echo "ConfidentialInfoAccountId=${confidentialInfoAccountId}"
-#
-    #helpdeskAccountId=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.HelpdeskAccountId') 
-    #echo "HelpdeskAccountId=${helpdeskAccountId}"
-#
-    #openSearchArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.OpenSearchArn') 
-    #echo "OpenSearchArn=${openSearchArn}"
-#
-    #logsBucketKmsKeyArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LogsBucketKmsKeyArn')
-    #echo "LogsBucketKmsKeyArn=${logsBucketKmsKeyArn}"
-#
-    #logRetention=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LogRetention')
-    #echo "LogRetention=${logRetention}"
-  
-    #logsBucketName=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LogsBucketName') 
-    #echo "LogsBucketName=${logsBucketName}"
-
-    #logsBucketName=''
-
-    #LambdasBasePath=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LambdasBasePath') 
-    #echo "LambdasBasePath=${LambdasBasePath}"
-
     applicationLoadBalancerListenerArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.ApplicationLoadBalancerListenerArn') 
     echo "ApplicationLoadBalancerListenerArn=${applicationLoadBalancerListenerArn}"
-    #echo "LambdasBucketName=${bucketName}"
-    #echo "LambdasBasePath=${LambdasBasePath}"
     
     raddTargetGroupArn=$( aws ${aws_command_base_args}  elbv2 describe-rules --listener-arn ${applicationLoadBalancerListenerArn}  \
        --query "Rules[].{Host:Conditions[0].Values[0],TargetGroup:Actions[0].TargetGroupArn}" | jq -r \
        ".[] | select(.Host==\"/radd/*\") | .TargetGroup")
     
     OptionalParameters=""
-    #if ( [ ! -z "$confidentialInfoAccountId" ] ) then
-    #  OptionalParameters="${OptionalParameters} ConfidentialInfoAccountId=${confidentialInfoAccountId}"
-    #fi
-#
-    #if ( [ ! -z "$helpdeskAccountId" ] ) then
-    #  OptionalParameters="${OptionalParameters} HelpdeskAccountId=${helpdeskAccountId}"
-    #fi
-#
-    #if ( [ ! -z "$openSearchArn" ] ) then
-    #  OptionalParameters="${OptionalParameters} OpenSearchArn=${openSearchArn}"
-    #fi
-#
-    #if ( [ ! -z "$logsBucketName" ] ) then
-    #  OptionalParameters="${OptionalParameters} LogsBucketName=${logsBucketName}"
-    #else
-    #  OptionalParameters="${OptionalParameters} LogsBucketName=${logsBucketName}"
-    #fi
-
-    # The Radd is not currently exposed on Api Gateway but using an Application Load Balancer Target Group
-    # so we have to monitor metrics on ALB Target Group
+    
     if ( [ ! -z "$raddTargetGroupArn" ] ) then
       delimiter="listener/"
       s=$applicationLoadBalancerListenerArn$delimiter
