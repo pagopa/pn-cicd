@@ -108,7 +108,6 @@ dump_params(){
   echo "Lambda Bucket Name: ${LambdasBucketName}"
 }
 
-
 # START SCRIPT
 
 parse_params "$@"
@@ -173,47 +172,15 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
 
     comm -3 all_metric_alarms.txt used.txt | tee not_referenced_metric_allarms.txt
 
-    confidentialInfoAccountId=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.ConfidentialInfoAccountId') 
-    echo "ConfidentialInfoAccountId=${confidentialInfoAccountId}"
-
-    helpdeskAccountId=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.HelpdeskAccountId') 
-    echo "HelpdeskAccountId=${helpdeskAccountId}"
-
-    openSearchArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.OpenSearchArn') 
-    echo "OpenSearchArn=${openSearchArn}"
-  
-    #logsBucketName=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.LogsBucketName') 
-    #echo "LogsBucketName=${logsBucketName}"
-    logsBucketName=''
-
     applicationLoadBalancerListenerArn=$(cat $INFRA_ALL_OUTPUTS_FILE | jq -r '.ApplicationLoadBalancerListenerArn') 
     echo "ApplicationLoadBalancerListenerArn=${applicationLoadBalancerListenerArn}"
-
+    
     raddTargetGroupArn=$( aws ${aws_command_base_args}  elbv2 describe-rules --listener-arn ${applicationLoadBalancerListenerArn}  \
        --query "Rules[].{Host:Conditions[0].Values[0],TargetGroup:Actions[0].TargetGroupArn}" | jq -r \
        ".[] | select(.Host==\"/radd/*\") | .TargetGroup")
     
     OptionalParameters=""
-    if ( [ ! -z "$confidentialInfoAccountId" ] ) then
-      OptionalParameters="${OptionalParameters} ConfidentialInfoAccountId=${confidentialInfoAccountId}"
-    fi
-
-    if ( [ ! -z "$helpdeskAccountId" ] ) then
-      OptionalParameters="${OptionalParameters} HelpdeskAccountId=${helpdeskAccountId}"
-    fi
-
-    if ( [ ! -z "$openSearchArn" ] ) then
-      OptionalParameters="${OptionalParameters} OpenSearchArn=${openSearchArn}"
-    fi
-
-    if ( [ ! -z "$logsBucketName" ] ) then
-      OptionalParameters="${OptionalParameters} LogsBucketName=${logsBucketName}"
-    else
-      OptionalParameters="${OptionalParameters} LogsBucketName=${logsBucketName}"
-    fi
-
-    # The Radd is not currently exposed on Api Gateway but using an Application Load Balancer Target Group
-    # so we have to monitor metrics on ALB Target Group
+    
     if ( [ ! -z "$raddTargetGroupArn" ] ) then
       delimiter="listener/"
       s=$applicationLoadBalancerListenerArn$delimiter
@@ -234,20 +201,42 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       done;
 
       raddRef="targetgroup/"${array1[1]}
-      OptionalParameters="${OptionalParameters} Alb=${albRef} RaddTargetGroup=${raddRef}"
+      OptionalParameters="\"Alb=${albRef}\",\"RaddTargetGroup=${raddRef}\",\"TemplateBucketBaseUrl=${templateBucketHttpsBaseUrl}\""
     fi
 
     echo "Optional Parameters ${OptionalParameters}"
     
+    ParamFilePath="pn-infra/runtime-infra/pn-oer-dashboard-${env_type}-cfg.json"
+    TmpFilePath=terraform-merge-${env_type}-cfg.json
+
+    if ( [ -f "$INFRA_ALL_OUTPUTS_FILE" ] ) then
+      echo "Merging outputs of ${INFRA_ALL_OUTPUTS_FILE} into pn-oer-dashboard"
+
+      echo ""
+      echo "= Enanched Terraform parameters file for pn-oer-dashboard"
+      jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} >  ${TmpFilePath}
+      mv ${TmpFilePath} ${ParamFilePath}
+    fi
+
+    PipelineParams="\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}\",$OptionalParameters"
+    EnanchedParamFilePath="pn-infra/runtime-infra/pn-oer-dashboard-${env_type}-enhanced-cfg.json"
+
+    echo ""
+    echo "= Enanched parameters file"
+    jq -c "." \
+      ${ParamFilePath} \
+      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
+      > ${EnanchedParamFilePath}
+    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
+    cat ${EnanchedParamFilePath}
+
     aws ${aws_command_base_args} cloudformation deploy \
         --stack-name pn-oer-dashboard-${env_type} \
         --capabilities CAPABILITY_NAMED_IAM \
+        --s3-bucket ${bucketName} \
         --template-file pn-infra/runtime-infra/pn-oer-dashboard.yaml \
         --tags Microservice=pn-infra-monitoring \
-        --parameter-overrides \
-            ProjectName=${project_name} \
-            Version="cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}" \
-            $OptionalParameters
+        --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 else
     echo "Skipped OER dashboard deploy"
 fi
