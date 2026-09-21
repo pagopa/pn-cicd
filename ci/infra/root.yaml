@@ -344,6 +344,7 @@ Resources:
         GitHubDefaultBranch: "develop"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -382,6 +383,7 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-delivery-push"
         JavaVersion: "21"
+        ARMEnvironment: true
         DisableIntegrationTest: "false"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
