@@ -519,6 +519,7 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         JavaVersion: "21"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -562,6 +563,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -606,6 +608,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -650,6 +653,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -694,6 +698,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -823,6 +828,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -910,6 +916,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -996,6 +1003,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1039,6 +1047,7 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "21"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1084,6 +1093,7 @@ Resources:
         JavaVersion: "25"
         CdsEnabled: "true"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1173,6 +1183,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1217,6 +1228,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1261,6 +1273,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1307,6 +1320,7 @@ Resources:
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "25"
         CdsEnabled: "true"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1353,6 +1367,7 @@ Resources:
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "25"
         CdsEnabled: "true"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1398,6 +1413,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1442,6 +1458,7 @@ Resources:
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1530,6 +1547,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1575,6 +1593,7 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         JavaVersion: "21"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1709,6 +1728,7 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "21"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1754,6 +1774,7 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "21"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1799,6 +1820,7 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         JavaVersion: "21"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1890,7 +1912,7 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "21"
-        ARMEnvironment: false
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1936,6 +1958,7 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "21"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -2072,6 +2095,7 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "21"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
