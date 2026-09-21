@@ -615,6 +615,8 @@ fi
 echo ""
 echo "=== Deploy PN-Cost-Saving FOR $env_type ACCOUNT"
 COST_SAVING_STACK_FILE=pn-infra/runtime-infra/pn-cost-saving.yaml
+ParamFilePath=pn-infra/runtime-infra/pn-cost-saving-${env_type}-cfg.json
+EnanchedParamFilePath=pn-cost-saving-${env_type}-cfg-enanched.json
 
 if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
     echo "$COST_SAVING_STACK_FILE exists, updating pn-cost-saving stack"
