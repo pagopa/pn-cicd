@@ -92,8 +92,9 @@ Resources:
                   from pathlib import Path
                   import yaml
 
-                  directory = Path(os.environ["CONFIG_FOLDER_NAME"])
+                  directory = Path(os.environ["CONFIG_FOLDER_NAME"]).resolve()
                   files = []
+                  parsed_files = {}
                   for path in sorted(directory.rglob("*")):
                       if path.is_symlink():
                           raise ValueError(f"Symbolic links are not supported: {path}")
@@ -104,7 +105,35 @@ Resources:
                   for path in files:
                       print(f"Validating {path}", flush=True)
                       with path.open(encoding="utf-8") as stream:
-                          yaml.safe_load(stream)
+                          parsed_files[path] = yaml.safe_load(stream)
+
+                  manifest_path = directory / "manifest.yaml"
+                  manifest = parsed_files.get(manifest_path)
+                  if not isinstance(manifest, dict):
+                      raise ValueError(f"Missing or invalid manifest: {manifest_path}")
+                  tables = manifest.get("tables")
+                  if not isinstance(tables, dict):
+                      raise ValueError("Manifest 'tables' must be a mapping")
+
+                  for table_name, entry in tables.items():
+                      if not isinstance(entry, dict):
+                          raise ValueError(f"Invalid manifest entry for table {table_name}")
+                      if entry.get("enabled", True) is False:
+                          continue
+                      config_file = entry.get("config")
+                      if not isinstance(config_file, str) or not config_file.strip():
+                          raise ValueError(f"Missing config path for table {table_name}")
+                      config_path = (directory / config_file).resolve()
+                      if not config_path.is_relative_to(directory) or not config_path.is_file():
+                          raise ValueError(f"Config file not found in package for table {table_name}: {config_file}")
+                      config = parsed_files.get(config_path)
+                      if config is None:
+                          with config_path.open(encoding="utf-8") as stream:
+                              config = yaml.safe_load(stream)
+                      if not isinstance(config, dict):
+                          raise ValueError(f"Invalid config for table {table_name}: {config_file}")
+                      if config.get("table") and config["table"] != table_name:
+                          raise ValueError(f"Config table mismatch for {table_name}: {config_file}")
                   PY
             build:
               on-failure: ABORT
@@ -128,7 +157,7 @@ Resources:
           - - Type: EVENT
               Pattern: PUSH
             - Type: HEAD_REF
-              Pattern: ^refs/heads/.+$
+              Pattern: ^refs/heads/(main|develop|(feature|feat|chore|hotfix|bug|fix|release)/.+)$
       VpcConfig:
         VpcId: !Ref VpcId
         Subnets: !Ref SubnetsIds

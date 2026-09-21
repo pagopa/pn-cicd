@@ -76,60 +76,6 @@ Example: Properties depends on the selected _builder_ type.
   TimeoutInMinutes: <timeout in minutes for build process>
 ````
 
-## Configuration packages
-
-The `config-package-codebuild.yaml` builder validates YAML syntax and packages a
-repository directory, preserving its directory name at the ZIP root. Repository,
-directory and ZIP filename are configured by the caller in `infra/root.yaml`.
-Manifest references and Data Quality semantics remain the responsibility of the
-source repository; this builder does not validate them.
-
-`PnMetrics` packages `pn-metrics/data-quality/config/` as `config-layer.zip`, with
-`config/manifest.yaml` and `config/tables/` available at the ZIP root. It publishes
-the artifact to the CI bucket under:
-
-```
-pn-metrics/commits/<pn_metrics_commitId>/config-layer.zip
-```
-
-The CodeBuild webhook builds branch pushes, including branches such as
-`SNDM-231`. A build can also be started with a specific source commit. Failed
-validation or packaging prevents publication. Build failures use the existing
-SNS notification topic. This builder does not emit `BUILD_DONE` or start a CD
-pipeline automatically.
-
-### Infra deployment
-
-Add `pn_metrics_commitId` to the environment's `pn-configuration/repository-list.json`.
-The existing configuration resolver produces the commit used by CD. For DEV
-configurations that use `desired-commit-ids-env.sh` directly, add the same variable
-there. The selected commit must have a successful configuration build before CD.
-
-Both Infra update paths pass the value to `deployLogStreaming.sh` through the
-optional `-m` argument. The script copies the ZIP into the environment's
-`LambdasBucketName` at:
-
-```
-<LambdasBasePath>/cdc-preproc-data-quality-config/<pn_metrics_commitId>/config-layer.zip
-```
-
-It then sets `PnMetricsCommitId` in the parameters of `pn-logs-export`. A missing
-artifact stops the script before this stack is updated. If no commit is supplied,
-the copy and parameter injection are skipped, preserving the previous CD flow.
-
-The corresponding `pn-infra` template must declare `PnMetricsCommitId` in the
-parent and forward it to the pre-processing fragment. Its Layer uses the existing
-`LambdasBucketName` and the key above; the Lambda receives the resulting Layer
-version ARN and reads `/opt/config`. Callers with pre-processing disabled must
-remain valid without a Metrics version. When the Layer is enabled, its template
-must require a non-empty version.
-
-After this initial Infra integration, promoting or rolling back rules requires
-changing the Metrics pin and running Infra CD, without changing the Infra pin or
-rebuilding the Lambda. CloudFormation still updates the Layer and the Lambda
-configuration. Existing commits created before the builder was enabled need an
-explicit build before they can be selected for deployment.
-
 ## Useful commands
 
 ### Create a stack using builders for testing purpose
@@ -148,3 +94,4 @@ aws cloudformation delete-stack --stack-name <value> --profile cicd --capabiliti
 aws codebuild start-build --project-name myProject --profile cicd \
  --environment-variables-override "[{\"name\":\"ACTION\",\"value\":\"create\"},{\"name\":\"BRANCH\",\"value\":\"${BITBUCKET_BRANCH}\"}]"
 ```
+
