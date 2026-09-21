@@ -555,6 +555,10 @@ EnanchedParamFilePath=pn-cost-saving-${env_type}-cfg-enanched.json
 if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
     echo "$COST_SAVING_STACK_FILE exists, updating pn-cost-saving stack"
 
+    if [[ ! -f "$ParamFilePath" ]]; then
+      echo '{ "Parameters": {} }' > "$ParamFilePath"
+    fi
+
     echo ""
     echo ""
     echo ""
