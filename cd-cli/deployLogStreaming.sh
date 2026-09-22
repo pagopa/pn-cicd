@@ -199,8 +199,10 @@ echo "LambdasBasePath: ${lambdasBasePath}"
 
 if ( [ ! -z "${pn_metrics_commitid}" ] ) then
   echo "=== Copy pn-metrics configuration commitId=${pn_metrics_commitid}"
-  aws ${aws_command_base_args} s3 cp \
-    "s3://${LambdasBucketName}/pn-metrics/commits/${pn_metrics_commitid}/config-layer.zip" \
+  aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+    --bucket "$LambdasBucketName" --key "pn-metrics/commits/${pn_metrics_commitid}/config-layer.zip" \
+    "pn-metrics-config-layer.zip"
+  aws ${aws_command_base_args} s3 cp "pn-metrics-config-layer.zip" \
     "s3://${lambdasBucketName}/${lambdasBasePath}/cdc-preproc-data-quality-config/${pn_metrics_commitid}/config-layer.zip"
 else
   echo "=== Skip pn-metrics configuration: no commitId configured"
