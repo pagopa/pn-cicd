@@ -257,7 +257,7 @@ echo ""
 echo "= Enanched parameters file"
 jq -s --arg metricsCommitId "${pn_metrics_commitid}" \
    '{ "Parameters": .[0] } * .[1] * { "Parameters": .[2] } |
-    if $metricsCommitId != "" then .Parameters.PnMetricsCommitId = $metricsCommitId else . end' \
+    if $metricsCommitId != "" then .Parameters.PnMetricsVersion = $metricsCommitId else . end' \
    ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} ${OpensearchParamFilePath} \
    > ${EnanchedParamFilePath}
 cat ${EnanchedParamFilePath}
