@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Validates and packages YAML configuration files
+Description: Packages and publishes a repository artifact to S3
 Parameters:
   GitHubProjectName:
     Description: Name of the pagopa GitHub repository
@@ -16,9 +16,9 @@ Parameters:
     Description: Directory identifier for the CodeBuild project name
     Type: String
   ArtifactName:
-    Description: Configuration ZIP filename
+    Description: ZIP artifact filename
     Type: String
-    AllowedPattern: '[A-Za-z0-9_-]+\.zip'
+    AllowedPattern: '[A-Za-z0-9_-]+[.]zip'
   CiArtifactBucket:
     Description: CI artifact bucket name
     Type: String
@@ -55,7 +55,7 @@ Resources:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
             Value: !Ref GitHubProjectName
-          - Name: CONFIG_FOLDER_NAME
+          - Name: SOURCE_DIR
             Type: PLAINTEXT
             Value: !Ref BaseDir
           - Name: ARTIFACT_NAME
@@ -73,79 +73,32 @@ Resources:
           env:
             shell: bash
           phases:
-            install:
-              on-failure: ABORT
-              runtime-versions:
-                python: 3.12
-              commands:
-                - python -m pip install PyYAML==6.0.2
             pre_build:
               on-failure: ABORT
               commands:
                 - export COMMIT_ID="$CODEBUILD_RESOLVED_SOURCE_VERSION"
                 - test -n "$COMMIT_ID"
-                - test -d "$CONFIG_FOLDER_NAME"
+                - test -d "$SOURCE_DIR"
                 - |
-                  echo "Validating YAML files in ${CONFIG_FOLDER_NAME}"
-                  python - <<'PY'
-                  import os
-                  from pathlib import Path
-                  import yaml
-
-                  directory = Path(os.environ["CONFIG_FOLDER_NAME"]).resolve()
-                  files = []
-                  parsed_files = {}
-                  for path in sorted(directory.rglob("*")):
-                      if path.is_symlink():
-                          raise ValueError(f"Symbolic links are not supported: {path}")
-                      if path.is_file() and path.suffix.lower() in (".yaml", ".yml"):
-                          files.append(path)
-                  if not files:
-                      raise ValueError(f"No YAML files found in {directory}")
-                  for path in files:
-                      print(f"Validating {path}", flush=True)
-                      with path.open(encoding="utf-8") as stream:
-                          parsed_files[path] = yaml.safe_load(stream)
-
-                  manifest_path = directory / "manifest.yaml"
-                  manifest = parsed_files.get(manifest_path)
-                  if not isinstance(manifest, dict):
-                      raise ValueError(f"Missing or invalid manifest: {manifest_path}")
-                  tables = manifest.get("tables")
-                  if not isinstance(tables, dict):
-                      raise ValueError("Manifest 'tables' must be a mapping")
-
-                  for table_name, entry in tables.items():
-                      if not isinstance(entry, dict):
-                          raise ValueError(f"Invalid manifest entry for table {table_name}")
-                      if entry.get("enabled", True) is False:
-                          continue
-                      config_file = entry.get("config")
-                      if not isinstance(config_file, str) or not config_file.strip():
-                          raise ValueError(f"Missing config path for table {table_name}")
-                      config_path = (directory / config_file).resolve()
-                      if not config_path.is_relative_to(directory) or not config_path.is_file():
-                          raise ValueError(f"Config file not found in package for table {table_name}: {config_file}")
-                      config = parsed_files.get(config_path)
-                      if config is None:
-                          with config_path.open(encoding="utf-8") as stream:
-                              config = yaml.safe_load(stream)
-                      if not isinstance(config, dict):
-                          raise ValueError(f"Invalid config for table {table_name}: {config_file}")
-                      if config.get("table") and config["table"] != table_name:
-                          raise ValueError(f"Config table mismatch for {table_name}: {config_file}")
-                  PY
+                  if [ -n "$(find "$SOURCE_DIR" -type l -print -quit)" ]; then
+                    echo "Symbolic links are not supported in ${SOURCE_DIR}" >&2
+                    exit 1
+                  fi
+                  if [ -z "$(find "$SOURCE_DIR" -type f -print -quit)" ]; then
+                    echo "No files found in ${SOURCE_DIR}" >&2
+                    exit 1
+                  fi
             build:
               on-failure: ABORT
               commands:
-                - echo "Packaging ${CONFIG_FOLDER_NAME} for commit ${COMMIT_ID}"
-                - '(cd "$(dirname "$CONFIG_FOLDER_NAME")" && zip -r "$CODEBUILD_SRC_DIR/$ARTIFACT_NAME" "$(basename "$CONFIG_FOLDER_NAME")")'
+                - echo "Packaging ${SOURCE_DIR} for commit ${COMMIT_ID}"
+                - '(cd "$(dirname "$SOURCE_DIR")" && zip -r "$CODEBUILD_SRC_DIR/$ARTIFACT_NAME" "$(basename "$SOURCE_DIR")")'
             post_build:
               on-failure: ABORT
               commands:
                 - |
                   if [ "$CODEBUILD_BUILD_SUCCEEDING" != "1" ]; then
-                    echo "Skipping configuration publication because the build failed"
+                    echo "Skipping artifact publication because the build failed"
                     exit 1
                   fi
                 - echo "Publishing ${ARTIFACT_NAME} for commit ${COMMIT_ID}"
@@ -192,7 +145,7 @@ Resources:
                   - logs:PutLogEvents
                 Resource:
                   - !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${GitHubProjectName}-${BaseDirEscaped}-CodeBuild:*'
-              - Sid: PublishConfiguration
+              - Sid: PublishArtifact
                 Effect: Allow
                 Action:
                   - s3:PutObject

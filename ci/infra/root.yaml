@@ -2435,14 +2435,14 @@ Resources:
   PnMetrics:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/config-package-codebuild.yaml"
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/artifact-publisher-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-metrics"
         GitHubDefaultBranch: "main"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         BaseDir: "data-quality/config"
-        BaseDirEscaped: "data-quality-config"
+        BaseDirEscaped: "config-package"
         ArtifactName: "config-layer.zip"
       TimeoutInMinutes: 5
   PnInfra:
