@@ -190,6 +190,7 @@ _clone_repository(){
 if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
   echo PN_CONFIGURATION_TAG is present. 
   PN_CONFIGURATION_TAG_param=""
+  SUB1=tag
   SUB2=amazonaws
   SUB3=sha256
   #retrive secret:
@@ -206,115 +207,34 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
   
   #Function for Github request:
   github_request() {
-      # Local variables, take the values passed to the function:
+      #Local variables, take the first value passed to fuction:
       local url=$1
-      local not_found_message=${2-}
       local response
       local http_code
-      local github_error_message
 
       if $USE_TOKEN; then
-          response=$(curl -sS -w "%{http_code}" -o response.json -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer $GITHUB_TOKEN" "$url")
+          response=$(curl -s -w "%{http_code}" -o response.json -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer $GITHUB_TOKEN" "$url")
           http_code=$(tail -n1 <<< "$response")
 
-          # GitHub returns 401 when the provided credentials are invalid.
-          # Other statuses describe the requested resource and must not be
-          # incorrectly reported as authentication failures.
+          #Only HTTP 401 means that the token is invalid or expired:
           if [ "$http_code" = "401" ]; then
               echo "****   WARNING: GitHub token is expired or invalid (HTTP 401). Retrying without authentication.   ****"
               USE_TOKEN=false
-              github_request "$url" "$not_found_message"
+              github_request "$url"
               return
           fi
       else
           #Go to GitHub without Auth:
-          response=$(curl -sS -w "%{http_code}" -o response.json -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "$url")
+          response=$(curl -s -w "%{http_code}" -o response.json -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "$url")
           http_code=$(tail -n1 <<< "$response")
       fi
 
-      case "$http_code" in
-        200)
-          return
-          ;;
-        404)
-          if [ -n "$not_found_message" ]; then
-            echo "****   ERROR: $not_found_message   ****"
-          else
-            echo "****   ERROR: GitHub resource not found (HTTP 404): $url   ****"
-          fi
-          ;;
-        401)
-          echo "****   ERROR: GitHub authentication failed (HTTP 401). Check the GitHub token.   ****"
-          ;;
-        403)
-          echo "****   ERROR: GitHub denied the request (HTTP 403). Check token permissions and API rate limits.   ****"
-          ;;
-        *)
-          echo "****   ERROR: GitHub request failed with HTTP status code $http_code: $url   ****"
-          ;;
-      esac
-
-      github_error_message=$(jq -r '.message // empty' response.json 2>/dev/null || true)
-      if [ -n "$github_error_message" ]; then
-        echo "****   GitHub response: $github_error_message   ****"
-      fi
-      echo "****   EXPORT IS NOT COMPLETED   ****"
-      exit 1
-  }
-
-  resolve_tag_commit() {
-      local repo=$1
-      local tag=$2
-      local encoded_tag
-      local object_type
-      local object_sha
-
-      if [ -z "$tag" ]; then
-        echo "****   ERROR: Empty tag configured for repository 'pagopa/$repo'. Expected format: tag/<tag-name>.   ****"
-        echo "****   EXPORT IS NOT COMPLETED   ****"
-        exit 1
-      fi
-
-      # Encode each path component while preserving slashes allowed in Git tag names.
-      encoded_tag=$(jq -nr --arg tag "$tag" '$tag | split("/") | map(@uri) | join("/")')
-      github_request \
-        "https://api.github.com/repos/pagopa/$repo/git/ref/tags/$encoded_tag" \
-        "Tag '$tag' does not exist in GitHub repository 'pagopa/$repo'. Check repository-list.json in pn-configuration."
-
-      object_type=$(jq -er '.object.type' response.json 2>/dev/null) || {
-        echo "****   ERROR: Invalid GitHub response while resolving tag '$tag' in repository 'pagopa/$repo'.   ****"
-        echo "****   EXPORT IS NOT COMPLETED   ****"
-        exit 1
-      }
-      object_sha=$(jq -er '.object.sha' response.json 2>/dev/null) || {
-        echo "****   ERROR: GitHub response for tag '$tag' in repository 'pagopa/$repo' does not contain a SHA.   ****"
-        echo "****   EXPORT IS NOT COMPLETED   ****"
-        exit 1
-      }
-
-      # Lightweight tags point directly to a commit. Annotated tags point to
-      # another Git object, which may itself be another annotated tag.
-      while [ "$object_type" = "tag" ]; do
-        github_request "https://api.github.com/repos/pagopa/$repo/git/tags/$object_sha"
-        object_type=$(jq -er '.object.type' response.json 2>/dev/null) || {
-          echo "****   ERROR: Invalid annotated tag '$tag' in repository 'pagopa/$repo'.   ****"
+      #If script failed exit from immediately:
+      if [ "$http_code" -ne 200 ]; then
+          echo "****   ERROR: GitHub request failed with HTTP status code $http_code. Exit from script.   ****"
           echo "****   EXPORT IS NOT COMPLETED   ****"
           exit 1
-        }
-        object_sha=$(jq -er '.object.sha' response.json 2>/dev/null) || {
-          echo "****   ERROR: Annotated tag '$tag' in repository 'pagopa/$repo' does not contain a target SHA.   ****"
-          echo "****   EXPORT IS NOT COMPLETED   ****"
-          exit 1
-        }
-      done
-
-      if [ "$object_type" != "commit" ]; then
-        echo "****   ERROR: Tag '$tag' in repository 'pagopa/$repo' does not point to a commit.   ****"
-        echo "****   EXPORT IS NOT COMPLETED   ****"
-        exit 1
       fi
-
-      PN_COMMIT_ID=$object_sha
   }
 
   #cloning git repository and change directory:
@@ -347,10 +267,10 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
       fi
 
     #TAG:
-    elif [[ "$PN_COMMIT" == tag/* ]]; then
+    elif grep -q "$SUB1" <<< "$PN_COMMIT"; then
         echo "TAG is present for $PN_CONFIGURATION_TAG_param , go to GitHub";
-        # Take only the tag name, preserving any slash in it (for example release/v1.0.0).
-        TAG=${PN_COMMIT#tag/}
+        #take only tag es: v1.0.0:
+        TAG=$(echo $PN_COMMIT | cut -d "/" -f 2)
         #declare variable for repo:
         REPO=$(echo $PN_CONFIGURATION_TAG_param | sed -E 's/_commitId//g' | sed -E 's/_/-/g')
         
@@ -361,7 +281,12 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
           REPO="pn-auth-fleet"
         fi
 
-        resolve_tag_commit "$REPO" "$TAG"
+        github_request "https://api.github.com/repos/pagopa/$REPO/tags"
+        if ! PN_COMMIT_ID=$(jq -er --arg tag "$TAG" '.[] | select(.name == $tag) | .commit.sha' response.json); then
+          echo "****   ERROR: Tag '$TAG' does not exist in GitHub repository 'pagopa/$REPO'. Check repository-list.json in pn-configuration.   ****"
+          echo "****   EXPORT IS NOT COMPLETED   ****"
+          exit 1
+        fi
         echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
     
     #CommitID (nothing to do):
@@ -382,9 +307,7 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
           REPO=pn-auth-fleet
         fi
         
-        github_request \
-          "https://api.github.com/repos/pagopa/$REPO/branches/$PN_COMMIT" \
-          "Branch '$PN_COMMIT' does not exist in GitHub repository 'pagopa/$REPO'. Check repository-list.json in pn-configuration."
+        github_request "https://api.github.com/repos/pagopa/$REPO/branches/$PN_COMMIT"
         PN_COMMIT_ID=$(jq -r '.commit.sha' response.json)
         echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
     fi
