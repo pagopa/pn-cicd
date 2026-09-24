@@ -235,7 +235,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       mv ${TmpFilePath} ${ParamFilePath}
     fi
 
-    OptionalParameters="${OptionalParameters}, \"DataMonitoringBucketName=${dashboardTemplateBucketName}\""
+    OptionalParameters="${OptionalParameters}, \"ProjectName=${ProjectName}\",\"DataMonitoringBucketName=${dashboardTemplateBucketName}\""
 
     PipelineParams="\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}\",$OptionalParameters"
     EnanchedParamFilePath="pn-infra/runtime-infra/pn-oer-dashboard-${env_type}-enhanced-cfg.json"
