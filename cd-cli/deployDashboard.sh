@@ -141,6 +141,9 @@ if ( [ ! -z "${aws_region}" ] ) then
 fi
 echo ${aws_command_base_args}
 
+account_id=$(aws ${aws_command_base_args} sts get-caller-identity --query "Account" --output text)
+echo " - Account Id: ${account_id}"
+
 
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
 templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
@@ -163,6 +166,18 @@ echo "## start merge all ##"
 cat $INFRA_ALL_OUTPUTS_FILE
 echo "## end merge all ##"
 
+echo ""
+echo "Upload dashboard template bucket S3"
+dashboardTemplateS3Url=s3://pn-datamonitoring-${aws_region}-${account_id}/dashboard/${pn_infra_commitid}/runtime-infra
+echo " - Dashboard Bucket Template S3 Url: ${dashboardTemplateS3Url}"
+
+if ( [ -d pn-infra/runtime-infra/dashboard ] ) then
+  aws ${aws_command_base_args} \
+      s3 cp pn-infra/runtime-infra/dashboard ${dashboardTemplateS3Url} \
+        --recursive --exclude ".git/*"
+else
+  echo " - No pn-infra/runtime-infra/dashboard directory found, skipping upload"
+fi
 
 ## Script to get metric alarms not used by any composite alarm
 if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
