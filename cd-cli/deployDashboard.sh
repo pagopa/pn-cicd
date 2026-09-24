@@ -169,7 +169,8 @@ echo "## end merge all ##"
 echo ""
 echo "Upload dashboard template bucket S3"
 
-dashboardTemplateS3Url=s3://pn-datamonitoring-${aws_region}-${account_id}
+dashboardTemplateBucketName=pn-datamonitoring-${aws_region}-${account_id}
+dashboardTemplateS3Url=s3://${dashboardTemplateBucketName}
 echo " - Dashboard Bucket Template S3 Url: ${dashboardTemplateS3Url}"
 
 if ( [ -d pn-infra/runtime-infra/dashboard ] ) then
@@ -234,7 +235,7 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       mv ${TmpFilePath} ${ParamFilePath}
     fi
 
-    OptionalParameters="${OptionalParameters}, \"DataMonitoringBucketName=${dashboardTemplateS3Url}"
+    OptionalParameters="${OptionalParameters}, \"DataMonitoringBucketName=${dashboardTemplateBucketName}\""
 
     PipelineParams="\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}\",$OptionalParameters"
     EnanchedParamFilePath="pn-infra/runtime-infra/pn-oer-dashboard-${env_type}-enhanced-cfg.json"
