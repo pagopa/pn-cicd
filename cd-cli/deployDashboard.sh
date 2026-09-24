@@ -168,13 +168,14 @@ echo "## end merge all ##"
 
 echo ""
 echo "Upload dashboard template bucket S3"
-dashboardTemplateS3Url=s3://pn-datamonitoring-${aws_region}-${account_id}/dashboard/${pn_infra_commitid}/runtime-infra
+
+dashboardTemplateS3Url=s3://pn-datamonitoring-${aws_region}-${account_id}
 echo " - Dashboard Bucket Template S3 Url: ${dashboardTemplateS3Url}"
 
 if ( [ -d pn-infra/runtime-infra/dashboard ] ) then
   aws ${aws_command_base_args} \
-      s3 cp pn-infra/runtime-infra/dashboard ${dashboardTemplateS3Url} \
-        --recursive --exclude ".git/*"
+      s3 cp pn-infra/runtime-infra/dashboard ${dashboardTemplateS3Url}/dashboard \
+      --recursive --exclude ".git/*" --quiet
 else
   echo " - No pn-infra/runtime-infra/dashboard directory found, skipping upload"
 fi
@@ -233,6 +234,8 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       mv ${TmpFilePath} ${ParamFilePath}
     fi
 
+    OptionalParameters="${OptionalParameters}, \"DataMonitoringBucketName=${dashboardTemplateS3Url}"
+
     PipelineParams="\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}\",$OptionalParameters"
     EnanchedParamFilePath="pn-infra/runtime-infra/pn-oer-dashboard-${env_type}-enhanced-cfg.json"
 
@@ -250,6 +253,14 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
         --capabilities CAPABILITY_NAMED_IAM \
         --s3-bucket ${bucketName} \
         --template-file pn-infra/runtime-infra/pn-oer-dashboard.yaml \
+        --tags Microservice=pn-infra-monitoring \
+        --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+
+    aws ${aws_command_base_args} cloudformation deploy \
+        --stack-name pn-business-dashboard-${env_type} \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --s3-bucket ${bucketName} \
+        --template-file pn-infra/runtime-infra/pn-business-dashboard.yaml \
         --tags Microservice=pn-infra-monitoring \
         --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
 else
