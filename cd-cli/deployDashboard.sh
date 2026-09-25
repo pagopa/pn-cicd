@@ -256,14 +256,18 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
         --template-file pn-infra/runtime-infra/pn-oer-dashboard.yaml \
         --tags Microservice=pn-infra-monitoring \
         --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
-
-    aws ${aws_command_base_args} cloudformation deploy \
+    
+    if ( [ -f pn-infra/runtime-infra/pn-business-dashboard.yaml ] ) then
+      aws ${aws_command_base_args} cloudformation deploy \
         --stack-name pn-business-dashboard-${env_type} \
         --capabilities CAPABILITY_NAMED_IAM \
         --s3-bucket ${bucketName} \
         --template-file pn-infra/runtime-infra/pn-business-dashboard.yaml \
         --tags Microservice=pn-infra-monitoring \
         --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+    else
+      echo "Skipped Business dashboard deploy"
+    fi
 else
     echo "Skipped OER dashboard deploy"
 fi
