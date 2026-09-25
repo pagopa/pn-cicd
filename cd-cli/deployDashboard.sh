@@ -141,6 +141,9 @@ if ( [ ! -z "${aws_region}" ] ) then
 fi
 echo ${aws_command_base_args}
 
+account_id=$(aws ${aws_command_base_args} sts get-caller-identity --query "Account" --output text)
+echo " - Account Id: ${account_id}"
+
 
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
 templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
@@ -163,6 +166,20 @@ echo "## start merge all ##"
 cat $INFRA_ALL_OUTPUTS_FILE
 echo "## end merge all ##"
 
+echo ""
+echo "Upload dashboard template bucket S3"
+
+dashboardTemplateBucketName=pn-datamonitoring-${aws_region}-${account_id}
+dashboardTemplateS3Url=s3://${dashboardTemplateBucketName}
+echo " - Dashboard Bucket Template S3 Url: ${dashboardTemplateS3Url}"
+
+if ( [ -d pn-infra/runtime-infra/dashboard ] ) then
+  aws ${aws_command_base_args} \
+      s3 cp pn-infra/runtime-infra/dashboard ${dashboardTemplateS3Url}/dashboard \
+      --recursive --exclude ".git/*" --quiet
+else
+  echo " - No pn-infra/runtime-infra/dashboard directory found, skipping upload"
+fi
 
 ## Script to get metric alarms not used by any composite alarm
 if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
@@ -218,6 +235,8 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
       mv ${TmpFilePath} ${ParamFilePath}
     fi
 
+    OptionalParameters="${OptionalParameters}, \"ProjectName=${project_name}\",\"DataMonitoringBucketName=${dashboardTemplateBucketName}\""
+
     PipelineParams="\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitId}\",$OptionalParameters"
     EnanchedParamFilePath="pn-infra/runtime-infra/pn-oer-dashboard-${env_type}-enhanced-cfg.json"
 
@@ -237,6 +256,18 @@ if ( [ -f pn-infra/runtime-infra/pn-oer-dashboard.yaml ] ) then
         --template-file pn-infra/runtime-infra/pn-oer-dashboard.yaml \
         --tags Microservice=pn-infra-monitoring \
         --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+    
+    if ( [ -f pn-infra/runtime-infra/pn-business-dashboard.yaml ] ) then
+      aws ${aws_command_base_args} cloudformation deploy \
+        --stack-name pn-business-dashboard-${env_type} \
+        --capabilities CAPABILITY_NAMED_IAM \
+        --s3-bucket ${bucketName} \
+        --template-file pn-infra/runtime-infra/pn-business-dashboard.yaml \
+        --tags Microservice=pn-infra-monitoring \
+        --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
+    else
+      echo "Skipped Business dashboard deploy"
+    fi
 else
     echo "Skipped OER dashboard deploy"
 fi
