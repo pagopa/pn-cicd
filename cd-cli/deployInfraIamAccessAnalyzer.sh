@@ -168,7 +168,7 @@ echo ""
 echo "=== Package and upload Lambda functions"
 lambdasBasePath="pn-infra-iam-access/${pn_infra_commitid}"
 
-for lambda_dir in pn-infra/runtime-infra/lambdas/iam-unused-access-exporter pn-infra/runtime-infra/lambdas/iam-unused-access-core-widget; do
+for lambda_dir in pn-infra/runtime-infra/lambdas/iam-unused-access-exporter; do
   lambda_name=$(basename "$lambda_dir")
   echo " - Packaging ${lambda_name}"
   (cd "$lambda_dir" && zip -r "${work_dir}/${lambda_name}.zip" .)
