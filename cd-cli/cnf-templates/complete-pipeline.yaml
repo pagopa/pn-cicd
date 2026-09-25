@@ -2434,15 +2434,15 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
-                - 'echo "###                OER DASHBOARD                      ###"'
+                - 'echo "###                DASHBOARD                      ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
                 - |
-                  existsDashboardOer=$(find ./scripts/cd-cli -name deployOerDashboard.sh | wc -l)
+                  existsDashboardOer=$(find ./scripts/cd-cli -name deployDashboard.sh | wc -l)
                   if ( [ $existsDashboardOer = "1" ] ) then
-                    (cd scripts/cd-cli && ./deployOerDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
+                    (cd scripts/cd-cli && ./deployDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
                   fi
                 - 'echo ""'
                 - 'echo ""'
