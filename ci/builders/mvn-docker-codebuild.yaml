@@ -218,6 +218,11 @@ Conditions:
       - Ref: GitHubProjectName
       - 'pn-paper-channel'
 
+  PnBffModule:
+    Fn::Equals:
+      - Ref: GitHubProjectName
+      - 'pn-bff'
+
   IsNativeComp:
     Fn::Equals:
       - Ref: NativeComp
@@ -227,6 +232,7 @@ Conditions:
     Fn::Or:
       - Condition: PnDeliveryPushModule
       - Condition: PnPaperChannelModule
+      - Condition: PnBffModule
       - Condition: IsNativeComp
   
   NeedARMEnvironment:
