@@ -2226,6 +2226,24 @@ Resources:
                 - 'custom_config_dir=$( cd "scripts/cd-cli/custom-config" && pwd)'
                 - 'echo ""'
                 - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###                  DASHBOARD UTILS                  ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "./deployDashboardUtils.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a confinfo -c $custom_config_dir"'
+                - '(cd scripts/cd-cli && ./deployDashboardUtils.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a confinfo -c $custom_config_dir )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - |
+                  existsDashboardOer=$(find ./scripts/cd-cli -name deployDashboard.sh | wc -l)
+                  if ( [ $existsDashboardOer = "1" ] ) then
+                    (cd scripts/cd-cli && ./deployDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
+                  fi
+                - 'echo ""'
+                - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
