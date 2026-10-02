@@ -198,7 +198,7 @@ cat ${EnhancedParamFilePath}
 
 if ( [ -f "${DASHBOARD_UTILS_TEMPLATE_PATH}" ] ) then
   aws ${aws_command_base_args} cloudformation deploy \
-        --stack-name pn-dashboard-utils-${env_type} \ 
+        --stack-name pn-dashboard-utils-${env_type} \
         --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
         --template-file $DASHBOARD_UTILS_TEMPLATE_PATH \
         --tags Microservice=pn-infra-monitoring \
