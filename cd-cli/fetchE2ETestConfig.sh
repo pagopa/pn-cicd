@@ -117,6 +117,8 @@ SECRET_PROPS=(
   "pn.external.radd-cognito-clientid-user-1=e2eTestCognitoClientIdUser1"
   "pn.external.radd-cognito-password-user-2=e2eTestCognitoPasswordUser2"
   "pn.external.radd-cognito-clientid-user-2=e2eTestCognitoClientIdUser2"
+  "pn.address.manager.api-key=e2eAddressManagerApiKey"
+  "pn.address.manager.cxId=e2eAddressManagerCxId"
 )
 
 # ==============================================================================
@@ -167,6 +169,7 @@ SSM_PROPS=(
   "pn.delayer.lambda.arn=/pn-test-e2e/pnDelayerLambdaArn"
   "pn.delayer.portfat.lambda.name=/pn-test-e2e/portfatLambdaArn"
   "pn-deleghe-temporanee-bucket-s3=/pn-test-e2e/delegheTemporaneeBucketS3"
+  "pn.address.manager.base-url=/pn-test-e2e/addressManagerUrl"
   # NB: pn.radd-vpc.base-url e' condizionale (vedi sezione DERIVATE / STATICHE).
 )
 
