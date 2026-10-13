@@ -22,8 +22,7 @@ usage() {
     -e <env-type>                  : one of dev / uat / svil / coll / cert / prod
     [-s <cfgRepositorySecretName>] : nome del secret che contiene le informazioni per effettuare
                                      il download delle configurazioni specifiche dell'ambiente
-    [-c <PnConfigurationTag>]      : a partire dal file repository-list.json nel repo pn-configuration 
-                                     costruisce il file desiredCommitIds.sh
+    [-c <PnConfigurationTag>]      : configuration ref (main/origin/main or PR commit ID)
     [-i <CiCdAccountId>]            : CICD Account Id
     
     
@@ -182,6 +181,22 @@ _clone_repository(){
   fi
 
   git clone ${_GITURI}
+
+  # Defaults retain the clone's current main; overrides must resolve before copying files.
+  (
+    cd pn-configuration
+    case "$PN_CONFIGURATION_TAG" in
+      main|origin/main) ;;
+      *)
+        configuration_commit=$(git rev-parse --verify --end-of-options "${PN_CONFIGURATION_TAG}^{commit}") || {
+          echo "Invalid pn-configuration ref: $PN_CONFIGURATION_TAG" >&2
+          exit 1
+        }
+        git checkout --detach "$configuration_commit" || exit 1
+        ;;
+    esac
+    echo "pn-configuration ref: $PN_CONFIGURATION_TAG; commit: $(git rev-parse HEAD)"
+  )
 
   (cd pn-configuration && git reflog -n 10)
 }
