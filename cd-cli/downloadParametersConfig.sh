@@ -22,7 +22,7 @@ usage() {
     -e <env-type>                  : one of dev / uat / svil / coll / cert / prod
     [-s <cfgRepositorySecretName>] : nome del secret che contiene le informazioni per effettuare
                                      il download delle configurazioni specifiche dell'ambiente
-    [-c <PnConfigurationTag>]      : configuration ref (main/origin/main or PR commit ID)
+    [-c <PnConfigurationTag>]      : configuration ref (main/origin/main or commit ID)
     [-i <CiCdAccountId>]            : CICD Account Id
     
     
