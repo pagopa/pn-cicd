@@ -8526,7 +8526,7 @@ Resources:
       Variables:
         - Name: pn_configuration_ref
           DefaultValue: "origin/main"
-          Description: 'Defaults to origin/main. Override with the pn-configuration PR commit ID.'
+          Description: 'Enter a commit ID to validate another version of pn-configuration before merge.'
         - Name: release_label
           DefaultValue: "UNTAGGED"
           Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
