@@ -1925,9 +1925,13 @@ Resources:
                   ( cd pn-cicd && git checkout $cd_scripts_commitId )
                   if ( [ ! -z "$PnConfigurationEnabled" ] ) then
                     echo "### Execute Download Custom Config ###"
-                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c main -i $CiAccountId || exit 1
+                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c "${PnConfigurationRef:-main}" -i $CiAccountId || exit 1
                     echo ""
                   else
+                    case "${PnConfigurationRef:-main}" in
+                      main|origin/main) ;;
+                      *) echo "Configuration override requires pn-configuration support."; exit 1 ;;
+                    esac
                     ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) || exit 1
                   fi                 
                 - 'echo ""'
@@ -8520,6 +8524,9 @@ Resources:
         - Key: goallowed
           Value: true
       Variables:
+        - Name: pn_configuration_ref
+          DefaultValue: "origin/main"
+          Description: 'Enter a commit ID to validate another version of pn-configuration.'
         - Name: release_label
           DefaultValue: "UNTAGGED"
           Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
@@ -8593,6 +8600,7 @@ Resources:
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"PnConfigurationRef", "value":"#{variables.pn_configuration_ref}", "type":"PLAINTEXT"},
                     {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
                     {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
