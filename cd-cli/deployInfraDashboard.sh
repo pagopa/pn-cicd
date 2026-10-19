@@ -166,9 +166,19 @@ echo "###################################################################"
 PreviousOutputFilePath=previous-output-${env_type}.json
 PreviousLogsOutputFilePath=previous-logs-output-${env_type}.json
 PreviousMonitoringOutputFilePath=previous-monitoring-output-${env_type}.json
+InfraStorageOutputFilePath=infra-storage-output-${env_type}.json
 TemplateFilePath="pn-infra/runtime-infra/pn-infra-dashboard.yaml"
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 EnanchedParamFilePath="pn-infra-dashboard-${env_type}-enhanced.json"
+
+echo "= Read Outputs from pn-infra-storage"
+aws ${aws_command_base_args} \
+    cloudformation describe-stacks \
+      --stack-name pn-infra-storage-$env_type \
+      --query "Stacks[0].Outputs" \
+      --output json \
+      | jq 'map({ (.OutputKey): .OutputValue}) | add' \
+      | tee ${InfraStorageOutputFilePath}
 
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
@@ -246,8 +256,8 @@ fi
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * { \"Parameters\": .[2] }" \
-   ${PreviousOutputFilePath} ${PreviousLogsOutputFilePath} ${PreviousMonitoringOutputFilePath} \
+jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * { \"Parameters\": .[2] } * { \"Parameters\": .[3] }" \
+   ${InfraStorageOutputFilePath} ${PreviousOutputFilePath} ${PreviousLogsOutputFilePath} ${PreviousMonitoringOutputFilePath} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ${AdditionalParams}]" >> ${EnanchedParamFilePath}
