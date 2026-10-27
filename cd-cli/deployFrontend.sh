@@ -595,6 +595,11 @@ if [[ -n "$HAS_PORTALE_PT" ]]; then
   webappPtDistributionId=${distributionId}
   webappPtTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
   webappPtTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
+
+  echo " === Distribution ID Portale PT = ${webappPtDistributionId}"
+  echo " === Bucket Portale PT = ${webappPtBucketName}"
+  echo " === Too Many Request Alarm Portale PT = ${webappPtTooManyRequestsAlarmArn}"
+  echo " === Too Many Errors Alarm Portale PT = ${webappPtTooManyErrorsAlarmArn}"
 fi
 
 prepareOneCloudFront webapp-pfl-cdn-${env_type} \
@@ -654,12 +659,6 @@ echo " === Distribution ID Portale PA = ${webappPaDistributionId}"
 echo " === Bucket Portale PA = ${webappPaBucketName}"
 echo " === Too Many Request Alarm Portale PA = ${webappPaTooManyRequestsAlarmArn}"
 echo " === Too Many Errors Alarm Portale PA = ${webappPaTooManyErrorsAlarmArn}"
-if [[ -n "$HAS_PORTALE_PT" ]]; then
-  echo " === Distribution ID Portale PT = ${webappPtDistributionId}"
-  echo " === Bucket Portale PT = ${webappPtBucketName}"
-  echo " === Too Many Request Alarm Portale PT = ${webappPtTooManyRequestsAlarmArn}"
-  echo " === Too Many Errors Alarm Portale PT = ${webappPtTooManyErrorsAlarmArn}"
-fi
 echo " === Bucket Portale PF = ${webappPfBucketName}"
 echo " === Distribution ID Portale PF = ${webappPfDistributionId}"
 echo " === Too Many Request Alarm Portale PF = ${webappPfTooManyRequestsAlarmArn}"
