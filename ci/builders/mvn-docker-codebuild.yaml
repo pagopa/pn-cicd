@@ -379,11 +379,9 @@ Resources:
               runtime-versions:
                 java: corretto${JAVA_VERSION}
                 nodejs: ${NODE_VERSION}
+                python: ${PYTHON_VERSION}
               commands:
-                - echo "Setting up Python ${PYTHON_VERSION}"
-                - pyenv install -s $PYTHON_VERSION
-                - pyenv versions
-                - pyenv global $PYTHON_VERSION
+                - node --version
                 - python --version
             pre_build:
               on-failure: ABORT

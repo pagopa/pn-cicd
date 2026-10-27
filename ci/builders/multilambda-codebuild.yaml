@@ -22,7 +22,7 @@ Parameters:
     Description: Topic for build and pipeline notification
   NodeVersion:
     Type: String
-    Default: '18'
+    Default: '22'
     AllowedValues:
       - '18'
       - '20'
@@ -52,15 +52,6 @@ Parameters:
     Description: Codebuild network SecurityGroupID
     Default: sg-03a2c0bb8367596b2
 
-Mappings:
-  NodeImageMap:
-    '18':
-      Image: aws/codebuild/standard:7.0
-    '20':
-      Image: aws/codebuild/standard:7.0
-    '22':
-      Image: aws/codebuild/standard:7.0
-
 Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
@@ -71,7 +62,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: !FindInMap [ NodeImageMap, !Ref NodeVersion, Image ]
+        Image: aws/codebuild/standard:7.0
         EnvironmentVariables:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
@@ -85,6 +76,9 @@ Resources:
           - Name: CI_BUCKET_NAME
             Type: PLAINTEXT
             Value: !Sub "${CiArtifactBucket}"
+          - Name: NODE_VERSION
+            Type: PLAINTEXT
+            Value: !Ref NodeVersion
           - Name: PYTHON_VERSION
             Type: PLAINTEXT
             Value: !Ref PythonVersion
@@ -99,11 +93,11 @@ Resources:
               SONAR_TOKEN: arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM:token
           phases:
             install:
+              runtime-versions:
+                nodejs: ${NODE_VERSION}
+                python: ${PYTHON_VERSION}
               commands:
-                - echo "Setting up Python ${PYTHON_VERSION}"
-                - pyenv install -s $PYTHON_VERSION
-                - pyenv versions
-                - pyenv global $PYTHON_VERSION
+                - node --version
                 - python --version
                 - npm install --global pnpm
             pre_build:
