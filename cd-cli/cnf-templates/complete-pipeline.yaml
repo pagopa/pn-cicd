@@ -2073,8 +2073,8 @@ Resources:
                   existsFunctionsFolder=$(find ./pn-auth-fleet -name "functions" | wc -l)
                   existsDeployMultiLambdaScript=$(find ./scripts/cd-cli -name "deployMultiLambdaService.sh" | wc -l)
                   if ( [ $existsFunctionsFolder = "1" -a $existsDeployMultiLambdaScript = "1" ] ) then
-                    echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
-                    (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
+                    echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId --bff-commitid ${pn_bff_commitId:-} -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
+                    (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId --bff-commitid "${pn_bff_commitId:-}" -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
                   else
                     echo "Auth fleet non multifunctions is not supported"
                   fi
@@ -2248,8 +2248,8 @@ Resources:
                   existsFunctionsFolder=$(find ./pn-auth-fleet -name "functions" | wc -l)
                   existsDeployMultiLambdaScript=$(find ./scripts/cd-cli -name "deployMultiLambdaService.sh" | wc -l)
                   if ( [ $existsFunctionsFolder = "1" -a $existsDeployMultiLambdaScript = "1" ] ) then
-                    echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
-                    (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
+                    echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId --bff-commitid ${pn_bff_commitId:-} -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
+                    (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId --bff-commitid "${pn_bff_commitId:-}" -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
                   else
                     echo "Auth fleet non multifunction is not supported"
                   fi
