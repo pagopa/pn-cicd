@@ -123,7 +123,10 @@ parse_params() {
       LambdasBucketName="${2-}"
       shift
       ;;
-    -?*) die "Unknown option: $1" ;;
+    -?*)
+      printf 'Unknown option: %q\n' "$1" >&2
+      exit 1
+      ;;
     *) break ;;
     esac
     shift
