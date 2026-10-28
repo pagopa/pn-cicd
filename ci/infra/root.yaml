@@ -2220,6 +2220,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/docker-generic-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-simulatore-recapiti"
+        PythonVersion: "3.10"
         GitHubDefaultBranch: "develop"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
@@ -2383,6 +2384,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-pa-webapp"
         BaseDir: "packages/pn-pa-webapp"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2396,6 +2398,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personafisica-webapp"
         BaseDir: "packages/pn-personafisica-webapp"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2409,6 +2412,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personagiuridica-webapp"
         BaseDir: "packages/pn-personagiuridica-webapp"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2422,6 +2426,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personafisica-login"
         BaseDir: "packages/pn-personafisica-login"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2435,6 +2440,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-showcase-site"
+        NodeVersion: "22"
         PackageName: "pn-showcase-site"
         BaseDir: "pn-showcase-site"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2448,6 +2454,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-helpdesk-fe"
+        NodeVersion: "22"
         PackageName: "pn-helpdesk-fe"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -2461,6 +2468,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-commons"
         BaseDir: "packages/pn-commons"
       TimeoutInMinutes: 5
@@ -2470,6 +2478,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-pa-webapp"
         BaseDir: "packages/pn-pa-webapp"
       TimeoutInMinutes: 5
@@ -2479,6 +2488,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personafisica-webapp"
         BaseDir: "packages/pn-personafisica-webapp"
       TimeoutInMinutes: 5
@@ -2488,6 +2498,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personagiuridica-webapp"
         BaseDir: "packages/pn-personagiuridica-webapp"
       TimeoutInMinutes: 5
@@ -2497,6 +2508,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personafisica-login"
         BaseDir: "packages/pn-personafisica-login"
       TimeoutInMinutes: 5
@@ -2506,6 +2518,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-validator"
         BaseDir: "packages/pn-validator"
       TimeoutInMinutes: 5
@@ -2515,6 +2528,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-helpdesk-fe"
+        NodeVersion: "22"
         PackageName: "pn-helpdesk-fe"
       TimeoutInMinutes: 5
 
@@ -2538,7 +2552,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/multilambda-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-infra"
-        NodeVersion: "22"
+        NodeVersion: "24"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
