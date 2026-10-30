@@ -40,7 +40,7 @@ _DEPLOY_SUCCESS=false
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -n <repo-name> -r <aws-region> -e <env-type> -i <github-commitid> -a <pn-microsvc-github-commitId> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaArtifactBucketName> [-w <work_dir>]
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -n <repo-name> -r <aws-region> -e <env-type> -i <github-commitid> -a <pn-microsvc-github-commitId> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaArtifactBucketName> [-w <work_dir>] [--bff-commitid <pn-bff-commit-id>]
     
     
     [-h]                           : this help message
@@ -55,6 +55,7 @@ usage() {
     -B <lambdaArtifactBucketName>  : bucket name where lambda artifact are memorized
     -n <repo-name>                 : nome del repository del servizio
     -w <work-dir>                    : working directory used by the script to download artifacts (default $HOME/tmp/deploy)
+    --bff-commitid <pn-bff-commit-id> : resolved pn-bff commit ID, required for pn-auth-fleet JWT policies
 
 EOF
   exit 1
@@ -70,6 +71,7 @@ parse_params() {
   repo_name=""
   pn_infra_commitid=""
   pn_microsvc_commitId=""
+  pn_bff_commitId=""
   bucketName=""
   LambdasBucketName=""
 
@@ -97,6 +99,10 @@ parse_params() {
       pn_microsvc_commitId="${2-}"
       shift
       ;;
+    --bff-commitid)
+      pn_bff_commitId="${2-}"
+      shift
+      ;;
     -c | --custom-config-dir) 
       custom_config_dir="${2-}"
       shift
@@ -117,7 +123,10 @@ parse_params() {
       LambdasBucketName="${2-}"
       shift
       ;;
-    -?*) die "Unknown option: $1" ;;
+    -?*)
+      printf 'Unknown option: %q\n' "$1" >&2
+      exit 1
+      ;;
     *) break ;;
     esac
     shift
@@ -145,6 +154,9 @@ dump_params(){
   echo "Custom config dir:  ${custom_config_dir}"
   echo "Infra CommitId:     ${pn_infra_commitid}"
   echo "Microsvc CommitId: ${pn_microsvc_commitId}"
+  if [[ "$repo_name" == "pn-auth-fleet" ]]; then
+    echo "BFF CommitId:       ${pn_bff_commitId}"
+  fi
   echo "Repo Name: ${repo_name}"
   echo "Env Name:           ${env_type}"
   echo "AWS region:         ${aws_region}"
@@ -226,10 +238,25 @@ aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.co
 
 unzip ${lambdasZip} -d ./${lambdasLocalPath}
 
+if [[ "$repo_name" == "pn-auth-fleet" ]]; then
+  bash "${script_dir}/commons/prepare-jwt-policies.sh" \
+    "$pn_bff_commitId" "${lambdasLocalPath}/jwtAuthorizer.zip"
+fi
+
 bucketBasePath="${repo_name}/${pn_microsvc_commitId}"
-aws ${aws_command_base_args} s3 cp --recursive \
+if [[ "$repo_name" == "pn-auth-fleet" ]]; then
+  jwt_authorizer_code_s3_key="${repo_name}/${pn_microsvc_commitId}_${pn_bff_commitId}/jwtAuthorizer.zip"
+  aws ${aws_command_base_args} s3 cp \
+      "${lambdasLocalPath}/jwtAuthorizer.zip" \
+      "s3://${bucketName}/${jwt_authorizer_code_s3_key}" --quiet
+  aws ${aws_command_base_args} s3 cp --recursive \
+      "${lambdasLocalPath}/" \
+      "s3://$bucketName/${bucketBasePath}/" --exclude "jwtAuthorizer.zip" --quiet
+else
+  aws ${aws_command_base_args} s3 cp --recursive \
       "${lambdasLocalPath}/" \
       "s3://$bucketName/${bucketBasePath}/" --quiet
+fi
 
 
 echo ""
@@ -337,6 +364,9 @@ PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\
      \"ProjectName=$project_name\",\"MicroserviceNumber=${MicroserviceNumber}\",\
      \"LambdasBucketName=${bucketName}\",\"BucketBasePath=$bucketBasePath\",\
      \"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid},${repo_name}=${pn_microsvc_commitId}\""
+if [[ "$repo_name" == "pn-auth-fleet" ]]; then
+  PipelineParams="${PipelineParams},\"JwtAuthorizerCodeS3Key=${jwt_authorizer_code_s3_key}\""
+fi
 
 echo " - PreviousOutputFilePath: ${PreviousOutputFilePath}"
 echo " - TemplateFilePath: ${TemplateFilePath}"
