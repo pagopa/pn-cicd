@@ -2405,6 +2405,15 @@ Resources:
         PackageName: "pn-pa-webapp"
         BaseDir: "packages/pn-pa-webapp"
       TimeoutInMinutes: 5
+  PnPtSonar:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-frontend"
+        PackageName: "pn-pt-webapp"
+        BaseDir: "packages/pn-pt-webapp"
+      TimeoutInMinutes: 5
   PnPersonafisicaSonar:
     Type: AWS::CloudFormation::Stack
     Properties:
