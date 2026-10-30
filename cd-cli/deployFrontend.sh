@@ -432,12 +432,14 @@ function prepareOneCloudFront() {
 
 ZONE_ID=""
 PORTALE_PA_CERTIFICATE_ARN=""
+PORTALE_PT_CERTIFICATE_ARN=""
 PORTALE_PF_CERTIFICATE_ARN=""
 PORTALE_PF_LOGIN_CERTIFICATE_ARN=""
 PORTALE_PG_CERTIFICATE_ARN=""
 PORTALE_STATUS_CERTIFICATE_ARN=""
 
 PORTALE_PA_DOMAIN="portale-pa.${env_type}.pn.pagopa.it"
+PORTALE_PT_DOMAIN=""
 PORTALE_PF_DOMAIN="portale.${env_type}.pn.pagopa.it"
 PORTALE_PF_LOGIN_DOMAIN="portale-login.${env_type}.pn.pagopa.it"
 PORTALE_PG_DOMAIN="portale-pg.${env_type}.pn.pagopa.it"
@@ -459,6 +461,11 @@ fi
 PortalePaCertificateArn=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePaCertificateArn' )
 if ( [ $PortalePaCertificateArn != '-' ] ) then
   PORTALE_PA_CERTIFICATE_ARN=$PortalePaCertificateArn
+fi
+
+PortalePtCertificateArn=$( jq -r '.PortalePtCertificateArn // empty' "${INFRA_ALL_OUTPUTS_FILE}" )
+if [[ -n "$PortalePtCertificateArn" && "$PortalePtCertificateArn" != "-" ]]; then
+  PORTALE_PT_CERTIFICATE_ARN=$PortalePtCertificateArn
 fi
 
 PortalePfCertificateArn=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePfCertificateArn' )
@@ -486,6 +493,11 @@ fi
 PortalePaDomain=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePaDomain' )
 if ( [ $PortalePaDomain != '-' ] ) then
   PORTALE_PA_DOMAIN=$PortalePaDomain
+fi
+
+PortalePtDomain=$( jq -r '.PortalePtDomain // empty' "${INFRA_ALL_OUTPUTS_FILE}" )
+if [[ -n "$PortalePtDomain" && "$PortalePtDomain" != "-" ]]; then
+  PORTALE_PT_DOMAIN=$PortalePtDomain
 fi
 
 PortalePfDomain=$( cat ${INFRA_ALL_OUTPUTS_FILE} | jq -r '.PortalePfDomain' )
@@ -516,6 +528,39 @@ fi
 
 echo "REACT_APP_URL_API ${REACT_APP_URL_API}"
 
+# PT remains optional until the production rollout is complete.
+HAS_PORTALE_PT=""
+if portalePtArtifactError=$(aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object \
+    --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-pt-webapp.tar.gz" 2>&1 > /dev/null); then
+  HAS_PORTALE_PT="true"
+elif [[ "$portalePtArtifactError" == *"An error occurred (404) when calling the HeadObject operation:"* ]]; then
+  echo "Skipping PT deployment: pn-pt-webapp.tar.gz is not available for frontend commit ${pn_frontend_commitid}"
+else
+  echo "Unable to check PT artifact: ${portalePtArtifactError}" >&2
+  exit 1
+fi
+
+if [[ -n "$HAS_PORTALE_PT" ]]; then
+  case "$PORTALE_PT_DOMAIN" in
+    ""|"-"|"null")
+      echo "Missing PT domain: configure PortalePtDomain or PORTALE_PT_DOMAIN in env-cdn.sh" >&2
+      exit 1
+      ;;
+  esac
+
+  case "$PORTALE_PT_CERTIFICATE_ARN" in
+    ""|"-"|"null")
+      echo "Missing PT certificate: configure PortalePtCertificateArn or PORTALE_PT_CERTIFICATE_ARN in env-cdn.sh" >&2
+      exit 1
+      ;;
+  esac
+
+  if [[ "$env_type" != "dev" && ! -f "pn-frontend/pn-pt-webapp/conf/config-${env_type}.json" ]]; then
+    echo "Missing PT configuration: pn-frontend/pn-pt-webapp/conf/config-${env_type}.json" >&2
+    exit 1
+  fi
+fi
+
 portalePgTarballPresent=$( ( aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api head-object --bucket ${LambdasBucketName} --key "pn-frontend/commits/${pn_frontend_commitid}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
 HAS_PORTALE_PG=""
 if ( [ $portalePgTarballPresent = "OK" ] ) then
@@ -538,6 +583,24 @@ webappPaBucketName=${bucketName}
 webappPaDistributionId=${distributionId}
 webappPaTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
 webappPaTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
+
+if [[ -n "$HAS_PORTALE_PT" ]]; then
+  prepareOneCloudFront webapp-pt-cdn-${env_type} \
+      "$PORTALE_PT_DOMAIN" \
+      "$PORTALE_PT_CERTIFICATE_ARN" \
+      "$ZONE_ID" \
+      "$REACT_APP_URL_API" \
+      "${PORTALE_PT_ALTERNATE_DNS-}"
+  webappPtBucketName=${bucketName}
+  webappPtDistributionId=${distributionId}
+  webappPtTooManyRequestsAlarmArn=${tooManyRequestsAlarmArn}
+  webappPtTooManyErrorsAlarmArn=${tooManyErrorsAlarmArn}
+
+  echo " === Distribution ID Portale PT = ${webappPtDistributionId}"
+  echo " === Bucket Portale PT = ${webappPtBucketName}"
+  echo " === Too Many Request Alarm Portale PT = ${webappPtTooManyRequestsAlarmArn}"
+  echo " === Too Many Errors Alarm Portale PT = ${webappPtTooManyErrorsAlarmArn}"
+fi
 
 prepareOneCloudFront webapp-pfl-cdn-${env_type} \
     "$PORTALE_PF_LOGIN_DOMAIN" \
@@ -699,6 +762,29 @@ aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${
 
 aws ${aws_command_base_args} \
     s3 sync "pn-pa-webapp" "s3://${webappPaBucketName}/" --delete 
+
+if [[ -n "$HAS_PORTALE_PT" ]]; then
+  echo ""
+  echo "===                          PORTALE PT                           ==="
+  echo "====================================================================="
+  aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+        --bucket "$LambdasBucketName" --key "pn-frontend/commits/${pn_frontend_commitid}/pn-pt-webapp.tar.gz" \
+        "pn-pt-webapp.tar.gz"
+
+  mkdir -p "pn-pt-webapp"
+  ( cd "pn-pt-webapp" \
+       && tar xvzf "../pn-pt-webapp.tar.gz" \
+       && replace_config ${env_type} "pn-pt-webapp" \
+  )
+
+  aws ${aws_command_base_args} \
+      s3 cp "pn-pt-webapp" "s3://${webappPtBucketName}/" --recursive
+
+  aws ${aws_command_base_args} cloudfront create-invalidation --distribution-id ${webappPtDistributionId} --paths "/*"
+
+  aws ${aws_command_base_args} \
+      s3 sync "pn-pt-webapp" "s3://${webappPtBucketName}/" --delete
+fi
 
 echo ""
 echo "===                          PORTALE PF                           ==="
