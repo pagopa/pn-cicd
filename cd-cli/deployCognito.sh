@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 usage() {
       cat <<EOF
-    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> [-c <custom_config_dir>] -b <artifactBucketName>
+    Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-p <aws-profile>] -r <aws-region> -e <env-type> -i <github-commitid> [-c <custom_config_dir>] -b <artifactBucketName> -B <lambdaBucketName>
 
     [-h]                      : this help message
     [-v]                      : verbose mode
@@ -23,6 +23,7 @@ usage() {
     -i <github-commitid>      : commitId for github repository pagopa/pn-infra
     [-c <custom_config_dir>]  : where tor read additional env-type configurations
     -b <artifactBucketName>   : bucket name to use as temporary artifacts storage
+    -B <lambdaBucketName>     : bucket name containing Lambda artifacts built by CI
     
 EOF
   exit 1
@@ -38,6 +39,7 @@ parse_params() {
   env_type=""
   pn_infra_commitid=""
   bucketName=""
+  LambdasBucketName=""
 
   while :; do
     case "${1-}" in
@@ -71,6 +73,10 @@ parse_params() {
       bucketName="${2-}"
       shift
       ;;
+    -B | --lambda-bucket-name)
+      LambdasBucketName="${2-}"
+      shift
+      ;;
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -84,6 +90,7 @@ parse_params() {
   [[ -z "${pn_infra_commitid-}" ]] && usage
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
+  [[ -z "${LambdasBucketName-}" ]] && usage
   return 0
 }
 
@@ -99,6 +106,7 @@ dump_params(){
   echo "AWS region:         ${aws_region}"
   echo "AWS profile:        ${aws_profile}"
   echo "Bucket Name:        ${bucketName}"
+  echo "Lambda Bucket Name: ${LambdasBucketName}"
 }
 
 
@@ -149,10 +157,17 @@ aws ${aws_command_base_args} \
     s3 cp pn-infra $templateBucketS3BaseUrl \
       --recursive --exclude ".git/*" --quiet
 
-## zip and upload lambda
-(cd pn-infra/runtime-infra/cognito/post-auth-trigger && npm --silent ci && zip -q -r function.zip .)
+echo " - Copy Cognito Lambda zip from CI"
+lambdasZip='functions.zip'
+lambdasLocalPath=$(mktemp -d)
+aws ${aws_command_base_args} --endpoint-url https://s3.eu-central-1.amazonaws.com s3api get-object \
+  --bucket "$LambdasBucketName" --key "pn-infra/commits/${pn_infra_commitid}/${lambdasZip}" \
+  "${lambdasLocalPath}/${lambdasZip}"
+unzip -q "${lambdasLocalPath}/${lambdasZip}" post-auth-trigger.zip -d "$lambdasLocalPath"
+
 lambdaPath=pn-infra-cognito/${pn_infra_commitid}/cognito/post-auth-trigger.zip
-aws s3 cp ${aws_command_base_args} pn-infra/runtime-infra/cognito/post-auth-trigger/function.zip s3://${bucketName}/${lambdaPath} --quiet
+aws s3 cp ${aws_command_base_args} "${lambdasLocalPath}/post-auth-trigger.zip" s3://${bucketName}/${lambdaPath} --quiet
+rm -rf "$lambdasLocalPath"
 
 echo ""
 echo ""
