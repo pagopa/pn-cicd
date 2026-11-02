@@ -3632,6 +3632,33 @@ Resources:
               - "ses:GetConfigurationSetEventDestinations"
             Resource: "*"
             Effect: Allow
+          - Sid: ManageSesMailIdentity
+            Effect: Allow
+            Action:
+              - "ses:CreateEmailIdentity"
+              - "ses:GetEmailIdentity"
+              - "ses:DeleteEmailIdentity"
+              - "ses:PutEmailIdentityConfigurationSetAttributes"
+              - "ses:PutEmailIdentityDkimSigningAttributes"
+              - "ses:PutEmailIdentityFeedbackAttributes"
+              - "ses:ListTagsForResource"
+              - "ses:TagResource"
+              - "ses:UntagResource"
+            Resource: !If
+              - IsProdEnv
+              - !Sub "arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:identity/mail.notifichedigitali.it"
+              - !Sub "arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:identity/mail.${EnvName}.notifichedigitali.it"
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !GetAtt CodeBuildRole.Arn
+          - Sid: AssociateSesMailConfigurationSet
+            Effect: Allow
+            Action:
+              - "ses:PutEmailIdentityConfigurationSetAttributes"
+            Resource: !Sub "arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:configuration-set/*"
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !GetAtt CodeBuildRole.Arn
 
   ###########################################################################
   ###  Utility codebuild used to list the deployed artifacts versions
