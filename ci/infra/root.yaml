@@ -565,7 +565,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
-        ARMEnvironment: false
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1642,7 +1642,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
-        ARMEnvironment: false
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1688,6 +1688,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1917,7 +1918,7 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "21"
-        ARMEnvironment: false
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -2309,6 +2310,19 @@ Resources:
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
       TimeoutInMinutes: 5
+  PnPtWebapp:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-frontend"
+        PackageName: "pn-pt-webapp"
+        BaseDir: "packages/pn-pt-webapp"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
   PnPfWebapp:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -2391,6 +2405,15 @@ Resources:
         GitHubProjectName: "pn-frontend"
         PackageName: "pn-pa-webapp"
         BaseDir: "packages/pn-pa-webapp"
+      TimeoutInMinutes: 5
+  PnPtSonar:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-frontend"
+        PackageName: "pn-pt-webapp"
+        BaseDir: "packages/pn-pt-webapp"
       TimeoutInMinutes: 5
   PnPersonafisicaSonar:
     Type: AWS::CloudFormation::Stack
