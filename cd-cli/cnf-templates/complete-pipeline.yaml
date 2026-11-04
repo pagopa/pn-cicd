@@ -537,7 +537,7 @@ Resources:
                 - |
                   if ( [ "$PIPELINE_NAME" = "pn-frontend-update-pipeline" ] ) then
                     echo "Check pn-frontend build end"
-                    
+
                     pf=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
                     echo "pf is build ${pf}"
 
@@ -550,6 +550,7 @@ Resources:
                     pg=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
                     echo "pg is build ${pg}"
 
+                    # PT remains optional until the production rollout is complete.
                     if ( [ "${pf}" = "KO" -o "${pfl}" = "KO" -o "${pa}" = "KO" -o "${pg}" = "KO" ] ) then
                       echo "##### WARNING pn-frontend have not ended"
                       export PIPELINE_NAME=""
