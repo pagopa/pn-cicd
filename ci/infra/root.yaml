@@ -338,7 +338,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-delivery"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -384,7 +384,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-delivery-push"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         ARMEnvironment: true
@@ -431,7 +431,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-external-channels"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -476,7 +476,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-io-connector-mock"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -522,7 +522,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-data-vault"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -569,7 +569,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-national-registries"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         JavaVersion: "21"
@@ -615,7 +615,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-external-registries"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -662,7 +662,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-mandate"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -709,7 +709,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-user-attributes"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -756,7 +756,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-downtime-logs"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         JavaVersion: "21"
@@ -801,7 +801,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-radd-fsu"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -846,7 +846,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-radd-alt"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -893,7 +893,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-bff"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -939,7 +939,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-logextractor-be"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -985,7 +985,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-logsaver-be"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         JavaVersion: "21"
@@ -1030,7 +1030,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-emd-integration"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -1076,7 +1076,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-apikey-manager"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1122,7 +1122,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-paper-channel"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1170,7 +1170,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-io-connector"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -1217,7 +1217,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ss"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -1264,7 +1264,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-statemachinemanager"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1311,7 +1311,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ec"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1359,7 +1359,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-kafka-bridge"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         DisableIntegrationTest: "false"
         GitHubDefaultBranch: "develop"
@@ -1408,7 +1408,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-address-manager"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1457,7 +1457,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-service-desk"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -1505,7 +1505,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-f24"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -1552,7 +1552,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-pecmock"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1597,7 +1597,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-pdfraster"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -1645,7 +1645,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-paper-event-enricher"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1693,7 +1693,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-templates-engine"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -1741,7 +1741,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-stream"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
@@ -1789,7 +1789,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-action-manager"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1837,7 +1837,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-timeline-service"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1885,7 +1885,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-portfat"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1933,7 +1933,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-delayer"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1981,7 +1981,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-paper-tracker"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -2029,7 +2029,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-delivery-push-workflow"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -2077,7 +2077,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-workflow-manager"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -2125,7 +2125,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-notification-cost-service"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -2173,7 +2173,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-delivery-push-validator"
-        NodeVersion: "20"
+        NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -2299,7 +2299,7 @@ Resources:
         GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        NodeVersion: "18"
+        NodeVersion: "22"
       TimeoutInMinutes: 10
 
   # Progetto pn-bfhd
@@ -2354,7 +2354,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-zendesk-auth"
-        NodeVersion: "18"
+        NodeVersion: "22"
         BaseDir: "functions"
         GitHubDefaultBranch: "develop"
         BaseDirEscaped: "functions"
@@ -2370,7 +2370,7 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-paper-tenders"
         NodeProjectDir: "scripts/build_tenders"
-        NodeVersion: "20"
+        NodeVersion: "22"
         GitHubDefaultBranch: "main"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"

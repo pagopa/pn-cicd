@@ -47,10 +47,8 @@ Parameters:
   NodeVersion:
     Description: Node.js version for Lambda function builds
     Type: String
-    Default: '20'
+    Default: '22'
     AllowedValues:
-      - '18'
-      - '20'
       - '22'
 
   PythonVersion:

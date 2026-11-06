@@ -22,10 +22,8 @@ Parameters:
     Description: Topic for build and pipeline notification
   NodeVersion:
     Type: String
-    Default: '18'
+    Default: '22'
     AllowedValues:
-      - '18'
-      - '20'
       - '22'
       - '24'
     Description: Node.js runtime version to use

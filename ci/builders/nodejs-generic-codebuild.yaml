@@ -26,7 +26,7 @@ Parameters:
   NodeVersion:
     Description: Version of Node.js to use in the build
     Type: String
-    Default: '20'
+    Default: '22'
   VpcId:
     Type: String
     Description: Codebuild network VPC id 
