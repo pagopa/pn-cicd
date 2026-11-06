@@ -26,7 +26,7 @@ Parameters:
   NodeVersion:
     Description: Version of Node.js to use in the build
     Type: String
-    Default: '20'
+    Default: '22'
   VpcId:
     Type: String
     Description: Codebuild network VPC id 
@@ -70,11 +70,13 @@ Resources:
           - Name: OUTPUT_FILE
             Type: PLAINTEXT
             Value: !Sub "${OutputFile}"
+          - Name: NODE_VERSION
+            Type: PLAINTEXT
+            Value: !Ref NodeVersion
       Source:
         Type: GITHUB
         Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
-        # Nota: Per le variabili di ambiente, utilizzare ${!VariableName} per evitare che vengano interpretate come parametri di CloudFormation
-        BuildSpec: !Sub |
+        BuildSpec: |
           version: 0.2
           env:
             shell: bash
@@ -83,7 +85,9 @@ Resources:
           phases:
             install:
               runtime-versions:
-                nodejs: ${NodeVersion}
+                nodejs: ${NODE_VERSION}
+              commands:
+                - node --version
             pre_build:
               on-failure: ABORT
               commands:
@@ -95,25 +99,25 @@ Resources:
                 - echo "CODEBUILD_WEBHOOK_BASE_REF=$CODEBUILD_WEBHOOK_BASE_REF"
                 - echo "CODEBUILD_SOURCE_VERSION=$CODEBUILD_SOURCE_VERSION"
                 - echo "GIT_DEFAULT_BRANCH=$GIT_DEFAULT_BRANCH"
-                - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${!BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
+                - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///'); export BRANCH_NAME=${BRANCH_NAME:=$GIT_DEFAULT_BRANCH}
                 - if echo $CODEBUILD_SOURCE_VERSION | grep -q ^pr/ ; then PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | sed 's/pr\///'); BRANCH_TARGET=$(echo $CODEBUILD_WEBHOOK_BASE_REF | sed 's/refs\/heads\///'); export PR_NUM BRANCH_TARGET; fi;
                 - export CI_PROFILE="$CODEBUILD_CI"
                 - |
-                  if ( [ -z "${!PR_NUM}" ] ) then
+                  if ( [ -z "${PR_NUM}" ] ) then
                     export PR_NUM=$(curl -L \
                       -H "Accept: application/vnd.github+json" \
                       -H "X-GitHub-Api-Version: 2022-11-28" \
-                      "https://api.github.com/repos/pagopa/${!GITHUB_PRJ_NAME}/pulls?state=all&sort=updated&direction=desc&head=pagopa:${!BRANCH_NAME}" | jq -r '.[] | .number ' | head -1)
+                      "https://api.github.com/repos/pagopa/${GITHUB_PRJ_NAME}/pulls?state=all&sort=updated&direction=desc&head=pagopa:${BRANCH_NAME}" | jq -r '.[] | .number ' | head -1)
 
-                    echo "EXPORTING PR_NUM=${!PR_NUM}"
+                    echo "EXPORTING PR_NUM=${PR_NUM}"
                   fi
                 - |
-                  if ( [ ! -z "${!PR_NUM}" ] ) then
+                  if ( [ ! -z "${PR_NUM}" ] ) then
                     export BRANCH_TARGET=$(curl -L \
                       -H "Accept: application/vnd.github+json" \
                       -H "X-GitHub-Api-Version: 2022-11-28" \
-                      "https://api.github.com/repos/pagopa/${!GITHUB_PRJ_NAME}/pulls/${!PR_NUM}" | jq '.base.ref')
-                    echo "BRANCH_TARGET=${!BRANCH_TARGET}"
+                      "https://api.github.com/repos/pagopa/${GITHUB_PRJ_NAME}/pulls/${PR_NUM}" | jq '.base.ref')
+                    echo "BRANCH_TARGET=${BRANCH_TARGET}"
                   fi
             build:
               on-failure: ABORT

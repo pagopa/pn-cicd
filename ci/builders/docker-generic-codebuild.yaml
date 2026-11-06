@@ -1,6 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: CodeBuild for maven docker project
 Parameters:
+  PythonVersion:
+    Type: String
+    Default: '3.10'
+    Description: Python runtime for packaging Lambda functions
   GitHubProjectName:
     Description: Name of pagopa project name
     Type: String
@@ -152,6 +156,9 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:6.0
         EnvironmentVariables:
+          - Name: PYTHON_VERSION
+            Type: PLAINTEXT
+            Value: !Ref PythonVersion
           - Name: IS_PUBLIC_PROJECT
             Type: PLAINTEXT
             Value: !Sub "${IsPublicProject}"
@@ -185,6 +192,11 @@ Resources:
             secrets-manager:
               SONAR_TOKEN: arn:aws:secretsmanager:eu-central-1:911845998067:secret:SonarCloud-7370vM:token
           phases:
+            install:
+              runtime-versions:
+                python: ${PYTHON_VERSION}
+              commands:
+                - python --version
             pre_build:
               on-failure: ABORT
               commands:
