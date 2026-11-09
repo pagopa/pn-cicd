@@ -455,7 +455,7 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Ref CheckSystemCodebuildProject
-                PrimarySource: EmptyZip
+                PrimarySource: DesiredCommitIdsAndScripts
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
@@ -466,7 +466,7 @@ Resources:
                     {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
-                - Name: EmptyZip
+                - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: ParameterOutput
               RunOrder: 2
@@ -1714,6 +1714,7 @@ Resources:
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"PnConfigurationRef", "value":"#{variables.pn_configuration_ref}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
@@ -1733,11 +1734,10 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Ref CheckSystemCodebuildProject
-                PrimarySource: EmptyZip
+                PrimarySource: ParameterOutput
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"PnConfigurationRef", "value":"#{variables.pn_configuration_ref}", "type":"PLAINTEXT"},
                     {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
                     {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
@@ -1745,7 +1745,7 @@ Resources:
                     {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
                   ]'
               InputArtifacts:
-                - Name: EmptyZip
+                - Name: ParameterOutput
               OutputArtifacts:
                 - Name: DesiredCommitIdsAndScripts
               RunOrder: 2
@@ -1881,13 +1881,19 @@ Resources:
                   echo ""
                   echo "### CLONE CICD SCRIPTS ###"
                   echo ""
-                  git clone https://github.com/pagopa/pn-cicd.git
-                  ( cd pn-cicd && git checkout $cd_scripts_commitId )                
+                  if [ -z "$PnConfigurationEnabled" ]; then
+                    git clone https://github.com/pagopa/pn-cicd.git
+                    ( cd pn-cicd && git checkout $cd_scripts_commitId )
+                  fi
                   if ( [ ! -z "$PnConfigurationEnabled" ] ) then
                     echo ""
                     echo "### Execute Download Custom Config ###"
-                    ( ./pn-cicd/cd-cli/downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c main -i $CiAccountId )
+                    curl --fail --silent --show-error --location --retry 2 --retry-delay 2 "https://raw.githubusercontent.com/pagopa/pn-cicd/main/cd-cli/downloadCustomConfig.sh" --output downloadCustomConfig.sh || exit 1
+                    bash ./downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c "${PnConfigurationRef:-main}" -i $CiAccountId || exit 1
+                    jq -e '.cd_scripts_commitId | select(type == "string" and length > 0)' "pn-configuration/$EnvName/repository-list.json" >/dev/null || exit 1
                     . ./desired-commit-ids-env.sh
+                    git clone https://github.com/pagopa/pn-cicd.git || exit 1
+                    git -C pn-cicd checkout --detach "$cd_scripts_commitId" || exit 1
                     echo ""
                     echo ""
                     echo "### UPDATED ENVIRONMENT AFTER CUSTOM CONFIG ###"
@@ -2320,32 +2326,11 @@ Resources:
                 - env
                 - 'echo ""'
                 - | 
-                  aws s3api get-object --bucket ${DesiredCommitIdsBucketName} --key ${DesiredCommitIdsPath} desired-commit-ids-env.sh --version-id ${DesiredCommitIdsVersionId}
-                  cat desired-commit-ids-env.sh
-                  echo "### DOWNLOAD DESIRED COMMIT IDS ###"
-                  echo ""
-                  echo "### SOURCE DESIRED COMMIT IDS ###"
-                  . ./desired-commit-ids-env.sh  
-                  echo ""
-                  echo ""
-                  echo "### UPDATED ENVIRONMENT ###"
-                  echo "###########################"
-                  env
-                  echo "### CLONE CICD SCRIPTS ###"
-                  echo ""
-                  git clone https://github.com/pagopa/pn-cicd.git
-                  ( cd pn-cicd && git checkout $cd_scripts_commitId )
-                  if ( [ ! -z "$PnConfigurationEnabled" ] ) then
-                    echo "### Execute Download Custom Config ###"
-                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c "${PnConfigurationRef:-main}" -i $CiAccountId || exit 1
-                    echo ""
-                  else
-                    case "${PnConfigurationRef:-main}" in
-                      main|origin/main) ;;
-                      *) echo "Configuration override requires pn-configuration support."; exit 1 ;;
-                    esac
-                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) || exit 1
-                  fi                 
+                  cp scripts/desired-commit-ids-env.sh desired-commit-ids-env.sh || exit 1
+                  . ./desired-commit-ids-env.sh
+                  mkdir -p pn-cicd "parameters/$EnvName" || exit 1
+                  cp -R scripts/cd-cli pn-cicd/ || exit 1
+                  cp -R pn-cicd/cd-cli/custom-config/. "parameters/$EnvName/" || exit 1
                 - 'echo ""'
                 - 'echo "INSTALLING node_modules"'
                 - '(cd ./pn-cicd/cd-cli/checkSystem/validateParameters/ && npm i )'

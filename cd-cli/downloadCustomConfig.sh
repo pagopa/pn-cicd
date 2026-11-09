@@ -184,6 +184,14 @@ _clone_repository(){
 
   git clone ${_GITURI}
 
+  case "$PN_CONFIGURATION_TAG" in
+    main|origin/main) ;;
+    *)
+      configuration_commit=$(git -C pn-configuration rev-parse --verify --end-of-options "${PN_CONFIGURATION_TAG}^{commit}") || exit 1
+      git -C pn-configuration checkout --detach "$configuration_commit" || exit 1
+      ;;
+  esac
+
   (cd pn-configuration && git reflog -n 10)
 }
 
