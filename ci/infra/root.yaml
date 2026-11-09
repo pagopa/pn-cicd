@@ -340,6 +340,7 @@ Resources:
         GitHubProjectName: "pn-delivery"
         NodeVersion: "22"
         PythonVersion: "3.12"
+        JavaVersion: "21"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
