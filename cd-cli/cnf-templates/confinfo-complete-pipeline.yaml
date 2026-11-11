@@ -447,29 +447,32 @@ Resources:
               RunOrder: 1
 
             # Check System Env
-            - Name: Check_System
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !Ref CheckSystemCodebuildProject
-                PrimarySource: DesiredCommitIdsAndScripts
-                EnvironmentVariables: !Sub '[
-                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
-                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
-                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
-                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
-                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
-                  ]'
-              InputArtifacts:
-                - Name: DesiredCommitIdsAndScripts
-              OutputArtifacts:
-                - Name: ParameterOutput
-              RunOrder: 2
+            - Fn::If:
+                - IsNewConfiguration
+                - Name: Check_System
+                  ActionTypeId:
+                    Category: Build
+                    Owner: AWS
+                    Version: 1
+                    Provider: CodeBuild
+                  Configuration:
+                    ProjectName: !Ref CheckSystemCodebuildProject
+                    PrimarySource: DesiredCommitIdsAndScripts
+                    EnvironmentVariables: !Sub '[
+                        {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                        {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                        {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                        {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"},
+                        {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                        {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                        {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                      ]'
+                  InputArtifacts:
+                    - Name: DesiredCommitIdsAndScripts
+                  OutputArtifacts:
+                    - Name: ParameterOutput
+                  RunOrder: 2
+                - !Ref AWS::NoValue
 
             # Update pn-infra
             - Name: Update_Infrastructure
@@ -1650,6 +1653,7 @@ Resources:
               RunOrder: 3
 
   CheckSystemDeployPipeline:
+    Condition: IsNewConfiguration
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
