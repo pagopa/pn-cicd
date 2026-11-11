@@ -338,6 +338,9 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-delivery"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
+        JavaVersion: "21"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -382,6 +385,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-delivery-push"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         ARMEnvironment: true
         DisableIntegrationTest: "false"
@@ -427,6 +432,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-external-channels"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -470,6 +477,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-io-connector-mock"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -514,12 +523,15 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-data-vault"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        JavaVersion: "21"
+        JavaVersion: "25"
+        CdsEnabled: "true"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
@@ -559,13 +571,15 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-national-registries"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
-        ARMEnvironment: false
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -603,6 +617,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-external-registries"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -648,6 +664,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-mandate"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -693,6 +711,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-user-attributes"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -738,6 +758,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-downtime-logs"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -781,6 +803,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-radd-fsu"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -824,6 +848,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-radd-alt"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -869,6 +895,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-bff"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -913,6 +941,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-logextractor-be"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -957,6 +987,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-logsaver-be"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1000,6 +1032,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-emd-integration"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1044,6 +1078,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-apikey-manager"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -1088,6 +1124,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-paper-channel"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1134,6 +1172,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-io-connector"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1179,6 +1219,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ss"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1224,6 +1266,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-statemachinemanager"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         JavaVersion: "21"
@@ -1269,6 +1313,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-ec"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         JavaVersion: "21"
@@ -1315,6 +1361,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-kafka-bridge"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         DisableIntegrationTest: "false"
         GitHubDefaultBranch: "develop"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1362,6 +1410,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-address-manager"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1409,6 +1459,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-service-desk"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1455,6 +1507,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-f24"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1500,6 +1554,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-pecmock"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1543,6 +1599,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-pdfraster"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1589,6 +1647,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-paper-event-enricher"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1635,6 +1695,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-templates-engine"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1642,7 +1704,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
-        ARMEnvironment: false
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1681,6 +1743,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-stream"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         JavaVersion: "21"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
@@ -1688,6 +1752,7 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1726,6 +1791,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-action-manager"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1772,6 +1839,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-timeline-service"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1818,6 +1887,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-portfat"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1864,6 +1935,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-delayer"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1910,6 +1983,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-paper-tracker"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -1917,7 +1992,7 @@ Resources:
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         JavaVersion: "21"
-        ARMEnvironment: false
+        ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
         AllowedDeployAccount3: !Ref Ada3
@@ -1956,6 +2031,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-delivery-push-workflow"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2002,13 +2079,16 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-workflow-manager"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
-        JavaVersion: "21"
+        JavaVersion: "25"
+        CdsEnabled: "true"
         ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
@@ -2048,6 +2128,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-notification-cost-service"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2094,6 +2176,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/mvn-docker-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-delivery-push-validator"
+        NodeVersion: "22"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         DisableIntegrationTest: "false"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2140,6 +2224,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/docker-generic-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-simulatore-recapiti"
+        PythonVersion: "3.10"
         GitHubDefaultBranch: "develop"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
@@ -2217,7 +2302,7 @@ Resources:
         GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
-        NodeVersion: "18"
+        NodeVersion: "22"
       TimeoutInMinutes: 10
 
   # Progetto pn-bfhd
@@ -2272,6 +2357,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/nodejs-multilambda-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-zendesk-auth"
+        NodeVersion: "22"
         BaseDir: "functions"
         GitHubDefaultBranch: "develop"
         BaseDirEscaped: "functions"
@@ -2287,7 +2373,7 @@ Resources:
       Parameters:
         GitHubProjectName: "pn-paper-tenders"
         NodeProjectDir: "scripts/build_tenders"
-        NodeVersion: "20"
+        NodeVersion: "22"
         GitHubDefaultBranch: "main"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
@@ -2302,8 +2388,22 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-pa-webapp"
         BaseDir: "packages/pn-pa-webapp"
+        CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
+        CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
+        CiArtifactBucket: !Ref "CiArtifactBucket"
+        NotificationSNSTopic: !Ref "NotificationSNSTopic"
+      TimeoutInMinutes: 5
+  PnPtWebapp:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-frontend"
+        PackageName: "pn-pt-webapp"
+        BaseDir: "packages/pn-pt-webapp"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         CiArtifactBucket: !Ref "CiArtifactBucket"
@@ -2315,6 +2415,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personafisica-webapp"
         BaseDir: "packages/pn-personafisica-webapp"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2328,6 +2429,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personagiuridica-webapp"
         BaseDir: "packages/pn-personagiuridica-webapp"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2341,6 +2443,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personafisica-login"
         BaseDir: "packages/pn-personafisica-login"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2354,6 +2457,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-showcase-site"
+        NodeVersion: "22"
         PackageName: "pn-showcase-site"
         BaseDir: "pn-showcase-site"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
@@ -2367,6 +2471,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-standard-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-helpdesk-fe"
+        NodeVersion: "22"
         PackageName: "pn-helpdesk-fe"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
@@ -2380,6 +2485,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-commons"
         BaseDir: "packages/pn-commons"
       TimeoutInMinutes: 5
@@ -2389,8 +2495,18 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-pa-webapp"
         BaseDir: "packages/pn-pa-webapp"
+      TimeoutInMinutes: 5
+  PnPtSonar:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
+      Parameters:
+        GitHubProjectName: "pn-frontend"
+        PackageName: "pn-pt-webapp"
+        BaseDir: "packages/pn-pt-webapp"
       TimeoutInMinutes: 5
   PnPersonafisicaSonar:
     Type: AWS::CloudFormation::Stack
@@ -2398,6 +2514,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personafisica-webapp"
         BaseDir: "packages/pn-personafisica-webapp"
       TimeoutInMinutes: 5
@@ -2407,6 +2524,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personagiuridica-webapp"
         BaseDir: "packages/pn-personagiuridica-webapp"
       TimeoutInMinutes: 5
@@ -2416,6 +2534,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-personafisica-login"
         BaseDir: "packages/pn-personafisica-login"
       TimeoutInMinutes: 5
@@ -2425,6 +2544,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-frontend"
+        NodeVersion: "22"
         PackageName: "pn-validator"
         BaseDir: "packages/pn-validator"
       TimeoutInMinutes: 5
@@ -2434,6 +2554,7 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/webapp-sonar-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-helpdesk-fe"
+        NodeVersion: "22"
         PackageName: "pn-helpdesk-fe"
       TimeoutInMinutes: 5
 
@@ -2457,6 +2578,8 @@ Resources:
       TemplateURL: !Sub "https://s3.amazonaws.com/${PnCiCdTemplatesBucketName}/ci/builders/multilambda-codebuild.yaml"
       Parameters:
         GitHubProjectName: "pn-infra"
+        NodeVersion: "24"
+        PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
         CiArtifactBucket: !Ref "CiArtifactBucket"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
