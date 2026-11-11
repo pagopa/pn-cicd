@@ -161,15 +161,21 @@ new_fixture
 for target in pn-infra pn-infra-core pn-infra-confinfo pn-auth-fleet \
   pn-progression-sensor pn-cn pn-pdf-normalizer-integration pn-bfhd \
   go-automation pn-zendesk-auth; do
-  RELEASE_REPOSITORY="pagopa/$target" run_release --validate-inputs || fail "allowlist $target"
+  RELEASE_REPOSITORY="pagopa/$target" run_release --validate-inputs || fail "repository format $target"
 done
 [[ ! -s "$FIXTURE/network.log" ]] || fail "input validation accessed the network"
 pass "all ten targets accepted without target access"
+RELEASE_REPOSITORY=pagopa/future-multilambda run_release --validate-inputs ||
+  fail "a new workflow choice requires a script change"
+[[ ! -s "$FIXTURE/network.log" ]] || fail "new repository validation accessed the network"
+pass "future workflow choices require no script allowlist update"
 
 for invalid in v2.5.0 02.5.0 2.05.0 2.5.00 2.5.0-RC.0 2.5.0-RC.01 2.5.0-RC-1 2.5.0-SNAPSHOT '2.5.0; echo injected'; do
   RELEASE_VERSION="$invalid" expect_preflight_failure "reject invalid version $invalid" "Expected X.Y.Z"
 done
-RELEASE_REPOSITORY=pagopa/pn-cicd expect_preflight_failure "exclude pn-cicd" "approved infra/multilambda"
+for invalid in '' pagopa/ pn-infra other-org/pn-infra pagopa/../pn-infra pagopa/-pn-infra 'pagopa/pn-infra; echo injected'; do
+  RELEASE_REPOSITORY="$invalid" expect_preflight_failure "reject invalid repository '$invalid'" "pagopa/<name> format"
+done
 RELEASE_MERGE_IN_MAIN=invalid expect_preflight_failure "invalid merge boolean" "merge_in_main must"
 RELEASE_INCREMENT_SNAPSHOT=invalid expect_preflight_failure "invalid increment boolean" "increment_snapshot must"
 RELEASE_BASE_BRANCH='bad branch' expect_preflight_failure "invalid branch" "Invalid base branch"
@@ -393,5 +399,11 @@ if grep -q '^SUCCESS:' "$FIXTURE/output"; then fail "partial failure reported su
 pass "GitHub Release failure reports partial publication without rollback"
 sync_remote
 expect_preflight_failure "partial publication cannot be blindly repeated" "already exists"
+
+new_fixture
+RELEASE_REPOSITORY=pagopa/future-multilambda
+g remote set-url origin https://github.com/pagopa/future-multilambda.git
+expect_success "release of a future workflow target without script changes"
+assert_equal "$(g show refs/heads/release/2.5.0:VERSION)" 2.5.0-RC.1 "future target VERSION"
 
 printf '\n%s checks passed. No real network commands executed.\n' "$passed"

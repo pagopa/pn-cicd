@@ -54,7 +54,7 @@ jobs:
       RELEASE_INCREMENT_SNAPSHOT: ${{ inputs.increment_snapshot }}
     steps:
       - name: Checkout release automation
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           path: automation
@@ -62,7 +62,7 @@ jobs:
       - name: Validate inputs before accessing the target repository
         run: bash automation/.github/scripts/create-infra-multilambda-release.sh --validate-inputs
       - name: Checkout target repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.repository }}
           token: ${{ secrets.GITBOT_TOKEN_FOR_RELEASE }}

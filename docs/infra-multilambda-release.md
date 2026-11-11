@@ -7,18 +7,14 @@ remains unchanged.
 
 ## Onboarding
 
-Supported targets:
-
-- `pagopa/pn-infra`
-- `pagopa/pn-infra-core`
-- `pagopa/pn-infra-confinfo`
-- `pagopa/pn-auth-fleet`
-- `pagopa/pn-progression-sensor`
-- `pagopa/pn-cn`
-- `pagopa/pn-pdf-normalizer-integration`
-- `pagopa/pn-bfhd`
-- `pagopa/go-automation`
-- `pagopa/pn-zendesk-auth`
+Supported targets are defined in the `repository` choices of the
+[workflow](../.github/workflows/create-infra-multilambda-release.yml).
+To onboard a new infrastructure or multilambda repository, add its
+`pagopa/<name>` to that list in `pn-cicd`. The script validates the repository
+format and the target origin, without duplicating the supported-target list;
+no script change is required. Direct script invocation is not an allowlist
+or an authorization boundary: repository eligibility is selected by the
+workflow, and access is controlled by the bot token and repository protections.
 
 Before using the workflow, explicitly add a regular root `VERSION` file to
 the target's development branch. Choose its value from that repository's

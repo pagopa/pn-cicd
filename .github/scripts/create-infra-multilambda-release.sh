@@ -33,13 +33,8 @@ number='(0|[1-9][0-9]*)'
 version_pattern="^${number}\\.${number}\\.${number}(-RC\\.([1-9][0-9]*))?$"
 file_version_pattern="^${number}\\.${number}\\.${number}(-SNAPSHOT|-RC[.-][1-9][0-9]*)?$"
 
-case "$repository" in
-  pagopa/pn-infra | pagopa/pn-infra-core | pagopa/pn-infra-confinfo | \
-  pagopa/pn-auth-fleet | pagopa/pn-progression-sensor | pagopa/pn-cn | \
-  pagopa/pn-pdf-normalizer-integration | pagopa/pn-bfhd | \
-  pagopa/go-automation | pagopa/pn-zendesk-auth) ;;
-  *) die "Repository is not in the approved infra/multilambda list: $repository" ;;
-esac
+[[ "$repository" =~ ^pagopa/[A-Za-z0-9][A-Za-z0-9._-]*$ ]] ||
+  die "Expected repository in pagopa/<name> format"
 [[ "$version" =~ $version_pattern ]] || die "Expected X.Y.Z or X.Y.Z-RC.N without a v prefix"
 major="${BASH_REMATCH[1]}"
 minor="${BASH_REMATCH[2]}"
