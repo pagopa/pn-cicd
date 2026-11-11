@@ -1,0 +1,76 @@
+name: Create Infra and Multilambda Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: Repository to release
+        required: true
+        type: choice
+        options:
+          - pagopa/pn-infra
+          - pagopa/pn-infra-core
+          - pagopa/pn-infra-confinfo
+          - pagopa/pn-auth-fleet
+          - pagopa/pn-progression-sensor
+          - pagopa/pn-cn
+          - pagopa/pn-pdf-normalizer-integration
+          - pagopa/pn-bfhd
+          - pagopa/go-automation
+          - pagopa/pn-zendesk-auth
+      tag:
+        description: Version without v, e.g. 2.5.0-RC.1 or 2.5.0
+        required: true
+        type: string
+      base_branch:
+        description: Base branch for RCs and next-release
+        required: true
+        type: string
+        default: develop
+      merge_in_main:
+        description: Merge the final release into main
+        type: boolean
+        default: true
+      increment_snapshot:
+        description: Prepare the next minor SNAPSHOT on next-release
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infra-multilambda-release-${{ inputs.repository }}
+  cancel-in-progress: false
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_REPOSITORY: ${{ inputs.repository }}
+      RELEASE_VERSION: ${{ inputs.tag }}
+      RELEASE_BASE_BRANCH: ${{ inputs.base_branch }}
+      RELEASE_MERGE_IN_MAIN: ${{ inputs.merge_in_main }}
+      RELEASE_INCREMENT_SNAPSHOT: ${{ inputs.increment_snapshot }}
+    steps:
+      - name: Checkout release automation
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          path: automation
+          persist-credentials: false
+      - name: Validate inputs before accessing the target repository
+        run: bash automation/.github/scripts/create-infra-multilambda-release.sh --validate-inputs
+      - name: Checkout target repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: ${{ inputs.repository }}
+          token: ${{ secrets.GITBOT_TOKEN_FOR_RELEASE }}
+          ref: ${{ inputs.base_branch }}
+          fetch-depth: 0
+          path: target
+      - name: Prepare and publish release
+        working-directory: target
+        env:
+          GH_TOKEN: ${{ secrets.GITBOT_TOKEN_FOR_RELEASE }}
+        run: bash "$GITHUB_WORKSPACE/automation/.github/scripts/create-infra-multilambda-release.sh"
