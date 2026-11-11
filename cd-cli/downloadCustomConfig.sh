@@ -187,6 +187,7 @@ _clone_repository(){
   case "$PN_CONFIGURATION_TAG" in
     main|origin/main) ;;
     *)
+      # Standalone CheckSystem configuration overrides.
       configuration_commit=$(git -C pn-configuration rev-parse --verify --end-of-options "${PN_CONFIGURATION_TAG}^{commit}") || exit 1
       git -C pn-configuration checkout --detach "$configuration_commit" || exit 1
       ;;
