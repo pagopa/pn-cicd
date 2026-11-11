@@ -2087,7 +2087,8 @@ Resources:
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
         NotificationSNSTopic: !Ref "NotificationSNSTopic"
         CiArtifactBucket: !Ref "CiArtifactBucket"
-        JavaVersion: "21"
+        JavaVersion: "25"
+        CdsEnabled: "true"
         ARMEnvironment: true
         AllowedDeployAccount1: !Ref Ada1
         AllowedDeployAccount2: !Ref Ada2
