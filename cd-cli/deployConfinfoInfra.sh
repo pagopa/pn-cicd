@@ -43,9 +43,6 @@ parse_params() {
   pn_infra_commitid=""
   bucketName=""
   LambdasBucketName=""
-  ##__START
-  pn_microsvc_commitid=""
-  ##__END
 
   while :; do
     case "${1-}" in
@@ -83,16 +80,6 @@ parse_params() {
       LambdasBucketName="${2-}"
       shift
       ;;
-    ##__START  
-    -m | --ms-commitid)
-      pn_microsvc_commitid="${2-}"
-      shift
-      ;;
-    -n | --ms-name)
-      microcvs_name="${2-}"
-      shift
-      ;;
-    ##__END  
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
@@ -107,10 +94,6 @@ parse_params() {
   [[ -z "${bucketName-}" ]] && usage
   [[ -z "${aws_region-}" ]] && usage
   [[ -z "${LambdasBucketName-}" ]] && usage
-  ##__START
-  [[ -z "${pn_microsvc_commitid-}" ]] && usage
-  [[ -z "${microcvs_name-}" ]] && usage
-  ##__END
   return 0
 }
 
@@ -127,10 +110,6 @@ dump_params(){
   echo "AWS profile:         ${aws_profile}"
   echo "Bucket Name:         ${bucketName}"
   echo "Lambdas Bucket Name: ${LambdasBucketName}"
-  ##__START
-  echo "Microsvc CommitId:   ${pn_microsvc_commitid}"
-  echo "Microsvc Name:       ${microcvs_name}"
-  ##__END 
 }
 
 
@@ -159,21 +138,6 @@ echo " - copy pn-infra-confinfo config"
 if ( [ -d "${custom_config_dir}/pn-infra-confinfo" ] ) then
   cp -r $custom_config_dir/pn-infra-confinfo .
 fi
-
-##__START
-echo "=== Download microservizio ${microcvs_name}"
-if ( [ ! -e ${microcvs_name} ] ) then
-  git clone "https://github.com/pagopa/${microcvs_name}.git"
-fi
-
-echo ""
-echo "=== Checkout ${microcvs_name} commitId=${pn_microsvc_commitid}"
-( cd ${microcvs_name} && git fetch && git checkout $pn_microsvc_commitid )
-echo " - copy custom config"
-if ( [ ! -z "${custom_config_dir}" ] ) then
-  cp -r $custom_config_dir/${microcvs_name} .
-fi
-##__END
 
 echo ""
 echo "=== Base AWS command parameters"

@@ -1979,8 +1979,8 @@ Resources:
                 - 'echo "###       UPDATE INFRA    "'
                 - 'echo "########################################################"'
                 - 'echo ""'
-                - 'echo "./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir -m $ms_commitId -n $MsName"'
-                - '(cd scripts/cd-cli && ./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir -m $ms_commitId -n $MsName)'
+                - 'echo "./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir"'
+                - '(cd scripts/cd-cli && ./deployConfinfoInfra.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
             post_build:
               commands:
                 - 'echo ""'
