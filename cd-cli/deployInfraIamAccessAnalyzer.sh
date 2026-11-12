@@ -153,9 +153,15 @@ echo ${aws_command_base_args}
 
 templateBucketS3BaseUrl="s3://${bucketName}/pn-infra/${pn_infra_commitid}"
 templateBucketHttpsBaseUrl="https://s3.${aws_region}.amazonaws.com/${bucketName}/pn-infra/${pn_infra_commitid}/runtime-infra"
+IAM_ANALYZER_TEMPLATE_PATH=pn-infra/runtime-infra/pn-iam-unused-access-analyzer.yaml
 echo " - Bucket Name: ${bucketName}"
 echo " - Bucket Template S3 Url: ${templateBucketS3BaseUrl}"
 echo " - Bucket Template HTTPS Url: ${templateBucketHttpsBaseUrl}"
+
+if [[ ! -f "${IAM_ANALYZER_TEMPLATE_PATH}" ]]; then
+  echo "No ${IAM_ANALYZER_TEMPLATE_PATH} provided; skipping deployment"
+  exit 0
+fi
 
 echo ""
 echo "=== Upload files to bucket"
@@ -168,8 +174,16 @@ echo ""
 echo "=== Package and upload Lambda functions"
 lambdasBasePath="pn-infra-iam-access/${pn_infra_commitid}"
 
-for lambda_dir in pn-infra/runtime-infra/lambdas/iam-unused-access-exporter pn-infra/runtime-infra/lambdas/iam-unused-access-core-widget; do
-  lambda_name=$(basename "$lambda_dir")
+lambda_names=$(sed -nE \
+  's#.*\$\{LambdasBasePath\}/(iam-unused-access-[A-Za-z0-9-]+)\.zip.*#\1#p' \
+  "${IAM_ANALYZER_TEMPLATE_PATH}" | sort -u)
+
+for lambda_name in ${lambda_names}; do
+  lambda_dir="pn-infra/runtime-infra/lambdas/${lambda_name}"
+  if [[ ! -d "$lambda_dir" ]]; then
+    die "Template references ${lambda_name}, but required directory is missing: ${lambda_dir}"
+  fi
+
   echo " - Packaging ${lambda_name}"
   (cd "$lambda_dir" && zip -r "${work_dir}/${lambda_name}.zip" .)
   aws ${aws_command_base_args} s3 cp \
@@ -198,8 +212,6 @@ echo ""
 echo "###        BUILD IAM UNUSED ACCESS ANALYZER             ###"
 echo "###########################################################"
 
-IAM_ANALYZER_TEMPLATE_PATH=pn-infra/runtime-infra/pn-iam-unused-access-analyzer.yaml
-
 echo "=== Prepare enhanced parameters for IAM unused access analyzer"
 IAM_ANALYZER_TEMPLATE_CONFIG_PATH="pn-infra/runtime-infra/pn-iam-unused-access-analyzer-${env_type}-cfg.json"
 
@@ -218,13 +230,9 @@ sed -i '${s/,\s*$/\n/}' "$EnhancedParamFilePath"
 echo ",\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"LambdasBucketName=$bucketName\",\"LambdasBasePath=$lambdasBasePath\"]" >> "$EnhancedParamFilePath"
 cat ${EnhancedParamFilePath}
 
-if ( [ -f "${IAM_ANALYZER_TEMPLATE_PATH}" ] ) then
-  aws ${aws_command_base_args} cloudformation deploy \
-        --stack-name pn-iam-unused-access-analyzer-${env_type} \
-        --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-        --template-file $IAM_ANALYZER_TEMPLATE_PATH \
-        --tags Microservice=pn-iam-unused-access-analyzer \
-        --parameter-overrides file://$( realpath ${EnhancedParamFilePath} )
-else 
-  echo "No ${IAM_ANALYZER_TEMPLATE_PATH} provided"
-fi
+aws ${aws_command_base_args} cloudformation deploy \
+      --stack-name pn-iam-unused-access-analyzer-${env_type} \
+      --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+      --template-file $IAM_ANALYZER_TEMPLATE_PATH \
+      --tags Microservice=pn-iam-unused-access-analyzer \
+      --parameter-overrides file://$( realpath ${EnhancedParamFilePath} )

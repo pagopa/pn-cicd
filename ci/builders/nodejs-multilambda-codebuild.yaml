@@ -22,11 +22,10 @@ Parameters:
     Description: Topic for build and pipeline notification
   NodeVersion:
     Type: String
-    Default: '18'
+    Default: '22'
     AllowedValues:
-      - '18'
-      - '20'
       - '22'
+      - '24'
     Description: Node.js runtime version to use
   VpcId:
     Type: String
@@ -41,15 +40,6 @@ Parameters:
     Description: Codebuild network SecurityGroupID 
     Default: sg-03a2c0bb8367596b2
 
-Mappings:
-  NodeImageMap:
-    '18':
-      Image: aws/codebuild/standard:7.0
-    '20':
-      Image: aws/codebuild/standard:7.0
-    '22':
-      Image: aws/codebuild/standard:7.0
-
 Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
@@ -60,7 +50,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: !FindInMap [ NodeImageMap, !Ref NodeVersion, Image ]
+        Image: aws/codebuild/standard:7.0
         EnvironmentVariables:
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
@@ -76,7 +66,7 @@ Resources:
             Value: !Sub "${CiArtifactBucket}"
           - Name: NODE_VERSION
             Type: PLAINTEXT
-            Value: !Sub "${NodeVersion}"
+            Value: !Ref NodeVersion
       Source:
         Type: GITHUB
         Location: !Sub 'https://github.com/pagopa/${GitHubProjectName}'
@@ -91,6 +81,7 @@ Resources:
               runtime-versions:
                 nodejs: ${NODE_VERSION}  
               commands:
+                - node --version
                 - npm install --global pnpm
             pre_build:
               on-failure: ABORT

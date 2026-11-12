@@ -305,6 +305,12 @@ Resources:
                     export PIPELINE_NAME="pn-io-connector-update-pipeline"
                   fi
                 - |
+                  if ( [ "$PROJECT" = "pn-io-connector-mock" ] ) then
+                    sed -i -e "s|pn_io_connector_mock_commitId=.*|pn_io_connector_mock_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
+                    sed -i -e "s|pn_io_connector_mock_imageUrl=.*|pn_io_connector_mock_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
+                    export PIPELINE_NAME="pn-io-connector-mock-update-pipeline"
+                  fi
+                - |
                   if ( [ "$PROJECT" = "pn-radd-fsu" ] ) then
                     sed -i -e "s|pn_radd_fsu_commitId=.*|pn_radd_fsu_commitId=$COMMIT_ID|" desired-commit-ids-env.sh
                     sed -i -e "s|pn_radd_fsu_imageUrl=.*|pn_radd_fsu_imageUrl=$IMAGE_URL|" desired-commit-ids-env.sh
@@ -531,7 +537,7 @@ Resources:
                 - |
                   if ( [ "$PIPELINE_NAME" = "pn-frontend-update-pipeline" ] ) then
                     echo "Check pn-frontend build end"
-                    
+
                     pf=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personafisica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
                     echo "pf is build ${pf}"
 
@@ -544,6 +550,7 @@ Resources:
                     pg=$( ( aws s3api head-object --bucket ${CiArtifactBucketName} --key "pn-frontend/commits/${COMMIT_ID}/pn-personagiuridica-webapp.tar.gz" 2> /dev/null > /dev/null ) && echo "OK"  || echo "KO" )
                     echo "pg is build ${pg}"
 
+                    # PT remains optional until the production rollout is complete.
                     if ( [ "${pf}" = "KO" -o "${pfl}" = "KO" -o "${pa}" = "KO" -o "${pg}" = "KO" ] ) then
                       echo "##### WARNING pn-frontend have not ended"
                       export PIPELINE_NAME=""
@@ -602,6 +609,7 @@ Resources:
         - !Ref CodeBuildPolicyEventLogs
         - !Ref CodeBuildPolicyIAM
         - !Ref CodeBuildNetworking
+        - !Ref CodeBuildPolicyData
       
   ###########################################################################
   ###             EFFECTIVE CONTINUOS INTEGRATIONS PIPELINES              ###
@@ -718,6 +726,8 @@ Resources:
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
@@ -1888,6 +1898,10 @@ Resources:
             pre_build:
               commands:
                 - echo "NO PRE_BUILD"
+                - 'echo "### RELEASE TRACKING INITIALIZATION ###"'
+                - 'export _RELEASE_EVENT_ID=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen | tr "[:upper:]" "[:lower:]" || echo "unknown-$(date +%s)")'
+                - 'export _START_TIME_EPOCH=$(date -u +%s)'
+                - 'export _START_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
             build:
               commands:
                 - 'echo "### ENVIRONMENT ###"'
@@ -1912,9 +1926,13 @@ Resources:
                   ( cd pn-cicd && git checkout $cd_scripts_commitId )
                   if ( [ ! -z "$PnConfigurationEnabled" ] ) then
                     echo "### Execute Download Custom Config ###"
-                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c main -i $CiAccountId || exit 1
+                    ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c "${PnConfigurationRef:-main}" -i $CiAccountId || exit 1
                     echo ""
                   else
+                    case "${PnConfigurationRef:-main}" in
+                      main|origin/main) ;;
+                      *) echo "Configuration override requires pn-configuration support."; exit 1 ;;
+                    esac
                     ./pn-cicd/cd-cli/downloadParametersConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) || exit 1
                   fi                 
                 - 'echo ""'
@@ -1930,6 +1948,19 @@ Resources:
                   else
                     echo "All parameters are syncs"
                   fi
+            post_build:
+              commands:
+                - 'echo "### RELEASE TRACKING FINALIZATION ###"'
+                - '_END_TIME_EPOCH=$(date -u +%s)'
+                - '_DURATION_SECONDS=$(( _END_TIME_EPOCH - _START_TIME_EPOCH ))'
+                - |
+                  if [ $CODEBUILD_BUILD_SUCCEEDING -eq 1 ]; then
+                    PHASE="SUCCESS"
+                  else
+                    PHASE="FAILURE"
+                  fi
+                - 'echo "=== Parameter check completed with status: $PHASE, tracking release event..."'
+                - '(cd pn-cicd/cd-cli && bash ./commons/track-release.sh -i "$_RELEASE_EVENT_ID" -n "pn-check-system" -e "$EnvName" -p "$PHASE" -V "$cd_scripts_commitId" -d "$cd_scripts_commitId" -b "$DesiredCommitIdsBucketName" -s "$_START_TIMESTAMP" -D "$_DURATION_SECONDS" -r "$ReleaseLabel" -R "$AwsRegion" || true)'
           artifacts:
             files:
               - '**/*'
@@ -1993,7 +2024,7 @@ Resources:
                     echo "########################################################"
                     echo ""
                     (cd scripts/cd-cli && ./deployNetworking.sh -r $AwsRegion -e $EnvName -i $pn_infra_core_commitId -a core -w /tmp -c $custom_config_dir )
-                    (cd scripts/cd-cli && ./deployCognito.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
+                    (cd scripts/cd-cli && ./deployCognito.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName -B $CiArtifactBucketName )
                     (cd scripts/cd-cli && ./deployOpensearch.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
                     (cd scripts/cd-cli && ./deployCache.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
                   fi
@@ -2017,7 +2048,7 @@ Resources:
                 - 'echo "###                UPDATE LOGS EXPORTS                ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && ./deployLogStreaming.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - '(cd scripts/cd-cli && ./deployLogStreaming.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m "${pn_metrics_commitId:-}" -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
@@ -2043,8 +2074,8 @@ Resources:
                   existsFunctionsFolder=$(find ./pn-auth-fleet -name "functions" | wc -l)
                   existsDeployMultiLambdaScript=$(find ./scripts/cd-cli -name "deployMultiLambdaService.sh" | wc -l)
                   if ( [ $existsFunctionsFolder = "1" -a $existsDeployMultiLambdaScript = "1" ] ) then
-                    echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
-                    (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
+                    echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId --bff-commitid ${pn_bff_commitId:-} -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
+                    (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId --bff-commitid "${pn_bff_commitId:-}" -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
                   else
                     echo "Auth fleet non multifunctions is not supported"
                   fi
@@ -2113,7 +2144,7 @@ Resources:
                     echo "########################################################"
                     echo ""
                     (cd scripts/cd-cli && ./deployNetworking.sh -r $AwsRegion -e $EnvName -i $pn_infra_core_commitId -a core -w /tmp -c $custom_config_dir )
-                    (cd scripts/cd-cli && ./deployCognito.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
+                    (cd scripts/cd-cli && ./deployCognito.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName -B $CiArtifactBucketName )
                     (cd scripts/cd-cli && ./deployOpensearch.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
                     (cd scripts/cd-cli && ./deployCache.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -w /tmp -c $custom_config_dir -b $CdArtifactBucketName )
                   fi
@@ -2137,7 +2168,7 @@ Resources:
                 - 'echo "###                UPDATE LOGS EXPORTS                ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
-                - '(cd scripts/cd-cli && ./deployLogStreaming.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - '(cd scripts/cd-cli && ./deployLogStreaming.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -m "${pn_metrics_commitId:-}" -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
@@ -2218,8 +2249,8 @@ Resources:
                   existsFunctionsFolder=$(find ./pn-auth-fleet -name "functions" | wc -l)
                   existsDeployMultiLambdaScript=$(find ./scripts/cd-cli -name "deployMultiLambdaService.sh" | wc -l)
                   if ( [ $existsFunctionsFolder = "1" -a $existsDeployMultiLambdaScript = "1" ] ) then
-                    echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
-                    (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
+                    echo "(cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId --bff-commitid ${pn_bff_commitId:-} -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )"
+                    (cd scripts/cd-cli && ./deployMultiLambdaService.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -n pn-auth-fleet -a $pn_authfleet_commitId --bff-commitid "${pn_bff_commitId:-}" -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir )
                   else
                     echo "Auth fleet non multifunction is not supported"
                   fi
@@ -2368,6 +2399,18 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
+                - 'echo "###          UPDATE WARNING NOTIFICATIONS             ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./deployWarningNotifications.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###            UPDATE SEND PDND AUTOMATION            ###"'
+                - 'echo "#########################################################"'
+                - '(cd scripts/cd-cli && ./deploySendPdndAutomation.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -c $custom_config_dir )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
                 - 'echo "###                UPDATE COMPOSITE ALARMS            ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
@@ -2396,15 +2439,26 @@ Resources:
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
-                - 'echo "###                OER DASHBOARD                      ###"'
+                - 'echo "###                  DASHBOARD UTILS                  ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "./deployDashboardUtils.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a core -c $custom_config_dir"'
+                - '(cd scripts/cd-cli && ./deployDashboardUtils.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -w /tmp -a core -c $custom_config_dir )'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###                DASHBOARD                      ###"'
                 - 'echo "#########################################################"'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo ""'
                 - |
-                  existsDashboardOer=$(find ./scripts/cd-cli -name deployOerDashboard.sh | wc -l)
+                  existsDashboardOer=$(find ./scripts/cd-cli -name deployDashboard.sh | wc -l)
                   if ( [ $existsDashboardOer = "1" ] ) then
-                    (cd scripts/cd-cli && ./deployOerDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
+                    (cd scripts/cd-cli && ./deployDashboard.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
                   fi
                 - 'echo ""'
                 - 'echo ""'
@@ -2421,6 +2475,13 @@ Resources:
                     (cd scripts/cd-cli && ./deployPnCloudwatchDashboards.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -b $CdArtifactBucketName -B $CiArtifactBucketName -w /tmp -c $custom_config_dir)
                   fi
                 - 'echo ""'
+                - 'echo ""'
+                - 'echo ""'
+                - 'echo "#########################################################"'
+                - 'echo "###                    UPDATE PROWLER                  ###"'
+                - 'echo "#########################################################"'
+                - 'echo ""'
+                - '(cd scripts/cd-cli && ./deployProwler.sh -r $AwsRegion -e $EnvName -i $pn_infra_commitId -a core -b $CdArtifactBucketName -w /tmp -c $custom_config_dir )'
                 - 'echo ""'
                 - 'echo ""'
                 - 'echo "#########################################################"'
@@ -3611,7 +3672,7 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Sid: IAMxCelonis
+          - Sid: IAMPolicy
             Effect: Allow
             Action:
               - iam:AttachUserPolicy
@@ -3639,7 +3700,7 @@ Resources:
             Action:
               - secretsmanager:GetRandomPassword
             Resource: "*"
-          - Sid: SecretxCelonis
+          - Sid: Secret
             Effect: Allow
             Action: 
               - secretsmanager:CreateSecret
@@ -5352,6 +5413,106 @@ Resources:
                 - Name: DesiredCommitIdsAndScripts
               OutputArtifacts:
                 - Name: PnIoConnectorOutput
+              RunOrder: 3
+
+  # MICROSERVICE PN-IO-CONNECTOR-MOCK
+  ############################
+  PnIoConnectorMockDeployPipeline:
+    Condition: RequiresSingleProjects
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt ChooseAndLaunchPipelineCodeBuildRole.Arn
+      Name: !Sub '${ProjectName}-io-connector-mock-update-pipeline'
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactBucket
+      # Pipeline V2 Variables for release tracking
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
+      Stages:
+        - Name: Download_Configurations
+          Actions:
+            # Trigger build when material set is changed
+            - Name: Read_CommitIds_And_ImageUrls_File
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'config/desired-commit-ids-env.sh'
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: 'DesiredCommitIdsNS'
+              RunOrder: 1
+            # CodePipeline CodeArtifact integration issue
+            - Name: EmptyZipBecauseCodeBuildWithCodepipelineNeedOneZipInputArtifact
+              ActionTypeId:
+                Provider: S3
+                Owner: AWS
+                Version: 1
+                Category: Source
+              Configuration:
+                PollForSourceChanges: false
+                S3Bucket: !Ref CdArtifactBucket
+                S3ObjectKey: 'empty.zip'
+              OutputArtifacts:
+                - Name: EmptyZip
+              RunOrder: 1
+        - Name: DeployAll
+          Actions:
+            # Download cd-cli scripts
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DownloadScriptsCodebuildProject
+                PrimarySource: EmptyZip
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              RunOrder: 1
+            
+            # Update pn-io-connector-mock
+            - Name: Update_IoConnectorMock
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref UpdateMicroserviceCodeBuildProject
+                PrimarySource: DesiredCommitIdsAndScripts
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"CdArtifactBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
+                    {"name":"CiArtifactBucketName", "value":"${CiArtifactBucketNameParam}", "type":"PLAINTEXT"},                    
+                    {"name":"MsName", "value":"pn-io-connector-mock", "type":"PLAINTEXT"},
+                    {"name":"MsNumber", "value":"37", "type":"PLAINTEXT"},
+                    {"name":"VarPrefix", "value":"pn_io_connector_mock", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: DesiredCommitIdsAndScripts
+              OutputArtifacts:
+                - Name: PnIoConnectorMockOutput
               RunOrder: 3
 
   # MICROSERVICE PN-RADD-FSU
@@ -8363,6 +8524,13 @@ Resources:
       Tags:
         - Key: goallowed
           Value: true
+      Variables:
+        - Name: pn_configuration_ref
+          DefaultValue: "origin/main"
+          Description: 'Enter a commit ID to validate another version of pn-configuration.'
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key. Leave default for deployments without a release tag.'
       Stages:
         - Name: Download_Configurations
           Actions:
@@ -8433,6 +8601,9 @@ Resources:
                 EnvironmentVariables: !Sub '[
                     {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
                     {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"PnConfigurationRef", "value":"#{variables.pn_configuration_ref}", "type":"PLAINTEXT"},
+                    {"name":"ReleaseLabel", "value":"#{variables.release_label}", "type":"PLAINTEXT"},
+                    {"name":"PipelineExecutionId", "value":"#{codepipeline.PipelineExecutionId}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsBucketName", "value":"${CdArtifactBucket}", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
                     {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}

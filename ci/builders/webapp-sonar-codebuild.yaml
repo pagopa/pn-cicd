@@ -2,6 +2,10 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: CodeBuild for sonar-webapp project (node)
 
 Parameters:
+  NodeVersion:
+    Type: String
+    Default: '22'
+    Description: Node.js runtime selected by the application buildspec
   GitHubProjectName:
     Description: Name of pagopa project name
     Type: String
@@ -50,6 +54,9 @@ Resources:
             - BUILD_GENERAL1_MEDIUM
         Image: aws/codebuild/standard:7.0
         EnvironmentVariables:
+          - Name: NODE_VERSION
+            Type: PLAINTEXT
+            Value: !Ref NodeVersion
           - Name: GITHUB_PRJ_NAME
             Type: PLAINTEXT
             Value: !Sub "${GitHubProjectName}"

@@ -107,6 +107,7 @@ SECRET_PROPS=(
   "pn.consolidatore.api.key=e2eConsolidatoreApiKey"
   "pn.interop.clientId=e2eTestClientIdInterop"
   "pn.interop.token-oauth2.client-assertion=e2eTestTokenClientAssertionInterop"
+  "pn.bearer-token-b2b.pg1=e2eTestbearerTokenB2BPG1"
   "pn.bearer-token-b2b.pg2=e2eTestbearerTokenB2BPG2"
   "pn.bearer-token.pg3=e2eTestbearerTokenUserPG3"
   "pn.bearer-token.pg4=e2eTestbearerTokenUserPG4"
@@ -116,6 +117,8 @@ SECRET_PROPS=(
   "pn.external.radd-cognito-clientid-user-1=e2eTestCognitoClientIdUser1"
   "pn.external.radd-cognito-password-user-2=e2eTestCognitoPasswordUser2"
   "pn.external.radd-cognito-clientid-user-2=e2eTestCognitoClientIdUser2"
+  "pn.address.manager.api-key=e2eAddressManagerApiKey"
+  "pn.address.manager.cxId=e2eAddressManagerCxId"
 )
 
 # ==============================================================================
@@ -166,6 +169,7 @@ SSM_PROPS=(
   "pn.delayer.lambda.arn=/pn-test-e2e/pnDelayerLambdaArn"
   "pn.delayer.portfat.lambda.name=/pn-test-e2e/portfatLambdaArn"
   "pn-deleghe-temporanee-bucket-s3=/pn-test-e2e/delegheTemporaneeBucketS3"
+  "pn.address.manager.base-url=/pn-test-e2e/addressManagerUrl"
   # NB: pn.radd-vpc.base-url e' condizionale (vedi sezione DERIVATE / STATICHE).
 )
 
@@ -200,6 +204,7 @@ _prop "pn.interop.enable"               "${INTEROP_ENABLED:-false}"
 _prop "spring.profiles.active"          "${ENV_NAME}"
 _prop "jdk.httpclient.allowRestrictedMethods" "PATCH"
 _prop "github.token"                    "${GITHUB_TOKEN}"
+_prop "pn.external.informal-base-url"   "https://api.${ENV_NAME}.${DOMAIN}/informal/"
 
 # pn.radd-vpc.base-url: il parametro SSM da leggere dipende dal flag opzionale
 # RADD_POSTE_ENV:

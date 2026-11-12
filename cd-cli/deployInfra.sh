@@ -611,49 +611,19 @@ else
   echo "${DATA_MONITORING_STACK_FILE} file doesn't exist, stack update skipped"
 fi
 
-echo ""
-echo "=== Deploy PN-Celonis-Export FOR $env_type ACCOUNT ON FRANKFURT region"
-CELONIS_EXPORTS_STACK_FILE=pn-infra/runtime-infra/celonis_exports.yaml
-
-if [[ -f "$CELONIS_EXPORTS_STACK_FILE" ]]; then
-    echo "$CELONIS_EXPORTS_STACK_FILE exists, updating pn-celonis-exports stack"
-
-    echo ""
-    echo "= Read Parameters file"
-    cat ${ParamFilePath} 
-
-    echo ""
-    echo "= Enanched parameters file"
-    jq -s "{ \"Parameters\": .[0] } * .[1]" ${INFRA_ALL_OUTPUTS_FILE} ${ParamFilePath} \
-      | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
-      > ${EnanchedParamFilePath}
-    echo "${PipelineParams} ]" >> ${EnanchedParamFilePath}
-    cat ${EnanchedParamFilePath}
-
-    aws_command_celonis_args=" --region eu-central-1"
-    if ( [ ! -z "${aws_profile}" ] ) then
-      aws_command_celonis_args="${aws_command_celonis_args} --profile $aws_profile"
-    fi
-
-    aws ${aws_command_celonis_args} \
-        cloudformation deploy \
-          --stack-name pn-celonis-exports-$env_type \
-          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-          --template-file ${CELONIS_EXPORTS_STACK_FILE} \
-          --tags Microservice=pn-celonis-exports \
-          --parameter-overrides file://$( realpath ${EnanchedParamFilePath} )
-else
-  echo "${CELONIS_EXPORTS_STACK_FILE} file doesn't exist, stack update skipped"
-fi
-
-
 
 echo ""
 echo "=== Deploy PN-Cost-Saving FOR $env_type ACCOUNT"
 COST_SAVING_STACK_FILE=pn-infra/runtime-infra/pn-cost-saving.yaml
+ParamFilePath=pn-infra/runtime-infra/pn-cost-saving-${env_type}-cfg.json
+EnanchedParamFilePath=pn-cost-saving-${env_type}-cfg-enanched.json
 
 if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
     echo "$COST_SAVING_STACK_FILE exists, updating pn-cost-saving stack"
+
+    if [[ ! -f "$ParamFilePath" ]]; then
+      echo '{ "Parameters": {} }' > "$ParamFilePath"
+    fi
 
     echo ""
     echo "= Read Parameters file"

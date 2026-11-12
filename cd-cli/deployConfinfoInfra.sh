@@ -501,6 +501,7 @@ fi
 echo ""
 echo "=== Deploy PN-Data-Monitoring FOR $env_type ACCOUNT"
 DATA_MONITORING_STACK_FILE=pn-infra/runtime-infra/pn-data-monitoring.yaml
+ParamFilePath=pn-infra/runtime-infra-confinfo/pn-data-monitoring-${env_type}-cfg.json
 
 if [[ -f "$DATA_MONITORING_STACK_FILE" ]]; then
     echo "$DATA_MONITORING_STACK_FILE exists, updating pn-data-monitoring stack"
@@ -548,9 +549,15 @@ fi
 echo ""
 echo "=== Deploy PN-Cost-Saving FOR $env_type ACCOUNT"
 COST_SAVING_STACK_FILE=pn-infra/runtime-infra/pn-cost-saving.yaml
+ParamFilePath=pn-infra/runtime-infra-confinfo/pn-cost-saving-${env_type}-cfg.json
+EnanchedParamFilePath=pn-cost-saving-${env_type}-cfg-enanched.json
 
 if [[ -f "$COST_SAVING_STACK_FILE" ]]; then
     echo "$COST_SAVING_STACK_FILE exists, updating pn-cost-saving stack"
+
+    if [[ ! -f "$ParamFilePath" ]]; then
+      echo '{ "Parameters": {} }' > "$ParamFilePath"
+    fi
 
     echo ""
     echo ""

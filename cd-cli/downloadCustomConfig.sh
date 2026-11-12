@@ -216,9 +216,9 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
           response=$(curl -s -w "%{http_code}" -o response.json -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer $GITHUB_TOKEN" "$url")
           http_code=$(tail -n1 <<< "$response")
 
-          #Check if token is invalid or expired and print a Warning with the http code error:
-          if [ "$http_code" -ne 200 ]; then
-              echo "****   WARNING: GitHub token is expired or invalid, because the request for check failed with HTTP status code $http_code. CHECK TOKEN!!! CONTINUING THE SCRIPT WITHOUT AUTH.   ****"
+          #Only HTTP 401 means that the token is invalid or expired:
+          if [ "$http_code" = "401" ]; then
+              echo "****   WARNING: GitHub token is expired or invalid (HTTP 401). Retrying without authentication.   ****"
               USE_TOKEN=false
               github_request "$url"
               return
@@ -231,7 +231,7 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
 
       #If script failed exit from immediately:
       if [ "$http_code" -ne 200 ]; then
-          echo "****   ERROR: GitHub request not authetincated failed with HTTP status code $http_code error response. Exit from script.   ****"
+          echo "****   ERROR: GitHub request failed with HTTP status code $http_code. Exit from script.   ****"
           echo "****   EXPORT IS NOT COMPLETED   ****"
           exit 1
       fi
@@ -282,7 +282,11 @@ if ( [ ! -z "${PN_CONFIGURATION_TAG}" -a ! -z "${cicd_account_id}" ] ) ; then
         fi
 
         github_request "https://api.github.com/repos/pagopa/$REPO/tags"
-        PN_COMMIT_ID=$(jq -r '.[] | select(.name=='\"$TAG\"') | .commit.sha' response.json)
+        if ! PN_COMMIT_ID=$(jq -er --arg tag "$TAG" '.[] | select(.name == $tag) | .commit.sha' response.json); then
+          echo "****   ERROR: Tag '$TAG' does not exist in GitHub repository 'pagopa/$REPO'. Check repository-list.json in pn-configuration.   ****"
+          echo "****   EXPORT IS NOT COMPLETED   ****"
+          exit 1
+        fi
         echo "export $PN_CONFIGURATION_TAG_param=$PN_COMMIT_ID" >> desired-commit-ids-env.sh
     
     #CommitID (nothing to do):
