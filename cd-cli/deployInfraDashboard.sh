@@ -166,9 +166,17 @@ echo "###################################################################"
 PreviousOutputFilePath=previous-output-${env_type}.json
 PreviousLogsOutputFilePath=previous-logs-output-${env_type}.json
 PreviousMonitoringOutputFilePath=previous-monitoring-output-${env_type}.json
+INFRA_ALL_OUTPUTS_FILE=infra_all_outputs-${env_type}.json
 TemplateFilePath="pn-infra/runtime-infra/pn-infra-dashboard.yaml"
 PipelineParams="\"TemplateBucketBaseUrl=$templateBucketHttpsBaseUrl\",\"ProjectName=$project_name\",\"Version=cd_scripts_commitId=${cd_scripts_commitId},pn_infra_commitId=${pn_infra_commitid}\""
 EnanchedParamFilePath="pn-infra-dashboard-${env_type}-enhanced.json"
+
+echo "Load all outputs in a single file for next stack deployments"
+merge_outputs_args=(-r "${aws_region}" -e "${env_type}" -o "${PWD}/${INFRA_ALL_OUTPUTS_FILE}")
+if [[ -n "${aws_profile}" ]]; then
+  merge_outputs_args+=(-p "${aws_profile}")
+fi
+(cd "${script_dir}/commons" && ./merge-infra-outputs-core.sh "${merge_outputs_args[@]}")
 
 aws ${aws_command_base_args} \
     cloudformation describe-stacks \
@@ -246,8 +254,8 @@ fi
 
 echo ""
 echo "= Enanched parameters file"
-jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * { \"Parameters\": .[2] }" \
-   ${PreviousOutputFilePath} ${PreviousLogsOutputFilePath} ${PreviousMonitoringOutputFilePath} \
+jq -s "{ \"Parameters\": .[0] } * { \"Parameters\": .[1] } * { \"Parameters\": .[2] } * { \"Parameters\": .[3] }" \
+   ${INFRA_ALL_OUTPUTS_FILE} ${PreviousOutputFilePath} ${PreviousLogsOutputFilePath} ${PreviousMonitoringOutputFilePath} \
    | jq -s ".[] | .Parameters" | sed -e 's/": "/=/' -e 's/^{$/[/' -e 's/^}$/,/' \
    > ${EnanchedParamFilePath}
 echo "${PipelineParams} ${AdditionalParams}]" >> ${EnanchedParamFilePath}
