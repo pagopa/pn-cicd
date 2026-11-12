@@ -10,10 +10,12 @@ See [ci/README.md](ci/README.md)
 ## Continuous Delivery
 See [cd-cli/README.md](cd-cli/README.md)
 
+## Infra and Multilambda Releases
+See [release workflow and onboarding](docs/infra-multilambda-release.md).
+
 
 ## WARNING: Hardcoded AccountId 
 The list of the "AWS account id" allowed to access to Continuous Integration 
 artifacts is hardcoded in the [ci/bootstrap.sh](ci/bootstrap.sh) file in the
 _"Deploy CI pipeline"_ command.
-
 
