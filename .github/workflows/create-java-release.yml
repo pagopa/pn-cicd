@@ -109,15 +109,15 @@ jobs:
           if [[ "$tag" == *"RC"* ]]; then
             base_branch=$([ "$BASE_BRANCH" = "" ] && echo "develop" || echo "$BASE_BRANCH")
             echo "Check consistency from branch: $base_branch"
-            git checkout $base_branch
+            git checkout "$base_branch"
           else
             git checkout develop
             git pull origin develop
             echo "Creating RELEASE version $tag ..."
             release_exists=$(git ls-remote origin release/"$tag" | wc -l)
             if [[ $release_exists -eq 1 ]]; then
-              git checkout release/$tag
-              git pull origin release/$tag
+              git checkout "release/$tag"
+              git pull origin "release/$tag"
               echo "Check consistency from branch: release/$tag"
             else
               echo "Branch release/$tag does not exit. Check consistency from branch: develop"
@@ -151,8 +151,8 @@ jobs:
           # Esegui git fetch
           git fetch
           # Sposta sul ramo $base_branch e allineati al ramo remoto
-          git checkout $base_branch
-          git pull origin $base_branch
+          git checkout "$base_branch"
+          git pull origin "$base_branch"
           echo "Check no snapshots dependencies"
           ./mvnw org.apache.maven.plugins:maven-enforcer-plugin:3.3.0:enforce -Denforcer.rules=requireReleaseDeps $MAVEN_CONFIG
           # Verifica se il tag contiene "RC"
@@ -167,9 +167,9 @@ jobs:
           else
             git checkout -b release/"$release_branch_name"
           fi
-          git merge --no-edit $base_branch
+          git merge --no-edit "$base_branch"
           # Modifica la versione del pom.xml con il tag dato in input (esempio da 0.0.1-SNAPSHOT a 0.0.1-RC-1)
-          ./mvnw build-helper:parse-version versions:set -DnewVersion=$tag -U versions:commit $MAVEN_CONFIG
+          ./mvnw build-helper:parse-version versions:set "-DnewVersion=$tag" -U versions:commit $MAVEN_CONFIG
           git add pom.xml
           git commit -m "[$tag] Modifica versione nel pom.xml"
           git push origin release/"$release_branch_name"
@@ -194,32 +194,32 @@ jobs:
           echo "Creating RELEASE version $tag ..."
           release_exists=$(git ls-remote origin release/"$tag" | wc -l)
           if [[ $release_exists -eq 1 ]]; then
-            git checkout release/$tag
-            git pull origin release/$tag
+            git checkout "release/$tag"
+            git pull origin "release/$tag"
           else
             echo "Branch release/$tag does not exit. Creating it from develop branch..."
-            git checkout -b release/$tag
+            git checkout -b "release/$tag"
           fi
           echo "Check no snapshots dependencies"
           ./mvnw org.apache.maven.plugins:maven-enforcer-plugin:3.3.0:enforce -Denforcer.rules=requireReleaseDeps $MAVEN_CONFIG
           echo "Edit pom version to $tag"
-          ./mvnw build-helper:parse-version versions:set -DnewVersion=$tag -U versions:commit $MAVEN_CONFIG
+          ./mvnw build-helper:parse-version versions:set "-DnewVersion=$tag" -U versions:commit $MAVEN_CONFIG
           git add pom.xml
           git commit -m "[$tag] Create Release Version"
-          git push origin release/$tag
+          git push origin "release/$tag"
           merge_in_main=${{ inputs.merge_in_main }}
           if [[ $merge_in_main = true ]]; then 
             git checkout main
             git pull origin main
-            git merge release/$tag
+            git merge "release/$tag"
             git push origin main
             # Crea il tag sul branch main (esempio v0.0.1)
             echo "Creating tag v$tag"
-            gh release create v$tag --generate-notes --target main
+            gh release create "v$tag" --generate-notes --target main
           else
             # Crea il tag sul branch sorgente release (esempio v0.0.1)
             echo "Creating tag v$tag"
-            gh release create v$tag --generate-notes --target release/$tag
+            gh release create "v$tag" --generate-notes --target "release/$tag"
           fi
 
       - name: run increment SNAPSHOT
