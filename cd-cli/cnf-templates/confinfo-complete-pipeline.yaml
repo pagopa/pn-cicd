@@ -1892,11 +1892,10 @@ Resources:
                   if ( [ ! -z "$PnConfigurationEnabled" ] ) then
                     echo ""
                     echo "### Execute Download Custom Config ###"
-                    curl --fail --silent --show-error --location --retry 2 --retry-delay 2 "https://raw.githubusercontent.com/pagopa/pn-cicd/main/cd-cli/downloadCustomConfig.sh" --output downloadCustomConfig.sh || exit 1
-                    bash ./downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c "${PnConfigurationRef:-main}" -i $CiAccountId || exit 1
+                    git clone --branch main https://github.com/pagopa/pn-cicd.git || exit 1
+                    bash ./pn-cicd/cd-cli/downloadCustomConfig.sh -r $AwsRegion -e $EnvName -w $(pwd) -c "${PnConfigurationRef:-main}" -i $CiAccountId || exit 1
                     jq -e '.cd_scripts_commitId | select(type == "string" and length > 0)' "pn-configuration/$EnvName/repository-list.json" >/dev/null || exit 1
                     . ./desired-commit-ids-env.sh
-                    git clone https://github.com/pagopa/pn-cicd.git || exit 1
                     git -C pn-cicd checkout --detach "$cd_scripts_commitId" || exit 1
                     echo ""
                     echo ""
