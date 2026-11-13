@@ -1,0 +1,282 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Update the local SEND CD pipeline stack
+
+# Bootstrap this stack manually from BootstrapCicdCommitId, then start the pipeline.
+Parameters:
+  ProjectName:
+    Type: String
+    Default: pn
+    MaxLength: 40
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9-]*'
+  EnvName:
+    Type: String
+    AllowedValues: [dev, svil, test, uat, hotfix, prod]
+  TargetStackName:
+    Type: String
+    Description: Existing local complete pipeline stack
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9-]*'
+  ArtifactBucketName:
+    Type: String
+    Description: CdArtifactBucketName output of the target stack
+    AllowedPattern: '[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]'
+  BootstrapCicdCommitId:
+    Type: String
+    Description: Reviewed pn-cicd commit containing this template and updater script
+    AllowedPattern: '[a-f0-9]{40}'
+  ConfigurationSecretName:
+    Type: String
+    Default: github-token
+    AllowedPattern: '[a-zA-Z0-9/_+=.@-]+'
+  ArtifactKmsKeyArn:
+    Type: String
+    Default: ''
+    Description: Existing artifact encryption key ARN, if a customer managed key is used
+    AllowedPattern: '^$|arn:[a-z-]+:kms:[a-z0-9-]+:[0-9]{12}:key/[a-zA-Z0-9-]+'
+
+Conditions:
+  HasArtifactKmsKey: !Not [!Equals [!Ref ArtifactKmsKeyArn, '']]
+
+Resources:
+  UpdateBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnEquals:
+                aws:SourceArn: !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-cicd-update
+      Policies:
+        - PolicyName: UpdatePipelines
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents']
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${ProjectName}-cicd-update:*
+              - Effect: Allow
+                Action: ['s3:GetBucketLocation', 's3:GetBucketVersioning']
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}
+              - Effect: Allow
+                Action: ['s3:GetObject', 's3:GetObjectVersion', 's3:PutObject']
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/${ProjectName}-cicd-update/*
+                  - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/pn-cicd-update/*
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}
+                Condition:
+                  StringLike:
+                    s3:prefix: [pn-cicd-update/*]
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${ConfigurationSecretName}-*
+              - Effect: Allow
+                Action: cloudformation:DescribeStacks
+                Resource:
+                  - !Ref AWS::StackId
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/pn-infra-${EnvName}/*
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/infra-${EnvName}/*
+              - Effect: Allow
+                Action: ['cloudformation:ListStackResources', 'cloudformation:CreateChangeSet']
+                Resource:
+                  - !Ref AWS::StackId
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
+              - Effect: Allow
+                Action: ['cloudformation:DescribeChangeSet', 'cloudformation:ExecuteChangeSet', 'cloudformation:DeleteChangeSet']
+                Resource: !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:changeSet/pn-cicd-update-*/*
+              - Effect: Allow
+                Action: ['codepipeline:GetPipeline', 'codepipeline:ListPipelineExecutions', 'codepipeline:UpdatePipeline', 'codepipeline:ListTagsForResource', 'codepipeline:TagResource', 'codepipeline:UntagResource']
+                Resource: !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectName}-*
+              - Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectName}-cicd-update
+              - Effect: Allow
+                Action: ['codebuild:ListBuildsForProject', 'codebuild:BatchGetProjects', 'codebuild:UpdateProject']
+                Resource: !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-*
+              - Effect: Allow
+                Action: codebuild:BatchGetBuilds
+                Resource: !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:build/${ProjectName}-*:*
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource:
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${AWS::StackName}-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ProjectName}-cd-pipeline-CodeBuildRole
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: [codepipeline.amazonaws.com, codebuild.amazonaws.com]
+        - !If
+          - HasArtifactKmsKey
+          - PolicyName: ArtifactKey
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action: ['kms:Decrypt', 'kms:GenerateDataKey']
+                  Resource: !Ref ArtifactKmsKeyArn
+                  Condition:
+                    StringEquals:
+                      kms:ViaService: !Sub s3.${AWS::Region}.${AWS::URLSuffix}
+          - !Ref AWS::NoValue
+
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: RunUpdater
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ['s3:GetBucketLocation', 's3:GetBucketVersioning', 's3:GetBucketAcl']
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}
+              - Effect: Allow
+                Action: ['s3:GetObject', 's3:GetObjectVersion', 's3:PutObject']
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/empty.zip
+                  - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/${ProjectName}-cicd-update/*
+              - Effect: Allow
+                Action: ['codebuild:StartBuild', 'codebuild:BatchGetBuilds']
+                Resource:
+                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-cicd-update
+                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:build/${ProjectName}-cicd-update:*
+        - !If
+          - HasArtifactKmsKey
+          - PolicyName: ArtifactKey
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action: ['kms:Decrypt', 'kms:GenerateDataKey']
+                  Resource: !Ref ArtifactKmsKeyArn
+                  Condition:
+                    StringEquals:
+                      kms:ViaService: !Sub s3.${AWS::Region}.${AWS::URLSuffix}
+          - !Ref AWS::NoValue
+
+  UpdateBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${ProjectName}-cicd-update
+      ServiceRole: !GetAtt UpdateBuildRole.Arn
+      ConcurrentBuildLimit: 1
+      TimeoutInMinutes: 60
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:7.0
+        EnvironmentVariables:
+          - Name: ENV_NAME
+            Value: !Ref EnvName
+          - Name: PROJECT_NAME
+            Value: !Ref ProjectName
+          - Name: ACCOUNT_ID
+            Value: !Ref AWS::AccountId
+          - Name: AWS_PARTITION
+            Value: !Ref AWS::Partition
+          - Name: UPDATER_STACK
+            Value: !Ref AWS::StackName
+          - Name: TARGET_STACK
+            Value: !Ref TargetStackName
+          - Name: ARTIFACT_BUCKET
+            Value: !Ref ArtifactBucketName
+          - Name: ARTIFACT_KMS_KEY_ARN
+            Value: !Ref ArtifactKmsKeyArn
+          - Name: BOOTSTRAP_COMMIT
+            Value: !Ref BootstrapCicdCommitId
+          - Name: CONFIGURATION_SECRET
+            Value: !Ref ConfigurationSecretName
+          - Name: UPDATER_PIPELINE
+            Value: !Sub ${ProjectName}-cicd-update
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - |
+                  set -eu
+                  work=$(mktemp -d)
+                  git clone https://github.com/pagopa/pn-cicd.git "$work/pn-cicd"
+                  git -C "$work/pn-cicd" checkout --detach "$BOOTSTRAP_COMMIT"
+                  cp "$work/pn-cicd/cd-cli/updateCdPipelines.sh" "$work/updateCdPipelines.sh"
+                  cd "$work/pn-cicd"
+                  bash "$work/updateCdPipelines.sh"
+
+  UpdatePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub ${ProjectName}-cicd-update
+      PipelineType: V2
+      ExecutionMode: QUEUED
+      RestartExecutionOnUpdate: false
+      RoleArn: !GetAtt PipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucketName
+        EncryptionKey: !If
+          - HasArtifactKmsKey
+          - Type: KMS
+            Id: !Ref ArtifactKmsKeyArn
+          - !Ref AWS::NoValue
+      Variables:
+        - Name: cicd_ref
+          DefaultValue: manifest
+          Description: Use the release manifest, or an explicit reviewed commit for the pilot
+        - Name: mode
+          DefaultValue: plan
+          Description: plan or apply
+        - Name: snapshot
+          DefaultValue: new
+          Description: Internal continuation identifier
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: S3
+                Version: '1'
+              Configuration:
+                S3Bucket: !Ref ArtifactBucketName
+                S3ObjectKey: empty.zip
+                PollForSourceChanges: false
+              OutputArtifacts:
+                - Name: Source
+        - Name: Update
+          Actions:
+            - Name: Update
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref UpdateBuild
+                EnvironmentVariables: |
+                  [{"name":"CICD_REF","value":"#{variables.cicd_ref}","type":"PLAINTEXT"},{"name":"UPDATE_MODE","value":"#{variables.mode}","type":"PLAINTEXT"},{"name":"SNAPSHOT_ID","value":"#{variables.snapshot}","type":"PLAINTEXT"},{"name":"EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]
+              InputArtifacts:
+                - Name: Source
+
+Outputs:
+  PipelineName:
+    Value: !Ref UpdatePipeline
