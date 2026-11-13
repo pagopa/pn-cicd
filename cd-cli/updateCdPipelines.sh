@@ -9,7 +9,7 @@ usage() {
 Usage: $(basename "${BASH_SOURCE[0]}") [-h]
 
 Required environment:
-  AWS_REGION, AWS_PARTITION, ACCOUNT_ID, ENV_NAME, PROJECT_NAME
+  AWS_REGION, AWS_PARTITION, ACCOUNT_ID, ACCOUNT_TYPE, ENV_NAME, PROJECT_NAME
   UPDATER_STACK, TARGET_STACK, ARTIFACT_BUCKET, BOOTSTRAP_COMMIT
   CONFIGURATION_SECRET, UPDATER_PIPELINE, EXECUTION_ID
   CICD_REF, UPDATE_MODE (plan or apply), SNAPSHOT_ID
@@ -29,6 +29,12 @@ parse_params() {
   : "${AWS_REGION:?}" "${AWS_PARTITION:?}" "${ENV_NAME:?}" "${PROJECT_NAME:?}" "${ACCOUNT_ID:?}" "${UPDATER_STACK:?}"
   : "${TARGET_STACK:?}" "${ARTIFACT_BUCKET:?}" "${BOOTSTRAP_COMMIT:?}" "${CONFIGURATION_SECRET:?}"
   : "${UPDATER_PIPELINE:?}" "${EXECUTION_ID:?}" "${CICD_REF:?}" "${UPDATE_MODE:?}" "${SNAPSHOT_ID:?}"
+  : "${ACCOUNT_TYPE:?}"
+  case "$ACCOUNT_TYPE" in
+    CORE) domain=core ;;
+    CONFINFO) domain=confinfo ;;
+    *) fail 'Expected ACCOUNT_TYPE CORE or CONFINFO' ;;
+  esac
   [[ $UPDATE_MODE == plan || $UPDATE_MODE == apply ]] || fail 'Expected plan or apply'
   [[ $EXECUTION_ID =~ ^[a-f0-9-]{36}$ ]] || fail 'Invalid execution ID'
   [[ $BOOTSTRAP_COMMIT =~ ^[a-f0-9]{40}$ ]] || fail 'Invalid bootstrap commit'
@@ -45,6 +51,7 @@ dump_params() {
   echo "Env Name:          ${ENV_NAME}"
   echo "AWS region:        ${AWS_REGION}"
   echo "Account ID:        ${ACCOUNT_ID}"
+  echo "Account type:      ${ACCOUNT_TYPE}"
   echo "Updater stack:     ${UPDATER_STACK}"
   echo "Target stack:      ${TARGET_STACK}"
   echo "Bucket Name:       ${ARTIFACT_BUCKET}"
@@ -193,26 +200,19 @@ execute_change_set() {
 
 main() {
   work=$(mktemp -d)
-  local core=0 confinfo=0 domain peer target_id updater_id config_commit=none cicd_commit
+  local target_id updater_id config_commit=none cicd_commit
   local self_change target_change root snapshot_key continuation=false
   local storage_args=(--server-side-encryption AES256)
   if [[ -n ${ARTIFACT_KMS_KEY_ARN:-} ]]; then
     storage_args=(--server-side-encryption aws:kms --ssekms-key-id "$ARTIFACT_KMS_KEY_ARN")
   fi
-  read_stack "pn-infra-$ENV_NAME" "$work/core.json" && core=1
-  read_stack "infra-$ENV_NAME" "$work/confinfo.json" && confinfo=1
-  [[ $((core + confinfo)) == 1 ]] || fail 'Missing or ambiguous infrastructure domain'
-  if [[ $core == 1 ]]; then domain=core; peer=ConfidentialInfoAccountId
-  else domain=confinfo; peer=PnCoreAwsAccountId; fi
-  ready_stack "$work/$domain.json"
-  jq -e --arg key "$peer" --arg account "$ACCOUNT_ID" \
-    '[.Stacks[0].Outputs[]? | select(.OutputKey == $key) | .OutputValue] |
-      length == 1 and (.[0] | test("^[0-9]{12}$")) and .[0] != $account' \
-    "$work/$domain.json" > /dev/null || fail 'Invalid domain account output'
   read_stack "$TARGET_STACK" "$work/target.json" || fail 'Target stack does not exist'
   read_stack "$UPDATER_STACK" "$work/self.json" || fail 'Updater stack does not exist'
   ready_stack "$work/target.json"
   ready_stack "$work/self.json"
+  jq -e --arg type "$ACCOUNT_TYPE" 'any(.Stacks[0].Parameters[];
+    .ParameterKey == "accountType" and .ParameterValue == $type)' "$work/self.json" > /dev/null ||
+    fail 'Account type does not match updater stack'
   target_id=$(jq -r '.Stacks[0].StackId' "$work/target.json")
   updater_id=$(jq -r '.Stacks[0].StackId' "$work/self.json")
   [[ $target_id != "$updater_id" ]] || fail 'Target and updater must be different stacks'

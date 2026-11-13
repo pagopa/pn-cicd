@@ -11,6 +11,10 @@ Parameters:
   EnvName:
     Type: String
     AllowedValues: [dev, svil, test, uat, hotfix, prod]
+  accountType:
+    Type: String
+    Description: SEND account type
+    AllowedValues: [CORE, CONFINFO]
   TargetStackName:
     Type: String
     Description: Existing local complete pipeline stack
@@ -82,8 +86,6 @@ Resources:
                 Resource:
                   - !Ref AWS::StackId
                   - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
-                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/pn-infra-${EnvName}/*
-                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/infra-${EnvName}/*
               - Effect: Allow
                 Action: ['cloudformation:ListStackResources', 'cloudformation:CreateChangeSet']
                 Resource:
@@ -185,6 +187,8 @@ Resources:
         EnvironmentVariables:
           - Name: ENV_NAME
             Value: !Ref EnvName
+          - Name: ACCOUNT_TYPE
+            Value: !Ref accountType
           - Name: PROJECT_NAME
             Value: !Ref ProjectName
           - Name: ACCOUNT_ID
