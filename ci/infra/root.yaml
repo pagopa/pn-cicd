@@ -574,7 +574,7 @@ Resources:
         NodeVersion: "22"
         PythonVersion: "3.12"
         GitHubDefaultBranch: "develop"
-        DisableIntegrationTest: "false"
+        DisableIntegrationTest: "true"
         JavaVersion: "21"
         CodeArtifactDomainName: !Ref "CodeArtifactDomainName"
         CodeArtifactRepositoryName: !Ref "CodeArtifactRepositoryName"
