@@ -11,8 +11,7 @@ Usage: $(basename "${BASH_SOURCE[0]}") [-h]
 Required environment:
   AWS_REGION, AWS_PARTITION, ACCOUNT_ID, ACCOUNT_TYPE, ENV_NAME, PROJECT_NAME
   UPDATER_STACK, TARGET_STACK, ARTIFACT_BUCKET, BOOTSTRAP_COMMIT
-  CONFIGURATION_SECRET, UPDATER_PIPELINE, EXECUTION_ID
-  CICD_REF, UPDATE_MODE (plan or apply), SNAPSHOT_ID
+  CODEBUILD_BUILD_ID, CICD_REF
 
 Optional environment:
   ARTIFACT_KMS_KEY_ARN
@@ -27,16 +26,16 @@ parse_params() {
   esac
 
   : "${AWS_REGION:?}" "${AWS_PARTITION:?}" "${ENV_NAME:?}" "${PROJECT_NAME:?}" "${ACCOUNT_ID:?}" "${UPDATER_STACK:?}"
-  : "${TARGET_STACK:?}" "${ARTIFACT_BUCKET:?}" "${BOOTSTRAP_COMMIT:?}" "${CONFIGURATION_SECRET:?}"
-  : "${UPDATER_PIPELINE:?}" "${EXECUTION_ID:?}" "${CICD_REF:?}" "${UPDATE_MODE:?}" "${SNAPSHOT_ID:?}"
+  : "${TARGET_STACK:?}" "${ARTIFACT_BUCKET:?}" "${BOOTSTRAP_COMMIT:?}"
+  : "${CODEBUILD_BUILD_ID:?}" "${CICD_REF:?}"
   : "${ACCOUNT_TYPE:?}"
   case "$ACCOUNT_TYPE" in
     CORE) domain=core ;;
     CONFINFO) domain=confinfo ;;
     *) fail 'Expected ACCOUNT_TYPE CORE or CONFINFO' ;;
   esac
-  [[ $UPDATE_MODE == plan || $UPDATE_MODE == apply ]] || fail 'Expected plan or apply'
-  [[ $EXECUTION_ID =~ ^[a-f0-9-]{36}$ ]] || fail 'Invalid execution ID'
+  build_id=${CODEBUILD_BUILD_ID##*:}
+  [[ $build_id =~ ^[a-f0-9-]{36}$ ]] || fail 'Invalid build ID'
   [[ $BOOTSTRAP_COMMIT =~ ^[a-f0-9]{40}$ ]] || fail 'Invalid bootstrap commit'
   [[ $(git rev-parse HEAD) == "$BOOTSTRAP_COMMIT" ]] || fail 'Unexpected bootstrap checkout'
 
@@ -56,7 +55,6 @@ dump_params() {
   echo "Target stack:      ${TARGET_STACK}"
   echo "Bucket Name:       ${ARTIFACT_BUCKET}"
   echo "Bootstrap Commit:  ${BOOTSTRAP_COMMIT}"
-  echo "Update mode:       ${UPDATE_MODE}"
 }
 
 fail() {
@@ -125,12 +123,12 @@ idle_target() {
 prepare_change_set() {
   set -e
   local stack=$1 template=$2 kind=$3 parameters=$4 change status reason token page
-  change="pn-cicd-update-$root-$kind"
+  change="pn-cicd-update-$build_id-$kind"
   aws_cli s3api put-object --bucket "$ARTIFACT_BUCKET" --expected-bucket-owner "$ACCOUNT_ID" \
-    --key "pn-cicd-update/$root/$kind.yaml" --body "$template" "${storage_args[@]}" > /dev/null
+    --key "pn-cicd-update/$build_id/$kind.yaml" --body "$template" "${storage_args[@]}" > /dev/null
   aws_cli cloudformation create-change-set --stack-name "$stack" --change-set-name "$change" \
-    --change-set-type UPDATE --client-token "$root-$kind" --capabilities CAPABILITY_NAMED_IAM \
-    --template-url "https://s3.$AWS_REGION.amazonaws.com/$ARTIFACT_BUCKET/pn-cicd-update/$root/$kind.yaml" \
+    --change-set-type UPDATE --client-token "$build_id-$kind" --capabilities CAPABILITY_NAMED_IAM \
+    --template-url "https://s3.$AWS_REGION.amazonaws.com/$ARTIFACT_BUCKET/pn-cicd-update/$build_id/$kind.yaml" \
     --parameters "file://$parameters" > /dev/null
   aws_cli cloudformation wait change-set-create-complete --stack-name "$stack" --change-set-name "$change" || true
   aws_cli cloudformation describe-change-set --stack-name "$stack" --change-set-name "$change" \
@@ -180,28 +178,21 @@ prepare_change_set() {
 }
 
 execute_change_set() {
-  local stack=$1 change=$2 state
-  [[ $change != none ]] || return 0
-  state=$(aws_cli cloudformation describe-change-set --change-set-name "$change" --query ExecutionStatus --output text)
-  case "$state" in
-    AVAILABLE)
-      aws_cli cloudformation execute-change-set --stack-name "$stack" --change-set-name "$change" \
-        --client-request-token "$root-$(basename "$stack")"
-      ;;
-    EXECUTE_COMPLETE)
-      [[ $(aws_cli cloudformation describe-stacks --stack-name "$stack" --query 'Stacks[0].StackStatus' --output text) == UPDATE_COMPLETE ]] ||
-        fail 'Previous update did not succeed'
-      return 0 ;;
-    EXECUTE_IN_PROGRESS) ;;
-    *) fail "Change set cannot execute: $state" ;;
-  esac
+  local stack=$1 change=$2
+  if [[ $change == none ]]; then
+    echo "No changes: $stack"
+    return 0
+  fi
+  echo "Updating $stack: $change"
+  aws_cli cloudformation execute-change-set --stack-name "$stack" --change-set-name "$change" \
+    --client-request-token "$build_id-$(basename "$stack")"
   aws_cli cloudformation wait stack-update-complete --stack-name "$stack"
 }
 
 main() {
   work=$(mktemp -d)
   local target_id updater_id config_commit=none cicd_commit
-  local self_change target_change root snapshot_key continuation=false
+  local self_change target_change
   local storage_args=(--server-side-encryption AES256)
   if [[ -n ${ARTIFACT_KMS_KEY_ARN:-} ]]; then
     storage_args=(--server-side-encryption aws:kms --ssekms-key-id "$ARTIFACT_KMS_KEY_ARN")
@@ -226,86 +217,40 @@ main() {
   jq -e --arg bucket "$ARTIFACT_BUCKET" 'any(.Stacks[0].Outputs[]?;
     .OutputKey == "CdArtifactBucketName" and .OutputValue == $bucket)' "$work/target.json" > /dev/null ||
     fail 'Artifact bucket does not belong to the target'
-  root=$EXECUTION_ID
-  if [[ $SNAPSHOT_ID != new ]]; then
-    [[ $SNAPSHOT_ID =~ ^[a-f0-9-]{36}$ && $SNAPSHOT_ID != "$EXECUTION_ID" ]] || fail 'Invalid continuation'
-    root=$SNAPSHOT_ID
-    continuation=true
-  fi
-  snapshot_key="pn-cicd-update/$root/snapshot.json"
-  aws_cli s3api list-objects-v2 --bucket "$ARTIFACT_BUCKET" --expected-bucket-owner "$ACCOUNT_ID" \
-    --prefix "$snapshot_key" --max-keys 1 > "$work/objects.json"
-  if jq -e --arg key "$snapshot_key" 'any(.Contents[]?; .Key == $key)' "$work/objects.json" > /dev/null; then
-    aws_cli s3api get-object --bucket "$ARTIFACT_BUCKET" --expected-bucket-owner "$ACCOUNT_ID" \
-      --key "$snapshot_key" "$work/snapshot.json" > /dev/null
-    jq -e --arg account "$ACCOUNT_ID" --arg region "$AWS_REGION" --arg env "$ENV_NAME" \
-      --arg domain "$domain" --arg target "$target_id" --arg updater "$updater_id" --arg mode "$UPDATE_MODE" \
-      '.account == $account and .region == $region and .environment == $env and .domain == $domain and
-        .target == $target and .updater == $updater and .mode == $mode and
-        (.cicd_commit | test("^[a-f0-9]{40}$"))' "$work/snapshot.json" > /dev/null || fail 'Snapshot context mismatch'
-    cicd_commit=$(jq -r '.cicd_commit' "$work/snapshot.json")
-    config_commit=$(jq -r '.configuration_commit' "$work/snapshot.json")
-    self_change=$(jq -r '.self_change' "$work/snapshot.json")
-    target_change=$(jq -r '.target_change' "$work/snapshot.json")
-    [[ $continuation == false || $BOOTSTRAP_COMMIT == "$cicd_commit" ]] || fail 'Continuation revision mismatch'
+  if [[ $CICD_REF == manifest ]]; then
+    [[ $ENV_NAME != dev ]] || fail 'DEV pilot requires an explicit reviewed cicd_ref'
+    local token authorization
+    token=$(aws_cli secretsmanager get-secret-value --secret-id github-token --query SecretString --output text)
+    [[ -n $token && $token != None ]] || fail 'Missing GitHub credential'
+    authorization=$(printf 'x-access-token:%s' "$token" | base64 | tr -d '\n')
+    GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader \
+      GIT_CONFIG_VALUE_0="Authorization: Basic $authorization" \
+      git clone --branch main https://github.com/pagopa/pn-configuration.git "$work/pn-configuration"
+    unset token authorization
+    config_commit=$(git -C "$work/pn-configuration" rev-parse HEAD)
+    CICD_REF=$(jq -er '.cd_scripts_commitId | select(type == "string" and length > 0)' \
+      "$work/pn-configuration/$ENV_NAME/repository-list.json")
   else
-    [[ $continuation == false ]] || fail 'Continuation snapshot is missing'
-    if [[ $CICD_REF == manifest ]]; then
-      case "$ENV_NAME" in dev|svil) fail 'DEV pilot requires an explicit reviewed cicd_ref' ;; esac
-      local token authorization
-      token=$(aws_cli secretsmanager get-secret-value --secret-id "$CONFIGURATION_SECRET" --query SecretString --output text)
-      [[ -n $token && $token != None ]] || fail 'Missing GitHub credential'
-      authorization=$(printf 'x-access-token:%s' "$token" | base64 | tr -d '\n')
-      GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader \
-        GIT_CONFIG_VALUE_0="Authorization: Basic $authorization" \
-        git clone --branch main https://github.com/pagopa/pn-configuration.git "$work/pn-configuration"
-      unset token authorization
-      config_commit=$(git -C "$work/pn-configuration" rev-parse HEAD)
-      CICD_REF=$(jq -er '.cd_scripts_commitId | select(type == "string" and length > 0)' \
-        "$work/pn-configuration/$ENV_NAME/repository-list.json")
-    else
-      [[ $CICD_REF =~ ^[a-f0-9]{40}$ ]] || fail 'Explicit cicd_ref must be a reviewed commit SHA'
-    fi
-    cicd_commit=$(resolve_commit . "$CICD_REF")
-    git merge-base --is-ancestor "$BOOTSTRAP_COMMIT" "$cicd_commit" || fail 'Automatic downgrade or divergent revision rejected'
-    git checkout --detach "$cicd_commit"
-    local template=cd-cli/cnf-templates/complete-pipeline.yaml
-    [[ $domain == core ]] || template=cd-cli/cnf-templates/confinfo-complete-pipeline.yaml
-    [[ -f $template && -f cd-cli/updateCdPipelines.sh && -f cd-cli/cnf-templates/cicd-update-pipeline.yaml ]] ||
-      fail 'Selected release does not contain the updater'
-    idle_target
-    jq '[.Stacks[0].Parameters[] | {ParameterKey, UsePreviousValue:true}]' "$work/target.json" > "$work/target-parameters.json"
-    jq --arg commit "$cicd_commit" '[.Stacks[0].Parameters[] |
-      if .ParameterKey == "BootstrapCicdCommitId" then {ParameterKey, ParameterValue:$commit}
-      else {ParameterKey, UsePreviousValue:true} end]' "$work/self.json" > "$work/self-parameters.json"
-    self_change=$(prepare_change_set "$updater_id" cd-cli/cnf-templates/cicd-update-pipeline.yaml self "$work/self-parameters.json")
-    [[ $self_change != none || $BOOTSTRAP_COMMIT == "$cicd_commit" ]] || fail 'Bootstrap revision was not updated'
-    target_change=$(prepare_change_set "$target_id" "$template" target "$work/target-parameters.json")
-    jq -n --arg account "$ACCOUNT_ID" --arg region "$AWS_REGION" --arg env "$ENV_NAME" \
-      --arg domain "$domain" --arg target "$target_id" --arg updater "$updater_id" --arg mode "$UPDATE_MODE" \
-      --arg cicd "$cicd_commit" --arg config "$config_commit" --arg self "$self_change" --arg change "$target_change" \
-      '{account:$account, region:$region, environment:$env, domain:$domain, target:$target, updater:$updater,
-        mode:$mode, cicd_commit:$cicd, configuration_commit:$config, self_change:$self, target_change:$change}' > "$work/snapshot.json"
-    aws_cli s3api put-object --bucket "$ARTIFACT_BUCKET" --expected-bucket-owner "$ACCOUNT_ID" \
-      --key "$snapshot_key" --body "$work/snapshot.json" --if-none-match '*' "${storage_args[@]}" > /dev/null
+    [[ $CICD_REF =~ ^[a-f0-9]{40}$ ]] || fail 'Explicit cicd_ref must be a reviewed commit SHA'
   fi
-  echo "Domain=$domain configuration=$config_commit cicd=$cicd_commit mode=$UPDATE_MODE"
-  echo "Self change set=$self_change target change set=$target_change snapshot=$root"
-  [[ $UPDATE_MODE == apply ]] || return 0
+  cicd_commit=$(resolve_commit . "$CICD_REF")
+  git merge-base --is-ancestor "$BOOTSTRAP_COMMIT" "$cicd_commit" || fail 'Automatic downgrade or divergent revision rejected'
+  git checkout --detach "$cicd_commit"
+  local template=cd-cli/cnf-templates/complete-pipeline.yaml
+  [[ $domain == core ]] || template=cd-cli/cnf-templates/confinfo-complete-pipeline.yaml
+  [[ -f $template && -f cd-cli/updateCdPipelines.sh && -f cd-cli/cnf-templates/cicd-update-pipeline.yaml ]] ||
+    fail 'Selected release does not contain the updater'
+  echo "Domain=$domain configuration=$config_commit cicd=$cicd_commit"
   idle_target
-  if [[ $self_change != none ]]; then
-    if [[ $continuation == false ]]; then
-      execute_change_set "$updater_id" "$self_change"
-      aws_cli codepipeline start-pipeline-execution --name "$UPDATER_PIPELINE" \
-        --client-request-token "$root-continue" \
-        --variables "name=cicd_ref,value=$cicd_commit" "name=mode,value=apply" "name=snapshot,value=$root"
-      echo 'Self-update complete; target update queued on the same snapshot'
-      return 0
-    fi
-    [[ $BOOTSTRAP_COMMIT == "$cicd_commit" ]] || fail 'Self-update did not activate the selected commit'
-    [[ $(aws_cli cloudformation describe-change-set --change-set-name "$self_change" --query ExecutionStatus --output text) == EXECUTE_COMPLETE ]] ||
-      fail 'Self-update has not completed'
-  fi
+  jq '[.Stacks[0].Parameters[] | {ParameterKey, UsePreviousValue:true}]' "$work/target.json" > "$work/target-parameters.json"
+  jq --arg commit "$cicd_commit" '[.Stacks[0].Parameters[] |
+    if .ParameterKey == "BootstrapCicdCommitId" then {ParameterKey, ParameterValue:$commit}
+    else {ParameterKey, UsePreviousValue:true} end]' "$work/self.json" > "$work/self-parameters.json"
+  self_change=$(prepare_change_set "$updater_id" cd-cli/cnf-templates/cicd-update-pipeline.yaml self "$work/self-parameters.json")
+  [[ $self_change != none || $BOOTSTRAP_COMMIT == "$cicd_commit" ]] || fail 'Bootstrap revision was not updated'
+  execute_change_set "$updater_id" "$self_change"
+
+  target_change=$(prepare_change_set "$target_id" "$template" target "$work/target-parameters.json")
   idle_target
   execute_change_set "$target_id" "$target_change"
   idle_target

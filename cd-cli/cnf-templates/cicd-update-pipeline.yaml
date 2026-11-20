@@ -1,16 +1,18 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Update the local SEND CD pipeline stack
 
-# Bootstrap this stack manually from BootstrapCicdCommitId, then start the pipeline.
+# This stack is bootstrapped manually once per account and environment.
+# One CodeBuild run updates this stack first, then the local Complete CD pipeline stack.
+# Empty change sets are skipped. A new pn-cicd commit updates the CodeBuild project.
+# CodePipeline update behavior: https://docs.aws.amazon.com/codepipeline/latest/userguide/pipelines-edit.html#pipelines-edit-cli
 Parameters:
   ProjectName:
     Type: String
     Default: pn
-    MaxLength: 40
     AllowedPattern: '[a-zA-Z][a-zA-Z0-9-]*'
   EnvName:
     Type: String
-    AllowedValues: [dev, svil, test, uat, hotfix, prod]
+    AllowedValues: [dev, test, uat, hotfix, prod]
   accountType:
     Type: String
     Description: SEND account type
@@ -22,15 +24,10 @@ Parameters:
   ArtifactBucketName:
     Type: String
     Description: CdArtifactBucketName output of the target stack
-    AllowedPattern: '[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]'
   BootstrapCicdCommitId:
     Type: String
     Description: Reviewed pn-cicd commit containing this template and updater script
     AllowedPattern: '[a-f0-9]{40}'
-  ConfigurationSecretName:
-    Type: String
-    Default: github-token
-    AllowedPattern: '[a-zA-Z0-9/_+=.@-]+'
   ArtifactKmsKeyArn:
     Type: String
     Default: ''
@@ -73,33 +70,26 @@ Resources:
                   - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/${ProjectName}-cicd-update/*
                   - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/pn-cicd-update/*
               - Effect: Allow
-                Action: s3:ListBucket
-                Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}
+                Action: secretsmanager:GetSecretValue
+                Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:github-token-*
+              - Effect: Allow
+                Action: ['cloudformation:DescribeStacks', 'cloudformation:ListStackResources']
+                Resource:
+                  - !Ref AWS::StackId
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
+              - Effect: Allow
+                Action: ['cloudformation:CreateChangeSet', 'cloudformation:DescribeChangeSet', 'cloudformation:ExecuteChangeSet', 'cloudformation:DeleteChangeSet']
+                Resource:
+                  - !Ref AWS::StackId
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
                 Condition:
                   StringLike:
-                    s3:prefix: [pn-cicd-update/*]
-              - Effect: Allow
-                Action: secretsmanager:GetSecretValue
-                Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${ConfigurationSecretName}-*
-              - Effect: Allow
-                Action: cloudformation:DescribeStacks
-                Resource:
-                  - !Ref AWS::StackId
-                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
-              - Effect: Allow
-                Action: ['cloudformation:ListStackResources', 'cloudformation:CreateChangeSet']
-                Resource:
-                  - !Ref AWS::StackId
-                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
-              - Effect: Allow
-                Action: ['cloudformation:DescribeChangeSet', 'cloudformation:ExecuteChangeSet', 'cloudformation:DeleteChangeSet']
-                Resource: !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:changeSet/pn-cicd-update-*/*
+                    cloudformation:ChangeSetName:
+                      - pn-cicd-update-*
+                      - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:changeSet/pn-cicd-update-*/*
               - Effect: Allow
                 Action: ['codepipeline:GetPipeline', 'codepipeline:ListPipelineExecutions', 'codepipeline:UpdatePipeline', 'codepipeline:ListTagsForResource', 'codepipeline:TagResource', 'codepipeline:UntagResource']
                 Resource: !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectName}-*
-              - Effect: Allow
-                Action: codepipeline:StartPipelineExecution
-                Resource: !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectName}-cicd-update
               - Effect: Allow
                 Action: ['codebuild:ListBuildsForProject', 'codebuild:BatchGetProjects', 'codebuild:UpdateProject']
                 Resource: !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-*
@@ -205,10 +195,6 @@ Resources:
             Value: !Ref ArtifactKmsKeyArn
           - Name: BOOTSTRAP_COMMIT
             Value: !Ref BootstrapCicdCommitId
-          - Name: CONFIGURATION_SECRET
-            Value: !Ref ConfigurationSecretName
-          - Name: UPDATER_PIPELINE
-            Value: !Sub ${ProjectName}-cicd-update
       Source:
         Type: CODEPIPELINE
         BuildSpec: |
@@ -245,12 +231,6 @@ Resources:
         - Name: cicd_ref
           DefaultValue: manifest
           Description: Use the release manifest, or an explicit reviewed commit for the pilot
-        - Name: mode
-          DefaultValue: plan
-          Description: plan or apply
-        - Name: snapshot
-          DefaultValue: new
-          Description: Internal continuation identifier
       Stages:
         - Name: Source
           Actions:
@@ -277,7 +257,7 @@ Resources:
               Configuration:
                 ProjectName: !Ref UpdateBuild
                 EnvironmentVariables: |
-                  [{"name":"CICD_REF","value":"#{variables.cicd_ref}","type":"PLAINTEXT"},{"name":"UPDATE_MODE","value":"#{variables.mode}","type":"PLAINTEXT"},{"name":"SNAPSHOT_ID","value":"#{variables.snapshot}","type":"PLAINTEXT"},{"name":"EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]
+                  [{"name":"CICD_REF","value":"#{variables.cicd_ref}","type":"PLAINTEXT"}]
               InputArtifacts:
                 - Name: Source
 
