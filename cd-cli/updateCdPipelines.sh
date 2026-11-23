@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-export AWS_PAGER=''
-export AWS_RETRY_MODE=standard
-export AWS_MAX_ATTEMPTS=3
 
 usage() {
   cat <<EOF
@@ -10,8 +7,7 @@ Usage: $(basename "${BASH_SOURCE[0]}") [-h]
 
 Required environment:
   AWS_REGION, AWS_PARTITION, ACCOUNT_ID, ACCOUNT_TYPE, ENV_NAME, PROJECT_NAME
-  UPDATER_STACK, TARGET_STACK, ARTIFACT_BUCKET, BOOTSTRAP_COMMIT
-  CODEBUILD_BUILD_ID, CICD_REF
+  UPDATER_STACK, TARGET_STACK, ARTIFACT_BUCKET, CODEBUILD_BUILD_ID
 
 Optional environment:
   ARTIFACT_KMS_KEY_ARN
@@ -26,8 +22,7 @@ parse_params() {
   esac
 
   : "${AWS_REGION:?}" "${AWS_PARTITION:?}" "${ENV_NAME:?}" "${PROJECT_NAME:?}" "${ACCOUNT_ID:?}" "${UPDATER_STACK:?}"
-  : "${TARGET_STACK:?}" "${ARTIFACT_BUCKET:?}" "${BOOTSTRAP_COMMIT:?}"
-  : "${CODEBUILD_BUILD_ID:?}" "${CICD_REF:?}"
+  : "${TARGET_STACK:?}" "${ARTIFACT_BUCKET:?}" "${CODEBUILD_BUILD_ID:?}"
   : "${ACCOUNT_TYPE:?}"
   case "$ACCOUNT_TYPE" in
     CORE) domain=core ;;
@@ -36,8 +31,6 @@ parse_params() {
   esac
   build_id=${CODEBUILD_BUILD_ID##*:}
   [[ $build_id =~ ^[a-f0-9-]{36}$ ]] || fail 'Invalid build ID'
-  [[ $BOOTSTRAP_COMMIT =~ ^[a-f0-9]{40}$ ]] || fail 'Invalid bootstrap commit'
-  [[ $(git rev-parse HEAD) == "$BOOTSTRAP_COMMIT" ]] || fail 'Unexpected bootstrap checkout'
 
   aws_command_base_args=(--region "$AWS_REGION")
 }
@@ -54,7 +47,6 @@ dump_params() {
   echo "Updater stack:     ${UPDATER_STACK}"
   echo "Target stack:      ${TARGET_STACK}"
   echo "Bucket Name:       ${ARTIFACT_BUCKET}"
-  echo "Bootstrap Commit:  ${BOOTSTRAP_COMMIT}"
 }
 
 fail() {
@@ -84,16 +76,6 @@ ready_stack() {
     CREATE_COMPLETE|UPDATE_COMPLETE|UPDATE_ROLLBACK_COMPLETE) ;;
     *) fail "Stack is not ready: $(jq -r '.Stacks[0].StackStatus' "$1")" ;;
   esac
-}
-
-resolve_commit() {
-  local repo=$1 ref=$2 result
-  case "$ref" in tag/*) ref="refs/tags/${ref#tag/}" ;; esac
-  result=$(git -C "$repo" rev-parse --verify --end-of-options "$ref^{commit}" 2>/dev/null) ||
-    result=$(git -C "$repo" rev-parse --verify --end-of-options "refs/remotes/origin/$ref^{commit}") ||
-    fail "Unknown revision: $ref"
-  [[ $result =~ ^[a-f0-9]{40}$ ]] || fail 'Invalid commit'
-  printf '%s\n' "$result"
 }
 
 idle_target() {
@@ -191,7 +173,7 @@ execute_change_set() {
 
 main() {
   work=$(mktemp -d)
-  local target_id updater_id config_commit=none cicd_commit
+  local target_id updater_id cicd_commit
   local self_change target_change
   local storage_args=(--server-side-encryption AES256)
   if [[ -n ${ARTIFACT_KMS_KEY_ARN:-} ]]; then
@@ -217,37 +199,16 @@ main() {
   jq -e --arg bucket "$ARTIFACT_BUCKET" 'any(.Stacks[0].Outputs[]?;
     .OutputKey == "CdArtifactBucketName" and .OutputValue == $bucket)' "$work/target.json" > /dev/null ||
     fail 'Artifact bucket does not belong to the target'
-  if [[ $CICD_REF == manifest ]]; then
-    [[ $ENV_NAME != dev ]] || fail 'DEV pilot requires an explicit reviewed cicd_ref'
-    local token authorization
-    token=$(aws_cli secretsmanager get-secret-value --secret-id github-token --query SecretString --output text)
-    [[ -n $token && $token != None ]] || fail 'Missing GitHub credential'
-    authorization=$(printf 'x-access-token:%s' "$token" | base64 | tr -d '\n')
-    GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader \
-      GIT_CONFIG_VALUE_0="Authorization: Basic $authorization" \
-      git clone --branch main https://github.com/pagopa/pn-configuration.git "$work/pn-configuration"
-    unset token authorization
-    config_commit=$(git -C "$work/pn-configuration" rev-parse HEAD)
-    CICD_REF=$(jq -er '.cd_scripts_commitId | select(type == "string" and length > 0)' \
-      "$work/pn-configuration/$ENV_NAME/repository-list.json")
-  else
-    [[ $CICD_REF =~ ^[a-f0-9]{40}$ ]] || fail 'Explicit cicd_ref must be a reviewed commit SHA'
-  fi
-  cicd_commit=$(resolve_commit . "$CICD_REF")
-  git merge-base --is-ancestor "$BOOTSTRAP_COMMIT" "$cicd_commit" || fail 'Automatic downgrade or divergent revision rejected'
-  git checkout --detach "$cicd_commit"
+  cicd_commit=$(git rev-parse --verify HEAD)
   local template=cd-cli/cnf-templates/complete-pipeline.yaml
   [[ $domain == core ]] || template=cd-cli/cnf-templates/confinfo-complete-pipeline.yaml
   [[ -f $template && -f cd-cli/updateCdPipelines.sh && -f cd-cli/cnf-templates/cicd-update-pipeline.yaml ]] ||
     fail 'Selected release does not contain the updater'
-  echo "Domain=$domain configuration=$config_commit cicd=$cicd_commit"
+  echo "Domain=$domain cicd=$cicd_commit"
   idle_target
   jq '[.Stacks[0].Parameters[] | {ParameterKey, UsePreviousValue:true}]' "$work/target.json" > "$work/target-parameters.json"
-  jq --arg commit "$cicd_commit" '[.Stacks[0].Parameters[] |
-    if .ParameterKey == "BootstrapCicdCommitId" then {ParameterKey, ParameterValue:$commit}
-    else {ParameterKey, UsePreviousValue:true} end]' "$work/self.json" > "$work/self-parameters.json"
+  jq '[.Stacks[0].Parameters[] | {ParameterKey, UsePreviousValue:true}]' "$work/self.json" > "$work/self-parameters.json"
   self_change=$(prepare_change_set "$updater_id" cd-cli/cnf-templates/cicd-update-pipeline.yaml self "$work/self-parameters.json")
-  [[ $self_change != none || $BOOTSTRAP_COMMIT == "$cicd_commit" ]] || fail 'Bootstrap revision was not updated'
   execute_change_set "$updater_id" "$self_change"
 
   target_change=$(prepare_change_set "$target_id" "$template" target "$work/target-parameters.json")

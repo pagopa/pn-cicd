@@ -3,7 +3,8 @@ Description: Update the local SEND CD pipeline stack
 
 # This stack is bootstrapped manually once per account and environment.
 # One CodeBuild run updates this stack first, then the local Complete CD pipeline stack.
-# Empty change sets are skipped. A new pn-cicd commit updates the CodeBuild project.
+# Release revision: S3 in DEV, pn-configuration in other environments.
+# Empty change sets are skipped.
 # CodePipeline update behavior: https://docs.aws.amazon.com/codepipeline/latest/userguide/pipelines-edit.html#pipelines-edit-cli
 Parameters:
   ProjectName:
@@ -24,10 +25,6 @@ Parameters:
   ArtifactBucketName:
     Type: String
     Description: CdArtifactBucketName output of the target stack
-  BootstrapCicdCommitId:
-    Type: String
-    Description: Reviewed pn-cicd commit containing this template and updater script
-    AllowedPattern: '[a-f0-9]{40}'
   ArtifactKmsKeyArn:
     Type: String
     Default: ''
@@ -35,6 +32,7 @@ Parameters:
     AllowedPattern: '^$|arn:[a-z-]+:kms:[a-z0-9-]+:[0-9]{12}:key/[a-zA-Z0-9-]+'
 
 Conditions:
+  IsDev: !Equals [!Ref EnvName, dev]
   HasArtifactKmsKey: !Not [!Equals [!Ref ArtifactKmsKeyArn, '']]
 
 Resources:
@@ -69,9 +67,14 @@ Resources:
                 Resource:
                   - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/${ProjectName}-cicd-update/*
                   - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/pn-cicd-update/*
-              - Effect: Allow
-                Action: secretsmanager:GetSecretValue
-                Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:github-token-*
+              - !If
+                - IsDev
+                - Effect: Allow
+                  Action: s3:GetObject
+                  Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/config/desired-commit-ids-env.sh
+                - Effect: Allow
+                  Action: secretsmanager:GetSecretValue
+                  Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:github-token-*
               - Effect: Allow
                 Action: ['cloudformation:DescribeStacks', 'cloudformation:ListStackResources']
                 Resource:
@@ -193,8 +196,6 @@ Resources:
             Value: !Ref ArtifactBucketName
           - Name: ARTIFACT_KMS_KEY_ARN
             Value: !Ref ArtifactKmsKeyArn
-          - Name: BOOTSTRAP_COMMIT
-            Value: !Ref BootstrapCicdCommitId
       Source:
         Type: CODEPIPELINE
         BuildSpec: |
@@ -203,13 +204,41 @@ Resources:
             build:
               commands:
                 - |
-                  set -eu
+                  set -euo pipefail
+                  export AWS_PAGER='' AWS_RETRY_MODE=standard AWS_MAX_ATTEMPTS=3
                   work=$(mktemp -d)
+                  if [[ "$ENV_NAME" == dev ]]; then
+                    aws --region "$AWS_REGION" s3api get-object --bucket "$ARTIFACT_BUCKET" \
+                      --expected-bucket-owner "$ACCOUNT_ID" --key config/desired-commit-ids-env.sh "$work/desired-commit-ids-env.sh" >/dev/null
+                    ref=$(awk '
+                      /^[[:blank:]]*(export[[:blank:]]+)?cd_scripts_commitId=/ {
+                        sub(/^[^=]*=/, "")
+                        sub(/[[:space:]]+$/, "")
+                        if (/^".*"$/ || /^\047.*\047$/) $0 = substr($0, 2, length($0) - 2)
+                        ref = $0
+                        count++
+                      }
+                      END { if (count != 1) exit 1; print ref }
+                    ' "$work/desired-commit-ids-env.sh") || { echo 'Missing or duplicate cd_scripts_commitId' >&2; exit 1; }
+                  else
+                    token=$(aws --region "$AWS_REGION" secretsmanager get-secret-value --secret-id github-token --query SecretString --output text)
+                    [[ -n $token && $token != None ]] || { echo 'Missing GitHub credential' >&2; exit 1; }
+                    authorization=$(printf 'x-access-token:%s' "$token" | base64 | tr -d '\n')
+                    GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader \
+                      GIT_CONFIG_VALUE_0="Authorization: Basic $authorization" \
+                      git clone --branch main https://github.com/pagopa/pn-configuration.git "$work/pn-configuration"
+                    unset token authorization
+                    ref=$(jq -er '.cd_scripts_commitId | select(type == "string")' \
+                      "$work/pn-configuration/$ENV_NAME/repository-list.json")
+                  fi
+                  [[ $ref =~ ^[[:alnum:]][[:alnum:]_./-]*$ ]] || { echo 'Invalid cd_scripts_commitId' >&2; exit 1; }
                   git clone https://github.com/pagopa/pn-cicd.git "$work/pn-cicd"
-                  git -C "$work/pn-cicd" checkout --detach "$BOOTSTRAP_COMMIT"
-                  cp "$work/pn-cicd/cd-cli/updateCdPipelines.sh" "$work/updateCdPipelines.sh"
                   cd "$work/pn-cicd"
-                  bash "$work/updateCdPipelines.sh"
+                  case "$ref" in tag/*) ref="refs/tags/${ref#tag/}" ;; esac
+                  commit=$(git rev-parse --verify --end-of-options "$ref^{commit}" 2>/dev/null ||
+                    git rev-parse --verify --end-of-options "refs/remotes/origin/$ref^{commit}")
+                  git checkout --detach "$commit"
+                  bash cd-cli/updateCdPipelines.sh
 
   UpdatePipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -227,10 +256,6 @@ Resources:
           - Type: KMS
             Id: !Ref ArtifactKmsKeyArn
           - !Ref AWS::NoValue
-      Variables:
-        - Name: cicd_ref
-          DefaultValue: manifest
-          Description: Use the release manifest, or an explicit reviewed commit for the pilot
       Stages:
         - Name: Source
           Actions:
@@ -256,8 +281,6 @@ Resources:
                 Version: '1'
               Configuration:
                 ProjectName: !Ref UpdateBuild
-                EnvironmentVariables: |
-                  [{"name":"CICD_REF","value":"#{variables.cicd_ref}","type":"PLAINTEXT"}]
               InputArtifacts:
                 - Name: Source
 
