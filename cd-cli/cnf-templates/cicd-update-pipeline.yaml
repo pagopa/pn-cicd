@@ -70,12 +70,12 @@ Resources:
                   Action: secretsmanager:GetSecretValue
                   Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:github-token-*
               - Effect: Allow
-                Action: cloudformation:DescribeStacks
+                Action: ['cloudformation:DescribeStacks', 'cloudformation:DescribeChangeSet']
                 Resource:
                   - !Ref AWS::StackId
                   - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
               - Effect: Allow
-                Action: ['cloudformation:CreateChangeSet', 'cloudformation:DescribeChangeSet', 'cloudformation:ExecuteChangeSet', 'cloudformation:DeleteChangeSet']
+                Action: ['cloudformation:CreateChangeSet', 'cloudformation:ExecuteChangeSet', 'cloudformation:DeleteChangeSet']
                 Resource:
                   - !Ref AWS::StackId
                   - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
