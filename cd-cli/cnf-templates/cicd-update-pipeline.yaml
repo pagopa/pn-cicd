@@ -25,15 +25,9 @@ Parameters:
   ArtifactBucketName:
     Type: String
     Description: CdArtifactBucketName output of the target stack
-  ArtifactKmsKeyArn:
-    Type: String
-    Default: ''
-    Description: Existing artifact encryption key ARN, if a customer managed key is used
-    AllowedPattern: '^$|arn:[a-z-]+:kms:[a-z0-9-]+:[0-9]{12}:key/[a-zA-Z0-9-]+'
 
 Conditions:
   IsDev: !Equals [!Ref EnvName, dev]
-  HasArtifactKmsKey: !Not [!Equals [!Ref ArtifactKmsKeyArn, '']]
 
 Resources:
   UpdateBuildRole:
@@ -108,19 +102,6 @@ Resources:
                 Condition:
                   StringEquals:
                     iam:PassedToService: [codepipeline.amazonaws.com, codebuild.amazonaws.com]
-        - !If
-          - HasArtifactKmsKey
-          - PolicyName: ArtifactKey
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: Allow
-                  Action: ['kms:Decrypt', 'kms:GenerateDataKey']
-                  Resource: !Ref ArtifactKmsKeyArn
-                  Condition:
-                    StringEquals:
-                      kms:ViaService: !Sub s3.${AWS::Region}.${AWS::URLSuffix}
-          - !Ref AWS::NoValue
 
   PipelineRole:
     Type: AWS::IAM::Role
@@ -150,19 +131,6 @@ Resources:
                 Resource:
                   - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-cicd-update
                   - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:build/${ProjectName}-cicd-update:*
-        - !If
-          - HasArtifactKmsKey
-          - PolicyName: ArtifactKey
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: Allow
-                  Action: ['kms:Decrypt', 'kms:GenerateDataKey']
-                  Resource: !Ref ArtifactKmsKeyArn
-                  Condition:
-                    StringEquals:
-                      kms:ViaService: !Sub s3.${AWS::Region}.${AWS::URLSuffix}
-          - !Ref AWS::NoValue
 
   UpdateBuild:
     Type: AWS::CodeBuild::Project
@@ -194,8 +162,6 @@ Resources:
             Value: !Ref TargetStackName
           - Name: ARTIFACT_BUCKET
             Value: !Ref ArtifactBucketName
-          - Name: ARTIFACT_KMS_KEY_ARN
-            Value: !Ref ArtifactKmsKeyArn
       Source:
         Type: CODEPIPELINE
         BuildSpec: |
@@ -251,11 +217,6 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref ArtifactBucketName
-        EncryptionKey: !If
-          - HasArtifactKmsKey
-          - Type: KMS
-            Id: !Ref ArtifactKmsKeyArn
-          - !Ref AWS::NoValue
       Stages:
         - Name: Source
           Actions:

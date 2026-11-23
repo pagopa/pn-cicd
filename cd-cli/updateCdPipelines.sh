@@ -8,9 +8,6 @@ Usage: $(basename "${BASH_SOURCE[0]}") [-h]
 Required environment:
   AWS_REGION, AWS_PARTITION, ACCOUNT_ID, ACCOUNT_TYPE, ENV_NAME, PROJECT_NAME
   UPDATER_STACK, TARGET_STACK, ARTIFACT_BUCKET, CODEBUILD_BUILD_ID
-
-Optional environment:
-  ARTIFACT_KMS_KEY_ARN
 EOF
 }
 
@@ -107,7 +104,7 @@ prepare_change_set() {
   local stack=$1 template=$2 kind=$3 parameters=$4 change status reason token page
   change="pn-cicd-update-$build_id-$kind"
   aws_cli s3api put-object --bucket "$ARTIFACT_BUCKET" --expected-bucket-owner "$ACCOUNT_ID" \
-    --key "pn-cicd-update/$build_id/$kind.yaml" --body "$template" "${storage_args[@]}" > /dev/null
+    --key "pn-cicd-update/$build_id/$kind.yaml" --body "$template" --server-side-encryption AES256 > /dev/null
   aws_cli cloudformation create-change-set --stack-name "$stack" --change-set-name "$change" \
     --change-set-type UPDATE --client-token "$build_id-$kind" --capabilities CAPABILITY_NAMED_IAM \
     --template-url "https://s3.$AWS_REGION.amazonaws.com/$ARTIFACT_BUCKET/pn-cicd-update/$build_id/$kind.yaml" \
@@ -175,10 +172,6 @@ main() {
   work=$(mktemp -d)
   local target_id updater_id cicd_commit
   local self_change target_change
-  local storage_args=(--server-side-encryption AES256)
-  if [[ -n ${ARTIFACT_KMS_KEY_ARN:-} ]]; then
-    storage_args=(--server-side-encryption aws:kms --ssekms-key-id "$ARTIFACT_KMS_KEY_ARN")
-  fi
   read_stack "$TARGET_STACK" "$work/target.json" || fail 'Target stack does not exist'
   read_stack "$UPDATER_STACK" "$work/self.json" || fail 'Updater stack does not exist'
   ready_stack "$work/target.json"
