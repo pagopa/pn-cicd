@@ -103,6 +103,9 @@ SECRET_PROPS=(
   "pn.external.bearer-token-radd-over-50KB=e2eTokenRaddOver50Kb"
   "pn.external.bearer-token-radd-privateKey-diverso=e2eTokenRaddPrivateKeyDiverso"
   "b2b.mail.password=e2eEmailPassword"
+  "pn.test.email.client-id"="e2eTestEmailClientId"
+  "pn.test.email.client-secret"="e2eTestEmailClientSecret"
+  "pn.test.email.refresh-token"="e2eTestEmailRefreshToken"
   "pn.safeStorage.apikey=e2eSafeStorageApikey"
   "pn.consolidatore.api.key=e2eConsolidatoreApiKey"
   "pn.interop.clientId=e2eTestClientIdInterop"
@@ -119,6 +122,12 @@ SECRET_PROPS=(
   "pn.external.radd-cognito-clientid-user-2=e2eTestCognitoClientIdUser2"
   "pn.address.manager.api-key=e2eAddressManagerApiKey"
   "pn.address.manager.cxId=e2eAddressManagerCxId"
+  "pn.external.pt.cx-id.pt1=e2eTestExternalChannelPt1Id"
+  "pn.external.pt.cx-id.pt2=e2eTestExternalChannelPt2Id"
+  "pn.external.pt.cx-id.pt-senza-deleghe=e2eTestExternalChannelPtSDId"
+  "pn.external.pt.pa-non-aderente.id=e2eTestExternalChannelPtNAId"
+  "pn.external.pt.uid=e2eTestExternalChannelPtUid"
+  "pn.selfcare.delegations.subscription-key=e2eTestSelfcareDelegationSubKey"
 )
 
 # ==============================================================================
@@ -168,8 +177,12 @@ SSM_PROPS=(
   "pn.appIO.checkQrCodeV2-bodyUrl=/pn-test-e2e/appIOQrCodeV2Url"
   "pn.delayer.lambda.arn=/pn-test-e2e/pnDelayerLambdaArn"
   "pn.delayer.portfat.lambda.name=/pn-test-e2e/portfatLambdaArn"
+  "pn.delayer.portfat.check.lambda.name=/pn-test-e2e/portfatCheckLambdaArn"
   "pn-deleghe-temporanee-bucket-s3=/pn-test-e2e/delegheTemporaneeBucketS3"
   "pn.address.manager.base-url=/pn-test-e2e/addressManagerUrl"
+  "pn.selfcare.delegations.product-id=/pn-test-e2e/selfcareDelegationsProductId"
+  "pn.selfcare.delegations.base-url=/pn-test-e2e/selfcareDelegationsBaseUrl"
+  "pn.external.registry.base-url=/pn-test-e2e/externalRegistryBaseUrl"
   # NB: pn.radd-vpc.base-url e' condizionale (vedi sezione DERIVATE / STATICHE).
 )
 
