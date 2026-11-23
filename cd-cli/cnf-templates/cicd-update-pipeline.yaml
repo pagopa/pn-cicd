@@ -70,7 +70,7 @@ Resources:
                   Action: secretsmanager:GetSecretValue
                   Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:github-token-*
               - Effect: Allow
-                Action: ['cloudformation:DescribeStacks', 'cloudformation:ListStackResources']
+                Action: cloudformation:DescribeStacks
                 Resource:
                   - !Ref AWS::StackId
                   - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
@@ -85,14 +85,16 @@ Resources:
                       - pn-cicd-update-*
                       - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:changeSet/pn-cicd-update-*/*
               - Effect: Allow
-                Action: ['codepipeline:GetPipeline', 'codepipeline:ListPipelineExecutions', 'codepipeline:UpdatePipeline', 'codepipeline:ListTagsForResource', 'codepipeline:TagResource', 'codepipeline:UntagResource']
+                Action: ['codepipeline:GetPipeline', 'codepipeline:UpdatePipeline', 'codepipeline:ListTagsForResource', 'codepipeline:TagResource', 'codepipeline:UntagResource']
                 Resource: !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectName}-*
               - Effect: Allow
-                Action: ['codebuild:ListBuildsForProject', 'codebuild:BatchGetProjects', 'codebuild:UpdateProject']
-                Resource: !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-*
+                Action: codepipeline:ListPipelineExecutions
+                Resource:
+                  - !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectName}-*
+                  - !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:go-automation-update-pipeline
               - Effect: Allow
-                Action: codebuild:BatchGetBuilds
-                Resource: !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:build/${ProjectName}-*:*
+                Action: ['codebuild:BatchGetProjects', 'codebuild:UpdateProject']
+                Resource: !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-*
               - Effect: Allow
                 Action: iam:PassRole
                 Resource:
