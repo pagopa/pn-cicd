@@ -3,7 +3,7 @@ Description: Update the local SEND CD pipeline stack
 
 # This stack is bootstrapped manually once per account and environment.
 # One CodeBuild run updates this stack first, then the local Complete CD pipeline stack.
-# Release revision: S3 in DEV, pn-configuration in other environments.
+# Release revision: resolved by the Complete DownloadScripts project.
 # Empty change sets are skipped.
 # CodePipeline update behavior: https://docs.aws.amazon.com/codepipeline/latest/userguide/pipelines-edit.html#pipelines-edit-cli
 Parameters:
@@ -25,9 +25,6 @@ Parameters:
   ArtifactBucketName:
     Type: String
     Description: CdArtifactBucketName output of the target stack
-
-Conditions:
-  IsDev: !Equals [!Ref EnvName, dev]
 
 Resources:
   UpdateBuildRole:
@@ -58,17 +55,7 @@ Resources:
                 Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}
               - Effect: Allow
                 Action: ['s3:GetObject', 's3:GetObjectVersion', 's3:PutObject']
-                Resource:
-                  - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/${ProjectName}-cicd-update/*
-                  - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/pn-cicd-update/*
-              - !If
-                - IsDev
-                - Effect: Allow
-                  Action: s3:GetObject
-                  Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/config/desired-commit-ids-env.sh
-                - Effect: Allow
-                  Action: secretsmanager:GetSecretValue
-                  Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:github-token-*
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/${ProjectName}-cicd-update/*
               - Effect: Allow
                 Action: ['cloudformation:DescribeStacks', 'cloudformation:DescribeChangeSet', 'cloudformation:GetTemplateSummary', 'cloudformation:ListStackResources', 'cloudformation:DescribeStackEvents', 'cloudformation:TagResource', 'cloudformation:UntagResource']
                 Resource:
@@ -165,8 +152,33 @@ Resources:
                   - iam:TagRole
                   - iam:UntagRole
                 Resource:
-                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${AWS::StackName}-UpdateBuildRole-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${AWS::StackName}-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-*
                   - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ProjectName}-cd-pipeline-CodeBuildRole
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['iam:AttachRolePolicy', 'iam:DetachRolePolicy']
+                Resource:
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ProjectName}-cd-pipeline-CodeBuildRole
+                Condition:
+                  ArnLike:
+                    iam:PolicyARN: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${ProjectName}-CodeBuildPolicy-*
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action:
+                  - iam:GetPolicy
+                  - iam:GetPolicyVersion
+                  - iam:ListPolicyVersions
+                  - iam:ListEntitiesForPolicy
+                  - iam:CreatePolicy
+                  - iam:CreatePolicyVersion
+                  - iam:DeletePolicy
+                  - iam:DeletePolicyVersion
+                Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${ProjectName}-CodeBuildPolicy-*
                 Condition:
                   ForAnyValue:StringEquals:
                     aws:CalledVia: cloudformation.amazonaws.com
@@ -210,12 +222,15 @@ Resources:
                 Action: ['s3:GetObject', 's3:GetObjectVersion', 's3:PutObject']
                 Resource:
                   - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/empty.zip
+                  - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/config/desired-commit-ids-env.sh
                   - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/${ProjectName}-cicd-update/*
               - Effect: Allow
                 Action: ['codebuild:StartBuild', 'codebuild:BatchGetBuilds']
                 Resource:
                   - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-cicd-update
                   - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:build/${ProjectName}-cicd-update:*
+                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-DownloadScriptsCodebuildProject
+                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:build/${ProjectName}-DownloadScriptsCodebuildProject:*
 
   UpdateBuild:
     Type: AWS::CodeBuild::Project
@@ -237,10 +252,6 @@ Resources:
             Value: !Ref accountType
           - Name: PROJECT_NAME
             Value: !Ref ProjectName
-          - Name: ACCOUNT_ID
-            Value: !Ref AWS::AccountId
-          - Name: AWS_PARTITION
-            Value: !Ref AWS::Partition
           - Name: UPDATER_STACK
             Value: !Ref AWS::StackName
           - Name: TARGET_STACK
@@ -251,47 +262,10 @@ Resources:
         Type: CODEPIPELINE
         BuildSpec: |
           version: 0.2
-          env:
-            shell: bash
           phases:
             build:
               commands:
-                - |
-                  set -euo pipefail
-                  export AWS_PAGER='' AWS_RETRY_MODE=standard AWS_MAX_ATTEMPTS=3
-                  work=$(mktemp -d)
-                  if [[ "$ENV_NAME" == dev ]]; then
-                    aws --region "$AWS_REGION" s3api get-object --bucket "$ARTIFACT_BUCKET" \
-                      --expected-bucket-owner "$ACCOUNT_ID" --key config/desired-commit-ids-env.sh "$work/desired-commit-ids-env.sh" >/dev/null
-                    ref=$(awk '
-                      /^[[:blank:]]*(export[[:blank:]]+)?cd_scripts_commitId=/ {
-                        sub(/^[^=]*=/, "")
-                        sub(/[[:space:]]+$/, "")
-                        if (/^".*"$/ || /^\047.*\047$/) $0 = substr($0, 2, length($0) - 2)
-                        ref = $0
-                        count++
-                      }
-                      END { if (count != 1) exit 1; print ref }
-                    ' "$work/desired-commit-ids-env.sh") || { echo 'Missing or duplicate cd_scripts_commitId' >&2; exit 1; }
-                  else
-                    token=$(aws --region "$AWS_REGION" secretsmanager get-secret-value --secret-id github-token --query SecretString --output text)
-                    [[ -n $token && $token != None ]] || { echo 'Missing GitHub credential' >&2; exit 1; }
-                    authorization=$(printf 'x-access-token:%s' "$token" | base64 | tr -d '\n')
-                    GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader \
-                      GIT_CONFIG_VALUE_0="Authorization: Basic $authorization" \
-                      git clone --branch main https://github.com/pagopa/pn-configuration.git "$work/pn-configuration"
-                    unset token authorization
-                    ref=$(jq -er '.cd_scripts_commitId | select(type == "string")' \
-                      "$work/pn-configuration/$ENV_NAME/repository-list.json")
-                  fi
-                  [[ $ref =~ ^[[:alnum:]][[:alnum:]_./-]*$ ]] || { echo 'Invalid cd_scripts_commitId' >&2; exit 1; }
-                  git clone https://github.com/pagopa/pn-cicd.git "$work/pn-cicd"
-                  cd "$work/pn-cicd"
-                  case "$ref" in tag/*) ref="refs/tags/${ref#tag/}" ;; esac
-                  commit=$(git rev-parse --verify --end-of-options "$ref^{commit}" 2>/dev/null ||
-                    git rev-parse --verify --end-of-options "refs/remotes/origin/$ref^{commit}")
-                  git checkout --detach "$commit"
-                  bash cd-cli/updateCdPipelines.sh
+                - cd scripts && bash cd-cli/updateCdPipelines.sh
 
   UpdatePipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -311,7 +285,20 @@ Resources:
       Stages:
         - Name: Source
           Actions:
-            - Name: Source
+            - Name: DesiredCommitIds
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: S3
+                Version: '1'
+              Configuration:
+                S3Bucket: !Ref ArtifactBucketName
+                S3ObjectKey: config/desired-commit-ids-env.sh
+                PollForSourceChanges: false
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: DesiredCommitIdsNS
+            - Name: EmptyZip
               ActionTypeId:
                 Category: Source
                 Owner: AWS
@@ -322,9 +309,29 @@ Resources:
                 S3ObjectKey: empty.zip
                 PollForSourceChanges: false
               OutputArtifacts:
-                - Name: Source
+                - Name: EmptyZip
         - Name: Update
           Actions:
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub ${ProjectName}-DownloadScriptsCodebuildProject
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${ArtifactBucketName}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: Scripts
+              RunOrder: 1
             - Name: Update
               ActionTypeId:
                 Category: Build
@@ -334,7 +341,8 @@ Resources:
               Configuration:
                 ProjectName: !Ref UpdateBuild
               InputArtifacts:
-                - Name: Source
+                - Name: Scripts
+              RunOrder: 2
 
 Outputs:
   PipelineName:
