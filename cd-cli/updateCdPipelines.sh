@@ -72,6 +72,7 @@ check_pipelines() {
   while IFS= read -r name; do
     [[ -n $name ]] || continue
     count=$(aws_cli codepipeline list-pipeline-executions --pipeline-name "$name" \
+      --no-paginate --max-results 100 \
       --query "length(pipelineExecutionSummaries[?status=='InProgress' || status=='Stopping'])" --output json)
     [[ $count == 0 ]] || fail "Pipeline is busy: $name. Retry after the current execution finishes."
   done <<< "$pipelines"

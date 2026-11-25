@@ -1886,8 +1886,9 @@ Resources:
                   echo "### CLONE CICD SCRIPTS ###"
                   echo ""
                   if [ -z "$PnConfigurationEnabled" ]; then
-                    git clone https://github.com/pagopa/pn-cicd.git
-                    ( cd pn-cicd && git checkout $cd_scripts_commitId )
+                    [ -n "$cd_scripts_commitId" ] || exit 1
+                    git clone https://github.com/pagopa/pn-cicd.git || exit 1
+                    git -C pn-cicd checkout "$cd_scripts_commitId" || exit 1
                   fi
                   if ( [ ! -z "$PnConfigurationEnabled" ] ) then
                     echo ""
