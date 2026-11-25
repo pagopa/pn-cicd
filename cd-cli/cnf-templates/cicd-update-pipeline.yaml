@@ -221,6 +221,10 @@ Resources:
       ArtifactStore:
         Type: S3
         Location: !Ref ArtifactBucketName
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label (e.g. GA26Q1.A) or Jira issue key.'
       Stages:
         - Name: Source
           Actions:
