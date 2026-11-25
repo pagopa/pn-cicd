@@ -70,7 +70,7 @@ Resources:
                   Action: secretsmanager:GetSecretValue
                   Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:github-token-*
               - Effect: Allow
-                Action: ['cloudformation:DescribeStacks', 'cloudformation:DescribeChangeSet']
+                Action: ['cloudformation:DescribeStacks', 'cloudformation:DescribeChangeSet', 'cloudformation:GetTemplateSummary', 'cloudformation:ListStackResources', 'cloudformation:DescribeStackEvents', 'cloudformation:TagResource', 'cloudformation:UntagResource']
                 Resource:
                   - !Ref AWS::StackId
                   - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
@@ -82,19 +82,94 @@ Resources:
                 Condition:
                   StringLike:
                     cloudformation:ChangeSetName:
-                      - pn-cicd-update-*
-                      - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:changeSet/pn-cicd-update-*/*
-              - Effect: Allow
-                Action: ['codepipeline:GetPipeline', 'codepipeline:UpdatePipeline', 'codepipeline:ListTagsForResource', 'codepipeline:TagResource', 'codepipeline:UntagResource']
-                Resource: !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectName}-*
+                      - awscli-cloudformation-package-deploy-*
+                      - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:changeSet/awscli-cloudformation-package-deploy-*/*
               - Effect: Allow
                 Action: codepipeline:ListPipelineExecutions
-                Resource:
-                  - !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectName}-*
-                  - !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:go-automation-update-pipeline
+                Resource: !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:*
               - Effect: Allow
-                Action: ['codebuild:BatchGetProjects', 'codebuild:UpdateProject']
-                Resource: !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-*
+                Action:
+                  - codepipeline:CreatePipeline
+                  - codepipeline:GetPipeline
+                  - codepipeline:UpdatePipeline
+                  - codepipeline:DeletePipeline
+                  - codepipeline:ListTagsForResource
+                  - codepipeline:TagResource
+                  - codepipeline:UntagResource
+                  - codebuild:CreateProject
+                  - codebuild:BatchGetProjects
+                  - codebuild:UpdateProject
+                  - codebuild:DeleteProject
+                Resource:
+                  - !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:*
+                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/*
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: s3:CreateBucket
+                Resource: !Sub arn:${AWS::Partition}:s3:::*
+                Condition:
+                  StringEquals:
+                    s3:LocationConstraint: !Ref AWS::Region
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['s3:ListBucket', 's3:GetBucketLocation', 's3:GetBucketVersioning', 's3:PutBucketVersioning', 's3:GetBucketTagging', 's3:PutBucketTagging']
+                Resource: !Sub arn:${AWS::Partition}:s3:::*
+                Condition:
+                  StringEquals:
+                    s3:ResourceAccount: !Ref AWS::AccountId
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['events:CreateEventBus', 'events:DescribeEventBus', 'events:UpdateEventBus', 'events:PutRule', 'events:DescribeRule', 'events:PutTargets', 'events:ListTargetsByRule', 'events:ListTagsForResource', 'events:TagResource', 'events:UntagResource']
+                Resource:
+                  - !Sub arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:event-bus/*
+                  - !Sub arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/*
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['events:PutPermission', 'logs:DescribeLogGroups']
+                Resource: '*'
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['sqs:CreateQueue', 'sqs:GetQueueUrl', 'sqs:GetQueueAttributes', 'sqs:SetQueueAttributes', 'sqs:ListQueueTags', 'sqs:TagQueue', 'sqs:UntagQueue']
+                Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:*
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['logs:CreateLogGroup', 'logs:DeleteLogGroup', 'logs:PutRetentionPolicy', 'logs:DeleteRetentionPolicy', 'logs:ListTagsLogGroup', 'logs:TagLogGroup', 'logs:UntagLogGroup', 'logs:ListTagsForResource', 'logs:TagResource', 'logs:UntagResource']
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - iam:UpdateRole
+                  - iam:UpdateRoleDescription
+                  - iam:UpdateAssumeRolePolicy
+                  - iam:GetRolePolicy
+                  - iam:PutRolePolicy
+                  - iam:DeleteRolePolicy
+                  - iam:ListRolePolicies
+                  - iam:ListAttachedRolePolicies
+                  - iam:ListRoleTags
+                  - iam:TagRole
+                  - iam:UntagRole
+                Resource:
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${AWS::StackName}-UpdateBuildRole-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ProjectName}-cd-pipeline-CodeBuildRole
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
               - Effect: Allow
                 Action: iam:PassRole
                 Resource:
@@ -104,6 +179,14 @@ Resources:
                 Condition:
                   StringEquals:
                     iam:PassedToService: [codepipeline.amazonaws.com, codebuild.amazonaws.com]
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-EventBusRunCodeBuildRole-*
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: events.amazonaws.com
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
 
   PipelineRole:
     Type: AWS::IAM::Role

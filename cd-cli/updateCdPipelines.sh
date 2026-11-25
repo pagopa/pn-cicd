@@ -7,7 +7,7 @@ Usage: $(basename "${BASH_SOURCE[0]}") [-h]
 
 Required environment:
   AWS_REGION, AWS_PARTITION, ACCOUNT_ID, ACCOUNT_TYPE, ENV_NAME, PROJECT_NAME
-  UPDATER_STACK, TARGET_STACK, ARTIFACT_BUCKET, CODEBUILD_BUILD_ID
+  UPDATER_STACK, TARGET_STACK, ARTIFACT_BUCKET
 EOF
 }
 
@@ -19,16 +19,13 @@ parse_params() {
   esac
 
   : "${AWS_REGION:?}" "${AWS_PARTITION:?}" "${ENV_NAME:?}" "${PROJECT_NAME:?}" "${ACCOUNT_ID:?}" "${UPDATER_STACK:?}"
-  : "${TARGET_STACK:?}" "${ARTIFACT_BUCKET:?}" "${CODEBUILD_BUILD_ID:?}"
+  : "${TARGET_STACK:?}" "${ARTIFACT_BUCKET:?}"
   : "${ACCOUNT_TYPE:?}"
   case "$ACCOUNT_TYPE" in
     CORE) domain=core ;;
     CONFINFO) domain=confinfo ;;
     *) fail 'Expected ACCOUNT_TYPE CORE or CONFINFO' ;;
   esac
-  build_id=${CODEBUILD_BUILD_ID##*:}
-  [[ $build_id =~ ^[a-f0-9-]{36}$ ]] || fail 'Invalid build ID'
-
   aws_command_base_args=(--region "$AWS_REGION")
 }
 
@@ -75,11 +72,11 @@ ready_stack() {
   esac
 }
 
-check_changed_pipelines() {
+check_pipelines() {
   local name count pipelines
-  pipelines=$(jq -r '
-    [.Changes[].ResourceChange | select(.ResourceType == "AWS::CodePipeline::Pipeline")
-      | (.BeforeContext | fromjson | .Properties.Name)] | unique[]' "$1")
+  pipelines=$(aws_cli cloudformation list-stack-resources --stack-name "$1" \
+    --query "StackResourceSummaries[?ResourceType=='AWS::CodePipeline::Pipeline'].PhysicalResourceId" \
+    --output json | jq -r 'unique[]')
   while IFS= read -r name; do
     [[ -n $name ]] || continue
     count=$(aws_cli codepipeline list-pipeline-executions --pipeline-name "$name" \
@@ -88,71 +85,19 @@ check_changed_pipelines() {
   done <<< "$pipelines"
 }
 
-prepare_change_set() {
-  set -e
-  local stack=$1 template=$2 kind=$3 parameters=$4 change status reason
-  change="pn-cicd-update-$build_id-$kind"
-  aws_cli s3api put-object --bucket "$ARTIFACT_BUCKET" --expected-bucket-owner "$ACCOUNT_ID" \
-    --key "pn-cicd-update/$build_id/$kind.yaml" --body "$template" --server-side-encryption AES256 > /dev/null
-  aws_cli cloudformation create-change-set --stack-name "$stack" --change-set-name "$change" \
-    --change-set-type UPDATE --client-token "$build_id-$kind" --capabilities CAPABILITY_NAMED_IAM \
-    --template-url "https://s3.$AWS_REGION.amazonaws.com/$ARTIFACT_BUCKET/pn-cicd-update/$build_id/$kind.yaml" \
-    --parameters "file://$parameters" > /dev/null
-  aws_cli cloudformation wait change-set-create-complete --stack-name "$stack" --change-set-name "$change" || true
-  aws_cli cloudformation describe-change-set --stack-name "$stack" --change-set-name "$change" \
-    --include-property-values --output json > "$work/$kind-change.json"
-  status=$(jq -r '.Status' "$work/$kind-change.json")
-  if [[ $status == FAILED ]]; then
-    reason=$(jq -r '.StatusReason' "$work/$kind-change.json")
-    case "$reason" in
-      *"didn't contain changes"*|*"No updates are to be performed"*)
-        aws_cli cloudformation delete-change-set --stack-name "$stack" --change-set-name "$change"
-        printf 'none\n'; return ;;
-      *) fail "$reason" ;;
-    esac
-  fi
-  [[ $status == CREATE_COMPLETE ]] || fail "Change set not ready: $change"
-  jq -e '
-    (.Changes | length > 0) and all(.Changes[].ResourceChange;
-      .Action == "Modify" and .Replacement == "False" and
-      (.ResourceType == "AWS::CodePipeline::Pipeline" or .ResourceType == "AWS::CodeBuild::Project") and
-      ((.BeforeContext | fromjson) as $before | (.AfterContext | fromjson) as $after |
-      ($before.Properties | type == "object") and ($after.Properties | type == "object") and
-      ($before.Properties.Name | type == "string") and
-      (
-      if .ResourceType == "AWS::CodePipeline::Pipeline" then
-        ($before.Properties.Name | length > 0) and
-        ($before.Properties.RoleArn | type == "string") and
-        ($before.Properties.RestartExecutionOnUpdate | tostring) != "true" and
-        ($after.Properties.RestartExecutionOnUpdate | tostring) != "true" and
-        $before.Properties.RoleArn == $after.Properties.RoleArn and
-        $before.Properties.Name == $after.Properties.Name and
-        $before.Properties.Stages[0] == $after.Properties.Stages[0] and
-        $before.Properties.Triggers == $after.Properties.Triggers
-      else
-        ($before.Properties.ServiceRole | type == "string") and
-        $before.Properties.ServiceRole == $after.Properties.ServiceRole and
-        $before.Properties.Name == $after.Properties.Name
-      end)))' "$work/$kind-change.json" > /dev/null || fail "Unsafe change set: $change"
-  jq -r '.ChangeSetId' "$work/$kind-change.json"
-}
-
-execute_change_set() {
-  local stack=$1 change=$2
-  if [[ $change == none ]]; then
-    echo "No changes: $stack"
-    return 0
-  fi
-  echo "Updating $stack: $change"
-  aws_cli cloudformation execute-change-set --stack-name "$stack" --change-set-name "$change" \
-    --client-request-token "$build_id-$(basename "$stack")"
-  aws_cli cloudformation wait stack-update-complete --stack-name "$stack"
+deploy_stack() {
+  aws_cli cloudformation deploy \
+    --stack-name "$1" \
+    --template-file "$2" \
+    --s3-bucket "$ARTIFACT_BUCKET" \
+    --s3-prefix pn-cicd-update \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --no-fail-on-empty-changeset
 }
 
 main() {
   work=$(mktemp -d)
   local target_id updater_id cicd_commit
-  local self_change target_change
   read_stack "$TARGET_STACK" "$work/target.json" || fail 'Target stack does not exist'
   read_stack "$UPDATER_STACK" "$work/self.json" || fail 'Updater stack does not exist'
   ready_stack "$work/target.json"
@@ -179,16 +124,9 @@ main() {
   [[ -f $template && -f cd-cli/updateCdPipelines.sh && -f cd-cli/cnf-templates/cicd-update-pipeline.yaml ]] ||
     fail 'Selected release does not contain the updater'
   echo "Domain=$domain cicd=$cicd_commit"
-  jq '[.Stacks[0].Parameters[] | {ParameterKey, UsePreviousValue:true}]' "$work/target.json" > "$work/target-parameters.json"
-  jq '[.Stacks[0].Parameters[] | {ParameterKey, UsePreviousValue:true}]' "$work/self.json" > "$work/self-parameters.json"
-  self_change=$(prepare_change_set "$updater_id" cd-cli/cnf-templates/cicd-update-pipeline.yaml self "$work/self-parameters.json")
-  execute_change_set "$updater_id" "$self_change"
-
-  target_change=$(prepare_change_set "$target_id" "$template" target "$work/target-parameters.json")
-  if [[ $target_change != none ]]; then
-    check_changed_pipelines "$work/target-change.json"
-  fi
-  execute_change_set "$target_id" "$target_change"
+  deploy_stack "$UPDATER_STACK" cd-cli/cnf-templates/cicd-update-pipeline.yaml
+  check_pipelines "$TARGET_STACK"
+  deploy_stack "$TARGET_STACK" "$template"
   echo "Pipeline maintenance complete: $target_id at $cicd_commit"
 }
 
