@@ -3207,11 +3207,11 @@ Resources:
               - cloudfront:GetCloudFrontOriginAccessIdentity
               - acm:ListCertificates
               - acm:AddTagsToCertificate
-              - acm:DescribeCertificate	
+              - acm:DescribeCertificate
               - acm:GetCertificate
               - acm:ListTagsForCertificate
               - acm:RequestCertificate
-              - acm:DeleteCertificate	
+              - acm:DeleteCertificate
               - acm:RemoveTagsFromCertificate
               - acm:*Tag*
               - cloudfront:UpdateDistribution
