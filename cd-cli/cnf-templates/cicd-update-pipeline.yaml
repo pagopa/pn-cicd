@@ -14,7 +14,7 @@ Parameters:
   EnvName:
     Type: String
     AllowedValues: [dev, test, uat, hotfix, prod]
-  accountType:
+  AccountType:
     Type: String
     Description: SEND account type
     AllowedValues: [CORE, CONFINFO]
@@ -251,7 +251,7 @@ Resources:
           - Name: ENV_NAME
             Value: !Ref EnvName
           - Name: ACCOUNT_TYPE
-            Value: !Ref accountType
+            Value: !Ref AccountType
           - Name: PROJECT_NAME
             Value: !Ref ProjectName
           - Name: UPDATER_STACK
