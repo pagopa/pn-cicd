@@ -1,0 +1,351 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Update the local SEND CD pipeline stack
+
+# This stack is bootstrapped manually once per account and environment.
+# One CodeBuild run updates this stack first, then the local Complete CD pipeline stack.
+# Release revision: resolved by the Complete DownloadScripts project.
+# Empty change sets are skipped.
+# CodePipeline update behavior: https://docs.aws.amazon.com/codepipeline/latest/userguide/pipelines-edit.html#pipelines-edit-cli
+Parameters:
+  ProjectName:
+    Type: String
+    Default: pn
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9-]*'
+  EnvName:
+    Type: String
+    AllowedValues: [dev, test, uat, hotfix, prod]
+  AccountType:
+    Type: String
+    Description: SEND account type
+    AllowedValues: [CORE, CONFINFO]
+  TargetStackName:
+    Type: String
+    Description: Existing local complete pipeline stack
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9-]*'
+  ArtifactBucketName:
+    Type: String
+    Description: CdArtifactBucketName output of the target stack
+
+Resources:
+  UpdateBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnEquals:
+                aws:SourceArn: !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-cicd-update
+      Policies:
+        - PolicyName: UpdatePipelines
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents']
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${ProjectName}-cicd-update:*
+              - Effect: Allow
+                Action: ['s3:GetBucketLocation', 's3:GetBucketVersioning']
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}
+              - Effect: Allow
+                Action: ['s3:GetObject', 's3:GetObjectVersion', 's3:PutObject']
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/${ProjectName}-cicd-update/*
+              - Effect: Allow
+                Action: ['cloudformation:DescribeStacks', 'cloudformation:DescribeChangeSet', 'cloudformation:GetTemplateSummary', 'cloudformation:ListStackResources', 'cloudformation:DescribeStackEvents', 'cloudformation:TagResource', 'cloudformation:UntagResource']
+                Resource:
+                  - !Ref AWS::StackId
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
+              - Effect: Allow
+                Action: ['cloudformation:CreateChangeSet', 'cloudformation:ExecuteChangeSet', 'cloudformation:DeleteChangeSet']
+                Resource:
+                  - !Ref AWS::StackId
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${TargetStackName}/*
+                Condition:
+                  StringLike:
+                    cloudformation:ChangeSetName:
+                      - awscli-cloudformation-package-deploy-*
+                      - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:changeSet/awscli-cloudformation-package-deploy-*/*
+              - Effect: Allow
+                Action: codepipeline:ListPipelineExecutions
+                Resource: !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:*
+              - Effect: Allow
+                Action:
+                  - codepipeline:CreatePipeline
+                  - codepipeline:GetPipeline
+                  - codepipeline:UpdatePipeline
+                  - codepipeline:DeletePipeline
+                  - codepipeline:ListTagsForResource
+                  - codepipeline:TagResource
+                  - codepipeline:UntagResource
+                  - codebuild:CreateProject
+                  - codebuild:BatchGetProjects
+                  - codebuild:UpdateProject
+                  - codebuild:DeleteProject
+                Resource:
+                  - !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:*
+                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/*
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: s3:CreateBucket
+                Resource: !Sub arn:${AWS::Partition}:s3:::*
+                Condition:
+                  StringEquals:
+                    s3:LocationConstraint: !Ref AWS::Region
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['s3:ListBucket', 's3:GetBucketLocation', 's3:GetBucketVersioning', 's3:PutBucketVersioning', 's3:GetBucketTagging', 's3:PutBucketTagging']
+                Resource: !Sub arn:${AWS::Partition}:s3:::*
+                Condition:
+                  StringEquals:
+                    s3:ResourceAccount: !Ref AWS::AccountId
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['events:CreateEventBus', 'events:DescribeEventBus', 'events:UpdateEventBus', 'events:PutRule', 'events:DescribeRule', 'events:PutTargets', 'events:ListTargetsByRule', 'events:ListTagsForResource', 'events:TagResource', 'events:UntagResource']
+                Resource:
+                  - !Sub arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:event-bus/*
+                  - !Sub arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/*
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['events:PutPermission', 'logs:DescribeLogGroups']
+                Resource: '*'
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['sqs:CreateQueue', 'sqs:GetQueueUrl', 'sqs:GetQueueAttributes', 'sqs:SetQueueAttributes', 'sqs:ListQueueTags', 'sqs:TagQueue', 'sqs:UntagQueue']
+                Resource: !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:*
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['logs:CreateLogGroup', 'logs:DeleteLogGroup', 'logs:PutRetentionPolicy', 'logs:DeleteRetentionPolicy', 'logs:ListTagsLogGroup', 'logs:TagLogGroup', 'logs:UntagLogGroup', 'logs:ListTagsForResource', 'logs:TagResource', 'logs:UntagResource']
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:*
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - iam:UpdateRole
+                  - iam:UpdateRoleDescription
+                  - iam:UpdateAssumeRolePolicy
+                  - iam:GetRolePolicy
+                  - iam:PutRolePolicy
+                  - iam:DeleteRolePolicy
+                  - iam:ListRolePolicies
+                  - iam:ListAttachedRolePolicies
+                  - iam:ListRoleTags
+                  - iam:TagRole
+                  - iam:UntagRole
+                Resource:
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${AWS::StackName}-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ProjectName}-cd-pipeline-CodeBuildRole
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: ['iam:AttachRolePolicy', 'iam:DetachRolePolicy']
+                Resource:
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ProjectName}-cd-pipeline-CodeBuildRole
+                Condition:
+                  ArnLike:
+                    iam:PolicyARN: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${ProjectName}-CodeBuildPolicy-*
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action:
+                  - iam:GetPolicy
+                  - iam:GetPolicyVersion
+                  - iam:ListPolicyVersions
+                  - iam:ListEntitiesForPolicy
+                  - iam:CreatePolicy
+                  - iam:CreatePolicyVersion
+                  - iam:DeletePolicy
+                  - iam:DeletePolicyVersion
+                Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${ProjectName}-CodeBuildPolicy-*
+                Condition:
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource:
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${AWS::StackName}-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${ProjectName}-cd-pipeline-CodeBuildRole
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: [codepipeline.amazonaws.com, codebuild.amazonaws.com]
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${TargetStackName}-EventBusRunCodeBuildRole-*
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: events.amazonaws.com
+                  ForAnyValue:StringEquals:
+                    aws:CalledVia: cloudformation.amazonaws.com
+
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: RunUpdater
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ['s3:GetBucketLocation', 's3:GetBucketVersioning', 's3:GetBucketAcl']
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}
+              - Effect: Allow
+                Action: ['s3:GetObject', 's3:GetObjectVersion']
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/empty.zip
+                  - !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/config/desired-commit-ids-env.sh
+              - Effect: Allow
+                Action: ['s3:GetObject', 's3:GetObjectVersion', 's3:PutObject']
+                Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactBucketName}/${ProjectName}-cicd-update/*
+              - Effect: Allow
+                Action: ['codebuild:StartBuild', 'codebuild:BatchGetBuilds']
+                Resource:
+                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-cicd-update
+                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:build/${ProjectName}-cicd-update:*
+                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${ProjectName}-DownloadScriptsCodebuildProject
+                  - !Sub arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:build/${ProjectName}-DownloadScriptsCodebuildProject:*
+
+  UpdateBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${ProjectName}-cicd-update
+      ServiceRole: !GetAtt UpdateBuildRole.Arn
+      ConcurrentBuildLimit: 1
+      TimeoutInMinutes: 60
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:7.0
+        EnvironmentVariables:
+          - Name: ENV_NAME
+            Value: !Ref EnvName
+          - Name: ACCOUNT_TYPE
+            Value: !Ref AccountType
+          - Name: PROJECT_NAME
+            Value: !Ref ProjectName
+          - Name: UPDATER_STACK
+            Value: !Ref AWS::StackName
+          - Name: TARGET_STACK
+            Value: !Ref TargetStackName
+          - Name: ARTIFACT_BUCKET
+            Value: !Ref ArtifactBucketName
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - cd scripts && bash cd-cli/updateCdPipelines.sh
+
+  UpdatePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub ${ProjectName}-cicd-update
+      PipelineType: V2
+      ExecutionMode: QUEUED
+      RestartExecutionOnUpdate: false
+      RoleArn: !GetAtt PipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucketName
+      Variables:
+        - Name: release_label
+          DefaultValue: "UNTAGGED"
+          Description: 'Release label or Jira issue key.'
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: DesiredCommitIds
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: S3
+                Version: '1'
+              Configuration:
+                S3Bucket: !Ref ArtifactBucketName
+                S3ObjectKey: config/desired-commit-ids-env.sh
+                PollForSourceChanges: false
+              OutputArtifacts:
+                - Name: DesiredCommitIds
+              Namespace: DesiredCommitIdsNS
+            - Name: EmptyZip
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: S3
+                Version: '1'
+              Configuration:
+                S3Bucket: !Ref ArtifactBucketName
+                S3ObjectKey: empty.zip
+                PollForSourceChanges: false
+              OutputArtifacts:
+                - Name: EmptyZip
+        - Name: Update
+          Actions:
+            - Name: Download_CLI_Scripts
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Sub ${ProjectName}-DownloadScriptsCodebuildProject
+                EnvironmentVariables: !Sub '[
+                    {"name":"EnvName", "value":"${EnvName}", "type":"PLAINTEXT"},
+                    {"name":"AwsRegion", "value":"${AWS::Region}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsBucketName", "value":"${ArtifactBucketName}", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsPath", "value":"config/desired-commit-ids-env.sh", "type":"PLAINTEXT"},
+                    {"name":"DesiredCommitIdsVersionId", "value":"#{DesiredCommitIdsNS.VersionId}", "type":"PLAINTEXT"}
+                  ]'
+              InputArtifacts:
+                - Name: EmptyZip
+              OutputArtifacts:
+                - Name: Scripts
+              RunOrder: 1
+            - Name: Update
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref UpdateBuild
+              InputArtifacts:
+                - Name: Scripts
+              RunOrder: 2
+
+Outputs:
+  PipelineName:
+    Value: !Ref UpdatePipeline
